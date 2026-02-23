@@ -46,7 +46,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = org.Id
         };
         dbContext.Collaborators.Add(adminLeader);
@@ -507,7 +507,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = organizationId
         };
 

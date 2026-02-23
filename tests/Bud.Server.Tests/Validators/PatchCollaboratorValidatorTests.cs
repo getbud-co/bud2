@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Bud.Server.Tests.Validators;
 
-public sealed class UpdateCollaboratorValidatorTests
+public sealed class PatchCollaboratorValidatorTests
 {
     [Fact]
     public async Task Validate_WithInvalidLeader_ShouldFail()

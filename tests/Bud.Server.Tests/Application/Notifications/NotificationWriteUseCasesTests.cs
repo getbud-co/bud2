@@ -41,7 +41,7 @@ public sealed class NotificationWriteUseCasesTests
         var collaboratorId = Guid.NewGuid();
         _tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
         _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((NotificationResponse?)null);
+            .ReturnsAsync((Notification?)null);
 
         var result = await CreateMarkAsReadUseCase().ExecuteAsync(Guid.NewGuid());
 
@@ -57,7 +57,7 @@ public sealed class NotificationWriteUseCasesTests
         var notificationId = Guid.NewGuid();
         _tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
 
-        var notification = new NotificationResponse
+        var notification = new Notification
         {
             Id = notificationId,
             RecipientCollaboratorId = Guid.NewGuid(),
@@ -84,7 +84,7 @@ public sealed class NotificationWriteUseCasesTests
         var notificationId = Guid.NewGuid();
         _tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
 
-        var notification = new NotificationResponse
+        var notification = new Notification
         {
             Id = notificationId,
             RecipientCollaboratorId = collaboratorId,
@@ -112,7 +112,7 @@ public sealed class NotificationWriteUseCasesTests
         var notificationId = Guid.NewGuid();
         _tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
 
-        var notification = new NotificationResponse
+        var notification = new Notification
         {
             Id = notificationId,
             RecipientCollaboratorId = collaboratorId,

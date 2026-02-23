@@ -50,7 +50,7 @@ public sealed class BudApiClientTests
 
             if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryResponse>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
@@ -72,7 +72,7 @@ public sealed class BudApiClientTests
                 payload.GetProperty("scopeType").ValueKind.Should().Be(JsonValueKind.Number);
                 payload.GetProperty("scopeType").GetInt32().Should().Be((int)MissionScopeType.Organization);
 
-                return JsonResponse(new Mission
+                return JsonResponse(new MissionResponse
                 {
                     Id = responseMissionId,
                     Name = "Missão Teste",

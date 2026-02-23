@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bud.Server.Infrastructure.Querying;
 
-public sealed class MissionMetricSearchSpecification(string? search, bool isNpgsql) : IQuerySpecification<Metric>
+public sealed class MetricSearchSpecification(string? search, bool isNpgsql) : IQuerySpecification<Metric>
 {
     public IQueryable<Metric> Apply(IQueryable<Metric> query)
     {

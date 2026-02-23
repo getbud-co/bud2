@@ -234,7 +234,7 @@ public sealed class McpToolServiceTests
 
             if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryResponse>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
@@ -270,7 +270,7 @@ public sealed class McpToolServiceTests
 
             if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryResponse>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
@@ -278,7 +278,7 @@ public sealed class McpToolServiceTests
 
             if (request.Method == HttpMethod.Patch && request.RequestUri.AbsolutePath == $"/api/missions/{missionId}")
             {
-                return JsonResponse(new Mission
+                return JsonResponse(new MissionResponse
                 {
                     Id = missionId,
                     Name = "Missão atualizada",

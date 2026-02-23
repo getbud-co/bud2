@@ -3,7 +3,7 @@ using Bud.Server.Domain.Repositories;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Application.UseCases.Missions;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 
 using Bud.Shared.Contracts;
 using Bud.Server.Domain.Model;

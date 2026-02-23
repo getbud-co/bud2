@@ -1,6 +1,5 @@
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.MultiTenancy;
 

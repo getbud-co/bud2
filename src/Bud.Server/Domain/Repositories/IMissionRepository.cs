@@ -7,7 +7,7 @@ public interface IMissionRepository
     Task<Mission?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<Mission?> GetByIdReadOnlyAsync(Guid id, CancellationToken ct = default);
     Task<Bud.Shared.Contracts.Common.PagedResult<Mission>> GetAllAsync(
-        Bud.Server.Domain.Model.MissionScopeType? scopeType, Guid? scopeId, string? search,
+        MissionScopeType? scopeType, Guid? scopeId, string? search,
         int page, int pageSize, CancellationToken ct = default);
     Task<Bud.Shared.Contracts.Common.PagedResult<Mission>> GetMyMissionsAsync(
         Guid collaboratorId, Guid organizationId,

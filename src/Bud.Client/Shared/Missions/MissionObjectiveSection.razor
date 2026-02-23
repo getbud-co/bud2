@@ -44,16 +44,16 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public Mission Mission { get; set; } = default!;
-    [Parameter, EditorRequired] public Objective Objective { get; set; } = default!;
+    [Parameter, EditorRequired] public MissionResponse Mission { get; set; } = default!;
+    [Parameter, EditorRequired] public ObjectiveResponse Objective { get; set; } = default!;
     [Parameter] public ObjectiveProgressResponse? ObjectiveProgressResponse { get; set; }
     [Parameter] public MissionProgressResponse? MissionProgressResponse { get; set; }
-    [Parameter] public List<Metric> ObjectiveMetrics { get; set; } = [];
+    [Parameter] public List<MetricResponse> ObjectiveMetrics { get; set; } = [];
     [Parameter] public Dictionary<Guid, MetricProgressResponse> MetricProgressCache { get; set; } = new();
     [Parameter] public bool IsExpanded { get; set; }
     [Parameter] public EventCallback OnToggleExpand { get; set; }
-    [Parameter] public EventCallback<Metric> OnCheckinClick { get; set; }
-    [Parameter] public EventCallback<Metric> OnHistoryClick { get; set; }
+    [Parameter] public EventCallback<MetricResponse> OnCheckinClick { get; set; }
+    [Parameter] public EventCallback<MetricResponse> OnHistoryClick { get; set; }
 
     private int ProgressPercent => (int)(ObjectiveProgressResponse?.OverallProgress ?? 0);
     private decimal ExpectedProgress => MissionProgressResponse?.ExpectedProgress ?? 0m;

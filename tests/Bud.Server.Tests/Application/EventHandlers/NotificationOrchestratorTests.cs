@@ -39,7 +39,7 @@ public class NotificationOrchestratorTests
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
-                It.Is<IEnumerable<NotificationResponse>>(n =>
+                It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 2 &&
                     n.All(x => x.Type == NotificationType.MissionCreated && x.Title == "Nova missão criada")),
                 It.IsAny<CancellationToken>()),
@@ -63,7 +63,7 @@ public class NotificationOrchestratorTests
 
         // Assert
         _repoMock.Verify(
-            r => r.AddRangeAsync(It.IsAny<IEnumerable<NotificationResponse>>(), It.IsAny<CancellationToken>()),
+            r => r.AddRangeAsync(It.IsAny<IEnumerable<Notification>>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _repoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -86,7 +86,7 @@ public class NotificationOrchestratorTests
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
-                It.Is<IEnumerable<NotificationResponse>>(n =>
+                It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 1 &&
                     n.All(x => x.Type == NotificationType.MissionUpdated && x.Title == "Missão atualizada")),
                 It.IsAny<CancellationToken>()),
@@ -112,7 +112,7 @@ public class NotificationOrchestratorTests
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
-                It.Is<IEnumerable<NotificationResponse>>(n =>
+                It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 1 &&
                     n.All(x => x.Type == NotificationType.MissionDeleted && x.Title == "Missão removida")),
                 It.IsAny<CancellationToken>()),
@@ -145,7 +145,7 @@ public class NotificationOrchestratorTests
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
-                It.Is<IEnumerable<NotificationResponse>>(n =>
+                It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 1 &&
                     n.All(x => x.Type == NotificationType.MetricCheckinCreated &&
                                x.Title == "Novo check-in registrado" &&
@@ -176,7 +176,7 @@ public class NotificationOrchestratorTests
             r => r.ResolveMissionRecipientsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _repoMock.Verify(
-            r => r.AddRangeAsync(It.IsAny<IEnumerable<NotificationResponse>>(), It.IsAny<CancellationToken>()),
+            r => r.AddRangeAsync(It.IsAny<IEnumerable<Notification>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -202,7 +202,7 @@ public class NotificationOrchestratorTests
 
         // Assert
         _repoMock.Verify(
-            r => r.AddRangeAsync(It.IsAny<IEnumerable<NotificationResponse>>(), It.IsAny<CancellationToken>()),
+            r => r.AddRangeAsync(It.IsAny<IEnumerable<Notification>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

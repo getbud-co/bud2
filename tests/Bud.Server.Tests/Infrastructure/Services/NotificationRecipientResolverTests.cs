@@ -56,8 +56,8 @@ public class NotificationRecipientResolverTests
         context.Teams.Add(team);
         context.Collaborators.AddRange(leader, c1, c2);
         context.CollaboratorTeams.AddRange(
-            new CollaboratorTeamResponse { CollaboratorId = c1.Id, TeamId = team.Id },
-            new CollaboratorTeamResponse { CollaboratorId = c2.Id, TeamId = team.Id }
+            new CollaboratorTeam { CollaboratorId = c1.Id, TeamId = team.Id },
+            new CollaboratorTeam { CollaboratorId = c2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
@@ -244,7 +244,7 @@ public class NotificationRecipientResolverTests
             Name = "Test Metric",
             Type = MetricType.Quantitative
         };
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         // Act

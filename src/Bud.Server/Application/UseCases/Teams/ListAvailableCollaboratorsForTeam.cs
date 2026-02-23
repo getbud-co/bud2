@@ -8,7 +8,7 @@ namespace Bud.Server.Application.UseCases.Teams;
 
 public sealed class ListAvailableCollaboratorsForTeam(ITeamRepository teamRepository)
 {
-    public async Task<Result<List<CollaboratorLookupResponse>>> ExecuteAsync(
+    public async Task<Result<List<TeamCollaboratorEligibleResponse>>> ExecuteAsync(
         Guid teamId,
         string? search,
         CancellationToken cancellationToken = default)
@@ -16,10 +16,10 @@ public sealed class ListAvailableCollaboratorsForTeam(ITeamRepository teamReposi
         var team = await teamRepository.GetByIdAsync(teamId, cancellationToken);
         if (team is null)
         {
-            return Result<List<CollaboratorLookupResponse>>.NotFound("Time não encontrado.");
+            return Result<List<TeamCollaboratorEligibleResponse>>.NotFound("Time não encontrado.");
         }
 
-        var summaries = await teamRepository.GetAvailableCollaboratorsAsync(teamId, team.OrganizationId, search, 50, cancellationToken);
-        return Result<List<CollaboratorLookupResponse>>.Success(summaries.Select(c => c.ToResponse()).ToList());
+        var summaries = await teamRepository.GetEligibleCollaboratorsForAssignmentAsync(teamId, team.OrganizationId, search, 50, cancellationToken);
+        return Result<List<TeamCollaboratorEligibleResponse>>.Success(summaries.Select(c => c.ToTeamCollaboratorEligibleResponse()).ToList());
     }
 }

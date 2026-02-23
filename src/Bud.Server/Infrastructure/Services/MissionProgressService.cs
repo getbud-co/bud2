@@ -1,6 +1,6 @@
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Server.Application.Ports;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Bud.Server.Application.Common;
@@ -125,7 +125,7 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
             return Result<List<MetricProgressSnapshot>>.Success([]);
         }
 
-        var metrics = await dbContext.MissionMetrics
+        var metrics = await dbContext.Metrics
             .AsNoTracking()
             .Where(m => metricIds.Contains(m.Id))
             .ToListAsync(cancellationToken);
@@ -340,7 +340,7 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
             return Result<List<ObjectiveProgressSnapshot>>.Success([]);
         }
 
-        var metrics = await dbContext.MissionMetrics
+        var metrics = await dbContext.Metrics
             .AsNoTracking()
             .Where(m => m.ObjectiveId.HasValue && objectiveIds.Contains(m.ObjectiveId.Value))
             .ToListAsync(cancellationToken);

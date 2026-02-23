@@ -1,12 +1,9 @@
 using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.ReadModels;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
-using Bud.Server.Domain.ValueObjects;
 using Bud.Server.MultiTenancy;
 using Bud.Shared.Contracts;
 
@@ -47,7 +44,7 @@ public sealed class CreateCollaborator(
 
         try
         {
-            var requestedRole = request.Role.ToDomain();
+            var requestedRole = request.Role;
 
             var collaborator = Collaborator.Create(
                 Guid.NewGuid(),

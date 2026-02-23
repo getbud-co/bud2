@@ -69,7 +69,7 @@ public class MissionProgressServiceTests
             TargetText = type == MetricType.Qualitative ? "Target text" : null
         };
 
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         return metric;

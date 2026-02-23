@@ -9,7 +9,7 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly BudMcpOptions _options = options;
-    private List<OrganizationSummaryResponse>? _cachedOrganizations;
+    private List<MyOrganizationResponse>? _cachedOrganizations;
 
     public BudAuthContext? AuthContext { get; private set; }
     public Guid? CurrentTenantId { get; private set; }
@@ -52,7 +52,7 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
         }
     }
 
-    public async Task<IReadOnlyList<OrganizationSummaryResponse>> ListAvailableTenantsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<MyOrganizationResponse>> ListAvailableTenantsAsync(CancellationToken cancellationToken = default)
     {
         EnsureAuthenticated();
 
@@ -60,7 +60,7 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AuthContext!.Token);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
-        var organizations = await ReadSuccessResponseOrThrowAsync<List<OrganizationSummaryResponse>>(response, cancellationToken);
+        var organizations = await ReadSuccessResponseOrThrowAsync<List<MyOrganizationResponse>>(response, cancellationToken);
         _cachedOrganizations = organizations;
         return organizations;
     }

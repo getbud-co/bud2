@@ -17,7 +17,7 @@ public sealed class MissionMetricDisplayHelperTests
     [Fact]
     public void GetTargetLabel_WhenQuantitative_ShouldComposeTargetWithUnit()
     {
-        var metric = new Metric
+        var metric = new MetricResponse
         {
             Type = MetricType.Quantitative,
             QuantitativeType = QuantitativeMetricType.KeepBetween,
@@ -34,7 +34,7 @@ public sealed class MissionMetricDisplayHelperTests
     [Fact]
     public void GetCheckinTargetHint_WhenAbbreviatedUnits_ShouldUseShortUnit()
     {
-        var metric = new Metric
+        var metric = new MetricResponse
         {
             Type = MetricType.Quantitative,
             QuantitativeType = QuantitativeMetricType.Achieve,

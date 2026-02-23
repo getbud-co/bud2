@@ -45,7 +45,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = org.Id
         };
         dbContext.Collaborators.Add(adminLeader);
@@ -741,7 +741,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Server.Infrastructure.Persistence.ApplicationDbContext>();
-            dbContext.Set<CollaboratorTeamResponse>().Add(new CollaboratorTeamResponse
+            dbContext.Set<CollaboratorTeam>().Add(new CollaboratorTeam
             {
                 CollaboratorId = member.Id,
                 TeamId = team.Id

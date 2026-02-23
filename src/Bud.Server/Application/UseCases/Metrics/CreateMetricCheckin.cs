@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.MultiTenancy;
@@ -59,7 +58,7 @@ public sealed class CreateMetricCheckin(
             return Result<MetricCheckin>.Forbidden("Colaborador não encontrado.");
         }
 
-        if (mission.Status != Bud.Server.Domain.Model.MissionStatus.Active)
+        if (mission.Status != MissionStatus.Active)
         {
             return Result<MetricCheckin>.Failure(
                 "Não é possível fazer check-in em métricas de missões que não estão ativas.",

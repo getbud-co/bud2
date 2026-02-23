@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.MultiTenancy;
@@ -16,7 +15,7 @@ public sealed class CreateTemplate(
     ITenantProvider tenantProvider,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result<MissionTemplate>> ExecuteAsync(
+    public async Task<Result<Template>> ExecuteAsync(
         ClaimsPrincipal user,
         CreateTemplateRequest request,
         CancellationToken cancellationToken = default)
@@ -29,13 +28,13 @@ public sealed class CreateTemplate(
                 cancellationToken);
             if (!canCreate)
             {
-                return Result<MissionTemplate>.Forbidden("Você não tem permissão para criar templates nesta organização.");
+                return Result<Template>.Forbidden("Você não tem permissão para criar templates nesta organização.");
             }
         }
 
         try
         {
-            var template = MissionTemplate.Create(
+            var template = Template.Create(
                 Guid.NewGuid(),
                 Guid.Empty,
                 request.Name,
@@ -44,31 +43,31 @@ public sealed class CreateTemplate(
                 request.MissionDescriptionPattern);
 
             template.ReplaceObjectivesAndMetrics(
-                request.Objectives.Select(objective => new MissionTemplateObjectiveDraft(
+                request.Objectives.Select(objective => new TemplateObjectiveDraft(
                     objective.Id,
                     objective.Name,
                     objective.Description,
                     objective.OrderIndex,
                     objective.Dimension)),
-                request.Metrics.Select(metric => new MissionTemplateMetricDraft(
+                request.Metrics.Select(metric => new TemplateMetricDraft(
                     metric.Name,
-                    metric.Type.ToDomain(),
+                    metric.Type,
                     metric.OrderIndex,
                     metric.TemplateObjectiveId,
-                    metric.QuantitativeType.ToDomain(),
+                    metric.QuantitativeType,
                     metric.MinValue,
                     metric.MaxValue,
-                    metric.Unit.ToDomain(),
+                    metric.Unit,
                     metric.TargetText)));
 
             await templateRepository.AddAsync(template, cancellationToken);
             await unitOfWork.CommitAsync(templateRepository.SaveChangesAsync, cancellationToken);
 
-            return Result<MissionTemplate>.Success(template);
+            return Result<Template>.Success(template);
         }
         catch (DomainInvariantException ex)
         {
-            return Result<MissionTemplate>.Failure(ex.Message, ErrorType.Validation);
+            return Result<Template>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 }

@@ -1,4 +1,6 @@
-namespace Bud.Server.Domain.Model;
+using Bud.Server.Domain.Model;
+
+namespace Bud.Server.Domain.ValueObjects;
 
 public readonly record struct MissionScope
 {

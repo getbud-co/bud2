@@ -16,7 +16,7 @@ public sealed class ListTeamCollaboratorOptions(ITeamRepository teamRepository)
             return Result<List<CollaboratorLookupResponse>>.NotFound("Time não encontrado.");
         }
 
-        var summaries = await teamRepository.GetCollaboratorSummariesAsync(teamId, cancellationToken);
+        var summaries = await teamRepository.GetCollaboratorLookupAsync(teamId, cancellationToken);
         return Result<List<CollaboratorLookupResponse>>.Success(summaries.Select(c => c.ToResponse()).ToList());
     }
 }

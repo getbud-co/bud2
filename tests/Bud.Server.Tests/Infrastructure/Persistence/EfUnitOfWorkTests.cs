@@ -1,4 +1,3 @@
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Events;
 using Bud.Server.Domain.Model;
 using Bud.Server.Infrastructure.Persistence;

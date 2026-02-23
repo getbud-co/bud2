@@ -5,9 +5,9 @@ using Xunit;
 
 namespace Bud.Server.Tests.Validators;
 
-public class CreateMissionMetricValidatorTests
+public class CreateMetricValidatorTests
 {
-    private readonly CreateMissionMetricValidator _validator = new();
+    private readonly CreateMetricValidator _validator = new();
 
     #region Qualitative Metric Validation Tests
 

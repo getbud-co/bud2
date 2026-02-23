@@ -123,7 +123,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = Guid.NewGuid(),
             FullName = "Dashboard Filter Leader",
             Email = $"filter-leader-{teamId:N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             TeamId = null,
             OrganizationId = organizationId
         };
@@ -149,7 +149,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         };
         dbContext.Collaborators.Add(member);
 
-        dbContext.Set<CollaboratorTeamResponse>().Add(new CollaboratorTeamResponse
+        dbContext.Set<CollaboratorTeam>().Add(new CollaboratorTeam
         {
             CollaboratorId = member.Id,
             TeamId = teamId
@@ -195,7 +195,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = Guid.NewGuid(),
             FullName = "Administrador Dashboard",
             Email = email,
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             TeamId = null,
             OrganizationId = org.Id
         };

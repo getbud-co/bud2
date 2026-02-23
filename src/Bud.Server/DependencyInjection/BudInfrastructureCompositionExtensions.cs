@@ -1,6 +1,5 @@
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Server.Infrastructure.DomainEvents;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 

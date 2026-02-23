@@ -325,7 +325,7 @@ public class DashboardReadStoreTests
         // Assert
         result.Should().NotBeNull();
         // 1 out of 2 direct reports accessed = 50%
-        result!.TeamHealth.Indicators.WeeklyAccess.Percentage.Should().Be(50);
+        result!.TeamHealth.WeeklyAccess.Percentage.Should().Be(50);
     }
 
     [Fact]
@@ -384,7 +384,7 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id,
             Type = MetricType.Quantitative
         };
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
 
         // Recent checkin with high confidence
         context.MetricCheckins.Add(new MetricCheckin
@@ -436,9 +436,9 @@ public class DashboardReadStoreTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.TeamHealth.Indicators.WeeklyAccess.Percentage.Should().Be(0);
-        result.TeamHealth.Indicators.MissionsUpdated.Percentage.Should().Be(0);
-        result.TeamHealth.Indicators.FormsResponded.IsPlaceholder.Should().BeTrue();
+        result!.TeamHealth.WeeklyAccess.Percentage.Should().Be(0);
+        result.TeamHealth.MissionsUpdated.Percentage.Should().Be(0);
+        result.TeamHealth.FormsResponded.IsPlaceholder.Should().BeTrue();
     }
 
     [Fact]
@@ -490,7 +490,7 @@ public class DashboardReadStoreTests
         context.Organizations.Add(org);
         context.Collaborators.Add(collaborator);
         context.Missions.Add(mission);
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         context.MetricCheckins.Add(checkin);
         await context.SaveChangesAsync();
 
@@ -555,7 +555,7 @@ public class DashboardReadStoreTests
         context.Organizations.Add(org);
         context.Collaborators.Add(collaborator);
         context.Missions.Add(mission);
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         context.MetricCheckins.Add(checkin);
         await context.SaveChangesAsync();
 
@@ -619,9 +619,9 @@ public class DashboardReadStoreTests
         context.Collaborators.Add(teamLeader);
         context.Teams.Add(team);
         context.Collaborators.AddRange(collaborator, member1, member2, outsider);
-        context.Set<CollaboratorTeamResponse>().AddRange(
-            new CollaboratorTeamResponse { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeamResponse { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Set<CollaboratorTeam>().AddRange(
+            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
+            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
@@ -669,8 +669,8 @@ public class DashboardReadStoreTests
         context.Collaborators.Add(teamLeader);
         context.Teams.Add(team);
         context.Collaborators.Add(collaborator);
-        context.Set<CollaboratorTeamResponse>().Add(
-            new CollaboratorTeamResponse { CollaboratorId = collaborator.Id, TeamId = team.Id }
+        context.Set<CollaboratorTeam>().Add(
+            new CollaboratorTeam { CollaboratorId = collaborator.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
@@ -713,9 +713,9 @@ public class DashboardReadStoreTests
         context.Workspaces.Add(workspace);
         context.Collaborators.AddRange(member1, member2);
         context.Teams.Add(team);
-        context.Set<CollaboratorTeamResponse>().AddRange(
-            new CollaboratorTeamResponse { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeamResponse { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Set<CollaboratorTeam>().AddRange(
+            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
+            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
         );
 
         // Only member1 accessed this week
@@ -737,7 +737,7 @@ public class DashboardReadStoreTests
         // Assert
         result.Should().NotBeNull();
         // 1 out of 2 team members accessed = 50%
-        result!.TeamHealth.Indicators.WeeklyAccess.Percentage.Should().Be(50);
+        result!.TeamHealth.WeeklyAccess.Percentage.Should().Be(50);
     }
 
     [Fact]
@@ -789,11 +789,11 @@ public class DashboardReadStoreTests
         context.Workspaces.Add(workspace);
         context.Collaborators.Add(collaborator);
         context.Teams.Add(team);
-        context.Set<CollaboratorTeamResponse>().Add(
-            new CollaboratorTeamResponse { CollaboratorId = collaborator.Id, TeamId = team.Id }
+        context.Set<CollaboratorTeam>().Add(
+            new CollaboratorTeam { CollaboratorId = collaborator.Id, TeamId = team.Id }
         );
         context.Missions.Add(mission);
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         context.MetricCheckins.Add(checkin);
         await context.SaveChangesAsync();
 
@@ -836,7 +836,7 @@ public class DashboardReadStoreTests
         result.Should().NotBeNull();
         result!.TeamHealth.Leader.Should().BeNull();
         result.TeamHealth.TeamMembers.Should().BeEmpty();
-        result.TeamHealth.Indicators.WeeklyAccess.Percentage.Should().Be(0);
+        result.TeamHealth.WeeklyAccess.Percentage.Should().Be(0);
     }
 
     [Fact]

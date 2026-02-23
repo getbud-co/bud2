@@ -1,4 +1,4 @@
-namespace Bud.Server.Domain.Model;
+namespace Bud.Server.Domain.ValueObjects;
 
 public readonly record struct NotificationTitle
 {
@@ -28,6 +28,16 @@ public readonly record struct NotificationTitle
 
         title = new NotificationTitle(normalized);
         return true;
+    }
+
+    public static NotificationTitle Create(string? raw)
+    {
+        if (!TryCreate(raw, out var title))
+        {
+            throw new DomainInvariantException("O título da notificação é inválido.");
+        }
+
+        return title;
     }
 
     public override string ToString() => Value;

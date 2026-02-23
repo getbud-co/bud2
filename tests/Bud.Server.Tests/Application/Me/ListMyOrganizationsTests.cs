@@ -1,6 +1,6 @@
 using Bud.Server.Application.Ports;
 using Bud.Server.Application.UseCases.Me;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Shared.Contracts;
 using FluentAssertions;
 using Moq;
@@ -20,7 +20,7 @@ public sealed class ListMyOrganizationsTests
         var authService = new Mock<IAuthService>();
         authService
             .Setup(s => s.GetMyOrganizationsAsync(email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<List<OrganizationSummary>>.Success([]));
+            .ReturnsAsync(Result<List<OrganizationSnapshot>>.Success([]));
 
         var useCase = new ListMyOrganizations(authService.Object);
 

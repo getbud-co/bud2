@@ -1,4 +1,4 @@
-namespace Bud.Server.Domain.Model;
+namespace Bud.Server.Domain.ValueObjects;
 
 public readonly record struct EntityName
 {

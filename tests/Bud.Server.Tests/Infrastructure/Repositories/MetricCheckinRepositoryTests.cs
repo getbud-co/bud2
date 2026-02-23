@@ -64,7 +64,7 @@ public sealed class MissionMetricCheckinPersistenceTests
             Unit = type == MetricType.Quantitative ? MetricUnit.Integer : null
         };
 
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         return metric;

@@ -1,12 +1,9 @@
 using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.ReadModels;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
-using Bud.Server.Domain.ValueObjects;
 using Bud.Server.MultiTenancy;
 using Bud.Shared.Contracts;
 
@@ -38,7 +35,7 @@ public sealed class PatchCollaborator(
         var requestedEmail = request.Email.HasValue ? request.Email.Value : collaborator.Email;
         var requestedFullName = request.FullName.HasValue ? request.FullName.Value : collaborator.FullName;
         var requestedLeaderId = request.LeaderId.HasValue ? request.LeaderId.Value : collaborator.LeaderId;
-        var requestedRole = request.Role.HasValue ? request.Role.Value.ToDomain() : collaborator.Role;
+        var requestedRole = request.Role.HasValue ? request.Role.Value : collaborator.Role;
 
         if (!EmailAddress.TryCreate(requestedEmail, out var emailAddress))
         {
@@ -71,14 +68,14 @@ public sealed class PatchCollaborator(
                 return Result<Collaborator>.Failure("O líder deve pertencer à mesma organização.", ErrorType.Validation);
             }
 
-            if (leader.Role != Bud.Server.Domain.Model.CollaboratorRole.Leader)
+            if (leader.Role != CollaboratorRole.Leader)
             {
                 return Result<Collaborator>.Failure("O colaborador selecionado não é um líder.", ErrorType.Validation);
             }
         }
 
-        if (collaborator.Role == Bud.Server.Domain.Model.CollaboratorRole.Leader &&
-            requestedRole == Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor)
+        if (collaborator.Role == CollaboratorRole.Leader &&
+            requestedRole == CollaboratorRole.IndividualContributor)
         {
             if (await collaboratorRepository.HasSubordinatesAsync(id, cancellationToken))
             {

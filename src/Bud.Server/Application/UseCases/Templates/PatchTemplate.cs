@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.MultiTenancy;
@@ -15,7 +14,7 @@ public sealed class PatchTemplate(
     IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result<MissionTemplate>> ExecuteAsync(
+    public async Task<Result<Template>> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
         PatchTemplateRequest request,
@@ -24,13 +23,13 @@ public sealed class PatchTemplate(
         var template = await templateRepository.GetByIdWithChildrenAsync(id, cancellationToken);
         if (template is null)
         {
-            return Result<MissionTemplate>.NotFound("Template de missão não encontrado.");
+            return Result<Template>.NotFound("Template de missão não encontrado.");
         }
 
         var canUpdate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, template.OrganizationId, cancellationToken);
         if (!canUpdate)
         {
-            return Result<MissionTemplate>.Forbidden("Você não tem permissão para atualizar templates nesta organização.");
+            return Result<Template>.Forbidden("Você não tem permissão para atualizar templates nesta organização.");
         }
 
         try
@@ -47,33 +46,33 @@ public sealed class PatchTemplate(
             var metricRequests = request.Metrics.AsEnumerable().ToList();
 
             template.ReplaceObjectivesAndMetrics(
-                objectiveRequests.Select(objective => new MissionTemplateObjectiveDraft(
+                objectiveRequests.Select(objective => new TemplateObjectiveDraft(
                     objective.Id,
                     objective.Name,
                     objective.Description,
                     objective.OrderIndex,
                     objective.Dimension)),
-                metricRequests.Select(metric => new MissionTemplateMetricDraft(
+                metricRequests.Select(metric => new TemplateMetricDraft(
                     metric.Name,
-                    metric.Type.ToDomain(),
+                    metric.Type,
                     metric.OrderIndex,
                     metric.TemplateObjectiveId,
-                    metric.QuantitativeType.ToDomain(),
+                    metric.QuantitativeType,
                     metric.MinValue,
                     metric.MaxValue,
-                    metric.Unit.ToDomain(),
+                    metric.Unit,
                     metric.TargetText)));
 
-            await templateRepository.RemoveObjectivesAndMetrics(previousObjectives, previousMetrics, cancellationToken);
-            await templateRepository.AddObjectivesAndMetrics(template.Objectives, template.Metrics, cancellationToken);
+            await templateRepository.RemoveObjectivesAndMetricsAsync(previousObjectives, previousMetrics, cancellationToken);
+            await templateRepository.AddObjectivesAndMetricsAsync(template.Objectives, template.Metrics, cancellationToken);
             await unitOfWork.CommitAsync(templateRepository.SaveChangesAsync, cancellationToken);
 
             var reloadedTemplate = await templateRepository.GetByIdReadOnlyAsync(id, cancellationToken);
-            return Result<MissionTemplate>.Success(reloadedTemplate!);
+            return Result<Template>.Success(reloadedTemplate!);
         }
         catch (DomainInvariantException ex)
         {
-            return Result<MissionTemplate>.Failure(ex.Message, ErrorType.Validation);
+            return Result<Template>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 }

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bud.Server.Infrastructure.Persistence.Configurations;
 
-public sealed class MissionMetricConfiguration : IEntityTypeConfiguration<Metric>
+public sealed class MetricConfiguration : IEntityTypeConfiguration<Metric>
 {
     public void Configure(EntityTypeBuilder<Metric> builder)
     {

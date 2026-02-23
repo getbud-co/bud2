@@ -160,7 +160,7 @@ public sealed class MetricCheckinWriteUseCasesTests
         created.CheckinId.Should().Be(result.Value!.Id);
         created.MetricId.Should().Be(metric.Id);
         created.OrganizationId.Should().Be(orgId);
-        created.ExcludeCollaboratorId.Should().Be(collaboratorId);
+        created.CreatorCollaboratorId.Should().Be(collaboratorId);
     }
 
     [Fact]

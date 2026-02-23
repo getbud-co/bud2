@@ -40,9 +40,9 @@ public sealed class NotificationReadUseCasesTests
         var collaboratorId = Guid.NewGuid();
         _tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
 
-        var pagedResult = new PagedResult<NotificationResponse>
+        var pagedResult = new PagedResult<Notification>
         {
-            Items = [new NotificationResponse { Id = Guid.NewGuid(), Title = "Test", Message = "Msg", Type = NotificationType.MissionCreated }],
+            Items = [new Notification { Id = Guid.NewGuid(), Title = "Test", Message = "Msg", Type = NotificationType.MissionCreated }],
             Total = 1,
             Page = 1,
             PageSize = 10

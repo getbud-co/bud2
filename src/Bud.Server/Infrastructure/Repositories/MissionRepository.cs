@@ -18,7 +18,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
             .FirstOrDefaultAsync(m => m.Id == id, ct);
 
     public async Task<PagedResult<Mission>> GetAllAsync(
-        Bud.Server.Domain.Model.MissionScopeType? scopeType, Guid? scopeId, string? search,
+        MissionScopeType? scopeType, Guid? scopeId, string? search,
         int page, int pageSize, CancellationToken ct = default)
     {
         var query = dbContext.Missions.AsNoTracking();
@@ -120,7 +120,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
 
     public async Task<PagedResult<Metric>> GetMetricsAsync(Guid missionId, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.MissionMetrics
+        var query = dbContext.Metrics
             .AsNoTracking()
             .Where(metric => metric.MissionId == missionId);
 

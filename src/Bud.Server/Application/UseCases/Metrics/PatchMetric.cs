@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Shared.Contracts;
@@ -36,7 +35,7 @@ public sealed class PatchMetric(
             return Result<Metric>.Forbidden("Você não tem permissão para atualizar métricas nesta missão.");
         }
 
-        var metric = await metricRepository.GetByIdTrackingAsync(id, cancellationToken);
+        var metric = await metricRepository.GetByIdForUpdateAsync(id, cancellationToken);
         if (metric is null)
         {
             return Result<Metric>.NotFound("Métrica da missão não encontrada.");
@@ -44,11 +43,11 @@ public sealed class PatchMetric(
 
         try
         {
-            var type = request.Type.HasValue ? request.Type.Value.ToDomain() : metric.Type;
+            var type = request.Type.HasValue ? request.Type.Value : metric.Type;
             var quantitativeType = request.QuantitativeType.HasValue
-                ? request.QuantitativeType.Value.ToDomain()
+                ? request.QuantitativeType.Value
                 : metric.QuantitativeType;
-            var unit = request.Unit.HasValue ? request.Unit.Value.ToDomain() : metric.Unit;
+            var unit = request.Unit.HasValue ? request.Unit.Value : metric.Unit;
             var name = request.Name.HasValue ? (request.Name.Value ?? metric.Name) : metric.Name;
             var minValue = request.MinValue.HasValue ? request.MinValue.Value : metric.MinValue;
             var maxValue = request.MaxValue.HasValue ? request.MaxValue.Value : metric.MaxValue;

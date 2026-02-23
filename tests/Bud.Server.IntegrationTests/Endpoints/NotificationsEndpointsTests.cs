@@ -32,7 +32,7 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             FullName = "NotificationResponse User",
             Email = $"notif-{Guid.NewGuid()}@example.com",
             OrganizationId = org.Id,
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor
+            Role = CollaboratorRole.IndividualContributor
         };
         dbContext.Collaborators.Add(collaborator);
         await dbContext.SaveChangesAsync();

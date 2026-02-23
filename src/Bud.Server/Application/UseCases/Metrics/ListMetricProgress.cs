@@ -1,6 +1,6 @@
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.Application.Ports;
 using Bud.Shared.Contracts;
 

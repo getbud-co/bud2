@@ -1,6 +1,5 @@
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.ReadModels;
 using Bud.Server.Application.UseCases.Teams;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
@@ -63,7 +62,7 @@ public sealed class TeamReadUseCasesTests
             .Setup(repository => repository.ExistsAsync(teamId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _teamRepository
-            .Setup(repository => repository.GetCollaboratorSummariesAsync(teamId, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetCollaboratorLookupAsync(teamId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListTeamCollaboratorOptions(_teamRepository.Object);
@@ -71,7 +70,7 @@ public sealed class TeamReadUseCasesTests
         var result = await useCase.ExecuteAsync(teamId);
 
         result.IsSuccess.Should().BeTrue();
-        _teamRepository.Verify(repository => repository.GetCollaboratorSummariesAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
+        _teamRepository.Verify(repository => repository.GetCollaboratorLookupAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -92,7 +91,7 @@ public sealed class TeamReadUseCasesTests
             });
 
         _teamRepository
-            .Setup(repository => repository.GetAvailableCollaboratorsAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetEligibleCollaboratorsForAssignmentAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListAvailableCollaboratorsForTeam(_teamRepository.Object);
@@ -101,7 +100,7 @@ public sealed class TeamReadUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         _teamRepository.Verify(
-            repository => repository.GetAvailableCollaboratorsAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()),
+            repository => repository.GetEligibleCollaboratorsForAssignmentAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

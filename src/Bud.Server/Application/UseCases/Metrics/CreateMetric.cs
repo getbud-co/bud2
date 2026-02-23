@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Shared.Contracts;
@@ -34,9 +33,9 @@ public sealed class CreateMetric(
 
         try
         {
-            var type = request.Type.ToDomain();
-            var quantitativeType = request.QuantitativeType.ToDomain();
-            var unit = request.Unit.ToDomain();
+            var type = request.Type;
+            var quantitativeType = request.QuantitativeType;
+            var unit = request.Unit;
 
             var metric = Metric.Create(
                 Guid.NewGuid(),

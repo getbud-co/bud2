@@ -43,7 +43,7 @@ public sealed class GetCollaboratorHierarchy(ICollaboratorRepository collaborato
                 Id = collaborator.Id,
                 FullName = collaborator.FullName,
                 Initials = GetInitials(collaborator.FullName),
-                Role = collaborator.Role == Bud.Server.Domain.Model.CollaboratorRole.Leader ? "Líder" : "Contribuidor individual",
+                Role = collaborator.Role == CollaboratorRole.Leader ? "Líder" : "Contribuidor individual",
                 Children = BuildTree(collaborator.Id, childrenByLeader, depth + 1, maxDepth)
             })
             .ToList();

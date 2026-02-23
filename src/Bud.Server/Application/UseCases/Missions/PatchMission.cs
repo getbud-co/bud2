@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.Application.Ports;
@@ -36,16 +35,16 @@ public sealed class PatchMission(
 
         try
         {
-            var status = request.Status.HasValue ? request.Status.Value.ToDomain() : mission.Status;
+            var status = request.Status.HasValue ? request.Status.Value : mission.Status;
             var scopeType = request.ScopeType.HasValue
-                ? request.ScopeType.Value.ToDomain()
+                ? request.ScopeType.Value
                 : mission.WorkspaceId.HasValue
-                    ? Bud.Server.Domain.Model.MissionScopeType.Workspace
+                    ? MissionScopeType.Workspace
                     : mission.TeamId.HasValue
-                        ? Bud.Server.Domain.Model.MissionScopeType.Team
+                        ? MissionScopeType.Team
                         : mission.CollaboratorId.HasValue
-                            ? Bud.Server.Domain.Model.MissionScopeType.Collaborator
-                            : Bud.Server.Domain.Model.MissionScopeType.Organization;
+                            ? MissionScopeType.Collaborator
+                            : MissionScopeType.Organization;
             var name = request.Name.HasValue ? (request.Name.Value ?? mission.Name) : mission.Name;
             var description = request.Description.HasValue ? request.Description.Value : mission.Description;
             var startDate = request.StartDate.HasValue ? request.StartDate.Value : mission.StartDate;

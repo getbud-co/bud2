@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bud.Server.Infrastructure.Persistence.Configurations;
 
-public sealed class MissionTemplateConfiguration : IEntityTypeConfiguration<MissionTemplate>
+public sealed class TemplateConfiguration : IEntityTypeConfiguration<Template>
 {
-    public void Configure(EntityTypeBuilder<MissionTemplate> builder)
+    public void Configure(EntityTypeBuilder<Template> builder)
     {
         builder.Property(mt => mt.Name)
             .HasMaxLength(200);
@@ -28,13 +28,13 @@ public sealed class MissionTemplateConfiguration : IEntityTypeConfiguration<Miss
         builder.HasIndex(mt => mt.OrganizationId);
 
         builder.HasMany(mt => mt.Metrics)
-            .WithOne(mtm => mtm.MissionTemplate)
-            .HasForeignKey(mtm => mtm.MissionTemplateId)
+            .WithOne(mtm => mtm.Template)
+            .HasForeignKey(mtm => mtm.TemplateId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(mt => mt.Objectives)
-            .WithOne(mto => mto.MissionTemplate)
-            .HasForeignKey(mto => mto.MissionTemplateId)
+            .WithOne(mto => mto.Template)
+            .HasForeignKey(mto => mto.TemplateId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

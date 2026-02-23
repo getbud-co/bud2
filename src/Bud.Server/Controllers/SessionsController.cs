@@ -31,7 +31,7 @@ public sealed class SessionsController(
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<SessionResponse>> Login(CreateSessionRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<SessionResponse>> Create(CreateSessionRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await loginValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -50,7 +50,7 @@ public sealed class SessionsController(
     [Authorize(Policy = AuthorizationPolicies.TenantSelected)]
     [HttpDelete("current")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteCurrent(CancellationToken cancellationToken)
     {
         var result = await deleteCurrentSession.ExecuteAsync(cancellationToken);
         return FromResult(result, NoContent);

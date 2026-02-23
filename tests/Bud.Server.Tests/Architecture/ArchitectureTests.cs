@@ -342,7 +342,7 @@ public sealed class ArchitectureTests
             [typeof(Team)] = ["Create", "Rename", "Reparent"],
             [typeof(Collaborator)] = ["Create", "UpdateProfile"],
             [typeof(Mission)] = ["Create", "UpdateDetails", "SetScope"],
-            [typeof(MissionTemplate)] = ["Create", "UpdateBasics"]
+            [typeof(Template)] = ["Create", "UpdateBasics"]
         };
 
         foreach (var (type, requiredMethods) in requiredMethodsByType)
@@ -432,7 +432,7 @@ public sealed class ArchitectureTests
             {
                 var source = File.ReadAllText(path);
                 return source.Contains("using Bud.Shared.Contracts;", StringComparison.Ordinal)
-                    || source.Contains("using Bud.Server.Domain.ReadModels;", StringComparison.Ordinal);
+                    || source.Contains("using Bud.Server.Application.ReadModels;", StringComparison.Ordinal);
             })
             .Select(path => Path.GetRelativePath(repositoryRoot, path))
             .ToList();
@@ -450,16 +450,16 @@ public sealed class ArchitectureTests
     }
 
     [Fact]
-    public void SessionsController_LoginAction_MustHaveRateLimitingAttribute()
+    public void SessionsController_CreateAction_MustHaveRateLimitingAttribute()
     {
-        var loginMethod = typeof(SessionsController)
+        var createMethod = typeof(SessionsController)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(m => m.Name == "Login");
+            .FirstOrDefault(m => m.Name == "Create");
 
-        loginMethod.Should().NotBeNull("SessionsController deve ter um método Login público");
+        createMethod.Should().NotBeNull("SessionsController deve ter um método Create público");
 
-        var hasRateLimiting = loginMethod!.GetCustomAttributes<EnableRateLimitingAttribute>(inherit: true).Any();
-        hasRateLimiting.Should().BeTrue("o método Login deve ter [EnableRateLimiting] para proteção contra brute-force");
+        var hasRateLimiting = createMethod!.GetCustomAttributes<EnableRateLimitingAttribute>(inherit: true).Any();
+        hasRateLimiting.Should().BeTrue("o método Create deve ter [EnableRateLimiting] para proteção contra brute-force");
     }
 
     private static bool IsServicesContract(ParameterInfo parameter)

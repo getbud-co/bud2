@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Bud.Server.Tests.Validators;
 
-public class UpdateOrganizationValidatorTests
+public class PatchOrganizationValidatorTests
 {
     private readonly PatchOrganizationValidator _validator = new();
 

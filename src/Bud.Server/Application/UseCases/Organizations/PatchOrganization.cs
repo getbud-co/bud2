@@ -1,6 +1,5 @@
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.Settings;
@@ -51,7 +50,7 @@ public sealed class PatchOrganization(
                     return Result<Organization>.NotFound("O líder selecionado não foi encontrado.");
                 }
 
-                if (newOwner.Role != Bud.Server.Domain.Model.CollaboratorRole.Leader)
+                if (newOwner.Role != CollaboratorRole.Leader)
                 {
                     return Result<Organization>.Failure(
                         "O proprietário da organização deve ter a função de Líder.",

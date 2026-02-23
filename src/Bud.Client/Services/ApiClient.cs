@@ -17,12 +17,12 @@ public sealed class ApiClient
         _toastService = toastService;
     }
 
-    public async Task<List<OrganizationSummaryResponse>?> GetMyOrganizationsAsync()
+    public async Task<List<MyOrganizationResponse>?> GetMyOrganizationsAsync()
     {
-        return await GetSafeAsync<List<OrganizationSummaryResponse>>("api/me/organizations");
+        return await GetSafeAsync<List<MyOrganizationResponse>>("api/me/organizations");
     }
 
-    public async Task<PagedResult<Organization>?> GetOrganizationsAsync(string? search, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<OrganizationResponse>?> GetOrganizationsAsync(string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -37,10 +37,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/organizations?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Organization>>(url);
+        return await GetSafeAsync<PagedResult<OrganizationResponse>>(url);
     }
 
-    public async Task<Organization?> CreateOrganizationAsync(CreateOrganizationRequest request)
+    public async Task<OrganizationResponse?> CreateOrganizationAsync(CreateOrganizationRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/organizations", request);
 
@@ -50,10 +50,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Organization>();
+        return await response.Content.ReadFromJsonAsync<OrganizationResponse>();
     }
 
-    public async Task<Organization?> UpdateOrganizationAsync(Guid id, PatchOrganizationRequest request)
+    public async Task<OrganizationResponse?> UpdateOrganizationAsync(Guid id, PatchOrganizationRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/organizations/{id}", request);
 
@@ -63,7 +63,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Organization>();
+        return await response.Content.ReadFromJsonAsync<OrganizationResponse>();
     }
 
     public async Task DeleteOrganizationAsync(Guid id)
@@ -87,7 +87,7 @@ public sealed class ApiClient
         return await GetSafeAsync<List<CollaboratorLeaderResponse>>(url);
     }
 
-    public async Task<PagedResult<Workspace>?> GetWorkspacesAsync(Guid? organizationId, string? search, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<WorkspaceResponse>?> GetWorkspacesAsync(Guid? organizationId, string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -106,17 +106,17 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/workspaces?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Workspace>>(url);
+        return await GetSafeAsync<PagedResult<WorkspaceResponse>>(url);
     }
 
-    public async Task<PagedResult<Collaborator>?> GetOrganizationCollaboratorsAsync(Guid organizationId, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<CollaboratorResponse>?> GetOrganizationCollaboratorsAsync(Guid organizationId, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
         var url = $"api/organizations/{organizationId}/collaborators?page={page}&pageSize={pageSize}";
-        return await GetSafeAsync<PagedResult<Collaborator>>(url);
+        return await GetSafeAsync<PagedResult<CollaboratorResponse>>(url);
     }
 
-    public async Task<Workspace?> CreateWorkspaceAsync(CreateWorkspaceRequest request)
+    public async Task<WorkspaceResponse?> CreateWorkspaceAsync(CreateWorkspaceRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/workspaces", request);
 
@@ -126,10 +126,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Workspace>();
+        return await response.Content.ReadFromJsonAsync<WorkspaceResponse>();
     }
 
-    public async Task<Workspace?> UpdateWorkspaceAsync(Guid id, PatchWorkspaceRequest request)
+    public async Task<WorkspaceResponse?> UpdateWorkspaceAsync(Guid id, PatchWorkspaceRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/workspaces/{id}", request);
 
@@ -139,7 +139,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Workspace>();
+        return await response.Content.ReadFromJsonAsync<WorkspaceResponse>();
     }
 
     public async Task DeleteWorkspaceAsync(Guid id)
@@ -153,7 +153,7 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<PagedResult<Team>?> GetTeamsAsync(Guid? workspaceId, Guid? parentTeamId, string? search, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<TeamResponse>?> GetTeamsAsync(Guid? workspaceId, Guid? parentTeamId, string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -176,10 +176,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/teams?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Team>>(url);
+        return await GetSafeAsync<PagedResult<TeamResponse>>(url);
     }
 
-    public async Task<Team?> CreateTeamAsync(CreateTeamRequest request)
+    public async Task<TeamResponse?> CreateTeamAsync(CreateTeamRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/teams", request);
 
@@ -189,10 +189,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Team>();
+        return await response.Content.ReadFromJsonAsync<TeamResponse>();
     }
 
-    public async Task<Team?> UpdateTeamAsync(Guid id, PatchTeamRequest request)
+    public async Task<TeamResponse?> UpdateTeamAsync(Guid id, PatchTeamRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/teams/{id}", request);
 
@@ -202,7 +202,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Team>();
+        return await response.Content.ReadFromJsonAsync<TeamResponse>();
     }
 
     public async Task DeleteTeamAsync(Guid id)
@@ -216,7 +216,7 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<PagedResult<Collaborator>?> GetCollaboratorsAsync(Guid? teamId, string? search, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<CollaboratorResponse>?> GetCollaboratorsAsync(Guid? teamId, string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -235,10 +235,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/collaborators?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Collaborator>>(url);
+        return await GetSafeAsync<PagedResult<CollaboratorResponse>>(url);
     }
 
-    public async Task<Collaborator?> CreateCollaboratorAsync(CreateCollaboratorRequest request)
+    public async Task<CollaboratorResponse?> CreateCollaboratorAsync(CreateCollaboratorRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/collaborators", request);
 
@@ -248,10 +248,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Collaborator>();
+        return await response.Content.ReadFromJsonAsync<CollaboratorResponse>();
     }
 
-    public async Task<Collaborator?> UpdateCollaboratorAsync(Guid id, PatchCollaboratorRequest request)
+    public async Task<CollaboratorResponse?> UpdateCollaboratorAsync(Guid id, PatchCollaboratorRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/collaborators/{id}", request);
 
@@ -261,7 +261,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Collaborator>();
+        return await response.Content.ReadFromJsonAsync<CollaboratorResponse>();
     }
 
     public async Task DeleteCollaboratorAsync(Guid id)
@@ -275,7 +275,7 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<PagedResult<Mission>?> GetMissionsAsync(
+    public async Task<PagedResult<MissionResponse>?> GetMissionsAsync(
         MissionScopeType? scopeType,
         Guid? scopeId,
         string? search,
@@ -303,10 +303,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/missions?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Mission>>(url);
+        return await GetSafeAsync<PagedResult<MissionResponse>>(url);
     }
 
-    public async Task<PagedResult<Mission>?> GetMyMissionsAsync(
+    public async Task<PagedResult<MissionResponse>?> GetMyMissionsAsync(
         string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
@@ -322,10 +322,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/me/missions?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Mission>>(url);
+        return await GetSafeAsync<PagedResult<MissionResponse>>(url);
     }
 
-    public async Task<Mission?> CreateMissionAsync(CreateMissionRequest request)
+    public async Task<MissionResponse?> CreateMissionAsync(CreateMissionRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/missions", request);
 
@@ -335,7 +335,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Mission>();
+        return await response.Content.ReadFromJsonAsync<MissionResponse>();
     }
 
     public async Task<MyDashboardResponse?> GetMyDashboardAsync(Guid? teamId = null)
@@ -348,7 +348,7 @@ public sealed class ApiClient
         return await GetSafeAsync<MyDashboardResponse>(url);
     }
 
-    public async Task<PagedResult<Metric>?> GetMissionMetricsAsync(Guid? missionId, string? search, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<MetricResponse>?> GetMissionMetricsAsync(Guid? missionId, string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -367,10 +367,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/metrics?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Metric>>(url);
+        return await GetSafeAsync<PagedResult<MetricResponse>>(url);
     }
 
-    public async Task<Metric?> CreateMissionMetricAsync(CreateMetricRequest request)
+    public async Task<MetricResponse?> CreateMissionMetricAsync(CreateMetricRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/metrics", request);
 
@@ -380,10 +380,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Metric>();
+        return await response.Content.ReadFromJsonAsync<MetricResponse>();
     }
 
-    public async Task<Mission?> UpdateMissionAsync(Guid id, PatchMissionRequest request)
+    public async Task<MissionResponse?> UpdateMissionAsync(Guid id, PatchMissionRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/missions/{id}", request);
 
@@ -393,7 +393,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Mission>();
+        return await response.Content.ReadFromJsonAsync<MissionResponse>();
     }
 
     public async Task DeleteMissionAsync(Guid id)
@@ -407,7 +407,7 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<Metric?> UpdateMissionMetricAsync(Guid id, PatchMetricRequest request)
+    public async Task<MetricResponse?> UpdateMissionMetricAsync(Guid id, PatchMetricRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/metrics/{id}", request);
 
@@ -417,7 +417,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Metric>();
+        return await response.Content.ReadFromJsonAsync<MetricResponse>();
     }
 
     public async Task DeleteMissionMetricAsync(Guid id)
@@ -431,15 +431,15 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<PagedResult<Metric>?> GetMissionMetricsByMissionIdAsync(Guid missionId, int page = 1, int pageSize = 100)
+    public async Task<PagedResult<MetricResponse>?> GetMissionMetricsByMissionIdAsync(Guid missionId, int page = 1, int pageSize = 100)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
         var url = $"api/missions/{missionId}/metrics?page={page}&pageSize={pageSize}";
-        return await GetSafeAsync<PagedResult<Metric>>(url);
+        return await GetSafeAsync<PagedResult<MetricResponse>>(url);
     }
 
     // Objective methods
-    public async Task<PagedResult<Objective>?> GetMissionObjectivesAsync(Guid missionId, int page = 1, int pageSize = 100)
+    public async Task<PagedResult<ObjectiveResponse>?> GetMissionObjectivesAsync(Guid missionId, int page = 1, int pageSize = 100)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -451,10 +451,10 @@ public sealed class ApiClient
         };
 
         var url = $"api/objectives?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<Objective>>(url);
+        return await GetSafeAsync<PagedResult<ObjectiveResponse>>(url);
     }
 
-    public async Task<Objective?> CreateMissionObjectiveAsync(CreateObjectiveRequest request)
+    public async Task<ObjectiveResponse?> CreateMissionObjectiveAsync(CreateObjectiveRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/objectives", request);
 
@@ -464,10 +464,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Objective>();
+        return await response.Content.ReadFromJsonAsync<ObjectiveResponse>();
     }
 
-    public async Task<Objective?> UpdateMissionObjectiveAsync(Guid id, PatchObjectiveRequest request)
+    public async Task<ObjectiveResponse?> UpdateMissionObjectiveAsync(Guid id, PatchObjectiveRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/objectives/{id}", request);
 
@@ -477,7 +477,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<Objective>();
+        return await response.Content.ReadFromJsonAsync<ObjectiveResponse>();
     }
 
     public async Task DeleteMissionObjectiveAsync(Guid id)
@@ -527,7 +527,7 @@ public sealed class ApiClient
     }
 
     // MetricCheckin methods
-    public async Task<PagedResult<MetricCheckin>?> GetMetricCheckinsAsync(Guid metricId, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<MetricCheckinResponse>?> GetMetricCheckinsAsync(Guid metricId, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -537,10 +537,10 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/metrics/{metricId}/checkins?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<MetricCheckin>>(url);
+        return await GetSafeAsync<PagedResult<MetricCheckinResponse>>(url);
     }
 
-    public async Task<MetricCheckin?> CreateMetricCheckinAsync(Guid metricId, CreateCheckinRequest request)
+    public async Task<MetricCheckinResponse?> CreateMetricCheckinAsync(Guid metricId, CreateCheckinRequest request)
     {
         var response = await _http.PostAsJsonAsync($"api/metrics/{metricId}/checkins", request);
 
@@ -550,10 +550,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<MetricCheckin>();
+        return await response.Content.ReadFromJsonAsync<MetricCheckinResponse>();
     }
 
-    public async Task<MetricCheckin?> UpdateMetricCheckinAsync(Guid metricId, Guid id, PatchCheckinRequest request)
+    public async Task<MetricCheckinResponse?> UpdateMetricCheckinAsync(Guid metricId, Guid id, PatchCheckinRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/metrics/{metricId}/checkins/{id}", request);
 
@@ -563,7 +563,7 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<MetricCheckin>();
+        return await response.Content.ReadFromJsonAsync<MetricCheckinResponse>();
     }
 
     public async Task DeleteMetricCheckinAsync(Guid metricId, Guid id)
@@ -577,8 +577,8 @@ public sealed class ApiClient
         }
     }
 
-    // MissionTemplate methods
-    public async Task<PagedResult<MissionTemplate>?> GetMissionTemplatesAsync(string? search, int page = 1, int pageSize = 10)
+    // Template methods
+    public async Task<PagedResult<TemplateResponse>?> GetTemplatesAsync(string? search, int page = 1, int pageSize = 10)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
@@ -593,15 +593,15 @@ public sealed class ApiClient
         queryParams.Add($"pageSize={pageSize}");
 
         var url = $"api/templates?{string.Join("&", queryParams)}";
-        return await GetSafeAsync<PagedResult<MissionTemplate>>(url);
+        return await GetSafeAsync<PagedResult<TemplateResponse>>(url);
     }
 
-    public async Task<MissionTemplate?> GetMissionTemplateByIdAsync(Guid id)
+    public async Task<TemplateResponse?> GetTemplateByIdAsync(Guid id)
     {
-        return await GetSafeAsync<MissionTemplate>($"api/templates/{id}");
+        return await GetSafeAsync<TemplateResponse>($"api/templates/{id}");
     }
 
-    public async Task<MissionTemplate?> CreateMissionTemplateAsync(CreateTemplateRequest request)
+    public async Task<TemplateResponse?> CreateTemplateAsync(CreateTemplateRequest request)
     {
         var response = await _http.PostAsJsonAsync("api/templates", request);
 
@@ -611,10 +611,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        return await response.Content.ReadFromJsonAsync<TemplateResponse>();
     }
 
-    public async Task<MissionTemplate?> UpdateMissionTemplateAsync(Guid id, PatchTemplateRequest request)
+    public async Task<TemplateResponse?> UpdateTemplateAsync(Guid id, PatchTemplateRequest request)
     {
         var response = await _http.PatchAsJsonAsync($"api/templates/{id}", request);
 
@@ -624,10 +624,10 @@ public sealed class ApiClient
             throw new HttpRequestException(errorMessage);
         }
 
-        return await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        return await response.Content.ReadFromJsonAsync<TemplateResponse>();
     }
 
-    public async Task DeleteMissionTemplateAsync(Guid id)
+    public async Task DeleteTemplateAsync(Guid id)
     {
         var response = await _http.DeleteAsync($"api/templates/{id}");
 
@@ -770,7 +770,7 @@ public sealed class ApiClient
     }
 
     // Collaborator Summaries
-    public async Task<List<CollaboratorLookupResponse>?> GetCollaboratorSummariesAsync(string? search = null)
+    public async Task<List<CollaboratorLookupResponse>?> GetCollaboratorLookupAsync(string? search = null)
     {
         var url = "api/collaborators/lookup";
         if (!string.IsNullOrWhiteSpace(search))

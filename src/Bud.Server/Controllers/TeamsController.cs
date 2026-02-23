@@ -204,7 +204,7 @@ public sealed class TeamsController(
     [HttpGet("{id:guid}/collaborators/lookup")]
     [ProducesResponseType(typeof(List<CollaboratorLookupResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<CollaboratorLookupResponse>>> GetCollaboratorOptions(
+    public async Task<ActionResult<List<CollaboratorLookupResponse>>> GetCollaboratorLookup(
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -216,10 +216,10 @@ public sealed class TeamsController(
     /// Lista colaboradores disponíveis para associação ao time.
     /// </summary>
     [HttpGet("{id:guid}/collaborators/eligible-for-assignment")]
-    [ProducesResponseType(typeof(List<CollaboratorLookupResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<TeamCollaboratorEligibleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<CollaboratorLookupResponse>>> GetAvailableCollaborators(
+    public async Task<ActionResult<List<TeamCollaboratorEligibleResponse>>> GetEligibleCollaboratorsForAssignment(
         Guid id,
         [FromQuery] string? search = null,
         CancellationToken cancellationToken = default)

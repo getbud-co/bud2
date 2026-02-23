@@ -4,13 +4,13 @@ namespace Bud.Server.Domain.Repositories;
 
 public interface ITemplateRepository
 {
-    Task<MissionTemplate?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<MissionTemplate?> GetByIdWithChildrenAsync(Guid id, CancellationToken ct = default);
-    Task<MissionTemplate?> GetByIdReadOnlyAsync(Guid id, CancellationToken ct = default);
-    Task<Bud.Shared.Contracts.Common.PagedResult<MissionTemplate>> GetAllAsync(string? search, int page, int pageSize, CancellationToken ct = default);
-    Task AddAsync(MissionTemplate entity, CancellationToken ct = default);
-    Task RemoveAsync(MissionTemplate entity, CancellationToken ct = default);
-    Task RemoveObjectivesAndMetrics(IEnumerable<MissionTemplateObjective> objectives, IEnumerable<MissionTemplateMetric> metrics, CancellationToken ct = default);
-    Task AddObjectivesAndMetrics(IEnumerable<MissionTemplateObjective> objectives, IEnumerable<MissionTemplateMetric> metrics, CancellationToken ct = default);
+    Task<Template?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<Template?> GetByIdWithChildrenAsync(Guid id, CancellationToken ct = default);
+    Task<Template?> GetByIdReadOnlyAsync(Guid id, CancellationToken ct = default);
+    Task<Bud.Shared.Contracts.Common.PagedResult<Template>> GetAllAsync(string? search, int page, int pageSize, CancellationToken ct = default);
+    Task AddAsync(Template entity, CancellationToken ct = default);
+    Task RemoveAsync(Template entity, CancellationToken ct = default);
+    Task RemoveObjectivesAndMetricsAsync(IEnumerable<TemplateObjective> objectives, IEnumerable<TemplateMetric> metrics, CancellationToken ct = default);
+    Task AddObjectivesAndMetricsAsync(IEnumerable<TemplateObjective> objectives, IEnumerable<TemplateMetric> metrics, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

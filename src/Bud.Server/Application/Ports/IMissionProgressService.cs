@@ -1,4 +1,4 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.Application.Common;
 
 namespace Bud.Server.Application.Ports;

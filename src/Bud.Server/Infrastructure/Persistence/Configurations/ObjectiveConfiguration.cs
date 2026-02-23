@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bud.Server.Infrastructure.Persistence.Configurations;
 
-public sealed class MissionObjectiveConfiguration : IEntityTypeConfiguration<Objective>
+public sealed class ObjectiveConfiguration : IEntityTypeConfiguration<Objective>
 {
     public void Configure(EntityTypeBuilder<Objective> builder)
     {

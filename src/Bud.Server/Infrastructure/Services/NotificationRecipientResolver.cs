@@ -92,7 +92,7 @@ public sealed class NotificationRecipientResolver(ApplicationDbContext dbContext
         Guid metricId,
         CancellationToken cancellationToken = default)
     {
-        var missionId = await dbContext.MissionMetrics
+        var missionId = await dbContext.Metrics
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(mm => mm.Id == metricId)

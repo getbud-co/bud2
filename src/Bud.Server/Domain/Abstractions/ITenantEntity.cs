@@ -1,4 +1,4 @@
-namespace Bud.Server.Domain.Model;
+namespace Bud.Server.Domain.Abstractions;
 
 public interface ITenantEntity
 {

@@ -248,6 +248,9 @@ dotnet_naming_style.async_suffix.capitalization = pascal_case
 # CA1848: Use LoggerMessage delegates for performance
 dotnet_diagnostic.CA1848.severity = suggestion
 
+# CA1711: Identifiers should not have incorrect suffix (conflicts with DDD EventHandler convention)
+dotnet_diagnostic.CA1711.severity = none
+
 # CA2007: Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = none
 

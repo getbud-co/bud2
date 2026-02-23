@@ -1,6 +1,6 @@
 using Bud.Server.Application.Ports;
 using Bud.Server.Application.UseCases.Me;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.MultiTenancy;
 using FluentAssertions;
 using Moq;
@@ -40,7 +40,7 @@ public sealed class GetMyDashboardTests
         tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
         repository
             .Setup(r => r.GetMyDashboardAsync(collaboratorId, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MyDashboardSnapshot());
+            .ReturnsAsync(new DashboardSnapshot());
 
         var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
         var user = new ClaimsPrincipal(new ClaimsIdentity());
@@ -60,7 +60,7 @@ public sealed class GetMyDashboardTests
         tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
         repository
             .Setup(r => r.GetMyDashboardAsync(collaboratorId, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MyDashboardSnapshot?)null);
+            .ReturnsAsync((DashboardSnapshot?)null);
 
         var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
         var user = new ClaimsPrincipal(new ClaimsIdentity());
@@ -82,7 +82,7 @@ public sealed class GetMyDashboardTests
         tenantProvider.SetupGet(x => x.CollaboratorId).Returns(collaboratorId);
         repository
             .Setup(r => r.GetMyDashboardAsync(collaboratorId, teamId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MyDashboardSnapshot());
+            .ReturnsAsync(new DashboardSnapshot());
 
         var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
         var user = new ClaimsPrincipal(new ClaimsIdentity());

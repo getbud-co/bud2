@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.Application.Ports;
@@ -21,8 +20,8 @@ public sealed class CreateMission(
         CreateMissionRequest request,
         CancellationToken cancellationToken = default)
     {
-        var scopeType = request.ScopeType.ToDomain();
-        var status = request.Status.ToDomain();
+        var scopeType = request.ScopeType;
+        var status = request.Status;
 
         var scopeResolution = await missionScopeResolver.ResolveScopeOrganizationIdAsync(
             scopeType,

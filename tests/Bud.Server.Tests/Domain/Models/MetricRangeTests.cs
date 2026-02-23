@@ -1,4 +1,3 @@
-using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Xunit;
 

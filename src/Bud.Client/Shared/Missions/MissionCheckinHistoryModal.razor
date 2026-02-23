@@ -85,8 +85,8 @@
 
 @code {
     [Parameter] public bool IsOpen { get; set; }
-    [Parameter] public Metric? Metric { get; set; }
-    [Parameter] public List<MetricCheckin> Checkins { get; set; } = [];
+    [Parameter] public MetricResponse? Metric { get; set; }
+    [Parameter] public List<MetricCheckinResponse> Checkins { get; set; } = [];
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnNewCheckin { get; set; }
@@ -94,7 +94,7 @@
     private static string GetConfidenceStarsDisplay(int level) =>
         new string('\u2605', level) + new string('\u2606', 5 - level);
 
-    private string GetCheckinValueDisplay(MetricCheckin checkin)
+    private string GetCheckinValueDisplay(MetricCheckinResponse checkin)
     {
         if (checkin.Value.HasValue)
         {

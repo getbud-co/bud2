@@ -1,10 +1,10 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 
 namespace Bud.Server.Application.Ports;
 
 public interface IMyDashboardReadStore
 {
-    Task<MyDashboardSnapshot?> GetMyDashboardAsync(
+    Task<DashboardSnapshot?> GetMyDashboardAsync(
         Guid collaboratorId,
         Guid? teamId,
         CancellationToken ct = default);

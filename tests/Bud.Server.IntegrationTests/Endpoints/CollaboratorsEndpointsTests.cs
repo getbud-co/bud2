@@ -123,7 +123,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             CollaboratorId = collaborator.Id,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = Bud.Server.Domain.Model.MissionStatus.Active
+            Status = MissionStatus.Active
         };
         dbContext.Missions.Add(mission);
         await dbContext.SaveChangesAsync();
@@ -224,7 +224,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = $"Líder {Guid.NewGuid():N}",
             Email = $"leader-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = organizationId
         };
 
@@ -244,7 +244,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = $"Sub-líder {Guid.NewGuid():N}",
             Email = $"subleader-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = organizationId,
             LeaderId = leaderId
         };
@@ -265,7 +265,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = $"Liderado {Guid.NewGuid():N}",
             Email = $"sub-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = organizationId,
             LeaderId = leaderId
         };
@@ -301,7 +301,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = org.Id
         };
         dbContext.Collaborators.Add(adminLeader);
@@ -328,7 +328,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = organizationId
         };
 
@@ -348,7 +348,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Colaborador Alvo",
             Email = $"alvo-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = organizationId
         };
 

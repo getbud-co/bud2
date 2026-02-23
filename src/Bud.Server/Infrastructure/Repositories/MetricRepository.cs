@@ -11,17 +11,17 @@ namespace Bud.Server.Infrastructure.Repositories;
 public sealed class MetricRepository(ApplicationDbContext dbContext) : IMetricRepository
 {
     public async Task<Metric?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.MissionMetrics
+        => await dbContext.Metrics
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id, ct);
 
-    public async Task<Metric?> GetByIdTrackingAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.MissionMetrics.FindAsync([id], ct);
+    public async Task<Metric?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.Metrics.FindAsync([id], ct);
 
     public async Task<PagedResult<Metric>> GetAllAsync(
         Guid? missionId, Guid? objectiveId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.MissionMetrics.AsNoTracking();
+        var query = dbContext.Metrics.AsNoTracking();
 
         if (missionId.HasValue)
         {
@@ -33,7 +33,7 @@ public sealed class MetricRepository(ApplicationDbContext dbContext) : IMetricRe
             query = query.Where(m => m.ObjectiveId == objectiveId.Value);
         }
 
-        query = new MissionMetricSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
+        query = new MetricSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -57,7 +57,7 @@ public sealed class MetricRepository(ApplicationDbContext dbContext) : IMetricRe
             .FirstOrDefaultAsync(m => m.Id == missionId, ct);
 
     public async Task<Objective?> GetObjectiveByIdAsync(Guid objectiveId, CancellationToken ct = default)
-        => await dbContext.MissionObjectives
+        => await dbContext.Objectives
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == objectiveId, ct);
 
@@ -118,7 +118,7 @@ public sealed class MetricRepository(ApplicationDbContext dbContext) : IMetricRe
     }
 
     public async Task<Metric?> GetMetricWithMissionAsync(Guid metricId, CancellationToken ct = default)
-        => await dbContext.MissionMetrics
+        => await dbContext.Metrics
             .AsNoTracking()
             .Include(m => m.Mission)
             .FirstOrDefaultAsync(m => m.Id == metricId, ct);
@@ -133,11 +133,11 @@ public sealed class MetricRepository(ApplicationDbContext dbContext) : IMetricRe
     }
 
     public async Task AddAsync(Metric entity, CancellationToken ct = default)
-        => await dbContext.MissionMetrics.AddAsync(entity, ct);
+        => await dbContext.Metrics.AddAsync(entity, ct);
 
     public Task RemoveAsync(Metric entity, CancellationToken ct = default)
     {
-        dbContext.MissionMetrics.Remove(entity);
+        dbContext.Metrics.Remove(entity);
         return Task.CompletedTask;
     }
 

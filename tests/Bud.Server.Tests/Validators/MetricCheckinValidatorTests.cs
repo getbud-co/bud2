@@ -145,7 +145,7 @@ public class CreateMetricCheckinValidatorTests
     }
 }
 
-public class UpdateMetricCheckinValidatorTests
+public class PatchMetricCheckinValidatorTests
 {
     private readonly PatchMetricCheckinValidator _validator = new();
 

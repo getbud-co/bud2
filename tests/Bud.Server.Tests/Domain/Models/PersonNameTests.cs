@@ -1,4 +1,3 @@
-using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Xunit;
 
@@ -24,5 +23,25 @@ public sealed class PersonNameTests
         var success = PersonName.TryCreate(raw, out _);
 
         success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Create_WithValidName_ShouldSucceed()
+    {
+        var name = PersonName.Create("João Silva");
+
+        name.Value.Should().Be("João Silva");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData("A")]
+    public void Create_WithInvalidName_ShouldThrow(string? raw)
+    {
+        var act = () => PersonName.Create(raw);
+
+        act.Should().Throw<DomainInvariantException>();
     }
 }

@@ -111,7 +111,7 @@ public sealed class ApiClientTests
     }
 
     [Fact]
-    public async Task GetCollaboratorSummariesAsync_CallsCollaboratorOptionsEndpoint()
+    public async Task GetCollaboratorLookupAsync_CallsCollaboratorOptionsEndpoint()
     {
         var handler = new CapturingHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -120,7 +120,7 @@ public sealed class ApiClientTests
             });
         var client = CreateClient(handler);
 
-        _ = await client.GetCollaboratorSummariesAsync("ana");
+        _ = await client.GetCollaboratorLookupAsync("ana");
 
         handler.LastRequest.Should().NotBeNull();
         handler.LastRequest!.RequestUri!.PathAndQuery.Should().Be("/api/collaborators/lookup?search=ana");

@@ -51,12 +51,12 @@
 
 @code {
     [Parameter] public bool IsOpen { get; set; }
-    [Parameter] public Metric? Metric { get; set; }
+    [Parameter] public MetricResponse? Metric { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<CreateCheckinRequest> OnSubmit { get; set; }
 
     private CreateCheckinRequest checkinRequest = new() { ConfidenceLevel = 3 };
-    private Metric? previousMetric;
+    private MetricResponse? previousMetric;
 
     protected override void OnParametersSet()
     {

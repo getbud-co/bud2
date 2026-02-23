@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Ports;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Server.Settings;
 using Bud.Server.Domain.Model;
@@ -19,12 +19,12 @@ public sealed class AuthService(
 {
     private readonly JwtSettings _jwtSettings = jwtOptions.Value;
 
-    public async Task<Result<AuthLoginResult>> LoginAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<LoginResult>> LoginAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim();
         if (string.IsNullOrWhiteSpace(email))
         {
-            return Result<AuthLoginResult>.Failure("Informe o e-mail.");
+            return Result<LoginResult>.Failure("Informe o e-mail.");
         }
 
         var normalizedEmail = email.ToLowerInvariant();
@@ -36,7 +36,7 @@ public sealed class AuthService(
 
         if (collaborator is null)
         {
-            return Result<AuthLoginResult>.NotFound("Usuário não encontrado.");
+            return Result<LoginResult>.NotFound("Usuário não encontrado.");
         }
 
         var claims = new List<Claim>
@@ -57,7 +57,7 @@ public sealed class AuthService(
 
         var token = GenerateJwtToken(claims);
 
-        return Result<AuthLoginResult>.Success(new AuthLoginResult
+        return Result<LoginResult>.Success(new LoginResult
         {
             Token = token,
             Email = collaborator.Email,
@@ -69,12 +69,12 @@ public sealed class AuthService(
         });
     }
 
-    public async Task<Result<List<Bud.Server.Domain.ReadModels.OrganizationSummary>>> GetMyOrganizationsAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<Result<List<Bud.Server.Application.ReadModels.OrganizationSnapshot>>> GetMyOrganizationsAsync(string email, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedEmail))
         {
-            return Result<List<Bud.Server.Domain.ReadModels.OrganizationSummary>>.Failure("E-mail é obrigatório.");
+            return Result<List<Bud.Server.Application.ReadModels.OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
 
         var collaborator = await dbContext.Collaborators
@@ -88,14 +88,14 @@ public sealed class AuthService(
                 .AsNoTracking()
                 .IgnoreQueryFilters()
                 .OrderBy(o => o.Name)
-                .Select(o => new Bud.Server.Domain.ReadModels.OrganizationSummary
+                .Select(o => new Bud.Server.Application.ReadModels.OrganizationSnapshot
                 {
                     Id = o.Id,
                     Name = o.Name
                 })
                 .ToListAsync(cancellationToken);
 
-            return Result<List<Bud.Server.Domain.ReadModels.OrganizationSummary>>.Success(allOrgs);
+            return Result<List<Bud.Server.Application.ReadModels.OrganizationSnapshot>>.Success(allOrgs);
         }
 
         // Regular users: get organizations from two sources:
@@ -107,7 +107,7 @@ public sealed class AuthService(
             .IgnoreQueryFilters()
             .Where(c => c.Email == normalizedEmail)
             .Include(c => c.Organization)
-            .Select(c => new Bud.Server.Domain.ReadModels.OrganizationSummary
+            .Select(c => new Bud.Server.Application.ReadModels.OrganizationSnapshot
             {
                 Id = c.Organization.Id,
                 Name = c.Organization.Name
@@ -118,7 +118,7 @@ public sealed class AuthService(
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(o => o.Owner != null && o.Owner.Email == normalizedEmail)
-            .Select(o => new Bud.Server.Domain.ReadModels.OrganizationSummary
+            .Select(o => new Bud.Server.Application.ReadModels.OrganizationSnapshot
             {
                 Id = o.Id,
                 Name = o.Name
@@ -133,7 +133,7 @@ public sealed class AuthService(
             .OrderBy(o => o.Name)
             .ToList();
 
-        return Result<List<Bud.Server.Domain.ReadModels.OrganizationSummary>>.Success(organizations);
+        return Result<List<Bud.Server.Application.ReadModels.OrganizationSnapshot>>.Success(organizations);
     }
 
     private async Task RegisterAccessLogAsync(Guid collaboratorId, Guid organizationId, CancellationToken cancellationToken)

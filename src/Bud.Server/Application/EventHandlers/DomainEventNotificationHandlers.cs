@@ -1,10 +1,9 @@
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Events;
 
 namespace Bud.Server.Application.EventHandlers;
 
-public sealed class MissionCreatedDomainEventConsumer(
-    NotificationOrchestrator notificationOrchestrator) : IDomainEventConsumer<MissionCreatedDomainEvent>
+public sealed class MissionCreatedDomainEventHandler(
+    NotificationOrchestrator notificationOrchestrator) : IDomainEventHandler<MissionCreatedDomainEvent>
 {
     public async Task HandleAsync(
         MissionCreatedDomainEvent domainEvent,
@@ -17,8 +16,8 @@ public sealed class MissionCreatedDomainEventConsumer(
     }
 }
 
-public sealed class MissionUpdatedDomainEventConsumer(
-    NotificationOrchestrator notificationOrchestrator) : IDomainEventConsumer<MissionUpdatedDomainEvent>
+public sealed class MissionUpdatedDomainEventHandler(
+    NotificationOrchestrator notificationOrchestrator) : IDomainEventHandler<MissionUpdatedDomainEvent>
 {
     public async Task HandleAsync(
         MissionUpdatedDomainEvent domainEvent,
@@ -31,8 +30,8 @@ public sealed class MissionUpdatedDomainEventConsumer(
     }
 }
 
-public sealed class MissionDeletedDomainEventConsumer(
-    NotificationOrchestrator notificationOrchestrator) : IDomainEventConsumer<MissionDeletedDomainEvent>
+public sealed class MissionDeletedDomainEventHandler(
+    NotificationOrchestrator notificationOrchestrator) : IDomainEventHandler<MissionDeletedDomainEvent>
 {
     public async Task HandleAsync(
         MissionDeletedDomainEvent domainEvent,
@@ -45,8 +44,8 @@ public sealed class MissionDeletedDomainEventConsumer(
     }
 }
 
-public sealed class MetricCheckinCreatedDomainEventConsumer(
-    NotificationOrchestrator notificationOrchestrator) : IDomainEventConsumer<MetricCheckinCreatedDomainEvent>
+public sealed class MetricCheckinCreatedDomainEventHandler(
+    NotificationOrchestrator notificationOrchestrator) : IDomainEventHandler<MetricCheckinCreatedDomainEvent>
 {
     public async Task HandleAsync(
         MetricCheckinCreatedDomainEvent domainEvent,
@@ -56,7 +55,7 @@ public sealed class MetricCheckinCreatedDomainEventConsumer(
             domainEvent.CheckinId,
             domainEvent.MetricId,
             domainEvent.OrganizationId,
-            domainEvent.ExcludeCollaboratorId,
+            domainEvent.CreatorCollaboratorId,
             cancellationToken);
     }
 }

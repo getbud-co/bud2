@@ -1,6 +1,5 @@
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.Settings;
@@ -24,7 +23,7 @@ public sealed class CreateOrganization(
             return Result<Organization>.NotFound("O líder selecionado não foi encontrado.");
         }
 
-        if (owner.Role != Bud.Server.Domain.Model.CollaboratorRole.Leader)
+        if (owner.Role != CollaboratorRole.Leader)
         {
             return Result<Organization>.Failure(
                 "O proprietário da organização deve ter a função de Líder.",

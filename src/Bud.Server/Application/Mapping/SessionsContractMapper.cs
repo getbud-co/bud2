@@ -1,10 +1,10 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 
 namespace Bud.Server.Application.Mapping;
 
 internal static class SessionsContractMapper
 {
-    public static SessionResponse ToResponse(this AuthLoginResult source)
+    public static SessionResponse ToResponse(this LoginResult source)
     {
         return new SessionResponse
         {
@@ -13,7 +13,7 @@ internal static class SessionsContractMapper
             DisplayName = source.DisplayName,
             IsGlobalAdmin = source.IsGlobalAdmin,
             CollaboratorId = source.CollaboratorId,
-            Role = source.Role.HasValue ? source.Role.Value.ToShared() : null,
+            Role = source.Role,
             OrganizationId = source.OrganizationId
         };
     }

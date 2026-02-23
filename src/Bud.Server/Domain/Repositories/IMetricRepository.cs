@@ -5,7 +5,7 @@ namespace Bud.Server.Domain.Repositories;
 public interface IMetricRepository
 {
     Task<Metric?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<Metric?> GetByIdTrackingAsync(Guid id, CancellationToken ct = default);
+    Task<Metric?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default);
     Task<Bud.Shared.Contracts.Common.PagedResult<Metric>> GetAllAsync(Guid? missionId, Guid? objectiveId, string? search, int page, int pageSize, CancellationToken ct = default);
     Task<Mission?> GetMissionByIdAsync(Guid missionId, CancellationToken ct = default);
     Task<Objective?> GetObjectiveByIdAsync(Guid objectiveId, CancellationToken ct = default);

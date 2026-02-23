@@ -247,7 +247,7 @@ public sealed class MissionMetricWriteUseCasesTests
             .Setup(repository => repository.GetByIdAsync(metricId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
-            .Setup(repository => repository.GetByIdTrackingAsync(metricId, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(metricId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
             .Setup(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -294,7 +294,7 @@ public sealed class MissionMetricWriteUseCasesTests
             .Setup(repository => repository.GetByIdAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
-            .Setup(repository => repository.GetByIdTrackingAsync(metric.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
             .Setup(repository => repository.RemoveAsync(metric, It.IsAny<CancellationToken>()))

@@ -20,14 +20,14 @@ public sealed class BudApiClient(HttpClient httpClient, BudApiSession session)
     private readonly HttpClient _httpClient = httpClient;
     private readonly BudApiSession _session = session;
 
-    public Task<Mission> CreateMissionAsync(CreateMissionRequest request, CancellationToken cancellationToken = default)
-        => PostAsync<CreateMissionRequest, Mission>("/api/missions", request, cancellationToken);
+    public Task<MissionResponse> CreateMissionAsync(CreateMissionRequest request, CancellationToken cancellationToken = default)
+        => PostAsync<CreateMissionRequest, MissionResponse>("/api/missions", request, cancellationToken);
 
-    public Task<Mission> GetMissionAsync(Guid id, CancellationToken cancellationToken = default)
-        => GetAsync<Mission>($"/api/missions/{id}", cancellationToken);
+    public Task<MissionResponse> GetMissionAsync(Guid id, CancellationToken cancellationToken = default)
+        => GetAsync<MissionResponse>($"/api/missions/{id}", cancellationToken);
 
-    public Task<PagedResult<Mission>> ListMissionsAsync(MissionScopeType? scopeType, Guid? scopeId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
-        => GetAsync<PagedResult<Mission>>(BuildQueryPath(
+    public Task<PagedResult<MissionResponse>> ListMissionsAsync(MissionScopeType? scopeType, Guid? scopeId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+        => GetAsync<PagedResult<MissionResponse>>(BuildQueryPath(
             "/api/missions",
             ("scopeType", scopeType?.ToString()),
             ("scopeId", scopeId?.ToString()),
@@ -35,46 +35,46 @@ public sealed class BudApiClient(HttpClient httpClient, BudApiSession session)
             ("page", page.ToString(CultureInfo.InvariantCulture)),
             ("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))), cancellationToken);
 
-    public Task<Mission> UpdateMissionAsync(Guid id, PatchMissionRequest request, CancellationToken cancellationToken = default)
-        => PatchAsync<PatchMissionRequest, Mission>($"/api/missions/{id}", request, cancellationToken);
+    public Task<MissionResponse> UpdateMissionAsync(Guid id, PatchMissionRequest request, CancellationToken cancellationToken = default)
+        => PatchAsync<PatchMissionRequest, MissionResponse>($"/api/missions/{id}", request, cancellationToken);
 
     public Task DeleteMissionAsync(Guid id, CancellationToken cancellationToken = default)
         => DeleteAsync($"/api/missions/{id}", cancellationToken);
 
-    public Task<Metric> CreateMissionMetricAsync(CreateMetricRequest request, CancellationToken cancellationToken = default)
-        => PostAsync<CreateMetricRequest, Metric>("/api/metrics", request, cancellationToken);
+    public Task<MetricResponse> CreateMissionMetricAsync(CreateMetricRequest request, CancellationToken cancellationToken = default)
+        => PostAsync<CreateMetricRequest, MetricResponse>("/api/metrics", request, cancellationToken);
 
-    public Task<Metric> GetMissionMetricAsync(Guid id, CancellationToken cancellationToken = default)
-        => GetAsync<Metric>($"/api/metrics/{id}", cancellationToken);
+    public Task<MetricResponse> GetMissionMetricAsync(Guid id, CancellationToken cancellationToken = default)
+        => GetAsync<MetricResponse>($"/api/metrics/{id}", cancellationToken);
 
-    public Task<PagedResult<Metric>> ListMissionMetricsAsync(Guid? missionId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
-        => GetAsync<PagedResult<Metric>>(BuildQueryPath(
+    public Task<PagedResult<MetricResponse>> ListMissionMetricsAsync(Guid? missionId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+        => GetAsync<PagedResult<MetricResponse>>(BuildQueryPath(
             "/api/metrics",
             ("missionId", missionId?.ToString()),
             ("search", search),
             ("page", page.ToString(CultureInfo.InvariantCulture)),
             ("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))), cancellationToken);
 
-    public Task<Metric> UpdateMissionMetricAsync(Guid id, PatchMetricRequest request, CancellationToken cancellationToken = default)
-        => PatchAsync<PatchMetricRequest, Metric>($"/api/metrics/{id}", request, cancellationToken);
+    public Task<MetricResponse> UpdateMissionMetricAsync(Guid id, PatchMetricRequest request, CancellationToken cancellationToken = default)
+        => PatchAsync<PatchMetricRequest, MetricResponse>($"/api/metrics/{id}", request, cancellationToken);
 
     public Task DeleteMissionMetricAsync(Guid id, CancellationToken cancellationToken = default)
         => DeleteAsync($"/api/metrics/{id}", cancellationToken);
 
-    public Task<MetricCheckin> CreateMetricCheckinAsync(Guid metricId, CreateCheckinRequest request, CancellationToken cancellationToken = default)
-        => PostAsync<CreateCheckinRequest, MetricCheckin>($"/api/metrics/{metricId}/checkins", request, cancellationToken);
+    public Task<MetricCheckinResponse> CreateMetricCheckinAsync(Guid metricId, CreateCheckinRequest request, CancellationToken cancellationToken = default)
+        => PostAsync<CreateCheckinRequest, MetricCheckinResponse>($"/api/metrics/{metricId}/checkins", request, cancellationToken);
 
-    public Task<MetricCheckin> GetMetricCheckinAsync(Guid metricId, Guid id, CancellationToken cancellationToken = default)
-        => GetAsync<MetricCheckin>($"/api/metrics/{metricId}/checkins/{id}", cancellationToken);
+    public Task<MetricCheckinResponse> GetMetricCheckinAsync(Guid metricId, Guid id, CancellationToken cancellationToken = default)
+        => GetAsync<MetricCheckinResponse>($"/api/metrics/{metricId}/checkins/{id}", cancellationToken);
 
-    public Task<PagedResult<MetricCheckin>> ListMetricCheckinsAsync(Guid metricId, int page, int pageSize, CancellationToken cancellationToken = default)
-        => GetAsync<PagedResult<MetricCheckin>>(BuildQueryPath(
+    public Task<PagedResult<MetricCheckinResponse>> ListMetricCheckinsAsync(Guid metricId, int page, int pageSize, CancellationToken cancellationToken = default)
+        => GetAsync<PagedResult<MetricCheckinResponse>>(BuildQueryPath(
             $"/api/metrics/{metricId}/checkins",
             ("page", page.ToString(CultureInfo.InvariantCulture)),
             ("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))), cancellationToken);
 
-    public Task<MetricCheckin> UpdateMetricCheckinAsync(Guid metricId, Guid id, PatchCheckinRequest request, CancellationToken cancellationToken = default)
-        => PatchAsync<PatchCheckinRequest, MetricCheckin>($"/api/metrics/{metricId}/checkins/{id}", request, cancellationToken);
+    public Task<MetricCheckinResponse> UpdateMetricCheckinAsync(Guid metricId, Guid id, PatchCheckinRequest request, CancellationToken cancellationToken = default)
+        => PatchAsync<PatchCheckinRequest, MetricCheckinResponse>($"/api/metrics/{metricId}/checkins/{id}", request, cancellationToken);
 
     public Task DeleteMetricCheckinAsync(Guid metricId, Guid id, CancellationToken cancellationToken = default)
         => DeleteAsync($"/api/metrics/{metricId}/checkins/{id}", cancellationToken);

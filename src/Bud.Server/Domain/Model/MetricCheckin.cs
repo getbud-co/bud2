@@ -20,7 +20,7 @@ public sealed class MetricCheckin : ITenantEntity
     public static MetricCheckin Create(
         Guid id,
         Guid organizationId,
-        Guid missionMetricId,
+        Guid metricId,
         Guid collaboratorId,
         decimal? value,
         string? text,
@@ -33,7 +33,7 @@ public sealed class MetricCheckin : ITenantEntity
             throw new DomainInvariantException("Check-in deve pertencer a uma organização válida.");
         }
 
-        if (missionMetricId == Guid.Empty)
+        if (metricId == Guid.Empty)
         {
             throw new DomainInvariantException("Check-in deve pertencer a uma métrica válida.");
         }
@@ -47,7 +47,7 @@ public sealed class MetricCheckin : ITenantEntity
         {
             Id = id,
             OrganizationId = organizationId,
-            MetricId = missionMetricId,
+            MetricId = metricId,
             CollaboratorId = collaboratorId
         };
 
@@ -57,7 +57,7 @@ public sealed class MetricCheckin : ITenantEntity
 
     public void Update(decimal? value, string? text, DateTime checkinDate, string? note, int confidenceLevel)
     {
-        var normalizedConfidence = Bud.Server.Domain.Model.ConfidenceLevel.Create(confidenceLevel);
+        var normalizedConfidence = Bud.Server.Domain.ValueObjects.ConfidenceLevel.Create(confidenceLevel);
 
         Value = value;
         Text = string.IsNullOrWhiteSpace(text) ? null : text.Trim();

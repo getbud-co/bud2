@@ -1,4 +1,4 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 
 namespace Bud.Server.Application.Mapping;
 

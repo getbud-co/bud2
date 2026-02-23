@@ -47,7 +47,7 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
             .Include(c => c.Organization)
             .Include(c => c.Team!)
                 .ThenInclude(t => t.Workspace)
-            .Where(c => c.Role == Bud.Server.Domain.Model.CollaboratorRole.Leader);
+            .Where(c => c.Role == CollaboratorRole.Leader);
 
         if (organizationId.HasValue)
         {
@@ -89,7 +89,7 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
             .ToListAsync(ct);
     }
 
-    public async Task<List<Team>> GetAvailableTeamsAsync(
+    public async Task<List<Team>> GetEligibleTeamsForAssignmentAsync(
         Guid collaboratorId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
     {
         var currentTeamIds = await dbContext.CollaboratorTeams
@@ -114,7 +114,7 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
             .ToListAsync(ct);
     }
 
-    public async Task<List<Collaborator>> GetSummariesAsync(string? search, int limit, CancellationToken ct = default)
+    public async Task<List<Collaborator>> GetLookupAsync(string? search, int limit, CancellationToken ct = default)
     {
         var query = dbContext.Collaborators.AsNoTracking();
 
@@ -165,7 +165,7 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == leaderId, ct);
 
-        if (leader is null || leader.Role != Bud.Server.Domain.Model.CollaboratorRole.Leader)
+        if (leader is null || leader.Role != CollaboratorRole.Leader)
         {
             return false;
         }

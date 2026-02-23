@@ -1,4 +1,3 @@
-using Bud.Server.Domain.Abstractions;
 
 namespace Bud.Server.Domain.Events;
 

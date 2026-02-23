@@ -10,12 +10,12 @@ namespace Bud.Server.Infrastructure.Repositories;
 public sealed class ObjectiveRepository(ApplicationDbContext dbContext) : IObjectiveRepository
 {
     public async Task<Objective?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.MissionObjectives
+        => await dbContext.Objectives
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == id, ct);
 
-    public async Task<Objective?> GetByIdTrackedAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.MissionObjectives.FindAsync([id], ct);
+    public async Task<Objective?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.Objectives.FindAsync([id], ct);
 
     public async Task<PagedResult<Objective>> GetAllAsync(
         Guid? missionId,
@@ -25,7 +25,7 @@ public sealed class ObjectiveRepository(ApplicationDbContext dbContext) : IObjec
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
-        var query = dbContext.MissionObjectives.AsNoTracking();
+        var query = dbContext.Objectives.AsNoTracking();
         if (missionId.HasValue)
         {
             query = query.Where(o => o.MissionId == missionId.Value);
@@ -48,11 +48,11 @@ public sealed class ObjectiveRepository(ApplicationDbContext dbContext) : IObjec
     }
 
     public async Task AddAsync(Objective entity, CancellationToken ct = default)
-        => await dbContext.MissionObjectives.AddAsync(entity, ct);
+        => await dbContext.Objectives.AddAsync(entity, ct);
 
     public Task RemoveAsync(Objective entity, CancellationToken ct = default)
     {
-        dbContext.MissionObjectives.Remove(entity);
+        dbContext.Objectives.Remove(entity);
         return Task.CompletedTask;
     }
 

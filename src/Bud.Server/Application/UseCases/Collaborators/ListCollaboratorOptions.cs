@@ -11,7 +11,7 @@ public sealed class ListCollaboratorOptions(ICollaboratorRepository collaborator
         string? search,
         CancellationToken cancellationToken = default)
     {
-        var summaries = await collaboratorRepository.GetSummariesAsync(search, 50, cancellationToken);
+        var summaries = await collaboratorRepository.GetLookupAsync(search, 50, cancellationToken);
         return Result<List<CollaboratorLookupResponse>>.Success(summaries.Select(c => c.ToResponse()).ToList());
     }
 }

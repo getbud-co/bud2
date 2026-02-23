@@ -5,9 +5,9 @@ using Xunit;
 
 namespace Bud.Server.Tests.Validators;
 
-public sealed class CreateMissionObjectiveValidatorTests
+public sealed class CreateObjectiveValidatorTests
 {
-    private readonly CreateMissionObjectiveValidator _validator = new();
+    private readonly CreateObjectiveValidator _validator = new();
 
     [Fact]
     public async Task Validate_WithValidRequest_Passes()
@@ -112,9 +112,9 @@ public sealed class CreateMissionObjectiveValidatorTests
 
 }
 
-public sealed class UpdateMissionObjectiveValidatorTests
+public sealed class PatchObjectiveValidatorTests
 {
-    private readonly PatchMissionObjectiveValidator _validator = new();
+    private readonly PatchObjectiveValidator _validator = new();
 
     [Fact]
     public async Task Validate_WithValidRequest_Passes()

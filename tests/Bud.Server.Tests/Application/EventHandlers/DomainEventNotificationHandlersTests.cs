@@ -26,7 +26,7 @@ public sealed class DomainEventNotificationHandlersTests
             .Setup(o => o.NotifyMissionCreatedAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new MissionCreatedDomainEventConsumer(orchestratorMock.Object);
+        var handler = new MissionCreatedDomainEventHandler(orchestratorMock.Object);
         var domainEvent = new MissionCreatedDomainEvent(Guid.NewGuid(), Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
@@ -44,7 +44,7 @@ public sealed class DomainEventNotificationHandlersTests
             .Setup(o => o.NotifyMissionUpdatedAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new MissionUpdatedDomainEventConsumer(orchestratorMock.Object);
+        var handler = new MissionUpdatedDomainEventHandler(orchestratorMock.Object);
         var domainEvent = new MissionUpdatedDomainEvent(Guid.NewGuid(), Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
@@ -62,7 +62,7 @@ public sealed class DomainEventNotificationHandlersTests
             .Setup(o => o.NotifyMissionDeletedAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new MissionDeletedDomainEventConsumer(orchestratorMock.Object);
+        var handler = new MissionDeletedDomainEventHandler(orchestratorMock.Object);
         var domainEvent = new MissionDeletedDomainEvent(Guid.NewGuid(), Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
@@ -85,7 +85,7 @@ public sealed class DomainEventNotificationHandlersTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new MetricCheckinCreatedDomainEventConsumer(orchestratorMock.Object);
+        var handler = new MetricCheckinCreatedDomainEventHandler(orchestratorMock.Object);
         var domainEvent = new MetricCheckinCreatedDomainEvent(
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -99,7 +99,7 @@ public sealed class DomainEventNotificationHandlersTests
                 domainEvent.CheckinId,
                 domainEvent.MetricId,
                 domainEvent.OrganizationId,
-                domainEvent.ExcludeCollaboratorId,
+                domainEvent.CreatorCollaboratorId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

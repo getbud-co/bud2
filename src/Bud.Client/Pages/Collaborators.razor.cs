@@ -11,11 +11,11 @@ namespace Bud.Client.Pages;
 public partial class Collaborators
 {
     private CreateCollaboratorRequest newCollaborator = new();
-    private List<Team> teams = new();
-    private List<Workspace> workspaces = new();
+    private List<TeamResponse> teams = new();
+    private List<WorkspaceResponse> workspaces = new();
     private List<CollaboratorLeaderResponse> leaders = new();
-    private List<Collaborator> allCollaborators = new();
-    private PagedResult<Collaborator>? collaborators;
+    private List<CollaboratorResponse> allCollaborators = new();
+    private PagedResult<CollaboratorResponse>? collaborators;
     private string? search;
     private string? selectedTeamId;
     private string? createLeaderId;
@@ -32,7 +32,7 @@ public partial class Collaborators
 
     // Estado do modal de edição
     private bool isEditModalOpen = false;
-    private Collaborator? selectedCollaborator = null;
+    private CollaboratorResponse? selectedCollaborator = null;
     private CollaboratorEditModel editCollaborator = new();
     private string? editLeaderId;
     private List<CollaboratorTeamResponse> availableTeamsForEdit = new();
@@ -41,7 +41,7 @@ public partial class Collaborators
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Collaborator? detailsCollaborator = null;
+    private CollaboratorResponse? detailsCollaborator = null;
     private List<CollaboratorTeamResponse>? detailsCollaboratorTeams = null;
     private List<CollaboratorSubordinateResponse>? detailsSubordinates = null;
 
@@ -92,13 +92,13 @@ public partial class Collaborators
     private async Task LoadTeams()
     {
         var result = await Api.GetTeamsAsync(null, null, null, 1, 100);
-        teams = result?.Items.ToList() ?? new List<Team>();
+        teams = result?.Items.ToList() ?? new List<TeamResponse>();
     }
 
     private async Task LoadWorkspaces()
     {
         var result = await Api.GetWorkspacesAsync(OrgContext.SelectedOrganizationId, null, 1, 100);
-        workspaces = result?.Items.ToList() ?? new List<Workspace>();
+        workspaces = result?.Items.ToList() ?? new List<WorkspaceResponse>();
     }
 
     private async Task LoadLeaders()
@@ -109,7 +109,7 @@ public partial class Collaborators
     private async Task LoadAllCollaborators()
     {
         var result = await Api.GetCollaboratorsAsync(null, null, 1, 100);
-        allCollaborators = result?.Items.ToList() ?? new List<Collaborator>();
+        allCollaborators = result?.Items.ToList() ?? new List<CollaboratorResponse>();
     }
 
     private async Task LoadCollaborators()
@@ -117,7 +117,7 @@ public partial class Collaborators
         var filterTeamId = Guid.TryParse(selectedTeamId, out var parsedTeamId)
             ? parsedTeamId
             : (Guid?)null;
-        collaborators = await Api.GetCollaboratorsAsync(filterTeamId, search, 1, 20) ?? new PagedResult<Collaborator>();
+        collaborators = await Api.GetCollaboratorsAsync(filterTeamId, search, 1, 20) ?? new PagedResult<CollaboratorResponse>();
     }
 
     // Filter methods
@@ -254,7 +254,7 @@ public partial class Collaborators
             "Não foi possível criar o colaborador. Verifique os dados e tente novamente.");
     }
 
-    private async Task OpenEditModal(Collaborator collaborator)
+    private async Task OpenEditModal(CollaboratorResponse collaborator)
     {
         selectedCollaborator = collaborator;
         editCollaborator = new CollaboratorEditModel
@@ -284,7 +284,7 @@ public partial class Collaborators
         teamsModified = false;
     }
 
-    private async Task OpenDetailsModal(Collaborator collaborator)
+    private async Task OpenDetailsModal(CollaboratorResponse collaborator)
     {
         detailsCollaborator = collaborator;
         detailsCollaboratorTeams = null;

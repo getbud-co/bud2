@@ -9,7 +9,7 @@ namespace Bud.Client.Tests.Shared.Missions;
 
 public sealed class MissionCheckinHistoryModalTests : TestContext
 {
-    private static Metric CreateQuantitativeMetric(string name = "Revenue") => new()
+    private static MetricResponse CreateQuantitativeMetric(string name = "Revenue") => new()
     {
         Id = Guid.NewGuid(),
         Name = name,
@@ -68,7 +68,7 @@ public sealed class MissionCheckinHistoryModalTests : TestContext
     [Fact]
     public void Render_WhenCheckinsExist_ShouldShowTimelineItems()
     {
-        var checkins = new List<MetricCheckin>
+        var checkins = new List<MetricCheckinResponse>
         {
             new()
             {
@@ -77,7 +77,7 @@ public sealed class MissionCheckinHistoryModalTests : TestContext
                 CheckinDate = new DateTime(2025, 6, 15),
                 ConfidenceLevel = 4,
                 Note = "Good progress",
-                Collaborator = new Collaborator { FullName = "Ana Silva" }
+                Collaborator = new CollaboratorResponse { FullName = "Ana Silva" }
             }
         };
 

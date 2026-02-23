@@ -191,9 +191,9 @@ public sealed class AggregateInvariantsTests
     }
 
     [Fact]
-    public void MissionTemplateMetric_Create_WithQuantitativeTypeMissing_ShouldThrow()
+    public void TemplateMetric_Create_WithQuantitativeTypeMissing_ShouldThrow()
     {
-        var act = () => MissionTemplateMetric.Create(
+        var act = () => TemplateMetric.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -211,9 +211,9 @@ public sealed class AggregateInvariantsTests
     }
 
     [Fact]
-    public void MissionTemplate_ReplaceMetrics_ShouldSetTemplateAndOrganizationIds()
+    public void Template_ReplaceMetrics_ShouldSetTemplateAndOrganizationIds()
     {
-        var template = MissionTemplate.Create(
+        var template = Template.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
             "Template",
@@ -223,7 +223,7 @@ public sealed class AggregateInvariantsTests
 
         template.ReplaceMetrics(
         [
-            new MissionTemplateMetricDraft(
+            new TemplateMetricDraft(
                 "Qualidade",
                 MetricType.Qualitative,
                 0,
@@ -236,7 +236,7 @@ public sealed class AggregateInvariantsTests
         ]);
 
         template.Metrics.Should().ContainSingle();
-        template.Metrics.First().MissionTemplateId.Should().Be(template.Id);
+        template.Metrics.First().TemplateId.Should().Be(template.Id);
         template.Metrics.First().OrganizationId.Should().Be(template.OrganizationId);
     }
 
@@ -334,7 +334,7 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Notification_Create_WithEmptyTitle_ShouldThrow()
     {
-        var act = () => NotificationResponse.Create(
+        var act = () => Notification.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bud.Server.Infrastructure.Persistence.Configurations;
 
-public sealed class MissionTemplateObjectiveConfiguration : IEntityTypeConfiguration<MissionTemplateObjective>
+public sealed class TemplateObjectiveConfiguration : IEntityTypeConfiguration<TemplateObjective>
 {
-    public void Configure(EntityTypeBuilder<MissionTemplateObjective> builder)
+    public void Configure(EntityTypeBuilder<TemplateObjective> builder)
     {
         builder.Property(mto => mto.Name)
             .HasMaxLength(200);
@@ -24,6 +24,6 @@ public sealed class MissionTemplateObjectiveConfiguration : IEntityTypeConfigura
             .IsRequired();
 
         builder.HasIndex(mto => mto.OrganizationId);
-        builder.HasIndex(mto => mto.MissionTemplateId);
+        builder.HasIndex(mto => mto.TemplateId);
     }
 }

@@ -29,7 +29,7 @@ public sealed class DbSeederTests
         // Assert
         var organization = await context.Organizations.IgnoreQueryFilters().SingleAsync(o => o.Name == "getbud.co");
 
-        var templateNames = await context.MissionTemplates
+        var templateNames = await context.Templates
             .IgnoreQueryFilters()
             .Where(t => t.OrganizationId == organization.Id)
             .Select(t => t.Name)
@@ -39,7 +39,7 @@ public sealed class DbSeederTests
         templateNames.Should().BeEquivalentTo(
             ["BSC", "Mapa Estratégico", "OKR", "PDI", "Planejamento Estratégico Anual"]);
 
-        var dimensions = await context.MissionTemplateObjectives
+        var dimensions = await context.TemplateObjectives
             .IgnoreQueryFilters()
             .Where(o => o.OrganizationId == organization.Id)
             .Select(o => o.Dimension)
@@ -72,14 +72,14 @@ public sealed class DbSeederTests
             OrganizationId = organization.Id
         });
 
-        context.MissionTemplates.Add(new MissionTemplate
+        context.Templates.Add(new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organization.Id,
             Name = "OKR",
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organization.Id,
@@ -99,7 +99,7 @@ public sealed class DbSeederTests
         await DbSeeder.SeedAsync(context);
 
         // Assert
-        var templateNames = await context.MissionTemplates
+        var templateNames = await context.Templates
             .IgnoreQueryFilters()
             .Where(t => t.OrganizationId == organization.Id)
             .Select(t => t.Name)
@@ -108,7 +108,7 @@ public sealed class DbSeederTests
         templateNames.Should().Contain(["BSC", "Mapa Estratégico", "OKR", "PDI", "Planejamento Estratégico Anual"]);
         templateNames.Count(name => name == "OKR").Should().Be(1);
 
-        var dimensions = await context.MissionTemplateObjectives
+        var dimensions = await context.TemplateObjectives
             .IgnoreQueryFilters()
             .Where(o => o.OrganizationId == organization.Id)
             .Select(o => o.Dimension)
@@ -131,7 +131,7 @@ public sealed class DbSeederTests
         // Assert
         var organization = await context.Organizations.IgnoreQueryFilters().SingleAsync(o => o.Name == "getbud.co");
 
-        var bscTemplate = await context.MissionTemplates
+        var bscTemplate = await context.Templates
             .IgnoreQueryFilters()
             .Include(t => t.Objectives)
             .Include(t => t.Metrics)
@@ -139,7 +139,7 @@ public sealed class DbSeederTests
 
         bscTemplate.Objectives.Should().NotBeEmpty();
         bscTemplate.Metrics.Should().NotBeEmpty();
-        bscTemplate.Metrics.Should().OnlyContain(m => m.MissionTemplateObjectiveId.HasValue);
-        bscTemplate.Objectives.Select(o => o.Id).Should().Contain(bscTemplate.Metrics.Select(m => m.MissionTemplateObjectiveId!.Value));
+        bscTemplate.Metrics.Should().OnlyContain(m => m.TemplateObjectiveId.HasValue);
+        bscTemplate.Objectives.Select(o => o.Id).Should().Contain(bscTemplate.Metrics.Select(m => m.TemplateObjectiveId!.Value));
     }
 }

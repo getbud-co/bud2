@@ -260,8 +260,8 @@ Mission (can be scoped to Organization, Workspace, Team, or Collaborator)
   └── MissionMetric(s) (direct metrics, MissionObjectiveId = null)
       └── MetricCheckin(s)
 
-MissionTemplate
-  └── MissionTemplateMetric(s)
+Template
+  └── TemplateMetric(s)
 
 Notification (tenant-scoped, with NotificationType, RelatedEntityId, RelatedEntityType)
 CollaboratorAccessLog (tenant-scoped, audit trail)
@@ -273,7 +273,7 @@ CollaboratorAccessLog (tenant-scoped, audit trail)
 - MissionObjective → SubObjectives = `Restrict` (must delete children first, same pattern as SubTeams)
 - Mission → MissionObjective = `Cascade`; MissionObjective → MissionMetric = `Cascade`
 - Mission → Organization/Workspace/Team/Collaborator = `Restrict` (repositories validate and return Conflict before deletion)
-- MissionTemplate → Organization = `Restrict`; MissionTemplate → Metrics/Objectives = `Cascade`
+- Template → Organization = `Restrict`; Template → Metrics/Objectives = `Cascade`
 
 ### Multi-Tenancy
 

@@ -1,15 +1,14 @@
 using System.ComponentModel.DataAnnotations;
-using Bud.Shared.Contracts;
 using FluentValidation;
 
 namespace Bud.Server.Validators;
 
-public sealed class CreateSessionRequestValidator : AbstractValidator<CreateSessionRequest>
+public sealed class CreateSessionValidator : AbstractValidator<CreateSessionRequest>
 {
     private const string AdminAlias = "admin";
     private static readonly EmailAddressAttribute EmailValidator = new();
 
-    public CreateSessionRequestValidator()
+    public CreateSessionValidator()
     {
         RuleFor(x => x.Email)
             .NotEmpty()

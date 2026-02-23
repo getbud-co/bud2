@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Bud.Server.Validators;
 
-public sealed class CreateMissionTemplateValidator : AbstractValidator<CreateTemplateRequest>
+public sealed class CreateTemplateValidator : AbstractValidator<CreateTemplateRequest>
 {
-    public CreateMissionTemplateValidator()
+    public CreateTemplateValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Nome é obrigatório.")
@@ -24,10 +24,10 @@ public sealed class CreateMissionTemplateValidator : AbstractValidator<CreateTem
             .When(x => !string.IsNullOrEmpty(x.MissionDescriptionPattern));
 
         RuleForEach(x => x.Objectives)
-            .SetValidator(new MissionTemplateObjectiveDtoValidator());
+            .SetValidator(new TemplateObjectiveDtoValidator());
 
         RuleForEach(x => x.Metrics)
-            .SetValidator(new MissionTemplateMetricDtoValidator());
+            .SetValidator(new TemplateMetricDtoValidator());
 
         RuleFor(x => x)
             .Must(HaveValidObjectiveReferences)
@@ -46,9 +46,9 @@ public sealed class CreateMissionTemplateValidator : AbstractValidator<CreateTem
     }
 }
 
-public sealed class PatchMissionTemplateValidator : AbstractValidator<PatchTemplateRequest>
+public sealed class PatchTemplateValidator : AbstractValidator<PatchTemplateRequest>
 {
-    public PatchMissionTemplateValidator()
+    public PatchTemplateValidator()
     {
         RuleFor(x => x.Name.Value)
             .NotEmpty().WithMessage("Nome é obrigatório.")
@@ -70,13 +70,13 @@ public sealed class PatchMissionTemplateValidator : AbstractValidator<PatchTempl
         When(x => x.Objectives.HasValue && x.Objectives.Value is not null, () =>
         {
             RuleForEach(x => x.Objectives.Value!)
-                .SetValidator(new MissionTemplateObjectiveDtoValidator());
+                .SetValidator(new TemplateObjectiveDtoValidator());
         });
 
         When(x => x.Metrics.HasValue && x.Metrics.Value is not null, () =>
         {
             RuleForEach(x => x.Metrics.Value!)
-                .SetValidator(new MissionTemplateMetricDtoValidator());
+                .SetValidator(new TemplateMetricDtoValidator());
         });
 
         RuleFor(x => x)
@@ -96,9 +96,9 @@ public sealed class PatchMissionTemplateValidator : AbstractValidator<PatchTempl
     }
 }
 
-public sealed class MissionTemplateObjectiveDtoValidator : AbstractValidator<TemplateObjectiveRequest>
+public sealed class TemplateObjectiveDtoValidator : AbstractValidator<TemplateObjectiveRequest>
 {
-    public MissionTemplateObjectiveDtoValidator()
+    public TemplateObjectiveDtoValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Nome é obrigatório.")
@@ -117,9 +117,9 @@ public sealed class MissionTemplateObjectiveDtoValidator : AbstractValidator<Tem
     }
 }
 
-public sealed class MissionTemplateMetricDtoValidator : AbstractValidator<TemplateMetricRequest>
+public sealed class TemplateMetricDtoValidator : AbstractValidator<TemplateMetricRequest>
 {
-    public MissionTemplateMetricDtoValidator()
+    public TemplateMetricDtoValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Nome é obrigatório.")

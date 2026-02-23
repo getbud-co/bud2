@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Events;
 
 namespace Bud.Server.Domain.Model;

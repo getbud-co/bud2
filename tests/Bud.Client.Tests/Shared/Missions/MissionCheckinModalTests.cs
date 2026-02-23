@@ -9,7 +9,7 @@ namespace Bud.Client.Tests.Shared.Missions;
 
 public sealed class MissionCheckinModalTests : TestContext
 {
-    private static Metric CreateQuantitativeMetric() => new()
+    private static MetricResponse CreateQuantitativeMetric() => new()
     {
         Id = Guid.NewGuid(),
         Name = "Sales Target",
@@ -19,7 +19,7 @@ public sealed class MissionCheckinModalTests : TestContext
         Unit = MetricUnit.Integer
     };
 
-    private static Metric CreateQualitativeMetric() => new()
+    private static MetricResponse CreateQualitativeMetric() => new()
     {
         Id = Guid.NewGuid(),
         Name = "Team Culture",

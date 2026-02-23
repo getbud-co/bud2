@@ -1,4 +1,4 @@
-namespace Bud.Server.Domain.Model;
+namespace Bud.Server.Domain.ValueObjects;
 
 public readonly record struct PersonName
 {
@@ -26,6 +26,16 @@ public readonly record struct PersonName
 
         personName = new PersonName(normalized);
         return true;
+    }
+
+    public static PersonName Create(string? raw)
+    {
+        if (!TryCreate(raw, out var personName))
+        {
+            throw new DomainInvariantException("O nome informado é inválido.");
+        }
+
+        return personName;
     }
 
     private static string Normalize(string raw)

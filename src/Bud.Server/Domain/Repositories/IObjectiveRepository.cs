@@ -5,7 +5,7 @@ namespace Bud.Server.Domain.Repositories;
 public interface IObjectiveRepository
 {
     Task<Objective?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<Objective?> GetByIdTrackedAsync(Guid id, CancellationToken ct = default);
+    Task<Objective?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default);
     Task<Bud.Shared.Contracts.Common.PagedResult<Objective>> GetAllAsync(
         Guid? missionId,
         int page,

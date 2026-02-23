@@ -20,9 +20,9 @@ public sealed class OrganizationsPageTests : TestContext
         var instance = cut.Instance;
 
         var organizationId = Guid.NewGuid();
-        SetField(instance, "organizations", new PagedResult<Organization>
+        SetField(instance, "organizations", new PagedResult<OrganizationResponse>
         {
-            Items = new List<Organization>
+            Items = new List<OrganizationResponse>
             {
                 new()
                 {

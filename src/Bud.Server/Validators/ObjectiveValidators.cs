@@ -1,11 +1,10 @@
-using Bud.Shared.Contracts;
 using FluentValidation;
 
 namespace Bud.Server.Validators;
 
-public sealed class CreateMissionObjectiveValidator : AbstractValidator<CreateObjectiveRequest>
+public sealed class CreateObjectiveValidator : AbstractValidator<CreateObjectiveRequest>
 {
-    public CreateMissionObjectiveValidator()
+    public CreateObjectiveValidator()
     {
         RuleFor(x => x.MissionId)
             .NotEmpty().WithMessage("Missão é obrigatória.");
@@ -25,9 +24,9 @@ public sealed class CreateMissionObjectiveValidator : AbstractValidator<CreateOb
     }
 }
 
-public sealed class PatchMissionObjectiveValidator : AbstractValidator<PatchObjectiveRequest>
+public sealed class PatchObjectiveValidator : AbstractValidator<PatchObjectiveRequest>
 {
-    public PatchMissionObjectiveValidator()
+    public PatchObjectiveValidator()
     {
         RuleFor(x => x.Name.Value)
             .NotEmpty().WithMessage("Nome é obrigatório.")

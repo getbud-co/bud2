@@ -49,7 +49,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             TeamId = null,
             OrganizationId = org.Id
         };
@@ -282,7 +282,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = organizationId
         };
 
@@ -497,7 +497,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             FullName = "Líder Org Teste",
             Email = $"leader-{Guid.NewGuid():N}@test-org.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.Leader,
+            Role = CollaboratorRole.Leader,
             OrganizationId = org!.Id,
             TeamId = null
         };
@@ -513,7 +513,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             FullName = "Test User",
             Email = $"test-{Guid.NewGuid():N}@example.com",
-            Role = Bud.Server.Domain.Model.CollaboratorRole.IndividualContributor,
+            Role = CollaboratorRole.IndividualContributor,
             OrganizationId = org!.Id,
             TeamId = team!.Id
         };

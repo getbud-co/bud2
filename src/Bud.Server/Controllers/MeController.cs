@@ -24,9 +24,9 @@ public sealed class MeController(
     /// Lista organizações disponíveis para o usuário autenticado.
     /// </summary>
     [HttpGet("organizations")]
-    [ProducesResponseType(typeof(List<OrganizationSummaryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<MyOrganizationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<OrganizationSummaryResponse>>> GetOrganizations(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<MyOrganizationResponse>>> GetOrganizations(CancellationToken cancellationToken)
     {
         var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email");
         if (string.IsNullOrWhiteSpace(email))

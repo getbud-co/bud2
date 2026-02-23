@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Repositories;
 
 namespace Bud.Server.Application.UseCases.Objectives;
@@ -30,7 +29,7 @@ public sealed class DeleteObjective(
             return Result.Forbidden("Você não tem permissão para excluir objetivos nesta missão.");
         }
 
-        var trackedObjective = await objectiveRepository.GetByIdTrackedAsync(id, cancellationToken);
+        var trackedObjective = await objectiveRepository.GetByIdForUpdateAsync(id, cancellationToken);
         await objectiveRepository.RemoveAsync(trackedObjective!, cancellationToken);
         await unitOfWork.CommitAsync(objectiveRepository.SaveChangesAsync, cancellationToken);
 

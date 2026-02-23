@@ -8,7 +8,7 @@ namespace Bud.Client.Pages;
 public partial class Organizations
 {
     private CreateOrganizationRequest newOrganization = new();
-    private PagedResult<Organization>? organizations;
+    private PagedResult<OrganizationResponse>? organizations;
     private List<CollaboratorLeaderResponse> leaders = new();
     private string? search;
     private bool isSubmitting = false;
@@ -22,9 +22,9 @@ public partial class Organizations
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Organization? selectedOrganization = null;
-    private PagedResult<Workspace>? orgWorkspaces = null;
-    private PagedResult<Collaborator>? orgCollaborators = null;
+    private OrganizationResponse? selectedOrganization = null;
+    private PagedResult<WorkspaceResponse>? orgWorkspaces = null;
+    private PagedResult<CollaboratorResponse>? orgCollaborators = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,7 +67,7 @@ public partial class Organizations
 
     private async Task LoadOrganizations()
     {
-        organizations = await Api.GetOrganizationsAsync(search, 1, 20) ?? new PagedResult<Organization>();
+        organizations = await Api.GetOrganizationsAsync(search, 1, 20) ?? new PagedResult<OrganizationResponse>();
     }
 
     private async Task OpenCreateModal()
@@ -82,7 +82,7 @@ public partial class Organizations
         isModalOpen = true;
     }
 
-    private async Task OpenEditModal(Organization org)
+    private async Task OpenEditModal(OrganizationResponse org)
     {
         modalMode = "edit";
         editingOrganizationId = org.Id;
@@ -242,7 +242,7 @@ public partial class Organizations
             "Não foi possível excluir a organização. Tente novamente.");
     }
 
-    private async Task OpenDetailsModal(Organization org)
+    private async Task OpenDetailsModal(OrganizationResponse org)
     {
         selectedOrganization = org;
         isDetailsModalOpen = true;
@@ -274,7 +274,7 @@ public partial class Organizations
         {
             Console.Error.WriteLine($"Erro ao carregar workspaces: {ex.Message}");
             ToastService.ShowError("Erro", "Não foi possível carregar os workspaces.");
-            orgWorkspaces = new PagedResult<Workspace> { Items = Array.Empty<Workspace>() };
+            orgWorkspaces = new PagedResult<WorkspaceResponse> { Items = Array.Empty<WorkspaceResponse>() };
         }
     }
 
@@ -288,7 +288,7 @@ public partial class Organizations
         {
             Console.Error.WriteLine($"Erro ao carregar colaboradores: {ex.Message}");
             ToastService.ShowError("Erro", "Não foi possível carregar os colaboradores.");
-            orgCollaborators = new PagedResult<Collaborator> { Items = Array.Empty<Collaborator>() };
+            orgCollaborators = new PagedResult<CollaboratorResponse> { Items = Array.Empty<CollaboratorResponse>() };
         }
     }
 

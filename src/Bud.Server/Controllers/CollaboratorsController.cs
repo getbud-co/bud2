@@ -207,10 +207,10 @@ public sealed class CollaboratorsController(
     /// Lista times disponíveis para vínculo com o colaborador.
     /// </summary>
     [HttpGet("{id:guid}/teams/eligible-for-assignment")]
-    [ProducesResponseType(typeof(List<CollaboratorTeamResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<CollaboratorTeamEligibleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<CollaboratorTeamResponse>>> GetAvailableTeams(
+    public async Task<ActionResult<List<CollaboratorTeamEligibleResponse>>> GetEligibleTeamsForAssignment(
         Guid id,
         [FromQuery] string? search = null,
         CancellationToken cancellationToken = default)

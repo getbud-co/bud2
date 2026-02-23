@@ -10,11 +10,11 @@ namespace Bud.Client.Pages;
 public partial class Teams
 {
     private CreateTeamRequest newTeam = new();
-    private List<Workspace> workspaces = new();
-    private List<Team> parentTeams = new();
-    private List<Team> allTeams = new();
-    private List<Collaborator> collaborators = new();
-    private PagedResult<Team>? teams;
+    private List<WorkspaceResponse> workspaces = new();
+    private List<TeamResponse> parentTeams = new();
+    private List<TeamResponse> allTeams = new();
+    private List<CollaboratorResponse> collaborators = new();
+    private PagedResult<TeamResponse>? teams;
     private string? search;
     private string? selectedWorkspaceId;
     private string? createWorkspaceId;
@@ -31,10 +31,10 @@ public partial class Teams
 
     // Estado do modal de edição
     private bool isEditModalOpen = false;
-    private Team? selectedTeam = null;
+    private TeamResponse? selectedTeam = null;
     private TeamEditModel editTeam = new();
     private string? editParentTeamId;
-    private List<Team> editParentTeams = new();
+    private List<TeamResponse> editParentTeams = new();
     private List<CollaboratorLeaderResponse> editLeaders = new();
     private string editLeaderId = "";
     private List<CollaboratorLookupResponse> availableCollaboratorsForEdit = new();
@@ -43,7 +43,7 @@ public partial class Teams
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Team? detailsTeam = null;
+    private TeamResponse? detailsTeam = null;
     private List<CollaboratorLookupResponse>? detailsTeamCollaborators = null;
 
     // Estado de confirmação de exclusão
@@ -89,7 +89,7 @@ public partial class Teams
     private async Task LoadWorkspaces()
     {
         var result = await Api.GetWorkspacesAsync(OrgContext.SelectedOrganizationId, null, 1, 100);
-        workspaces = result?.Items.ToList() ?? new List<Workspace>();
+        workspaces = result?.Items.ToList() ?? new List<WorkspaceResponse>();
     }
 
     private async Task LoadTeams()
@@ -97,16 +97,16 @@ public partial class Teams
         var filterWorkspaceId = Guid.TryParse(selectedWorkspaceId, out var parsedWorkspaceId)
             ? parsedWorkspaceId
             : (Guid?)null;
-        teams = await Api.GetTeamsAsync(filterWorkspaceId, null, search, 1, 20) ?? new PagedResult<Team>();
+        teams = await Api.GetTeamsAsync(filterWorkspaceId, null, search, 1, 20) ?? new PagedResult<TeamResponse>();
 
         var allTeamsResult = await Api.GetTeamsAsync(null, null, null, 1, 100);
-        allTeams = allTeamsResult?.Items.ToList() ?? new List<Team>();
+        allTeams = allTeamsResult?.Items.ToList() ?? new List<TeamResponse>();
     }
 
     private async Task LoadCollaborators()
     {
         var result = await Api.GetCollaboratorsAsync(null, null, 1, 100);
-        collaborators = result?.Items.ToList() ?? new List<Collaborator>();
+        collaborators = result?.Items.ToList() ?? new List<CollaboratorResponse>();
     }
 
     // Filter methods
@@ -148,7 +148,7 @@ public partial class Teams
     private int GetRootTeamsCount() => allTeams.Count(t => t.ParentTeamId == null);
     private int GetSubTeamsCount() => allTeams.Count(t => t.ParentTeamId != null);
 
-    private async Task OpenDetailsModal(Team team)
+    private async Task OpenDetailsModal(TeamResponse team)
     {
         detailsTeam = team;
         detailsTeamCollaborators = null;
@@ -175,7 +175,7 @@ public partial class Teams
         if (Guid.TryParse(createWorkspaceId, out var workspaceId))
         {
             var result = await Api.GetTeamsAsync(workspaceId, null, null, 1, 100);
-            parentTeams = result?.Items.ToList() ?? new List<Team>();
+            parentTeams = result?.Items.ToList() ?? new List<TeamResponse>();
         }
     }
 
@@ -189,7 +189,7 @@ public partial class Teams
         assignedCollaboratorsForCreate = new();
 
         createLeaders = await Api.GetLeadersAsync() ?? new();
-        availableCollaboratorsForCreate = await Api.GetCollaboratorSummariesAsync() ?? new();
+        availableCollaboratorsForCreate = await Api.GetCollaboratorLookupAsync() ?? new();
 
         isModalOpen = true;
     }
@@ -258,7 +258,7 @@ public partial class Teams
             "Não foi possível criar a equipe. Verifique os dados e tente novamente.");
     }
 
-    private async Task OpenEditModal(Team team)
+    private async Task OpenEditModal(TeamResponse team)
     {
         selectedTeam = team;
         editTeam = new TeamEditModel
@@ -270,7 +270,7 @@ public partial class Teams
 
         // Carregar equipes do mesmo workspace para seleção de equipe pai
         var result = await Api.GetTeamsAsync(team.WorkspaceId, null, null, 1, 100);
-        editParentTeams = result?.Items.ToList() ?? new List<Team>();
+        editParentTeams = result?.Items.ToList() ?? new List<TeamResponse>();
 
         // Load leaders and collaborators
         editLeaders = await Api.GetLeadersAsync() ?? new();
@@ -349,7 +349,7 @@ public partial class Teams
 
     private async Task SearchAvailableCollaboratorsForCreateAsync(string search)
     {
-        availableCollaboratorsForCreate = await Api.GetCollaboratorSummariesAsync(search) ?? new();
+        availableCollaboratorsForCreate = await Api.GetCollaboratorLookupAsync(search) ?? new();
     }
 
     private void OnCollaboratorsChanged(List<CollaboratorLookupResponse> collaborators)

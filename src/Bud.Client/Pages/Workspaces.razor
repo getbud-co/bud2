@@ -153,21 +153,21 @@
 
 @code {
     private CreateWorkspaceRequest newWorkspace = new();
-    private List<Organization> organizations = new();
-    private List<Team> teams = new();
-    private PagedResult<Workspace>? workspaces;
+    private List<OrganizationResponse> organizations = new();
+    private List<TeamResponse> teams = new();
+    private PagedResult<WorkspaceResponse>? workspaces;
     private string? search;
     private bool isModalOpen = false;
     private bool showFilterPanel = false;
 
     // Estado do modal de edição
     private bool isEditModalOpen = false;
-    private Workspace? selectedWorkspace = null;
+    private WorkspaceResponse? selectedWorkspace = null;
     private WorkspaceEditModel editWorkspace = new();
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Workspace? detailsWorkspace = null;
+    private WorkspaceResponse? detailsWorkspace = null;
 
     // Estado de confirmação de exclusão
     private Guid? deletingWorkspaceId = null;
@@ -210,18 +210,18 @@
     private async Task LoadOrganizations()
     {
         var result = await Api.GetOrganizationsAsync(null, 1, 100);
-        organizations = result?.Items.ToList() ?? new List<Organization>();
+        organizations = result?.Items.ToList() ?? new List<OrganizationResponse>();
     }
 
     private async Task LoadWorkspaces()
     {
-        workspaces = await Api.GetWorkspacesAsync(OrgContext.SelectedOrganizationId, search, 1, 20) ?? new PagedResult<Workspace>();
+        workspaces = await Api.GetWorkspacesAsync(OrgContext.SelectedOrganizationId, search, 1, 20) ?? new PagedResult<WorkspaceResponse>();
     }
 
     private async Task LoadTeams()
     {
         var result = await Api.GetTeamsAsync(null, null, null, 1, 100);
-        teams = result?.Items.ToList() ?? new List<Team>();
+        teams = result?.Items.ToList() ?? new List<TeamResponse>();
     }
 
     // Filter methods
@@ -245,7 +245,7 @@
     private int GetTotalWorkspacesCount() => workspaces?.Total ?? 0;
     private int GetTotalTeamsCount() => teams.Count;
 
-    private void OpenDetailsModal(Workspace workspace)
+    private void OpenDetailsModal(WorkspaceResponse workspace)
     {
         detailsWorkspace = workspace;
         isDetailsModalOpen = true;
@@ -299,7 +299,7 @@
             "Não foi possível criar o espaço de trabalho. Verifique os dados e tente novamente.");
     }
 
-    private void OpenEditModal(Workspace workspace)
+    private void OpenEditModal(WorkspaceResponse workspace)
     {
         selectedWorkspace = workspace;
         editWorkspace = new WorkspaceEditModel

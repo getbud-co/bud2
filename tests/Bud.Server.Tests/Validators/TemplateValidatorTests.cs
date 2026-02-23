@@ -6,11 +6,11 @@ using Xunit;
 
 namespace Bud.Server.Tests.Validators;
 
-#region CreateMissionTemplateValidator Tests
+#region CreateTemplateValidator Tests
 
-public sealed class CreateMissionTemplateValidatorTests
+public sealed class CreateTemplateValidatorTests
 {
-    private readonly CreateMissionTemplateValidator _validator = new();
+    private readonly CreateTemplateValidator _validator = new();
 
     [Fact]
     public async Task Validate_ValidRequest_Passes()
@@ -373,11 +373,11 @@ public sealed class CreateMissionTemplateValidatorTests
 
 #endregion
 
-#region PatchMissionTemplateValidator Tests
+#region PatchTemplateValidator Tests
 
-public sealed class UpdateMissionTemplateValidatorTests
+public sealed class PatchTemplateValidatorTests
 {
-    private readonly PatchMissionTemplateValidator _validator = new();
+    private readonly PatchTemplateValidator _validator = new();
 
     [Fact]
     public async Task Validate_ValidRequest_Passes()
@@ -647,11 +647,11 @@ public sealed class UpdateMissionTemplateValidatorTests
 
 #endregion
 
-#region MissionTemplateMetricDtoValidator Tests
+#region TemplateMetricDtoValidator Tests
 
-public sealed class MissionTemplateMetricDtoValidatorTests
+public sealed class TemplateMetricDtoValidatorTests
 {
-    private readonly MissionTemplateMetricDtoValidator _validator = new();
+    private readonly TemplateMetricDtoValidator _validator = new();
 
     #region General Validation Tests
 

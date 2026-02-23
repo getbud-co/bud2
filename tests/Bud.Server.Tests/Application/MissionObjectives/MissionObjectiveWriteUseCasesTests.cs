@@ -104,7 +104,7 @@ public sealed class MissionObjectiveWriteUseCasesTests
             .Setup(repository => repository.GetByIdAsync(objective.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(objective);
         _objectiveRepository
-            .Setup(repository => repository.GetByIdTrackedAsync(objective.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(objective.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(objective);
 
         _authorizationGateway

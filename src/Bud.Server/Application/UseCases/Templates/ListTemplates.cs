@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Server.MultiTenancy;
@@ -12,7 +11,7 @@ namespace Bud.Server.Application.UseCases.Templates;
 
 public sealed class ListTemplates(ITemplateRepository templateRepository)
 {
-    public async Task<Result<Bud.Shared.Contracts.Common.PagedResult<MissionTemplate>>> ExecuteAsync(
+    public async Task<Result<Bud.Shared.Contracts.Common.PagedResult<Template>>> ExecuteAsync(
         string? search,
         int page,
         int pageSize,
@@ -20,6 +19,6 @@ public sealed class ListTemplates(ITemplateRepository templateRepository)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
         var result = await templateRepository.GetAllAsync(search, page, pageSize, cancellationToken);
-        return Result<Bud.Shared.Contracts.Common.PagedResult<MissionTemplate>>.Success(result.MapPaged(x => x));
+        return Result<Bud.Shared.Contracts.Common.PagedResult<Template>>.Success(result.MapPaged(x => x));
     }
 }

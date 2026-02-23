@@ -70,7 +70,7 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
         return new PagedResult<Collaborator> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
-    public async Task<List<Collaborator>> GetCollaboratorSummariesAsync(Guid teamId, CancellationToken ct = default)
+    public async Task<List<Collaborator>> GetCollaboratorLookupAsync(Guid teamId, CancellationToken ct = default)
     {
         return await dbContext.CollaboratorTeams
             .AsNoTracking()
@@ -81,7 +81,7 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
             .ToListAsync(ct);
     }
 
-    public async Task<List<Collaborator>> GetAvailableCollaboratorsAsync(
+    public async Task<List<Collaborator>> GetEligibleCollaboratorsForAssignmentAsync(
         Guid teamId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
     {
         var currentCollaboratorIds = await dbContext.CollaboratorTeams

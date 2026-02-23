@@ -1,19 +1,20 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
+using Bud.Server.Domain.Model;
 
 namespace Bud.Server.Application.Mapping;
 
 internal static class MeContractMapper
 {
-    public static OrganizationSummaryResponse ToResponse(this OrganizationSummary source)
+    public static MyOrganizationResponse ToResponse(this OrganizationSnapshot source)
     {
-        return new OrganizationSummaryResponse
+        return new MyOrganizationResponse
         {
             Id = source.Id,
             Name = source.Name
         };
     }
 
-    public static MyDashboardResponse ToResponse(this MyDashboardSnapshot source)
+    public static MyDashboardResponse ToResponse(this DashboardSnapshot source)
     {
         return new MyDashboardResponse
         {
@@ -22,18 +23,23 @@ internal static class MeContractMapper
         };
     }
 
-    private static TeamHealthResponse ToResponse(this TeamHealthSnapshot source)
+    private static DashboardTeamHealthResponse ToResponse(this TeamHealthSnapshot source)
     {
-        return new TeamHealthResponse
+        return new DashboardTeamHealthResponse
         {
             Leader = source.Leader?.ToResponse(),
             TeamMembers = source.TeamMembers.Select(ToResponse).ToList(),
             Engagement = source.Engagement.ToResponse(),
-            Indicators = source.Indicators.ToResponse()
+            Indicators = new DashboardTeamIndicatorsResponse
+            {
+                WeeklyAccess = source.WeeklyAccess.ToResponse(),
+                MissionsUpdated = source.MissionsUpdated.ToResponse(),
+                FormsResponded = source.FormsResponded.ToResponse()
+            }
         };
     }
 
-    private static DashboardLeaderResponse ToResponse(this DashboardLeaderSnapshot source)
+    private static DashboardLeaderResponse ToResponse(this TeamLeaderSnapshot source)
     {
         return new DashboardLeaderResponse
         {
@@ -45,7 +51,7 @@ internal static class MeContractMapper
         };
     }
 
-    private static DashboardTeamMemberResponse ToResponse(this DashboardTeamMemberSnapshot source)
+    private static DashboardTeamMemberResponse ToResponse(this TeamMemberSnapshot source)
     {
         return new DashboardTeamMemberResponse
         {
@@ -55,9 +61,9 @@ internal static class MeContractMapper
         };
     }
 
-    private static EngagementScoreResponse ToResponse(this EngagementScoreSnapshot source)
+    private static DashboardEngagementScoreResponse ToResponse(this EngagementScore source)
     {
-        return new EngagementScoreResponse
+        return new DashboardEngagementScoreResponse
         {
             Score = source.Score,
             Level = source.Level,
@@ -65,19 +71,9 @@ internal static class MeContractMapper
         };
     }
 
-    private static TeamIndicatorsResponse ToResponse(this TeamIndicatorsSnapshot source)
+    private static DashboardIndicatorResponse ToResponse(this PerformanceIndicator source)
     {
-        return new TeamIndicatorsResponse
-        {
-            WeeklyAccess = source.WeeklyAccess.ToResponse(),
-            MissionsUpdated = source.MissionsUpdated.ToResponse(),
-            FormsResponded = source.FormsResponded.ToResponse()
-        };
-    }
-
-    private static IndicatorResponse ToResponse(this IndicatorSnapshot source)
-    {
-        return new IndicatorResponse
+        return new DashboardIndicatorResponse
         {
             Percentage = source.Percentage,
             DeltaPercentage = source.DeltaPercentage,
@@ -85,9 +81,9 @@ internal static class MeContractMapper
         };
     }
 
-    private static PendingTaskResponse ToResponse(this PendingTaskSnapshot source)
+    private static DashboardPendingTaskResponse ToResponse(this PendingTaskSnapshot source)
     {
-        return new PendingTaskResponse
+        return new DashboardPendingTaskResponse
         {
             ReferenceId = source.ReferenceId,
             TaskType = source.TaskType,

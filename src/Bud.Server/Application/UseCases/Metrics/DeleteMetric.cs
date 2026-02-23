@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
 using Bud.Server.Authorization;
-using Bud.Server.Domain.Abstractions;
 using Bud.Server.Domain.Repositories;
 
 namespace Bud.Server.Application.UseCases.Metrics;
@@ -33,7 +32,7 @@ public sealed class DeleteMetric(
             return Result.Forbidden("Você não tem permissão para excluir métricas nesta missão.");
         }
 
-        var metric = await metricRepository.GetByIdTrackingAsync(id, cancellationToken);
+        var metric = await metricRepository.GetByIdForUpdateAsync(id, cancellationToken);
         if (metric is null)
         {
             return Result.NotFound("Métrica da missão não encontrada.");

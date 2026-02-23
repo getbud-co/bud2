@@ -11,9 +11,9 @@ using FluentAssertions;
 using Moq;
 using Xunit;
 
-namespace Bud.Server.Tests.Application.MissionTemplates;
+namespace Bud.Server.Tests.Application.Templates;
 
-public sealed class MissionTemplateUseCasesTests
+public sealed class TemplateUseCasesTests
 {
     private static readonly ClaimsPrincipal User = new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test")]));
 
@@ -22,7 +22,7 @@ public sealed class MissionTemplateUseCasesTests
     private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     [Fact]
-    public async Task CreateStrategicMissionTemplate_WithValidRequest_CreatesTemplate()
+    public async Task CreateStrategicTemplate_WithValidRequest_CreatesTemplate()
     {
         var organizationId = Guid.NewGuid();
         _tenantProvider.SetupGet(provider => provider.TenantId).Returns(organizationId);
@@ -54,12 +54,12 @@ public sealed class MissionTemplateUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Template");
-        _repository.Verify(repository => repository.AddAsync(It.IsAny<MissionTemplate>(), It.IsAny<CancellationToken>()), Times.Once);
+        _repository.Verify(repository => repository.AddAsync(It.IsAny<Template>(), It.IsAny<CancellationToken>()), Times.Once);
         _repository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task CreateStrategicMissionTemplate_WhenUnauthorized_ReturnsForbidden()
+    public async Task CreateStrategicTemplate_WhenUnauthorized_ReturnsForbidden()
     {
         var tenantId = Guid.NewGuid();
         _tenantProvider.SetupGet(provider => provider.TenantId).Returns(tenantId);
@@ -76,19 +76,19 @@ public sealed class MissionTemplateUseCasesTests
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
-        _repository.Verify(repository => repository.AddAsync(It.IsAny<MissionTemplate>(), It.IsAny<CancellationToken>()), Times.Never);
+        _repository.Verify(repository => repository.AddAsync(It.IsAny<Template>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task ReviseStrategicMissionTemplate_WithExistingTemplate_UpdatesSuccessfully()
+    public async Task ReviseStrategicTemplate_WithExistingTemplate_UpdatesSuccessfully()
     {
-        var template = new MissionTemplate
+        var template = new Template
         {
             Id = Guid.NewGuid(),
             Name = "Original",
             OrganizationId = Guid.NewGuid(),
-            Objectives = new List<MissionTemplateObjective>(),
-            Metrics = new List<MissionTemplateMetric>()
+            Objectives = new List<TemplateObjective>(),
+            Metrics = new List<TemplateMetric>()
         };
 
         _repository
@@ -96,7 +96,7 @@ public sealed class MissionTemplateUseCasesTests
             .ReturnsAsync(template);
         _repository
             .Setup(repository => repository.GetByIdReadOnlyAsync(template.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MissionTemplate { Id = template.Id, Name = "Updated", OrganizationId = template.OrganizationId });
+            .ReturnsAsync(new Template { Id = template.Id, Name = "Updated", OrganizationId = template.OrganizationId });
         _authorizationGateway
             .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, template.OrganizationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -113,11 +113,11 @@ public sealed class MissionTemplateUseCasesTests
     }
 
     [Fact]
-    public async Task ReviseStrategicMissionTemplate_WhenNotFound_ReturnsNotFound()
+    public async Task ReviseStrategicTemplate_WhenNotFound_ReturnsNotFound()
     {
         _repository
             .Setup(repository => repository.GetByIdWithChildrenAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MissionTemplate?)null);
+            .ReturnsAsync((Template?)null);
 
         var useCase = new PatchTemplate(
             _repository.Object,
@@ -130,9 +130,9 @@ public sealed class MissionTemplateUseCasesTests
     }
 
     [Fact]
-    public async Task RemoveStrategicMissionTemplate_WithExistingTemplate_DeletesSuccessfully()
+    public async Task RemoveStrategicTemplate_WithExistingTemplate_DeletesSuccessfully()
     {
-        var template = new MissionTemplate
+        var template = new Template
         {
             Id = Guid.NewGuid(),
             Name = "Template",
@@ -158,11 +158,11 @@ public sealed class MissionTemplateUseCasesTests
     }
 
     [Fact]
-    public async Task RemoveStrategicMissionTemplate_WhenNotFound_ReturnsNotFound()
+    public async Task RemoveStrategicTemplate_WhenNotFound_ReturnsNotFound()
     {
         _repository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MissionTemplate?)null);
+            .ReturnsAsync((Template?)null);
 
         var useCase = new DeleteTemplate(
             _repository.Object,
@@ -175,12 +175,12 @@ public sealed class MissionTemplateUseCasesTests
     }
 
     [Fact]
-    public async Task ViewStrategicMissionTemplate_WithExistingTemplate_ReturnsSuccess()
+    public async Task ViewStrategicTemplate_WithExistingTemplate_ReturnsSuccess()
     {
         var templateId = Guid.NewGuid();
         _repository
             .Setup(repository => repository.GetByIdReadOnlyAsync(templateId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MissionTemplate { Id = templateId, Name = "Template", OrganizationId = Guid.NewGuid() });
+            .ReturnsAsync(new Template { Id = templateId, Name = "Template", OrganizationId = Guid.NewGuid() });
 
         var useCase = new GetTemplateById(_repository.Object);
 
@@ -191,11 +191,11 @@ public sealed class MissionTemplateUseCasesTests
     }
 
     [Fact]
-    public async Task ListMissionTemplates_ReturnsSuccess()
+    public async Task ListTemplates_ReturnsSuccess()
     {
-        var pagedResult = new PagedResult<MissionTemplate>
+        var pagedResult = new PagedResult<Template>
         {
-            Items = [new MissionTemplate { Id = Guid.NewGuid(), Name = "T1", OrganizationId = Guid.NewGuid() }],
+            Items = [new Template { Id = Guid.NewGuid(), Name = "T1", OrganizationId = Guid.NewGuid() }],
             Total = 1,
             Page = 1,
             PageSize = 10

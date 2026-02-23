@@ -1,4 +1,3 @@
-using Bud.Server.Domain.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Bud.Server.Infrastructure.DomainEvents;
@@ -16,9 +15,9 @@ public sealed class DomainEventDispatcher(IServiceProvider serviceProvider) : ID
 
         foreach (var domainEvent in domainEvents)
         {
-            var handlerType = typeof(IDomainEventConsumer<>).MakeGenericType(domainEvent.GetType());
+            var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEvent.GetType());
             var handlers = serviceProvider.GetServices(handlerType);
-            var handleMethod = handlerType.GetMethod(nameof(IDomainEventConsumer<IDomainEvent>.HandleAsync))
+            var handleMethod = handlerType.GetMethod(nameof(IDomainEventHandler<IDomainEvent>.HandleAsync))
                 ?? throw new InvalidOperationException($"Método HandleAsync não encontrado para {handlerType.Name}.");
 
             foreach (var handler in handlers)

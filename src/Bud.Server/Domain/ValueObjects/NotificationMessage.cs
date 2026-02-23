@@ -1,4 +1,4 @@
-namespace Bud.Server.Domain.Model;
+namespace Bud.Server.Domain.ValueObjects;
 
 public readonly record struct NotificationMessage
 {
@@ -28,6 +28,16 @@ public readonly record struct NotificationMessage
 
         message = new NotificationMessage(normalized);
         return true;
+    }
+
+    public static NotificationMessage Create(string? raw)
+    {
+        if (!TryCreate(raw, out var message))
+        {
+            throw new DomainInvariantException("A mensagem da notificação é inválida.");
+        }
+
+        return message;
     }
 
     public override string ToString() => Value;

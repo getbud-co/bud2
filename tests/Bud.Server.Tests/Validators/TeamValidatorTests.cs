@@ -98,7 +98,7 @@ public class TeamValidatorTests
     #region PatchTeamValidator Tests
 
     [Fact]
-    public void UpdateTeamValidator_WithValidRequest_PassesValidation()
+    public void PatchTeamValidator_WithValidRequest_PassesValidation()
     {
         var validator = new PatchTeamValidator();
         var request = new PatchTeamRequest
@@ -113,7 +113,7 @@ public class TeamValidatorTests
     }
 
     [Fact]
-    public void UpdateTeamValidator_WithEmptyName_FailsValidation()
+    public void PatchTeamValidator_WithEmptyName_FailsValidation()
     {
         var validator = new PatchTeamValidator();
         var request = new PatchTeamRequest
@@ -129,7 +129,7 @@ public class TeamValidatorTests
     }
 
     [Fact]
-    public void UpdateTeamValidator_WithEmptyLeaderId_FailsValidation()
+    public void PatchTeamValidator_WithEmptyLeaderId_FailsValidation()
     {
         var validator = new PatchTeamValidator();
         var request = new PatchTeamRequest

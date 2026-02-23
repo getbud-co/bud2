@@ -1,7 +1,6 @@
 using Bud.Server.Application.UseCases.Collaborators;
 using Bud.Server.Application.Common;
 using Bud.Server.Application.Mapping;
-using Bud.Server.Domain.ReadModels;
 using Bud.Server.Domain.Model;
 using Bud.Server.Domain.Repositories;
 using Bud.Shared.Contracts;
@@ -86,7 +85,7 @@ public sealed class CollaboratorReadUseCasesTests
                 OrganizationId = organizationId
             });
         _collaboratorRepository
-            .Setup(repository => repository.GetAvailableTeamsAsync(collaboratorId, organizationId, "produto", 50, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetEligibleTeamsForAssignmentAsync(collaboratorId, organizationId, "produto", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListAvailableTeamsForCollaborator(_collaboratorRepository.Object);
@@ -95,7 +94,7 @@ public sealed class CollaboratorReadUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         _collaboratorRepository.Verify(
-            repository => repository.GetAvailableTeamsAsync(collaboratorId, organizationId, "produto", 50, It.IsAny<CancellationToken>()),
+            repository => repository.GetEligibleTeamsForAssignmentAsync(collaboratorId, organizationId, "produto", 50, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

@@ -38,12 +38,12 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public Mission Mission { get; set; } = default!;
-    [Parameter, EditorRequired] public Metric Metric { get; set; } = default!;
+    [Parameter, EditorRequired] public MissionResponse Mission { get; set; } = default!;
+    [Parameter, EditorRequired] public MetricResponse Metric { get; set; } = default!;
     [Parameter] public MissionProgressResponse? MissionProgressResponse { get; set; }
     [Parameter] public MetricProgressResponse? MetricProgressResponse { get; set; }
-    [Parameter] public EventCallback<Metric> OnCheckinClick { get; set; }
-    [Parameter] public EventCallback<Metric> OnHistoryClick { get; set; }
+    [Parameter] public EventCallback<MetricResponse> OnCheckinClick { get; set; }
+    [Parameter] public EventCallback<MetricResponse> OnHistoryClick { get; set; }
 
     private int MetricProgressPercent => (int)(MetricProgressResponse?.Progress ?? 0);
     private decimal ExpectedProgress => MissionProgressResponse?.ExpectedProgress ?? 0m;
@@ -69,7 +69,7 @@
         return "off-track";
     }
 
-    private static string GetMetricStatusLabel(int progress, decimal expectedProgress, Metric metric)
+    private static string GetMetricStatusLabel(int progress, decimal expectedProgress, MetricResponse metric)
     {
         if (metric.Type == MetricType.Qualitative) return "Qualitativo";
         if (expectedProgress <= 0) return "Dentro do previsto";

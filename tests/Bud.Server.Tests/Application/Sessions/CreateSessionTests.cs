@@ -1,6 +1,6 @@
 using Bud.Server.Application.Ports;
 using Bud.Server.Application.UseCases.Sessions;
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Shared.Contracts;
 using FluentAssertions;
 using Moq;
@@ -20,7 +20,7 @@ public sealed class CreateSessionTests
         var authService = new Mock<IAuthService>();
         authService
             .Setup(s => s.LoginAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<AuthLoginResult>.Success(new AuthLoginResult
+            .ReturnsAsync(Result<LoginResult>.Success(new LoginResult
             {
                 Token = "token",
                 Email = request.Email,

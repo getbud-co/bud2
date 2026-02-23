@@ -59,7 +59,7 @@ public sealed class MetricRepositoryTests
             MissionId = mission.Id,
             OrganizationId = mission.OrganizationId
         };
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         var result = await repository.GetByIdAsync(metric.Id);
@@ -91,7 +91,7 @@ public sealed class MetricRepositoryTests
         var repository = new MetricRepository(context);
         var mission = await CreateTestMission(context);
 
-        context.MissionMetrics.AddRange(
+        context.Metrics.AddRange(
             new Metric
             {
                 Id = Guid.NewGuid(),
@@ -124,7 +124,7 @@ public sealed class MetricRepositoryTests
         var mission1 = await CreateTestMission(context);
         var mission2 = await CreateTestMission(context);
 
-        context.MissionMetrics.AddRange(
+        context.Metrics.AddRange(
             new Metric
             {
                 Id = Guid.NewGuid(),
@@ -157,7 +157,7 @@ public sealed class MetricRepositoryTests
         var mission = await CreateTestMission(context);
 
         var objectiveId = Guid.NewGuid();
-        context.MissionMetrics.AddRange(
+        context.Metrics.AddRange(
             new Metric
             {
                 Id = Guid.NewGuid(),
@@ -192,7 +192,7 @@ public sealed class MetricRepositoryTests
 
         for (int i = 0; i < 5; i++)
         {
-            context.MissionMetrics.Add(new Metric
+            context.Metrics.Add(new Metric
             {
                 Id = Guid.NewGuid(),
                 Name = $"Metric {i:D2}",
@@ -257,7 +257,7 @@ public sealed class MetricRepositoryTests
             MissionId = mission.Id,
             OrganizationId = mission.OrganizationId
         };
-        context.MissionObjectives.Add(objective);
+        context.Objectives.Add(objective);
         await context.SaveChangesAsync();
 
         var result = await repository.GetObjectiveByIdAsync(objective.Id);
@@ -298,7 +298,7 @@ public sealed class MetricRepositoryTests
         await repository.AddAsync(metric);
         await repository.SaveChangesAsync();
 
-        var persisted = await context.MissionMetrics.FindAsync(metric.Id);
+        var persisted = await context.Metrics.FindAsync(metric.Id);
         persisted.Should().NotBeNull();
         persisted!.Name.Should().Be("New Metric");
     }
@@ -318,13 +318,13 @@ public sealed class MetricRepositoryTests
             MissionId = mission.Id,
             OrganizationId = mission.OrganizationId
         };
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         await repository.RemoveAsync(metric);
         await repository.SaveChangesAsync();
 
-        var persisted = await context.MissionMetrics.FindAsync(metric.Id);
+        var persisted = await context.Metrics.FindAsync(metric.Id);
         persisted.Should().BeNull();
     }
 

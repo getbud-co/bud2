@@ -10,8 +10,8 @@ public interface ICollaboratorRepository
     Task<List<Collaborator>> GetLeadersAsync(Guid? organizationId, CancellationToken ct = default);
     Task<List<Collaborator>> GetSubordinatesAsync(Guid collaboratorId, int maxDepth, CancellationToken ct = default);
     Task<List<Team>> GetTeamsAsync(Guid collaboratorId, CancellationToken ct = default);
-    Task<List<Team>> GetAvailableTeamsAsync(Guid collaboratorId, Guid organizationId, string? search, int limit, CancellationToken ct = default);
-    Task<List<Collaborator>> GetSummariesAsync(string? search, int limit, CancellationToken ct = default);
+    Task<List<Team>> GetEligibleTeamsForAssignmentAsync(Guid collaboratorId, Guid organizationId, string? search, int limit, CancellationToken ct = default);
+    Task<List<Collaborator>> GetLookupAsync(string? search, int limit, CancellationToken ct = default);
     Task<bool> ExistsAsync(Guid id, CancellationToken ct = default);
     Task<bool> IsEmailUniqueAsync(string email, Guid? excludeId, CancellationToken ct = default);
     Task<bool> HasSubordinatesAsync(Guid collaboratorId, CancellationToken ct = default);

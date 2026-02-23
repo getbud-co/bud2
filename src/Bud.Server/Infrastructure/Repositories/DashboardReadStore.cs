@@ -1,4 +1,4 @@
-using Bud.Server.Domain.ReadModels;
+using Bud.Server.Application.ReadModels;
 using Bud.Server.Application.Ports;
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Server.Domain.Model;
@@ -8,7 +8,7 @@ namespace Bud.Server.Infrastructure.Repositories;
 
 public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDashboardReadStore
 {
-    public async Task<MyDashboardSnapshot?> GetMyDashboardAsync(
+    public async Task<DashboardSnapshot?> GetMyDashboardAsync(
         Guid collaboratorId,
         Guid? teamId,
         CancellationToken ct = default)
@@ -68,7 +68,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         var teamHealth = await BuildTeamHealthAsync(leaderSource, teamMembers, collaborator.OrganizationId, teamNameOverride, ct);
         var pendingTasks = await BuildPendingTasksAsync(collaborator, ct);
 
-        return new MyDashboardSnapshot
+        return new DashboardSnapshot
         {
             TeamHealth = teamHealth,
             PendingTasks = pendingTasks
@@ -88,7 +88,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
 
         var weeklyAccess = await CalculateWeeklyAccessAsync(teamMemberIds, organizationId, ct);
         var missionsUpdated = await CalculateMissionsUpdatedAsync(teamMemberIds, ct);
-        var formsResponded = new IndicatorSnapshot { Percentage = 0, DeltaPercentage = 0, IsPlaceholder = true };
+        var formsResponded = PerformanceIndicator.Placeholder();
 
         var avgConfidence = await CalculateAverageConfidenceAsync(teamMemberIds, ct);
         var engagement = CalculateEngagement(weeklyAccess.Percentage, missionsUpdated.Percentage, avgConfidence);
@@ -98,23 +98,20 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             Leader = leader,
             TeamMembers = teamMemberDtos,
             Engagement = engagement,
-            Indicators = new TeamIndicatorsSnapshot
-            {
-                WeeklyAccess = weeklyAccess,
-                MissionsUpdated = missionsUpdated,
-                FormsResponded = formsResponded
-            }
+            WeeklyAccess = weeklyAccess,
+            MissionsUpdated = missionsUpdated,
+            FormsResponded = formsResponded
         };
     }
 
-    private static DashboardLeaderSnapshot? BuildLeaderDto(Collaborator? leaderSource, string? teamNameOverride = null)
+    private static TeamLeaderSnapshot? BuildLeaderDto(Collaborator? leaderSource, string? teamNameOverride = null)
     {
         if (leaderSource is null)
         {
             return null;
         }
 
-        return new DashboardLeaderSnapshot
+        return new TeamLeaderSnapshot
         {
             Id = leaderSource.Id,
             FullName = leaderSource.FullName,
@@ -124,9 +121,9 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         };
     }
 
-    private static List<DashboardTeamMemberSnapshot> BuildTeamMembers(List<Collaborator> members)
+    private static List<TeamMemberSnapshot> BuildTeamMembers(List<Collaborator> members)
     {
-        return members.Select(m => new DashboardTeamMemberSnapshot
+        return members.Select(m => new TeamMemberSnapshot
         {
             Id = m.Id,
             FullName = m.FullName,
@@ -134,14 +131,14 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         }).ToList();
     }
 
-    private async Task<IndicatorSnapshot> CalculateWeeklyAccessAsync(
+    private async Task<PerformanceIndicator> CalculateWeeklyAccessAsync(
         List<Guid> teamMemberIds,
         Guid organizationId,
         CancellationToken ct)
     {
         if (teamMemberIds.Count == 0)
         {
-            return new IndicatorSnapshot { Percentage = 0, DeltaPercentage = 0 };
+            return PerformanceIndicator.Zero();
         }
 
         var now = DateTime.UtcNow;
@@ -171,20 +168,16 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         var currentPct = (int)Math.Round(thisWeekCount * 100.0 / total);
         var previousPct = (int)Math.Round(lastWeekCount * 100.0 / total);
 
-        return new IndicatorSnapshot
-        {
-            Percentage = currentPct,
-            DeltaPercentage = currentPct - previousPct
-        };
+        return PerformanceIndicator.Create(currentPct, currentPct - previousPct);
     }
 
-    private async Task<IndicatorSnapshot> CalculateMissionsUpdatedAsync(
+    private async Task<PerformanceIndicator> CalculateMissionsUpdatedAsync(
         List<Guid> teamMemberIds,
         CancellationToken ct)
     {
         if (teamMemberIds.Count == 0)
         {
-            return new IndicatorSnapshot { Percentage = 0, DeltaPercentage = 0 };
+            return PerformanceIndicator.Zero();
         }
 
         var now = DateTime.UtcNow;
@@ -202,10 +195,10 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
 
         if (activeMissionIds.Count == 0)
         {
-            return new IndicatorSnapshot { Percentage = 0, DeltaPercentage = 0 };
+            return PerformanceIndicator.Zero();
         }
 
-        var metricIdsForActiveMissions = await dbContext.MissionMetrics
+        var metricIdsForActiveMissions = await dbContext.Metrics
             .AsNoTracking()
             .Where(mm => activeMissionIds.Contains(mm.MissionId))
             .Select(mm => mm.Id)
@@ -213,7 +206,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
 
         if (metricIdsForActiveMissions.Count == 0)
         {
-            return new IndicatorSnapshot { Percentage = 0, DeltaPercentage = 0 };
+            return PerformanceIndicator.Zero();
         }
 
         var thisWeekUpdated = await dbContext.MetricCheckins
@@ -237,11 +230,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         var currentPct = (int)Math.Round(thisWeekUpdated * 100.0 / totalActive);
         var previousPct = (int)Math.Round(lastWeekUpdated * 100.0 / totalActive);
 
-        return new IndicatorSnapshot
-        {
-            Percentage = currentPct,
-            DeltaPercentage = currentPct - previousPct
-        };
+        return PerformanceIndicator.Create(currentPct, currentPct - previousPct);
     }
 
     private async Task<int> CalculateAverageConfidenceAsync(
@@ -270,26 +259,12 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         return (int)Math.Round((avg / 5.0) * 100);
     }
 
-    private static EngagementScoreSnapshot CalculateEngagement(int weeklyAccessPct, int missionsUpdatedPct, int confidencePct)
+    private static EngagementScore CalculateEngagement(int weeklyAccessPct, int missionsUpdatedPct, int confidencePct)
     {
         var score = (int)Math.Round(weeklyAccessPct * 0.30 + missionsUpdatedPct * 0.40 + confidencePct * 0.30);
         score = Math.Clamp(score, 0, 100);
 
-        var level = score >= 70 ? "high" : score >= 40 ? "medium" : "low";
-
-        var tip = level switch
-        {
-            "high" => "Excelente! Seu time está engajado e acompanhando as missões de perto.",
-            "medium" => "Bom progresso! Incentive o time a manter a frequência de check-ins.",
-            _ => "Atenção: o engajamento está baixo. Considere alinhar prioridades com o time."
-        };
-
-        return new EngagementScoreSnapshot
-        {
-            Score = score,
-            Level = level,
-            Tip = tip
-        };
+        return EngagementScore.Create(score);
     }
 
     private async Task<List<PendingTaskSnapshot>> BuildPendingTasksAsync(

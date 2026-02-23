@@ -30,7 +30,7 @@ public sealed class TemplatesController(
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TemplateResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<MissionTemplate>> Create(CreateTemplateRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Template>> Create(CreateTemplateRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -53,7 +53,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(TemplateResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MissionTemplate>> Update(Guid id, PatchTemplateRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Template>> Update(Guid id, PatchTemplateRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -87,7 +87,7 @@ public sealed class TemplatesController(
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TemplateResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MissionTemplate>> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<Template>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await getTemplateById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
@@ -99,9 +99,9 @@ public sealed class TemplatesController(
     /// <response code="200">Lista paginada retornada com sucesso.</response>
     /// <response code="400">Parâmetros de filtro/paginação inválidos.</response>
     [HttpGet]
-    [ProducesResponseType(typeof(PagedResult<MissionTemplate>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<Template>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PagedResult<MissionTemplate>>> GetAll(
+    public async Task<ActionResult<PagedResult<Template>>> GetAll(
         [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,

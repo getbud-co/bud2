@@ -10,12 +10,12 @@ using Xunit;
 
 namespace Bud.Server.IntegrationTests.Endpoints;
 
-public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory>
+public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private readonly CustomWebApplicationFactory _factory;
 
-    public MissionTemplatesEndpointsTests(CustomWebApplicationFactory factory)
+    public TemplatesEndpointsTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateGlobalAdminClient();
@@ -30,7 +30,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         _client.DefaultRequestHeaders.Add("X-Tenant-Id", orgId.ToString());
     }
 
-    private async Task<MissionTemplate> CreateTestTemplate()
+    private async Task<Template> CreateTestTemplate()
     {
         var request = new CreateTemplateRequest
         {
@@ -51,7 +51,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         };
         var response = await _client.PostAsJsonAsync("/api/templates", request);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<MissionTemplate>())!;
+        return (await response.Content.ReadFromJsonAsync<Template>())!;
     }
 
     #region Create Tests
@@ -92,7 +92,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Name.Should().Be("Valid Template");
         template.Description.Should().Be("A valid mission template");
@@ -138,11 +138,11 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Objectives.Should().ContainSingle();
         template.Metrics.Should().ContainSingle();
-        template.Metrics.First().MissionTemplateObjectiveId.Should().Be(template.Objectives.First().Id);
+        template.Metrics.First().TemplateObjectiveId.Should().Be(template.Objectives.First().Id);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Id.Should().Be(created.Id);
         template.Name.Should().Be(created.Name);
@@ -214,7 +214,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<MissionTemplate>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Template>>();
         result.Should().NotBeNull();
         result!.Page.Should().Be(1);
         result.PageSize.Should().Be(10);
@@ -258,7 +258,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updated = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var updated = await response.Content.ReadFromJsonAsync<Template>();
         updated.Should().NotBeNull();
         updated!.Name.Should().Be("Updated Template Name");
         updated.Description.Should().Be("Updated description");

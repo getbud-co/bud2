@@ -55,7 +55,7 @@ public sealed class NotificationsController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid id, CancellationToken cancellationToken)
     {
         var result = await patchNotification.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
@@ -69,7 +69,7 @@ public sealed class NotificationsController(
     [HttpPatch]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateAll(CancellationToken cancellationToken)
     {
         var result = await patchNotifications.ExecuteAsync(cancellationToken);
         return FromResult(result, NoContent);

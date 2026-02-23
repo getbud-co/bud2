@@ -101,7 +101,7 @@ public sealed class BudApiSessionTests
                 request.Headers.Authorization!.Scheme.Should().Be("Bearer");
                 request.Headers.Authorization.Parameter.Should().Be("jwt-token");
 
-                return JsonResponse(new List<OrganizationSummaryResponse>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = Guid.NewGuid(), Name = "Org 1" }
                 });
@@ -140,7 +140,7 @@ public sealed class BudApiSessionTests
 
             if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryResponse>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = validTenantId, Name = "Org Válida" }
                 });

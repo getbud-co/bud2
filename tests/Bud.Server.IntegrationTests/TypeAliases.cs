@@ -6,5 +6,5 @@ global using Mission = Bud.Server.Domain.Model.Mission;
 global using Metric = Bud.Server.Domain.Model.Metric;
 global using Objective = Bud.Server.Domain.Model.Objective;
 global using MetricCheckin = Bud.Server.Domain.Model.MetricCheckin;
-global using MissionTemplate = Bud.Server.Domain.Model.MissionTemplate;
-global using CollaboratorTeamResponse = Bud.Server.Domain.Model.CollaboratorTeam;
+global using Template = Bud.Server.Domain.Model.Template;
+global using CollaboratorTeam = Bud.Server.Domain.Model.CollaboratorTeam;
