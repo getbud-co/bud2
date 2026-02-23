@@ -39,7 +39,7 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Name" && e.ErrorMessage == "Nome é obrigatório.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("Name") && e.ErrorMessage == "Nome é obrigatório.");
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "WorkspaceId" && e.ErrorMessage == "Workspace é obrigatório.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("WorkspaceId") && e.ErrorMessage == "Workspace é obrigatório.");
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "LeaderId" && e.ErrorMessage == "Líder é obrigatório.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("LeaderId") && e.ErrorMessage == "Líder é obrigatório.");
     }
 
     [Fact]
@@ -90,18 +90,18 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Name" && e.ErrorMessage == "Nome deve ter no máximo 200 caracteres.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("Name") && e.ErrorMessage == "Nome deve ter no máximo 200 caracteres.");
     }
 
     #endregion
 
-    #region UpdateTeamValidator Tests
+    #region PatchTeamValidator Tests
 
     [Fact]
-    public void UpdateTeamValidator_WithValidRequest_PassesValidation()
+    public void PatchTeamValidator_WithValidRequest_PassesValidation()
     {
-        var validator = new UpdateTeamValidator();
-        var request = new UpdateTeamRequest
+        var validator = new PatchTeamValidator();
+        var request = new PatchTeamRequest
         {
             Name = "Test Team",
             LeaderId = Guid.NewGuid()
@@ -113,10 +113,10 @@ public class TeamValidatorTests
     }
 
     [Fact]
-    public void UpdateTeamValidator_WithEmptyName_FailsValidation()
+    public void PatchTeamValidator_WithEmptyName_FailsValidation()
     {
-        var validator = new UpdateTeamValidator();
-        var request = new UpdateTeamRequest
+        var validator = new PatchTeamValidator();
+        var request = new PatchTeamRequest
         {
             Name = "",
             LeaderId = Guid.NewGuid()
@@ -125,14 +125,14 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Name" && e.ErrorMessage == "Nome é obrigatório.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("Name") && e.ErrorMessage == "Nome é obrigatório.");
     }
 
     [Fact]
-    public void UpdateTeamValidator_WithEmptyLeaderId_FailsValidation()
+    public void PatchTeamValidator_WithEmptyLeaderId_FailsValidation()
     {
-        var validator = new UpdateTeamValidator();
-        var request = new UpdateTeamRequest
+        var validator = new PatchTeamValidator();
+        var request = new PatchTeamRequest
         {
             Name = "Test Team",
             LeaderId = Guid.Empty
@@ -141,7 +141,7 @@ public class TeamValidatorTests
         var result = validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "LeaderId" && e.ErrorMessage == "Líder é obrigatório.");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("LeaderId") && e.ErrorMessage == "Líder é obrigatório.");
     }
 
     #endregion

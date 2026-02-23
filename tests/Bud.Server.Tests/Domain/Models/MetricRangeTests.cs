@@ -1,4 +1,3 @@
-using Bud.Shared.Domain;
 using FluentAssertions;
 using Xunit;
 

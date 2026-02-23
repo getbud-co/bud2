@@ -16,12 +16,13 @@ public sealed class CreateWorkspaceValidator : AbstractValidator<CreateWorkspace
     }
 }
 
-public sealed class UpdateWorkspaceValidator : AbstractValidator<UpdateWorkspaceRequest>
+public sealed class PatchWorkspaceValidator : AbstractValidator<PatchWorkspaceRequest>
 {
-    public UpdateWorkspaceValidator()
+    public PatchWorkspaceValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(x => x.Name.Value)
             .NotEmpty().WithMessage("Nome é obrigatório.")
-            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres.");
+            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres.")
+            .When(x => x.Name.HasValue);
     }
 }

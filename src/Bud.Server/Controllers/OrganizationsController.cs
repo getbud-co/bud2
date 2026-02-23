@@ -1,10 +1,10 @@
-using Bud.Server.Application.Organizations;
+using Bud.Server.Application.UseCases.Organizations;
 using Bud.Server.Authorization;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Bud.Server.Domain.Model;
 
 namespace Bud.Server.Controllers;
 
@@ -13,10 +13,15 @@ namespace Bud.Server.Controllers;
 [Route("api/organizations")]
 [Produces("application/json")]
 public sealed class OrganizationsController(
-    IOrganizationCommandUseCase organizationCommandUseCase,
-    IOrganizationQueryUseCase organizationQueryUseCase,
+    CreateOrganization createOrganization,
+    PatchOrganization patchOrganization,
+    DeleteOrganization deleteOrganization,
+    GetOrganizationById getOrganizationById,
+    ListOrganizations listOrganizations,
+    ListOrganizationWorkspaces listOrganizationWorkspaces,
+    ListOrganizationCollaborators listOrganizationCollaborators,
     IValidator<CreateOrganizationRequest> createValidator,
-    IValidator<UpdateOrganizationRequest> updateValidator) : ApiControllerBase
+    IValidator<PatchOrganizationRequest> updateValidator) : ApiControllerBase
 {
     /// <summary>
     /// Cria uma organização.
@@ -27,7 +32,7 @@ public sealed class OrganizationsController(
     [HttpPost]
     [Authorize(Policy = AuthorizationPolicies.GlobalAdmin)]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Organization), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -39,7 +44,7 @@ public sealed class OrganizationsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await organizationCommandUseCase.CreateAsync(request, cancellationToken);
+        var result = await createOrganization.ExecuteAsync(request, cancellationToken);
         return FromResult(result, organization => CreatedAtAction(nameof(GetById), new { id = organization.Id }, organization));
     }
 
@@ -50,14 +55,14 @@ public sealed class OrganizationsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Organização não encontrada.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPatch("{id:guid}")]
     [Authorize(Policy = AuthorizationPolicies.GlobalAdmin)]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Organization), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<Organization>> Update(Guid id, UpdateOrganizationRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Organization>> Update(Guid id, PatchOrganizationRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -65,7 +70,7 @@ public sealed class OrganizationsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await organizationCommandUseCase.UpdateAsync(id, request, cancellationToken);
+        var result = await patchOrganization.ExecuteAsync(id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -84,7 +89,7 @@ public sealed class OrganizationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await organizationCommandUseCase.DeleteAsync(id, cancellationToken);
+        var result = await deleteOrganization.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -94,11 +99,11 @@ public sealed class OrganizationsController(
     /// <response code="200">Organização encontrada.</response>
     /// <response code="404">Organização não encontrada.</response>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(Organization), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Organization>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await organizationQueryUseCase.GetByIdAsync(id, cancellationToken);
+        var result = await getOrganizationById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -128,7 +133,7 @@ public sealed class OrganizationsController(
             return paginationValidation;
         }
 
-        var result = await organizationQueryUseCase.GetAllAsync(searchValidation.Value, page, pageSize, cancellationToken);
+        var result = await listOrganizations.ExecuteAsync(searchValidation.Value, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -154,7 +159,7 @@ public sealed class OrganizationsController(
             return paginationValidation;
         }
 
-        var result = await organizationQueryUseCase.GetWorkspacesAsync(id, page, pageSize, cancellationToken);
+        var result = await listOrganizationWorkspaces.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -180,7 +185,7 @@ public sealed class OrganizationsController(
             return paginationValidation;
         }
 
-        var result = await organizationQueryUseCase.GetCollaboratorsAsync(id, page, pageSize, cancellationToken);
+        var result = await listOrganizationCollaborators.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 }

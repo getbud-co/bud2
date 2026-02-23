@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using System.Globalization;
 using Bud.Mcp.Tests.Helpers;
 using Bud.Mcp.Tools;
-using Bud.Shared.Domain;
+using Bud.Shared.Contracts;
 
 namespace Bud.Mcp.Tests.Tools;
 
@@ -222,9 +222,9 @@ public sealed class McpToolServiceTests
         var tenantId = Guid.NewGuid();
         var handler = new StubHttpMessageHandler(request =>
         {
-            if (request.RequestUri!.AbsolutePath == "/api/auth/login")
+            if (request.RequestUri!.AbsolutePath == "/api/sessions")
             {
-                return JsonResponse(new AuthLoginResponse
+                return JsonResponse(new SessionResponse
                 {
                     Token = "jwt-token",
                     Email = "user@getbud.co",
@@ -232,9 +232,9 @@ public sealed class McpToolServiceTests
                 });
             }
 
-            if (request.RequestUri.AbsolutePath == "/api/auth/my-organizations")
+            if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryDto>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
@@ -257,9 +257,9 @@ public sealed class McpToolServiceTests
 
         var handler = new StubHttpMessageHandler(request =>
         {
-            if (request.RequestUri!.AbsolutePath == "/api/auth/login")
+            if (request.RequestUri!.AbsolutePath == "/api/sessions")
             {
-                return JsonResponse(new AuthLoginResponse
+                return JsonResponse(new SessionResponse
                 {
                     Token = "jwt-token",
                     Email = "user@getbud.co",
@@ -268,17 +268,17 @@ public sealed class McpToolServiceTests
                 });
             }
 
-            if (request.RequestUri.AbsolutePath == "/api/auth/my-organizations")
+            if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryDto>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
             }
 
-            if (request.Method == HttpMethod.Put && request.RequestUri.AbsolutePath == $"/api/missions/{missionId}")
+            if (request.Method == HttpMethod.Patch && request.RequestUri.AbsolutePath == $"/api/missions/{missionId}")
             {
-                return JsonResponse(new Mission
+                return JsonResponse(new MissionResponse
                 {
                     Id = missionId,
                     Name = "Missão atualizada",

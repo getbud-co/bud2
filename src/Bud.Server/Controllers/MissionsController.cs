@@ -1,11 +1,11 @@
-using Bud.Server.Application.MissionObjectives;
-using Bud.Server.Application.Missions;
+using Bud.Server.Application.UseCases.Objectives;
+using Bud.Server.Application.UseCases.Missions;
 using Bud.Server.Authorization;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Bud.Server.Domain.Model;
 
 namespace Bud.Server.Controllers;
 
@@ -14,11 +14,16 @@ namespace Bud.Server.Controllers;
 [Route("api/missions")]
 [Produces("application/json")]
 public sealed class MissionsController(
-    IMissionCommandUseCase missionCommandUseCase,
-    IMissionQueryUseCase missionQueryUseCase,
-    IMissionObjectiveQueryUseCase missionObjectiveQueryUseCase,
+    CreateMission createMission,
+    PatchMission patchMission,
+    DeleteMission deleteMission,
+    GetMissionById getMissionById,
+    ListMissionsByScope listMissionsByScope,
+    ListMissionProgress listMissionProgress,
+    ListMissionMetrics listMissionMetrics,
+    ListObjectivesByMission listObjectivesByMission,
     IValidator<CreateMissionRequest> createValidator,
-    IValidator<UpdateMissionRequest> updateValidator) : ApiControllerBase
+    IValidator<PatchMissionRequest> updateValidator) : ApiControllerBase
 {
     /// <summary>
     /// Cria uma nova missão.
@@ -32,7 +37,7 @@ public sealed class MissionsController(
     /// <response code="404">Escopo da missão não encontrado.</response>
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Mission), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(MissionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Mission>> Create(CreateMissionRequest request, CancellationToken cancellationToken)
@@ -43,7 +48,7 @@ public sealed class MissionsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await missionCommandUseCase.CreateAsync(User, request, cancellationToken);
+        var result = await createMission.ExecuteAsync(User, request, cancellationToken);
         return FromResult(result, mission => CreatedAtAction(nameof(GetById), new { id = mission.Id }, mission));
     }
 
@@ -57,12 +62,12 @@ public sealed class MissionsController(
     /// <response code="200">Missão atualizada com sucesso.</response>
     /// <response code="400">Payload inválido ou erro de validação.</response>
     /// <response code="404">Missão não encontrada.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Mission), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(MissionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Mission>> Update(Guid id, UpdateMissionRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Mission>> Update(Guid id, PatchMissionRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -70,7 +75,7 @@ public sealed class MissionsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await missionCommandUseCase.UpdateAsync(User, id, request, cancellationToken);
+        var result = await patchMission.ExecuteAsync(User, id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -84,7 +89,7 @@ public sealed class MissionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await missionCommandUseCase.DeleteAsync(User, id, cancellationToken);
+        var result = await deleteMission.ExecuteAsync(User, id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -94,11 +99,11 @@ public sealed class MissionsController(
     /// <response code="200">Missão encontrada.</response>
     /// <response code="404">Missão não encontrada.</response>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(Mission), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(MissionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Mission>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await missionQueryUseCase.GetByIdAsync(id, cancellationToken);
+        var result = await getMissionById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -111,7 +116,7 @@ public sealed class MissionsController(
     [ProducesResponseType(typeof(PagedResult<Mission>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<Mission>>> GetAll(
-        [FromQuery] MissionScopeType? scopeType,
+        [FromQuery] Bud.Shared.Contracts.MissionScopeType? scopeType,
         [FromQuery] Guid? scopeId,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -130,40 +135,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await missionQueryUseCase.GetAllAsync(scopeType, scopeId, searchValidation.Value, page, pageSize, cancellationToken);
-        return FromResultOk(result);
-    }
-
-    /// <summary>
-    /// Lista missões atribuídas ao colaborador informado.
-    /// </summary>
-    /// <response code="200">Lista paginada retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    /// <response code="404">Colaborador não encontrado.</response>
-    [HttpGet("my-missions/{collaboratorId:guid}")]
-    [ProducesResponseType(typeof(PagedResult<Mission>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<Mission>>> GetMyMissions(
-        Guid collaboratorId,
-        [FromQuery] string? search,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
-    {
-        var searchValidation = ValidateAndNormalizeSearch(search);
-        if (searchValidation.Failure is not null)
-        {
-            return searchValidation.Failure;
-        }
-
-        var paginationValidation = ValidatePagination(page, pageSize);
-        if (paginationValidation is not null)
-        {
-            return paginationValidation;
-        }
-
-        var result = await missionQueryUseCase.GetMyMissionsAsync(collaboratorId, searchValidation.Value, page, pageSize, cancellationToken);
+        var result = await listMissionsByScope.ExecuteAsync(scopeType, scopeId, searchValidation.Value, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -173,9 +145,9 @@ public sealed class MissionsController(
     /// <response code="200">Progresso calculado com sucesso.</response>
     /// <response code="400">Parâmetro missionIds inválido.</response>
     [HttpGet("progress")]
-    [ProducesResponseType(typeof(List<MissionProgressDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<MissionProgressResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<MissionProgressDto>>> GetProgress(
+    public async Task<ActionResult<List<MissionProgressResponse>>> GetProgress(
         [FromQuery] string ids,
         CancellationToken cancellationToken)
     {
@@ -185,7 +157,7 @@ public sealed class MissionsController(
             return parseResult.Failure;
         }
 
-        var result = await missionQueryUseCase.GetProgressAsync(parseResult.Values!, cancellationToken);
+        var result = await listMissionProgress.ExecuteAsync(parseResult.Values!, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -196,10 +168,10 @@ public sealed class MissionsController(
     /// <response code="400">Parâmetros de paginação inválidos.</response>
     /// <response code="404">Missão não encontrada.</response>
     [HttpGet("{id:guid}/metrics")]
-    [ProducesResponseType(typeof(PagedResult<MissionMetric>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<Metric>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<MissionMetric>>> GetMetrics(
+    public async Task<ActionResult<PagedResult<Metric>>> GetMetrics(
         Guid id,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -211,7 +183,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await missionQueryUseCase.GetMetricsAsync(id, page, pageSize, cancellationToken);
+        var result = await listMissionMetrics.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -221,9 +193,9 @@ public sealed class MissionsController(
     /// <response code="200">Objetivos retornados com sucesso.</response>
     /// <response code="400">Parâmetros de paginação inválidos.</response>
     [HttpGet("{id:guid}/objectives")]
-    [ProducesResponseType(typeof(PagedResult<MissionObjective>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<Objective>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PagedResult<MissionObjective>>> GetObjectives(
+    public async Task<ActionResult<PagedResult<Objective>>> GetObjectives(
         Guid id,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -235,7 +207,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await missionObjectiveQueryUseCase.GetByMissionAsync(id, page, pageSize, cancellationToken);
+        var result = await listObjectivesByMission.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 }

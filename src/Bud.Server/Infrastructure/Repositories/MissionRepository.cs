@@ -1,8 +1,9 @@
-using Bud.Server.Domain.Specifications;
+using Bud.Server.Infrastructure.Querying;
 using Bud.Server.Infrastructure.Persistence;
-using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using Microsoft.EntityFrameworkCore;
+
+using Bud.Shared.Contracts;
 
 namespace Bud.Server.Infrastructure.Repositories;
 
@@ -117,9 +118,9 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
             .ToListAsync(ct);
     }
 
-    public async Task<PagedResult<MissionMetric>> GetMetricsAsync(Guid missionId, int page, int pageSize, CancellationToken ct = default)
+    public async Task<PagedResult<Metric>> GetMetricsAsync(Guid missionId, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.MissionMetrics
+        var query = dbContext.Metrics
             .AsNoTracking()
             .Where(metric => metric.MissionId == missionId);
 
@@ -130,7 +131,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<MissionMetric>
+        return new PagedResult<Metric>
         {
             Items = items,
             Total = total,
@@ -153,14 +154,4 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
         => await dbContext.SaveChangesAsync(ct);
-
-    private static DateTime NormalizeToUtc(DateTime value)
-    {
-        return value.Kind switch
-        {
-            DateTimeKind.Utc => value,
-            DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
-            _ => value.ToUniversalTime()
-        };
-    }
 }

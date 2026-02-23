@@ -1,6 +1,5 @@
 using Bud.Client.Shared.Missions;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using Bunit;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
@@ -10,7 +9,7 @@ namespace Bud.Client.Tests.Shared.Missions;
 
 public sealed class MissionMetricRowTests : TestContext
 {
-    private static Mission CreateMission() => new()
+    private static MissionResponse CreateMission() => new()
     {
         Id = Guid.NewGuid(),
         Name = "Q1 Mission",
@@ -19,7 +18,7 @@ public sealed class MissionMetricRowTests : TestContext
         Status = MissionStatus.Active
     };
 
-    private static MissionMetric CreateMetric(string name = "Revenue Growth") => new()
+    private static MetricResponse CreateMetric(string name = "Revenue Growth") => new()
     {
         Id = Guid.NewGuid(),
         Name = name,
@@ -53,13 +52,13 @@ public sealed class MissionMetricRowTests : TestContext
     [Fact]
     public void Click_CheckinButton_ShouldInvokeOnCheckinClick()
     {
-        MissionMetric? received = null;
+        MetricResponse? received = null;
         var metric = CreateMetric();
 
         var cut = RenderComponent<MissionMetricRow>(parameters => parameters
             .Add(p => p.Mission, CreateMission())
             .Add(p => p.Metric, metric)
-            .Add(p => p.OnCheckinClick, EventCallback.Factory.Create<MissionMetric>(this, m => received = m)));
+            .Add(p => p.OnCheckinClick, EventCallback.Factory.Create<MetricResponse>(this, m => received = m)));
 
         var checkinBtn = cut.Find("button.metric-checkin-btn");
         checkinBtn.Click();
@@ -71,13 +70,13 @@ public sealed class MissionMetricRowTests : TestContext
     [Fact]
     public void Click_Row_ShouldInvokeOnHistoryClick()
     {
-        MissionMetric? received = null;
+        MetricResponse? received = null;
         var metric = CreateMetric();
 
         var cut = RenderComponent<MissionMetricRow>(parameters => parameters
             .Add(p => p.Mission, CreateMission())
             .Add(p => p.Metric, metric)
-            .Add(p => p.OnHistoryClick, EventCallback.Factory.Create<MissionMetric>(this, m => received = m)));
+            .Add(p => p.OnHistoryClick, EventCallback.Factory.Create<MetricResponse>(this, m => received = m)));
 
         var row = cut.Find(".metric-row");
         row.Click();

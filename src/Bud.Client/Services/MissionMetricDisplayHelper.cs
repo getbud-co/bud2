@@ -1,4 +1,4 @@
-using Bud.Shared.Domain;
+using Bud.Shared.Contracts;
 
 namespace Bud.Client.Services;
 
@@ -41,7 +41,7 @@ public static class MissionMetricDisplayHelper
         _ => unit.ToString()
     };
 
-    public static string GetTargetLabel(MissionMetric metric)
+    public static string GetTargetLabel(MetricResponse metric)
     {
         if (metric.Type == MetricType.Qualitative)
         {
@@ -64,7 +64,7 @@ public static class MissionMetricDisplayHelper
         };
     }
 
-    public static string GetCheckinTargetHint(MissionMetric metric, bool useAbbreviatedUnit = false)
+    public static string GetCheckinTargetHint(MetricResponse metric, bool useAbbreviatedUnit = false)
     {
         if (metric.Type != MetricType.Quantitative || !metric.QuantitativeType.HasValue)
         {

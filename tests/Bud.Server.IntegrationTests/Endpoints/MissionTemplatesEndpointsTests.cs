@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,12 +10,12 @@ using Xunit;
 
 namespace Bud.Server.IntegrationTests.Endpoints;
 
-public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory>
+public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private readonly CustomWebApplicationFactory _factory;
 
-    public MissionTemplatesEndpointsTests(CustomWebApplicationFactory factory)
+    public TemplatesEndpointsTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateGlobalAdminClient();
@@ -30,28 +30,28 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         _client.DefaultRequestHeaders.Add("X-Tenant-Id", orgId.ToString());
     }
 
-    private async Task<MissionTemplate> CreateTestTemplate()
+    private async Task<Template> CreateTestTemplate()
     {
-        var request = new CreateMissionTemplateRequest
+        var request = new CreateTemplateRequest
         {
             Name = $"Template {Guid.NewGuid():N}",
             Description = "Test template",
-            Metrics = new List<MissionTemplateMetricDto>
+            Metrics = new List<TemplateMetricRequest>
             {
                 new()
                 {
                     Name = "Metric 1",
-                    Type = MetricType.Quantitative,
+                    Type = Bud.Shared.Contracts.MetricType.Quantitative,
                     OrderIndex = 0,
-                    QuantitativeType = QuantitativeMetricType.Achieve,
+                    QuantitativeType = Bud.Shared.Contracts.QuantitativeMetricType.Achieve,
                     MaxValue = 100,
-                    Unit = MetricUnit.Percentage
+                    Unit = Bud.Shared.Contracts.MetricUnit.Percentage
                 }
             }
         };
-        var response = await _client.PostAsJsonAsync("/api/mission-templates", request);
+        var response = await _client.PostAsJsonAsync("/api/templates", request);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<MissionTemplate>())!;
+        return (await response.Content.ReadFromJsonAsync<Template>())!;
     }
 
     #region Create Tests
@@ -60,27 +60,27 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
     public async Task Create_WithValidRequest_ReturnsCreated()
     {
         // Arrange
-        var request = new CreateMissionTemplateRequest
+        var request = new CreateTemplateRequest
         {
             Name = "Valid Template",
             Description = "A valid mission template",
             MissionNamePattern = "Mission - {name}",
             MissionDescriptionPattern = "Description for {name}",
-            Metrics = new List<MissionTemplateMetricDto>
+            Metrics = new List<TemplateMetricRequest>
             {
                 new()
                 {
                     Name = "Revenue Target",
-                    Type = MetricType.Quantitative,
+                    Type = Bud.Shared.Contracts.MetricType.Quantitative,
                     OrderIndex = 0,
-                    QuantitativeType = QuantitativeMetricType.Achieve,
+                    QuantitativeType = Bud.Shared.Contracts.QuantitativeMetricType.Achieve,
                     MaxValue = 1000,
-                    Unit = MetricUnit.Integer
+                    Unit = Bud.Shared.Contracts.MetricUnit.Integer
                 },
                 new()
                 {
                     Name = "Quality Check",
-                    Type = MetricType.Qualitative,
+                    Type = Bud.Shared.Contracts.MetricType.Qualitative,
                     OrderIndex = 1,
                     TargetText = "Ensure all deliverables meet standards"
                 }
@@ -88,11 +88,11 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/mission-templates", request);
+        var response = await _client.PostAsJsonAsync("/api/templates", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Name.Should().Be("Valid Template");
         template.Description.Should().Be("A valid mission template");
@@ -106,12 +106,12 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
     {
         // Arrange
         var objectiveId = Guid.NewGuid();
-        var request = new CreateMissionTemplateRequest
+        var request = new CreateTemplateRequest
         {
             Name = "Template com objetivos",
             Objectives =
             [
-                new MissionTemplateObjectiveDto
+                new TemplateObjectiveRequest
                 {
                     Id = objectiveId,
                     Name = "Objetivo estratégico",
@@ -120,43 +120,43 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
             ],
             Metrics =
             [
-                new MissionTemplateMetricDto
+                new TemplateMetricRequest
                 {
                     Name = "Métrica vinculada",
-                    Type = MetricType.Quantitative,
+                    Type = Bud.Shared.Contracts.MetricType.Quantitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = objectiveId,
-                    QuantitativeType = QuantitativeMetricType.Achieve,
+                    TemplateObjectiveId = objectiveId,
+                    QuantitativeType = Bud.Shared.Contracts.QuantitativeMetricType.Achieve,
                     MaxValue = 100,
-                    Unit = MetricUnit.Percentage
+                    Unit = Bud.Shared.Contracts.MetricUnit.Percentage
                 }
             ]
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/mission-templates", request);
+        var response = await _client.PostAsJsonAsync("/api/templates", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Objectives.Should().ContainSingle();
         template.Metrics.Should().ContainSingle();
-        template.Metrics.First().MissionTemplateObjectiveId.Should().Be(template.Objectives.First().Id);
+        template.Metrics.First().TemplateObjectiveId.Should().Be(template.Objectives.First().Id);
     }
 
     [Fact]
     public async Task Create_WithEmptyName_ReturnsBadRequest()
     {
         // Arrange
-        var request = new CreateMissionTemplateRequest
+        var request = new CreateTemplateRequest
         {
             Name = "",
             Description = "Template with empty name"
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/mission-templates", request);
+        var response = await _client.PostAsJsonAsync("/api/templates", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -173,11 +173,11 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         var created = await CreateTestTemplate();
 
         // Act
-        var response = await _client.GetAsync($"/api/mission-templates/{created.Id}");
+        var response = await _client.GetAsync($"/api/templates/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var template = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
         template!.Id.Should().Be(created.Id);
         template.Name.Should().Be(created.Name);
@@ -192,7 +192,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         var nonExistingId = Guid.NewGuid();
 
         // Act
-        var response = await _client.GetAsync($"/api/mission-templates/{nonExistingId}");
+        var response = await _client.GetAsync($"/api/templates/{nonExistingId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -210,11 +210,11 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         await CreateTestTemplate();
 
         // Act
-        var response = await _client.GetAsync("/api/mission-templates?page=1&pageSize=10");
+        var response = await _client.GetAsync("/api/templates?page=1&pageSize=10");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<MissionTemplate>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Template>>();
         result.Should().NotBeNull();
         result!.Page.Should().Be(1);
         result.PageSize.Should().Be(10);
@@ -232,33 +232,33 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         // Arrange
         var created = await CreateTestTemplate();
 
-        var updateRequest = new UpdateMissionTemplateRequest
+        var updateRequest = new PatchTemplateRequest
         {
             Name = "Updated Template Name",
             Description = "Updated description",
             MissionNamePattern = "Updated - {name}",
             MissionDescriptionPattern = "Updated desc for {name}",
-            Metrics = new List<MissionTemplateMetricDto>
+            Metrics = new List<TemplateMetricRequest>
             {
                 new()
                 {
                     Name = "Updated Metric",
-                    Type = MetricType.Quantitative,
+                    Type = Bud.Shared.Contracts.MetricType.Quantitative,
                     OrderIndex = 0,
-                    QuantitativeType = QuantitativeMetricType.Reduce,
+                    QuantitativeType = Bud.Shared.Contracts.QuantitativeMetricType.Reduce,
                     MinValue = 0,
                     MaxValue = 50,
-                    Unit = MetricUnit.Percentage
+                    Unit = Bud.Shared.Contracts.MetricUnit.Percentage
                 }
             }
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/mission-templates/{created.Id}", updateRequest);
+        var response = await _client.PatchAsJsonAsync($"/api/templates/{created.Id}", updateRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updated = await response.Content.ReadFromJsonAsync<MissionTemplate>();
+        var updated = await response.Content.ReadFromJsonAsync<Template>();
         updated.Should().NotBeNull();
         updated!.Name.Should().Be("Updated Template Name");
         updated.Description.Should().Be("Updated description");
@@ -278,13 +278,13 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         var created = await CreateTestTemplate();
 
         // Act
-        var response = await _client.DeleteAsync($"/api/mission-templates/{created.Id}");
+        var response = await _client.DeleteAsync($"/api/templates/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it's deleted
-        var getResponse = await _client.GetAsync($"/api/mission-templates/{created.Id}");
+        var getResponse = await _client.GetAsync($"/api/templates/{created.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -299,7 +299,7 @@ public class MissionTemplatesEndpointsTests : IClassFixture<CustomWebApplication
         var unauthenticatedClient = _factory.CreateClient();
 
         // Act
-        var response = await unauthenticatedClient.GetAsync("/api/mission-templates");
+        var response = await unauthenticatedClient.GetAsync("/api/templates");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

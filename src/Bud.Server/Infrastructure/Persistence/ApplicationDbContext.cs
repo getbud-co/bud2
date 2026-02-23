@@ -1,5 +1,5 @@
 using Bud.Server.MultiTenancy;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bud.Server.Infrastructure.Persistence;
@@ -27,14 +27,13 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<Collaborator> Collaborators => Set<Collaborator>();
     public DbSet<Mission> Missions => Set<Mission>();
-    public DbSet<MissionMetric> MissionMetrics => Set<MissionMetric>();
+    public DbSet<Metric> Metrics => Set<Metric>();
     public DbSet<CollaboratorTeam> CollaboratorTeams => Set<CollaboratorTeam>();
     public DbSet<MetricCheckin> MetricCheckins => Set<MetricCheckin>();
-    public DbSet<MissionTemplate> MissionTemplates => Set<MissionTemplate>();
-    public DbSet<MissionTemplateObjective> MissionTemplateObjectives => Set<MissionTemplateObjective>();
-    public DbSet<MissionTemplateMetric> MissionTemplateMetrics => Set<MissionTemplateMetric>();
-    public DbSet<MissionObjective> MissionObjectives => Set<MissionObjective>();
-    public DbSet<ObjectiveDimension> ObjectiveDimensions => Set<ObjectiveDimension>();
+    public DbSet<Template> Templates => Set<Template>();
+    public DbSet<TemplateObjective> TemplateObjectives => Set<TemplateObjective>();
+    public DbSet<TemplateMetric> TemplateMetrics => Set<TemplateMetric>();
+    public DbSet<Objective> Objectives => Set<Objective>();
     public DbSet<CollaboratorAccessLog> CollaboratorAccessLogs => Set<CollaboratorAccessLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -81,25 +80,18 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && m.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<MissionObjective>()
-            .HasQueryFilter(mo =>
+        modelBuilder.Entity<Objective>()
+            .HasQueryFilter(o =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && mo.OrganizationId == _tenantId)
+                (_tenantId != null && o.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<ObjectiveDimension>()
-            .HasQueryFilter(od =>
+        modelBuilder.Entity<Metric>()
+            .HasQueryFilter(met =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && od.OrganizationId == _tenantId)
-            );
-
-        modelBuilder.Entity<MissionMetric>()
-            .HasQueryFilter(mm =>
-                !_applyTenantFilter ||
-                (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && mm.OrganizationId == _tenantId)
+                (_tenantId != null && met.OrganizationId == _tenantId)
             );
 
         modelBuilder.Entity<MetricCheckin>()
@@ -109,21 +101,21 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && mc.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<MissionTemplate>()
+        modelBuilder.Entity<Template>()
             .HasQueryFilter(mt =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && mt.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<MissionTemplateObjective>()
+        modelBuilder.Entity<TemplateObjective>()
             .HasQueryFilter(mto =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && mto.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<MissionTemplateMetric>()
+        modelBuilder.Entity<TemplateMetric>()
             .HasQueryFilter(mtm =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||

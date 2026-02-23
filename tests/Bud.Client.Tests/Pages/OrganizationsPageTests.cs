@@ -3,7 +3,6 @@ using System.Text;
 using Bud.Client.Pages;
 using Bud.Client.Services;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using Bunit;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,9 +20,9 @@ public sealed class OrganizationsPageTests : TestContext
         var instance = cut.Instance;
 
         var organizationId = Guid.NewGuid();
-        SetField(instance, "organizations", new PagedResult<Organization>
+        SetField(instance, "organizations", new PagedResult<OrganizationResponse>
         {
-            Items = new List<Organization>
+            Items = new List<OrganizationResponse>
             {
                 new()
                 {

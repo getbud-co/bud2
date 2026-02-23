@@ -1,10 +1,10 @@
-using Bud.Server.Application.Collaborators;
+using Bud.Server.Application.UseCases.Collaborators;
 using Bud.Server.Authorization;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Bud.Server.Domain.Model;
 
 namespace Bud.Server.Controllers;
 
@@ -13,10 +13,19 @@ namespace Bud.Server.Controllers;
 [Route("api/collaborators")]
 [Produces("application/json")]
 public sealed class CollaboratorsController(
-    ICollaboratorQueryUseCase collaboratorQueryUseCase,
-    ICollaboratorCommandUseCase collaboratorCommandUseCase,
+    CreateCollaborator createCollaborator,
+    PatchCollaborator patchCollaborator,
+    DeleteCollaborator deleteCollaborator,
+    GetCollaboratorById getCollaboratorById,
+    ListCollaboratorOptions listCollaboratorOptions,
+    ListLeaderCollaborators listLeaderCollaborators,
+    ListCollaborators listCollaborators,
+    GetCollaboratorHierarchy getCollaboratorHierarchy,
+    ListCollaboratorTeams listCollaboratorTeams,
+    PatchCollaboratorTeams patchCollaboratorTeams,
+    ListAvailableTeamsForCollaborator listAvailableTeamsForCollaborator,
     IValidator<CreateCollaboratorRequest> createValidator,
-    IValidator<UpdateCollaboratorRequest> updateValidator) : ApiControllerBase
+    IValidator<PatchCollaboratorRequest> updateValidator) : ApiControllerBase
 {
     /// <summary>
     /// Cria um colaborador.
@@ -27,7 +36,7 @@ public sealed class CollaboratorsController(
     /// <response code="403">Sem permissão para criar colaborador.</response>
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Collaborator), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CollaboratorResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -39,7 +48,7 @@ public sealed class CollaboratorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await collaboratorCommandUseCase.CreateAsync(User, request, cancellationToken);
+        var result = await createCollaborator.ExecuteAsync(User, request, cancellationToken);
         return FromResult(result, collaborator => CreatedAtAction(nameof(GetById), new { id = collaborator.Id }, collaborator));
     }
 
@@ -50,13 +59,13 @@ public sealed class CollaboratorsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Colaborador não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar colaborador.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Collaborator), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CollaboratorResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<Collaborator>> Update(Guid id, UpdateCollaboratorRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Collaborator>> Update(Guid id, PatchCollaboratorRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -64,7 +73,7 @@ public sealed class CollaboratorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await collaboratorCommandUseCase.UpdateAsync(User, id, request, cancellationToken);
+        var result = await patchCollaborator.ExecuteAsync(User, id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -82,7 +91,7 @@ public sealed class CollaboratorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await collaboratorCommandUseCase.DeleteAsync(User, id, cancellationToken);
+        var result = await deleteCollaborator.ExecuteAsync(User, id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -92,47 +101,11 @@ public sealed class CollaboratorsController(
     /// <response code="200">Colaborador encontrado.</response>
     /// <response code="404">Colaborador não encontrado.</response>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(Collaborator), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CollaboratorResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Collaborator>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await collaboratorQueryUseCase.GetByIdAsync(id, cancellationToken);
-        return FromResultOk(result);
-    }
-
-    /// <summary>
-    /// Lista resumo dos colaboradores da organização.
-    /// </summary>
-    /// <response code="200">Lista retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    [HttpGet("summaries")]
-    [ProducesResponseType(typeof(List<CollaboratorSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<CollaboratorSummaryDto>>> GetSummaries(
-        [FromQuery] string? search,
-        CancellationToken cancellationToken)
-    {
-        var searchValidation = ValidateAndNormalizeSearch(search);
-        if (searchValidation.Failure is not null)
-        {
-            return searchValidation.Failure;
-        }
-
-        var result = await collaboratorQueryUseCase.GetSummariesAsync(searchValidation.Value, cancellationToken);
-        return FromResultOk(result);
-    }
-
-    /// <summary>
-    /// Lista colaboradores líderes.
-    /// </summary>
-    /// <response code="200">Lista retornada com sucesso.</response>
-    [HttpGet("leaders")]
-    [ProducesResponseType(typeof(List<LeaderCollaboratorResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<LeaderCollaboratorResponse>>> GetLeaders(
-        [FromQuery] Guid? organizationId,
-        CancellationToken cancellationToken)
-    {
-        var result = await collaboratorQueryUseCase.GetLeadersAsync(organizationId, cancellationToken);
+        var result = await getCollaboratorById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -146,7 +119,7 @@ public sealed class CollaboratorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<Collaborator>>> GetAll(
         [FromQuery] Guid? teamId,
-        [FromQuery] string? search,
+        [FromQuery] string? search = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
@@ -163,7 +136,40 @@ public sealed class CollaboratorsController(
             return paginationValidation;
         }
 
-        var result = await collaboratorQueryUseCase.GetAllAsync(teamId, searchValidation.Value, page, pageSize, cancellationToken);
+        var result = await listCollaborators.ExecuteAsync(teamId, searchValidation.Value, page, pageSize, cancellationToken);
+        return FromResultOk(result);
+    }
+
+    /// <summary>
+    /// Lista opções simplificadas de colaboradores.
+    /// </summary>
+    [HttpGet("lookup")]
+    [ProducesResponseType(typeof(List<CollaboratorLookupResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<CollaboratorLookupResponse>>> GetLookup(
+        [FromQuery] string? search,
+        CancellationToken cancellationToken = default)
+    {
+        var searchValidation = ValidateAndNormalizeSearch(search);
+        if (searchValidation.Failure is not null)
+        {
+            return searchValidation.Failure;
+        }
+
+        var result = await listCollaboratorOptions.ExecuteAsync(searchValidation.Value, cancellationToken);
+        return FromResultOk(result);
+    }
+
+    /// <summary>
+    /// Lista colaboradores líderes.
+    /// </summary>
+    [HttpGet("leaders")]
+    [ProducesResponseType(typeof(List<CollaboratorLeaderResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<CollaboratorLeaderResponse>>> GetLeaders(
+        [FromQuery] Guid? organizationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await listLeaderCollaborators.ExecuteAsync(organizationId, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -173,11 +179,11 @@ public sealed class CollaboratorsController(
     /// <response code="200">Hierarquia retornada com sucesso.</response>
     /// <response code="404">Colaborador não encontrado.</response>
     [HttpGet("{id:guid}/subordinates")]
-    [ProducesResponseType(typeof(List<CollaboratorHierarchyNodeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<CollaboratorSubordinateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<CollaboratorHierarchyNodeDto>>> GetSubordinates(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<CollaboratorSubordinateResponse>>> GetSubordinates(Guid id, CancellationToken cancellationToken)
     {
-        var result = await collaboratorQueryUseCase.GetSubordinatesAsync(id, cancellationToken);
+        var result = await getCollaboratorHierarchy.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -187,12 +193,36 @@ public sealed class CollaboratorsController(
     /// <response code="200">Lista retornada com sucesso.</response>
     /// <response code="404">Colaborador não encontrado.</response>
     [HttpGet("{id:guid}/teams")]
-    [ProducesResponseType(typeof(List<TeamSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<CollaboratorTeamResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<TeamSummaryDto>>> GetTeams(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<CollaboratorTeamResponse>>> GetTeams(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var result = await collaboratorQueryUseCase.GetTeamsAsync(id, cancellationToken);
-        return FromResultOk(result);
+        var associatedTeams = await listCollaboratorTeams.ExecuteAsync(id, cancellationToken);
+        return FromResultOk(associatedTeams);
+    }
+
+    /// <summary>
+    /// Lista times disponíveis para vínculo com o colaborador.
+    /// </summary>
+    [HttpGet("{id:guid}/teams/eligible-for-assignment")]
+    [ProducesResponseType(typeof(List<CollaboratorTeamEligibleResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<CollaboratorTeamEligibleResponse>>> GetEligibleTeamsForAssignment(
+        Guid id,
+        [FromQuery] string? search = null,
+        CancellationToken cancellationToken = default)
+    {
+        var searchValidation = ValidateAndNormalizeSearch(search);
+        if (searchValidation.Failure is not null)
+        {
+            return searchValidation.Failure;
+        }
+
+        var availableTeams = await listAvailableTeamsForCollaborator.ExecuteAsync(id, searchValidation.Value, cancellationToken);
+        return FromResultOk(availableTeams);
     }
 
     /// <summary>
@@ -202,40 +232,16 @@ public sealed class CollaboratorsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Colaborador não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar vínculos.</response>
-    [HttpPut("{id:guid}/teams")]
+    [HttpPatch("{id:guid}/teams")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateTeams(Guid id, UpdateCollaboratorTeamsRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateTeams(Guid id, PatchCollaboratorTeamsRequest request, CancellationToken cancellationToken)
     {
-        var result = await collaboratorCommandUseCase.UpdateTeamsAsync(User, id, request, cancellationToken);
+        var result = await patchCollaboratorTeams.ExecuteAsync(User, id, request, cancellationToken);
         return FromResult(result, NoContent);
     }
 
-    /// <summary>
-    /// Lista times disponíveis para vínculo com o colaborador.
-    /// </summary>
-    /// <response code="200">Lista retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    /// <response code="404">Colaborador não encontrado.</response>
-    [HttpGet("{id:guid}/available-teams")]
-    [ProducesResponseType(typeof(List<TeamSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<TeamSummaryDto>>> GetAvailableTeams(
-        Guid id,
-        [FromQuery] string? search,
-        CancellationToken cancellationToken)
-    {
-        var searchValidation = ValidateAndNormalizeSearch(search);
-        if (searchValidation.Failure is not null)
-        {
-            return searchValidation.Failure;
-        }
-
-        var result = await collaboratorQueryUseCase.GetAvailableTeamsAsync(id, searchValidation.Value, cancellationToken);
-        return FromResultOk(result);
-    }
 }

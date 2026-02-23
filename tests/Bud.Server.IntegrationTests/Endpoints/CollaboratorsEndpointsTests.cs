@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +61,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             FullName = "Novo Colaborador",
             Email = $"novo-{Guid.NewGuid():N}@test.com",
-            Role = CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Contracts.CollaboratorRole.IndividualContributor
         };
 
         var response = await tenantClient.PostAsJsonAsync("/api/collaborators", request);
@@ -85,14 +85,14 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         var target = await CreateCollaborator(org.Id);
         var tenantClient = _factory.CreateTenantClient(org.Id, nonOwner.Email, nonOwner.Id);
 
-        var request = new UpdateCollaboratorRequest
+        var request = new PatchCollaboratorRequest
         {
             FullName = "Colaborador Atualizado",
             Email = $"atualizado-{Guid.NewGuid():N}@test.com",
-            Role = CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Contracts.CollaboratorRole.IndividualContributor
         };
 
-        var response = await tenantClient.PutAsJsonAsync($"/api/collaborators/{target.Id}", request);
+        var response = await tenantClient.PatchAsJsonAsync($"/api/collaborators/{target.Id}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -174,7 +174,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         var response = await _adminClient.GetAsync($"/api/collaborators/{leader.Id}/subordinates");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var nodes = await response.Content.ReadFromJsonAsync<List<CollaboratorHierarchyNodeDto>>();
+        var nodes = await response.Content.ReadFromJsonAsync<List<CollaboratorSubordinateResponse>>();
         nodes.Should().NotBeNull();
         nodes.Should().HaveCount(1);
         nodes![0].FullName.Should().Be(sub.FullName);
@@ -207,7 +207,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         var response = await _adminClient.GetAsync($"/api/collaborators/{topLeader.Id}/subordinates");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var nodes = await response.Content.ReadFromJsonAsync<List<CollaboratorHierarchyNodeDto>>();
+        var nodes = await response.Content.ReadFromJsonAsync<List<CollaboratorSubordinateResponse>>();
         nodes.Should().HaveCount(1);
         nodes![0].FullName.Should().Be(midLeader.FullName);
         nodes[0].Children.Should().HaveCount(1);

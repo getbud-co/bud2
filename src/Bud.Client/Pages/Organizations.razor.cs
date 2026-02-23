@@ -1,6 +1,5 @@
 using Bud.Client.Services;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 
 #pragma warning disable IDE0011, CA1805
 
@@ -9,23 +8,23 @@ namespace Bud.Client.Pages;
 public partial class Organizations
 {
     private CreateOrganizationRequest newOrganization = new();
-    private PagedResult<Organization>? organizations;
-    private List<LeaderCollaboratorResponse> leaders = new();
+    private PagedResult<OrganizationResponse>? organizations;
+    private List<CollaboratorLeaderResponse> leaders = new();
     private string? search;
     private bool isSubmitting = false;
     private bool isModalOpen = false;
     private string modalMode = "create"; // "create" ou "edit"
     private Guid? editingOrganizationId = null;
-    private UpdateOrganizationRequest editOrganization = new();
+    private OrganizationEditModel editOrganization = new();
     private Guid? deletingOrganizationId = null;
     private System.Threading.Timer? deleteConfirmTimer;
     private const string GlobalAdminOrgName = "getbud.co"; // Organização do admin global
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Organization? selectedOrganization = null;
-    private PagedResult<Workspace>? orgWorkspaces = null;
-    private PagedResult<Collaborator>? orgCollaborators = null;
+    private OrganizationResponse? selectedOrganization = null;
+    private PagedResult<WorkspaceResponse>? orgWorkspaces = null;
+    private PagedResult<CollaboratorResponse>? orgCollaborators = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,18 +56,18 @@ public partial class Organizations
     {
         try
         {
-            leaders = await Api.GetLeadersAsync(organizationId) ?? new List<LeaderCollaboratorResponse>();
+            leaders = await Api.GetLeadersAsync(organizationId) ?? new List<CollaboratorLeaderResponse>();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Erro ao carregar líderes: {ex.Message}");
-            leaders = new List<LeaderCollaboratorResponse>();
+            leaders = new List<CollaboratorLeaderResponse>();
         }
     }
 
     private async Task LoadOrganizations()
     {
-        organizations = await Api.GetOrganizationsAsync(search, 1, 20) ?? new PagedResult<Organization>();
+        organizations = await Api.GetOrganizationsAsync(search, 1, 20) ?? new PagedResult<OrganizationResponse>();
     }
 
     private async Task OpenCreateModal()
@@ -83,11 +82,11 @@ public partial class Organizations
         isModalOpen = true;
     }
 
-    private async Task OpenEditModal(Organization org)
+    private async Task OpenEditModal(OrganizationResponse org)
     {
         modalMode = "edit";
         editingOrganizationId = org.Id;
-        editOrganization = new UpdateOrganizationRequest
+        editOrganization = new OrganizationEditModel
         {
             Name = org.Name,
             OwnerId = org.OwnerId ?? Guid.Empty
@@ -114,7 +113,7 @@ public partial class Organizations
         isModalOpen = false;
         modalMode = "create";
         editingOrganizationId = null;
-        editOrganization = new UpdateOrganizationRequest();
+        editOrganization = new OrganizationEditModel();
     }
 
     private async Task CreateOrganization()
@@ -179,7 +178,12 @@ public partial class Organizations
             await UiOps.RunAsync(
                 async () =>
                 {
-                    await Api.UpdateOrganizationAsync(editingOrganizationId.Value, editOrganization);
+                    var request = new PatchOrganizationRequest
+                    {
+                        Name = editOrganization.Name,
+                        OwnerId = editOrganization.OwnerId
+                    };
+                    await Api.UpdateOrganizationAsync(editingOrganizationId.Value, request);
                     await LoadOrganizations();
                     await RefreshAvailableOrganizations();
                     ToastService.ShowSuccess("Organização atualizada com sucesso!", "As alterações foram salvas.");
@@ -238,7 +242,7 @@ public partial class Organizations
             "Não foi possível excluir a organização. Tente novamente.");
     }
 
-    private async Task OpenDetailsModal(Organization org)
+    private async Task OpenDetailsModal(OrganizationResponse org)
     {
         selectedOrganization = org;
         isDetailsModalOpen = true;
@@ -270,7 +274,7 @@ public partial class Organizations
         {
             Console.Error.WriteLine($"Erro ao carregar workspaces: {ex.Message}");
             ToastService.ShowError("Erro", "Não foi possível carregar os workspaces.");
-            orgWorkspaces = new PagedResult<Workspace> { Items = Array.Empty<Workspace>() };
+            orgWorkspaces = new PagedResult<WorkspaceResponse> { Items = Array.Empty<WorkspaceResponse>() };
         }
     }
 
@@ -284,7 +288,7 @@ public partial class Organizations
         {
             Console.Error.WriteLine($"Erro ao carregar colaboradores: {ex.Message}");
             ToastService.ShowError("Erro", "Não foi possível carregar os colaboradores.");
-            orgCollaborators = new PagedResult<Collaborator> { Items = Array.Empty<Collaborator>() };
+            orgCollaborators = new PagedResult<CollaboratorResponse> { Items = Array.Empty<CollaboratorResponse>() };
         }
     }
 
@@ -309,5 +313,11 @@ public partial class Organizations
         deleteConfirmTimer?.Dispose();
         OrgContext.OnOrganizationChanged -= HandleOrganizationChanged;
         GC.SuppressFinalize(this);
+    }
+
+    private sealed class OrganizationEditModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public Guid OwnerId { get; set; }
     }
 }

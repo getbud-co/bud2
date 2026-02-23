@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Bud.Mcp.Tests.Helpers;
-using Bud.Shared.Domain;
+using Bud.Shared.Contracts;
 
 namespace Bud.Mcp.Tests.Http;
 
@@ -38,9 +38,9 @@ public sealed class BudApiClientTests
 
         var handler = new StubHttpMessageHandler(request =>
         {
-            if (request.RequestUri!.AbsolutePath == "/api/auth/login")
+            if (request.RequestUri!.AbsolutePath == "/api/sessions")
             {
-                return JsonResponse(new AuthLoginResponse
+                return JsonResponse(new SessionResponse
                 {
                     Token = "jwt-token",
                     Email = "user@getbud.co",
@@ -48,9 +48,9 @@ public sealed class BudApiClientTests
                 });
             }
 
-            if (request.RequestUri.AbsolutePath == "/api/auth/my-organizations")
+            if (request.RequestUri.AbsolutePath == "/api/me/organizations")
             {
-                return JsonResponse(new List<OrganizationSummaryDto>
+                return JsonResponse(new List<MyOrganizationResponse>
                 {
                     new() { Id = tenantId, Name = "Org 1" }
                 });
@@ -72,7 +72,7 @@ public sealed class BudApiClientTests
                 payload.GetProperty("scopeType").ValueKind.Should().Be(JsonValueKind.Number);
                 payload.GetProperty("scopeType").GetInt32().Should().Be((int)MissionScopeType.Organization);
 
-                return JsonResponse(new Mission
+                return JsonResponse(new MissionResponse
                 {
                     Id = responseMissionId,
                     Name = "Missão Teste",
@@ -111,9 +111,9 @@ public sealed class BudApiClientTests
     {
         var handler = new StubHttpMessageHandler(request =>
         {
-            if (request.RequestUri!.AbsolutePath == "/api/auth/login")
+            if (request.RequestUri!.AbsolutePath == "/api/sessions")
             {
-                return JsonResponse(new AuthLoginResponse
+                return JsonResponse(new SessionResponse
                 {
                     Token = "jwt-token",
                     Email = "user@getbud.co",

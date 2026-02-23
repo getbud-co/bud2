@@ -1,10 +1,10 @@
-using Bud.Server.Application.Workspaces;
+using Bud.Server.Application.UseCases.Workspaces;
 using Bud.Server.Authorization;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Bud.Server.Domain.Model;
 
 namespace Bud.Server.Controllers;
 
@@ -13,10 +13,14 @@ namespace Bud.Server.Controllers;
 [Route("api/workspaces")]
 [Produces("application/json")]
 public sealed class WorkspacesController(
-    IWorkspaceQueryUseCase workspaceQueryUseCase,
-    IWorkspaceCommandUseCase workspaceCommandUseCase,
+    CreateWorkspace createWorkspace,
+    PatchWorkspace patchWorkspace,
+    DeleteWorkspace deleteWorkspace,
+    GetWorkspaceById getWorkspaceById,
+    ListWorkspaces listWorkspaces,
+    ListWorkspaceTeams listWorkspaceTeams,
     IValidator<CreateWorkspaceRequest> createValidator,
-    IValidator<UpdateWorkspaceRequest> updateValidator) : ApiControllerBase
+    IValidator<PatchWorkspaceRequest> updateValidator) : ApiControllerBase
 {
     /// <summary>
     /// Cria um workspace.
@@ -27,7 +31,7 @@ public sealed class WorkspacesController(
     /// <response code="403">Sem permissão para criar workspace.</response>
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Workspace), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(WorkspaceResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -39,7 +43,7 @@ public sealed class WorkspacesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await workspaceCommandUseCase.CreateAsync(User, request, cancellationToken);
+        var result = await createWorkspace.ExecuteAsync(User, request, cancellationToken);
         return FromResult(result, workspace => CreatedAtAction(nameof(GetById), new { id = workspace.Id }, workspace));
     }
 
@@ -50,13 +54,13 @@ public sealed class WorkspacesController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Workspace não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar workspace.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(Workspace), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WorkspaceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Workspace>> Update(Guid id, UpdateWorkspaceRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Workspace>> Update(Guid id, PatchWorkspaceRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -64,7 +68,7 @@ public sealed class WorkspacesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await workspaceCommandUseCase.UpdateAsync(User, id, request, cancellationToken);
+        var result = await patchWorkspace.ExecuteAsync(User, id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -80,7 +84,7 @@ public sealed class WorkspacesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await workspaceCommandUseCase.DeleteAsync(User, id, cancellationToken);
+        var result = await deleteWorkspace.ExecuteAsync(User, id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -90,11 +94,11 @@ public sealed class WorkspacesController(
     /// <response code="200">Workspace encontrado.</response>
     /// <response code="404">Workspace não encontrado.</response>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(Workspace), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WorkspaceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Workspace>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await workspaceQueryUseCase.GetByIdAsync(id, cancellationToken);
+        var result = await getWorkspaceById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -125,7 +129,7 @@ public sealed class WorkspacesController(
             return paginationValidation;
         }
 
-        var result = await workspaceQueryUseCase.GetAllAsync(organizationId, searchValidation.Value, page, pageSize, cancellationToken);
+        var result = await listWorkspaces.ExecuteAsync(organizationId, searchValidation.Value, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -151,7 +155,7 @@ public sealed class WorkspacesController(
             return paginationValidation;
         }
 
-        var result = await workspaceQueryUseCase.GetTeamsAsync(id, page, pageSize, cancellationToken);
+        var result = await listWorkspaceTeams.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 }

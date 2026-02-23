@@ -1,7 +1,6 @@
 using Bud.Client.Services;
 using Bud.Client.Shared.Missions;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 
 #pragma warning disable IDE0011, IDE0044, CA1822, CA1859, CA1860, CA1868
 
@@ -10,13 +9,12 @@ namespace Bud.Client.Pages;
 public partial class Missions
 {
     // Data
-    private PagedResult<Mission>? _missions;
-    private Dictionary<Guid, MissionProgressDto> _missionProgress = new();
-    private List<Organization> _organizations = new();
-    private List<Workspace> _workspaces = new();
-    private List<Team> _teams = new();
-    private List<Collaborator> _collaborators = new();
-    private List<ObjectiveDimension> _objectiveDimensions = new();
+    private PagedResult<MissionResponse>? _missions;
+    private Dictionary<Guid, MissionProgressResponse> _missionProgress = new();
+    private List<OrganizationResponse> _organizations = new();
+    private List<WorkspaceResponse> _workspaces = new();
+    private List<TeamResponse> _teams = new();
+    private List<CollaboratorResponse> _collaborators = new();
 
     // Filter state
     private string? _filterScopeTypeValue;
@@ -30,10 +28,10 @@ public partial class Missions
 
     // Card expansion state
     private HashSet<Guid> _expandedMissions = new();
-    private Dictionary<Guid, List<MissionMetric>> _missionMetricsCache = new();
-    private Dictionary<Guid, MetricProgressDto> _metricProgressCache = new();
-    private Dictionary<Guid, List<MissionObjective>> _missionObjectivesCache = new();
-    private Dictionary<Guid, ObjectiveProgressDto> _objectiveProgressCache = new();
+    private Dictionary<Guid, List<MetricResponse>> _missionMetricsCache = new();
+    private Dictionary<Guid, MetricProgressResponse> _metricProgressCache = new();
+    private Dictionary<Guid, List<ObjectiveResponse>> _missionObjectivesCache = new();
+    private Dictionary<Guid, ObjectiveProgressResponse> _objectiveProgressCache = new();
     private HashSet<Guid> _expandedObjectives = new();
 
     // Wizard state
@@ -44,18 +42,18 @@ public partial class Missions
 
     // Template picker state
     private bool _isTemplatePickerOpen;
-    private List<MissionTemplate> _availableTemplates = new();
+    private List<TemplateResponse> _availableTemplates = new();
 
     // Checkin modal state
     private bool _isCheckinModalOpen;
-    private Mission? _checkinMission;
-    private MissionMetric? _selectedCheckinMetric;
+    private MissionResponse? _checkinMission;
+    private MetricResponse? _selectedCheckinMetric;
 
     // Checkin history modal state
     private bool _isCheckinHistoryModalOpen;
-    private MissionMetric? _historyMetric;
-    private Mission? _historyMission;
-    private List<MetricCheckin> _metricCheckins = new();
+    private MetricResponse? _historyMetric;
+    private MissionResponse? _historyMission;
+    private List<MetricCheckinResponse> _metricCheckins = new();
     private bool _isLoadingCheckins;
 
     // Delete confirmation state
@@ -118,19 +116,17 @@ public partial class Missions
         var orgId = OrgContext.SelectedOrganizationId;
 
         var orgsResult = await Api.GetOrganizationsAsync(null, 1, 100);
-        _organizations = orgsResult?.Items.ToList() ?? new List<Organization>();
+        _organizations = orgsResult?.Items.ToList() ?? new List<OrganizationResponse>();
 
         var workspacesResult = await Api.GetWorkspacesAsync(orgId, null, 1, 100);
-        _workspaces = workspacesResult?.Items.ToList() ?? new List<Workspace>();
+        _workspaces = workspacesResult?.Items.ToList() ?? new List<WorkspaceResponse>();
 
         var teamsResult = await Api.GetTeamsAsync(null, null, null, 1, 100);
-        _teams = teamsResult?.Items.ToList() ?? new List<Team>();
+        _teams = teamsResult?.Items.ToList() ?? new List<TeamResponse>();
 
         var collaboratorsResult = await Api.GetCollaboratorsAsync(null, null, 1, 100);
-        _collaborators = collaboratorsResult?.Items.ToList() ?? new List<Collaborator>();
+        _collaborators = collaboratorsResult?.Items.ToList() ?? new List<CollaboratorResponse>();
 
-        var objectiveDimensionsResult = await Api.GetObjectiveDimensionsAsync(null, 1, 100);
-        _objectiveDimensions = objectiveDimensionsResult?.Items.ToList() ?? new List<ObjectiveDimension>();
     }
 
     private async Task SetMissionViewMode(bool myMissions)
@@ -153,19 +149,19 @@ public partial class Missions
 
     private async Task LoadMissions()
     {
-        PagedResult<Mission> result;
+        PagedResult<MissionResponse> result;
 
         if (_showMyMissions)
         {
-            var collaboratorId = AuthState.Session?.CollaboratorId;
+            var collaboratorId = AuthState.SessionResponse?.CollaboratorId;
             if (collaboratorId.HasValue)
             {
-                result = await Api.GetMyMissionsAsync(collaboratorId.Value, _search, 1, 100) ?? new PagedResult<Mission>();
+                result = await Api.GetMyMissionsAsync(_search, 1, 100) ?? new PagedResult<MissionResponse>();
             }
             else
             {
                 // Global admin without CollaboratorId — fallback to all _missions
-                result = await Api.GetMissionsAsync(null, null, _search, 1, 100) ?? new PagedResult<Mission>();
+                result = await Api.GetMissionsAsync(null, null, _search, 1, 100) ?? new PagedResult<MissionResponse>();
             }
         }
         else
@@ -175,7 +171,7 @@ public partial class Missions
                 ? parsedScopeId
                 : (Guid?)null;
 
-            result = await Api.GetMissionsAsync(scopeType, scopeId, _search, 1, 100) ?? new PagedResult<Mission>();
+            result = await Api.GetMissionsAsync(scopeType, scopeId, _search, 1, 100) ?? new PagedResult<MissionResponse>();
         }
 
         // Apply client-side filters
@@ -198,7 +194,7 @@ public partial class Missions
         }
 
         var filteredList = filteredItems.ToList();
-        _missions = new PagedResult<Mission>
+        _missions = new PagedResult<MissionResponse>
         {
             Items = filteredList,
             Total = filteredList.Count,
@@ -308,7 +304,7 @@ public partial class Missions
         // Load available templates and open the picker
         try
         {
-            var result = await Api.GetMissionTemplatesAsync(null, 1, 50);
+            var result = await Api.GetTemplatesAsync(null, 1, 50);
             _availableTemplates = result?.Items.ToList() ?? new();
         }
         catch
@@ -332,7 +328,7 @@ public partial class Missions
         _isWizardOpen = true;
     }
 
-    private void OpenCreateModalFromTemplate(MissionTemplate template)
+    private void OpenCreateModalFromTemplate(TemplateResponse template)
     {
         _isTemplatePickerOpen = false;
         var objectiveIdToTempId = template.Objectives
@@ -351,14 +347,14 @@ public partial class Missions
                     o.Name,
                     o.Description,
                     null,
-                    o.ObjectiveDimensionId))
+                    o.Dimension))
                 .ToList(),
             Metrics = template.Metrics
                 .OrderBy(m => m.OrderIndex)
                 .Select(m => new TempMetric(
                     null, m.Name, m.Type.ToString(), GetTemplateMetricDetails(m),
                     m.QuantitativeType?.ToString(), m.MinValue, m.MaxValue, m.TargetText, m.Unit?.ToString(),
-                    m.MissionTemplateObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.MissionTemplateObjectiveId.Value, out var objectiveTempId)
+                    m.TemplateObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.TemplateObjectiveId.Value, out var objectiveTempId)
                         ? objectiveTempId
                         : null))
                 .ToList()
@@ -368,7 +364,7 @@ public partial class Missions
         _isWizardOpen = true;
     }
 
-    private static string GetTemplateMetricDetails(MissionTemplateMetric metric)
+    private static string GetTemplateMetricDetails(TemplateMetricResponse metric)
     {
         if (metric.Type == MetricType.Qualitative)
             return $"Qualitativa — {metric.TargetText}";
@@ -438,7 +434,7 @@ public partial class Missions
         MissionWizardResult result,
         MissionStatus status,
         string successTitle,
-        Func<Mission?, string> successMessageFactory,
+        Func<MissionResponse?, string> successMessageFactory,
         string errorTitle,
         string errorMessage)
     {
@@ -470,7 +466,7 @@ public partial class Missions
             errorMessage);
     }
 
-    private async Task CreateObjectivesAndMetricsForMission(Mission? createdMission, List<TempObjective> objectives, List<TempMetric> metrics)
+    private async Task CreateObjectivesAndMetricsForMission(MissionResponse? createdMission, List<TempObjective> objectives, List<TempMetric> metrics)
     {
         if (createdMission is null) return;
 
@@ -488,12 +484,12 @@ public partial class Missions
         {
             try
             {
-                var created = await Api.CreateMissionObjectiveAsync(new CreateMissionObjectiveRequest
+                var created = await Api.CreateMissionObjectiveAsync(new CreateObjectiveRequest
                 {
                     MissionId = missionId,
                     Name = tempObj.Name,
                     Description = tempObj.Description,
-                    ObjectiveDimensionId = tempObj.ObjectiveDimensionId
+                    Dimension = tempObj.Dimension
                 });
                 if (created is not null)
                 {
@@ -524,7 +520,7 @@ public partial class Missions
 
             if (tempMetric.ObjectiveTempId is not null && objectiveIdMap.TryGetValue(tempMetric.ObjectiveTempId, out var objectiveId))
             {
-                request.MissionObjectiveId = objectiveId;
+                request.ObjectiveId = objectiveId;
             }
 
             try
@@ -598,7 +594,7 @@ public partial class Missions
         StateHasChanged();
     }
 
-    private async Task<(List<MissionMetric> metrics, List<MissionObjective> objectives)> LoadMissionDetailsIntoCacheAsync(Guid missionId)
+    private async Task<(List<MetricResponse> metrics, List<ObjectiveResponse> objectives)> LoadMissionDetailsIntoCacheAsync(Guid missionId)
     {
         var metricsTask = Api.GetMissionMetricsByMissionIdAsync(missionId);
         var objectivesTask = Api.GetMissionObjectivesAsync(missionId);
@@ -613,7 +609,7 @@ public partial class Missions
         return (metrics, objectives);
     }
 
-    private async Task LoadCardProgressAsync(List<MissionMetric> metrics, List<MissionObjective> objectives)
+    private async Task LoadCardProgressAsync(List<MetricResponse> metrics, List<ObjectiveResponse> objectives)
     {
         var metricProgressTask = metrics.Count > 0
             ? LoadMetricProgressForIds(metrics.Select(m => m.Id).ToList())
@@ -652,24 +648,24 @@ public partial class Missions
 
     // ---- Checkin History Modal Methods ----
 
-    private async Task OpenCheckinHistoryModal(Mission mission, MissionMetric metric)
+    private async Task OpenCheckinHistoryModal(MissionResponse mission, MetricResponse metric)
     {
         _historyMission = mission;
         _historyMetric = metric;
         _isCheckinHistoryModalOpen = true;
         _isLoadingCheckins = true;
-        _metricCheckins = new List<MetricCheckin>();
+        _metricCheckins = new List<MetricCheckinResponse>();
         StateHasChanged();
 
         try
         {
-            var result = await Api.GetMetricCheckinsAsync(metric.Id, null, 1, 50);
-            _metricCheckins = result?.Items.OrderByDescending(c => c.CheckinDate).ToList() ?? new List<MetricCheckin>();
+            var result = await Api.GetMetricCheckinsAsync(metric.Id, 1, 50);
+            _metricCheckins = result?.Items.OrderByDescending(c => c.CheckinDate).ToList() ?? new List<MetricCheckinResponse>();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Erro ao carregar histórico de check-ins da métrica {metric.Id}: {ex.Message}");
-            _metricCheckins = new List<MetricCheckin>();
+            _metricCheckins = new List<MetricCheckinResponse>();
             ToastService.ShowError("Erro ao carregar histórico", "Não foi possível carregar o histórico de check-ins desta métrica.");
         }
         finally
@@ -684,7 +680,7 @@ public partial class Missions
         _isCheckinHistoryModalOpen = false;
         _historyMetric = null;
         _historyMission = null;
-        _metricCheckins = new List<MetricCheckin>();
+        _metricCheckins = new List<MetricCheckinResponse>();
     }
 
     private void OpenCheckinFromHistory()
@@ -697,7 +693,7 @@ public partial class Missions
         _isCheckinHistoryModalOpen = false;
         _historyMetric = null;
         _historyMission = null;
-        _metricCheckins = new List<MetricCheckin>();
+        _metricCheckins = new List<MetricCheckinResponse>();
 
         // Now open checkin modal with captured values
         if (mission != null && metric != null)
@@ -736,7 +732,7 @@ public partial class Missions
 
     // ---- Checkin Modal Methods ----
 
-    private void OpenCheckinModalForMetric(Mission mission, MissionMetric metric)
+    private void OpenCheckinModalForMetric(MissionResponse mission, MetricResponse metric)
     {
         _checkinMission = mission;
         _selectedCheckinMetric = metric;
@@ -750,7 +746,7 @@ public partial class Missions
         _selectedCheckinMetric = null;
     }
 
-    private async Task HandleCheckinSubmit(CreateMetricCheckinRequest request)
+    private async Task HandleCheckinSubmit(CreateCheckinRequest request)
     {
         if (request.ConfidenceLevel < 1 || request.ConfidenceLevel > 5)
         {
@@ -761,7 +757,7 @@ public partial class Missions
         await UiOps.RunAsync(
             async () =>
             {
-                await Api.CreateMetricCheckinAsync(request);
+                await Api.CreateMetricCheckinAsync(_selectedCheckinMetric!.Id, request);
                 ToastService.ShowSuccess("Check-in criado", "O check-in foi registrado com sucesso.");
                 var missionId = _checkinMission?.Id;
                 CloseCheckinModal();
@@ -777,7 +773,7 @@ public partial class Missions
 
     // ---- Mission Edit/Delete Methods ----
 
-    private (MissionScopeType scopeType, Guid scopeId) GetMissionScope(Mission mission)
+    private (MissionScopeType scopeType, Guid scopeId) GetMissionScope(MissionResponse mission)
     {
         if (mission.CollaboratorId.HasValue)
             return (MissionScopeType.Collaborator, mission.CollaboratorId.Value);
@@ -788,7 +784,7 @@ public partial class Missions
         return (MissionScopeType.Organization, mission.OrganizationId);
     }
 
-    private async Task OpenEditWizard(Mission mission)
+    private async Task OpenEditWizard(MissionResponse mission)
     {
         _isEditMode = true;
         _editingMissionId = mission.Id;
@@ -800,8 +796,8 @@ public partial class Missions
         var objectivesTask = Api.GetMissionObjectivesAsync(mission.Id);
         await Task.WhenAll(metricsTask, objectivesTask);
 
-        var apiMetrics = metricsTask.Result?.Items.ToList() ?? new List<MissionMetric>();
-        var apiObjectives = objectivesTask.Result?.Items.ToList() ?? new List<MissionObjective>();
+        var apiMetrics = metricsTask.Result?.Items.ToList() ?? new List<MetricResponse>();
+        var apiObjectives = objectivesTask.Result?.Items.ToList() ?? new List<ObjectiveResponse>();
 
         // Convert objectives to TempObjective with OriginalId
         var tempObjs = apiObjectives.Select(o => new TempObjective(
@@ -809,7 +805,7 @@ public partial class Missions
             Name: o.Name,
             Description: o.Description,
             OriginalId: o.Id,
-            ObjectiveDimensionId: o.ObjectiveDimensionId
+            Dimension: o.Dimension
         )).ToList();
 
         // Build a map from original objective ID to TempId
@@ -821,7 +817,7 @@ public partial class Missions
         var tempMets = apiMetrics.Select(m =>
         {
             string? objTempId = null;
-            if (m.MissionObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.MissionObjectiveId.Value, out var tid))
+            if (m.ObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.ObjectiveId.Value, out var tid))
             {
                 objTempId = tid;
             }
@@ -877,9 +873,9 @@ public partial class Missions
             "Não foi possível atualizar a missão. Verifique os dados e tente novamente.");
     }
 
-    private static UpdateMissionRequest BuildUpdateMissionRequest(MissionWizardResult result, MissionScopeType scopeType, Guid scopeId)
+    private static PatchMissionRequest BuildUpdateMissionRequest(MissionWizardResult result, MissionScopeType scopeType, Guid scopeId)
     {
-        var request = new UpdateMissionRequest
+        var request = new PatchMissionRequest
         {
             Name = result.Name,
             Description = result.Description,
@@ -920,11 +916,11 @@ public partial class Missions
             objectiveIdMap[objective.TempId] = objective.OriginalId!.Value;
             try
             {
-                await Api.UpdateMissionObjectiveAsync(objective.OriginalId.Value, new UpdateMissionObjectiveRequest
+                await Api.UpdateMissionObjectiveAsync(objective.OriginalId.Value, new PatchObjectiveRequest
                 {
                     Name = objective.Name,
                     Description = objective.Description,
-                    ObjectiveDimensionId = objective.ObjectiveDimensionId
+                    Dimension = objective.Dimension
                 });
             }
             catch (Exception ex)
@@ -938,12 +934,12 @@ public partial class Missions
         {
             try
             {
-                var created = await Api.CreateMissionObjectiveAsync(new CreateMissionObjectiveRequest
+                var created = await Api.CreateMissionObjectiveAsync(new CreateObjectiveRequest
                 {
                     MissionId = missionId,
                     Name = objective.Name,
                     Description = objective.Description,
-                    ObjectiveDimensionId = objective.ObjectiveDimensionId
+                    Dimension = objective.Dimension
                 });
 
                 if (created is not null)
@@ -1008,7 +1004,7 @@ public partial class Missions
 
                 if (metric.ObjectiveTempId is not null && objectiveIdMap.TryGetValue(metric.ObjectiveTempId, out var objectiveId))
                 {
-                    request.MissionObjectiveId = objectiveId;
+                    request.ObjectiveId = objectiveId;
                 }
 
                 await Api.CreateMissionMetricAsync(request);
@@ -1078,7 +1074,7 @@ public partial class Missions
         }
     }
 
-    private static string GetMetricDetailsFromModel(MissionMetric m)
+    private static string GetMetricDetailsFromModel(MetricResponse m)
     {
         if (m.Type == MetricType.Qualitative)
             return m.TargetText ?? "";
@@ -1102,12 +1098,12 @@ public partial class Missions
         };
     }
 
-    private CreateMissionMetricRequest? BuildCreateMetricRequest(Guid missionId, TempMetric metric)
+    private CreateMetricRequest? BuildCreateMetricRequest(Guid missionId, TempMetric metric)
     {
         if (!EnumParsingHelper.TryParseEnum<MetricType>(metric.Type, out var metricType))
             return null;
 
-        var request = new CreateMissionMetricRequest
+        var request = new CreateMetricRequest
         {
             MissionId = missionId,
             Name = metric.Name,
@@ -1130,12 +1126,12 @@ public partial class Missions
         return request;
     }
 
-    private UpdateMissionMetricRequest? BuildUpdateMetricRequest(TempMetric metric)
+    private PatchMetricRequest? BuildUpdateMetricRequest(TempMetric metric)
     {
         if (!EnumParsingHelper.TryParseEnum<MetricType>(metric.Type, out var metricType))
             return null;
 
-        var request = new UpdateMissionMetricRequest
+        var request = new PatchMetricRequest
         {
             Name = metric.Name,
             Type = metricType,

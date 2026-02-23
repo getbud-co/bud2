@@ -1,5 +1,5 @@
 using Bud.Client.Shared.Missions;
-using Bud.Shared.Domain;
+using Bud.Shared.Contracts;
 using Bunit;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
@@ -32,10 +32,10 @@ public sealed class MissionTemplatePickerTests : TestContext
     [Fact]
     public void Render_WhenTemplatesProvided_ShouldShowTemplateNames()
     {
-        var templates = new List<MissionTemplate>
+        var templates = new List<TemplateResponse>
         {
-            new() { Id = Guid.NewGuid(), Name = "Template Alpha", Description = "Desc A", Metrics = new List<MissionTemplateMetric> { new() } },
-            new() { Id = Guid.NewGuid(), Name = "Template Beta", Metrics = new List<MissionTemplateMetric>() }
+            new() { Id = Guid.NewGuid(), Name = "Template Alpha", Description = "Desc A", Metrics = new List<TemplateMetricResponse> { new() } },
+            new() { Id = Guid.NewGuid(), Name = "Template Beta", Metrics = new List<TemplateMetricResponse>() }
         };
 
         var cut = RenderComponent<MissionTemplatePicker>(parameters => parameters
@@ -67,18 +67,18 @@ public sealed class MissionTemplatePickerTests : TestContext
     [Fact]
     public void Click_Template_ShouldInvokeOnSelectTemplateWithTemplate()
     {
-        MissionTemplate? selected = null;
-        var template = new MissionTemplate
+        TemplateResponse? selected = null;
+        var template = new TemplateResponse
         {
             Id = Guid.NewGuid(),
             Name = "My Template",
-            Metrics = new List<MissionTemplateMetric>()
+            Metrics = new List<TemplateMetricResponse>()
         };
 
         var cut = RenderComponent<MissionTemplatePicker>(parameters => parameters
             .Add(p => p.IsOpen, true)
             .Add(p => p.Templates, [template])
-            .Add(p => p.OnSelectTemplate, EventCallback.Factory.Create<MissionTemplate>(this, t => selected = t)));
+            .Add(p => p.OnSelectTemplate, EventCallback.Factory.Create<TemplateResponse>(this, t => selected = t)));
 
         // First card is "from scratch", second is the template
         var cards = cut.FindAll(".template-picker-card");

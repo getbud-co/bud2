@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -99,8 +99,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org!.Id
         };
 
@@ -147,8 +147,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission Forbidden",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org2!.Id
         };
 
@@ -168,8 +168,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid() // Non-existent ID
         };
 
@@ -198,8 +198,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow.AddDays(7),
             EndDate = DateTime.UtcNow, // Before start date
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org!.Id
         };
 
@@ -308,8 +308,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission for GetById",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org!.Id
         };
         var createResponse = await _client.PostAsJsonAsync("/api/missions", createRequest);
@@ -370,8 +370,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission Org 1",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org1!.Id
         });
 
@@ -380,8 +380,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission Org 2",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org2!.Id
         });
 
@@ -411,8 +411,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
                 Name = $"Mission {i}",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = MissionStatus.Planned,
-                ScopeType = MissionScopeType.Organization,
+                Status = Bud.Shared.Contracts.MissionStatus.Planned,
+                ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
                 ScopeId = org!.Id
             });
         }
@@ -527,8 +527,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Org Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org.Id
         });
 
@@ -537,13 +537,14 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Collaborator Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Collaborator,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Collaborator,
             ScopeId = collaborator!.Id
         });
 
         // Act
-        var response = await _client.GetAsync($"/api/missions/my-missions/{collaborator.Id}");
+        var collaboratorClient = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
+        var response = await collaboratorClient.GetAsync("/api/me/missions");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -572,23 +573,23 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Original Name",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org!.Id
         };
         var createResponse = await _client.PostAsJsonAsync("/api/missions", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Mission>();
 
-        var updateRequest = new UpdateMissionRequest
+        var updateRequest = new PatchMissionRequest
         {
             Name = "Updated Name",
             StartDate = created!.StartDate,
             EndDate = created.EndDate,
-            Status = MissionStatus.Active
+            Status = Bud.Shared.Contracts.MissionStatus.Active
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/missions/{created.Id}", updateRequest);
+        var response = await _client.PatchAsJsonAsync($"/api/missions/{created.Id}", updateRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -616,8 +617,8 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission to Delete",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = org!.Id
         };
         var createResponse = await _client.PostAsJsonAsync("/api/missions", createRequest);

@@ -40,5 +40,15 @@ public readonly record struct EmailAddress
         return !string.IsNullOrWhiteSpace(domainPart) && domainPart.Contains('.');
     }
 
+    public static EmailAddress Create(string? raw)
+    {
+        if (!TryCreate(raw, out var emailAddress))
+        {
+            throw new DomainInvariantException("O e-mail informado é inválido.");
+        }
+
+        return emailAddress;
+    }
+
     public override string ToString() => Value;
 }

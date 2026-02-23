@@ -1,7 +1,8 @@
 using Bud.Server.Infrastructure.Persistence;
 using Bud.Server.Infrastructure.Services;
+using Bud.Server.Application.Ports;
 using Bud.Server.Tests.Helpers;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -45,7 +46,7 @@ public class MissionProgressServiceTests
         return (org, mission);
     }
 
-    private static async Task<MissionMetric> CreateTestMetric(
+    private static async Task<Metric> CreateTestMetric(
         ApplicationDbContext context,
         Guid missionId,
         Guid organizationId,
@@ -54,7 +55,7 @@ public class MissionProgressServiceTests
         decimal? minValue = null,
         decimal? maxValue = 100m)
     {
-        var metric = new MissionMetric
+        var metric = new Metric
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -68,7 +69,7 @@ public class MissionProgressServiceTests
             TargetText = type == MetricType.Qualitative ? "Target text" : null
         };
 
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         return metric;
@@ -98,7 +99,7 @@ public class MissionProgressServiceTests
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
-            MissionMetricId = metricId,
+            MetricId = metricId,
             CollaboratorId = collaborator.Id,
             Value = value,
             Text = text,

@@ -1,4 +1,4 @@
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bud.Server.Infrastructure.Persistence;
@@ -59,65 +59,23 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        var dimensionsByName = await SeedObjectiveDimensionsAsync(context, budOrg.Id);
-        await SeedMissionTemplatesAsync(context, budOrg.Id, dimensionsByName);
+        await SeedTemplatesAsync(context, budOrg.Id);
     }
 
-    private static async Task<Dictionary<string, Guid>> SeedObjectiveDimensionsAsync(ApplicationDbContext context, Guid organizationId)
-    {
-        var defaultDimensions = new[]
-        {
-            "Financeira",
-            "Clientes",
-            "Produtos",
-            "Processos Internos",
-            "Aprendizado e Crescimento"
-        };
-
-        var existingDimensions = await context.ObjectiveDimensions
-            .IgnoreQueryFilters()
-            .Where(d => d.OrganizationId == organizationId)
-            .ToListAsync();
-
-        var existingByName = existingDimensions.ToDictionary(d => d.Name, d => d.Id);
-        var missingNames = defaultDimensions.Where(name => !existingByName.ContainsKey(name)).ToList();
-
-        foreach (var dimensionName in missingNames)
-        {
-            var dimension = new ObjectiveDimension
-            {
-                Id = Guid.NewGuid(),
-                OrganizationId = organizationId,
-                Name = dimensionName
-            };
-
-            context.ObjectiveDimensions.Add(dimension);
-            existingByName[dimensionName] = dimension.Id;
-        }
-
-        if (missingNames.Count > 0)
-        {
-            await context.SaveChangesAsync();
-        }
-
-        return existingByName;
-    }
-
-    private static async Task SeedMissionTemplatesAsync(
+    private static async Task SeedTemplatesAsync(
         ApplicationDbContext context,
-        Guid organizationId,
-        IReadOnlyDictionary<string, Guid> dimensionsByName)
+        Guid organizationId)
     {
-        var templates = new List<MissionTemplate>
+        var templates = new List<Template>
         {
-            BuildBscTemplate(organizationId, dimensionsByName),
-            BuildStrategicMapTemplate(organizationId, dimensionsByName),
-            BuildAnnualStrategicPlanningTemplate(organizationId, dimensionsByName),
-            BuildOkrTemplate(organizationId, dimensionsByName),
-            BuildPdiTemplate(organizationId, dimensionsByName)
+            BuildBscTemplate(organizationId),
+            BuildStrategicMapTemplate(organizationId),
+            BuildAnnualStrategicPlanningTemplate(organizationId),
+            BuildOkrTemplate(organizationId),
+            BuildPdiTemplate(organizationId)
         };
 
-        var existingTemplateNames = await context.MissionTemplates
+        var existingTemplateNames = await context.Templates
             .IgnoreQueryFilters()
             .Where(t => t.OrganizationId == organizationId)
             .Select(t => t.Name)
@@ -129,19 +87,19 @@ public static class DbSeeder
 
         if (missingTemplates.Count > 0)
         {
-            context.MissionTemplates.AddRange(missingTemplates);
+            context.Templates.AddRange(missingTemplates);
             await context.SaveChangesAsync();
         }
     }
 
-    private static MissionTemplate BuildBscTemplate(Guid organizationId, IReadOnlyDictionary<string, Guid> dimensionsByName)
+    private static Template BuildBscTemplate(Guid organizationId)
     {
         var financeiraObjectiveId = Guid.NewGuid();
         var clientesObjectiveId = Guid.NewGuid();
         var processosObjectiveId = Guid.NewGuid();
         var aprendizadoObjectiveId = Guid.NewGuid();
 
-        return new MissionTemplate
+        return new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -151,90 +109,90 @@ public static class DbSeeder
             MissionDescriptionPattern = "Missão estratégica baseada nas perspectivas do Balanced Scorecard.",
             Objectives =
             [
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = financeiraObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva Financeira",
                     Description = "Objetivos de desempenho econômico e sustentabilidade financeira.",
                     OrderIndex = 0,
-                    ObjectiveDimensionId = dimensionsByName["Financeira"]
+                    Dimension = "Financeira"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = clientesObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Clientes",
                     Description = "Objetivos relacionados à proposta de valor e satisfação do cliente.",
                     OrderIndex = 1,
-                    ObjectiveDimensionId = dimensionsByName["Clientes"]
+                    Dimension = "Clientes"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = processosObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Processos Internos",
                     Description = "Objetivos de eficiência e excelência operacional.",
                     OrderIndex = 2,
-                    ObjectiveDimensionId = dimensionsByName["Processos Internos"]
+                    Dimension = "Processos Internos"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = aprendizadoObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Aprendizado e Crescimento",
                     Description = "Objetivos de capacidade organizacional, pessoas e inovação.",
                     OrderIndex = 3,
-                    ObjectiveDimensionId = dimensionsByName["Aprendizado e Crescimento"]
+                    Dimension = "Aprendizado e Crescimento"
                 }
             ],
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Resultado Financeiro",
                     Type = MetricType.Quantitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = financeiraObjectiveId,
+                    TemplateObjectiveId = financeiraObjectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Satisfação de Clientes",
                     Type = MetricType.Quantitative,
                     OrderIndex = 1,
-                    MissionTemplateObjectiveId = clientesObjectiveId,
+                    TemplateObjectiveId = clientesObjectiveId,
                     QuantitativeType = QuantitativeMetricType.KeepAbove,
                     MinValue = 70,
                     MaxValue = 100,
                     Unit = MetricUnit.Points
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Eficiência de Processos Internos",
                     Type = MetricType.Quantitative,
                     OrderIndex = 2,
-                    MissionTemplateObjectiveId = processosObjectiveId,
+                    TemplateObjectiveId = processosObjectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Capacitação e Aprendizado",
                     Type = MetricType.Quantitative,
                     OrderIndex = 3,
-                    MissionTemplateObjectiveId = aprendizadoObjectiveId,
+                    TemplateObjectiveId = aprendizadoObjectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
@@ -243,14 +201,14 @@ public static class DbSeeder
         };
     }
 
-    private static MissionTemplate BuildStrategicMapTemplate(Guid organizationId, IReadOnlyDictionary<string, Guid> dimensionsByName)
+    private static Template BuildStrategicMapTemplate(Guid organizationId)
     {
         var crescimentoObjectiveId = Guid.NewGuid();
         var processosObjectiveId = Guid.NewGuid();
         var clientesObjectiveId = Guid.NewGuid();
         var financeiraObjectiveId = Guid.NewGuid();
 
-        return new MissionTemplate
+        return new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -260,96 +218,96 @@ public static class DbSeeder
             MissionDescriptionPattern = "Missão para construção e acompanhamento do mapa estratégico.",
             Objectives =
             [
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = crescimentoObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Capacidades Organizacionais",
                     Description = "Base de pessoas, cultura e inovação que viabiliza a estratégia.",
                     OrderIndex = 0,
-                    ObjectiveDimensionId = dimensionsByName["Aprendizado e Crescimento"]
+                    Dimension = "Aprendizado e Crescimento"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = processosObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Excelência de Processos",
                     Description = "Processos críticos para entregar valor com previsibilidade.",
                     OrderIndex = 1,
-                    ObjectiveDimensionId = dimensionsByName["Processos Internos"]
+                    Dimension = "Processos Internos"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = clientesObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Valor para Clientes",
                     Description = "Resultados percebidos pelos clientes e posicionamento competitivo.",
                     OrderIndex = 2,
-                    ObjectiveDimensionId = dimensionsByName["Clientes"]
+                    Dimension = "Clientes"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = financeiraObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Resultados Financeiros",
                     Description = "Impacto econômico final esperado da estratégia.",
                     OrderIndex = 3,
-                    ObjectiveDimensionId = dimensionsByName["Financeira"]
+                    Dimension = "Financeira"
                 }
             ],
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Objetivo Estratégico 1",
                     Type = MetricType.Qualitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = crescimentoObjectiveId,
+                    TemplateObjectiveId = crescimentoObjectiveId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Objetivo Estratégico 2",
                     Type = MetricType.Qualitative,
                     OrderIndex = 1,
-                    MissionTemplateObjectiveId = processosObjectiveId,
+                    TemplateObjectiveId = processosObjectiveId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Objetivo Estratégico 3",
                     Type = MetricType.Qualitative,
                     OrderIndex = 2,
-                    MissionTemplateObjectiveId = clientesObjectiveId,
+                    TemplateObjectiveId = clientesObjectiveId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Objetivo Estratégico 4",
                     Type = MetricType.Qualitative,
                     OrderIndex = 3,
-                    MissionTemplateObjectiveId = financeiraObjectiveId,
+                    TemplateObjectiveId = financeiraObjectiveId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 }
             ]
         };
     }
 
-    private static MissionTemplate BuildAnnualStrategicPlanningTemplate(Guid organizationId, IReadOnlyDictionary<string, Guid> dimensionsByName)
+    private static Template BuildAnnualStrategicPlanningTemplate(Guid organizationId)
     {
         var portfolioObjectiveId = Guid.NewGuid();
         var executionObjectiveId = Guid.NewGuid();
         var productsObjectiveId = Guid.NewGuid();
 
-        return new MissionTemplate
+        return new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -359,64 +317,64 @@ public static class DbSeeder
             MissionDescriptionPattern = "Planejamento estratégico anual com marcos e prioridades do ciclo.",
             Objectives =
             [
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = portfolioObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Priorização Estratégica",
                     Description = "Definição das frentes prioritárias do ano.",
                     OrderIndex = 0,
-                    ObjectiveDimensionId = dimensionsByName["Financeira"]
+                    Dimension = "Financeira"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = executionObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Execução e Governança",
                     Description = "Ritmo e disciplina de execução do plano.",
                     OrderIndex = 1,
-                    ObjectiveDimensionId = dimensionsByName["Processos Internos"]
+                    Dimension = "Processos Internos"
                 },
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = productsObjectiveId,
                     OrganizationId = organizationId,
                     Name = "Evolução de Produtos",
                     Description = "Resultados estratégicos esperados para produtos no ciclo.",
                     OrderIndex = 2,
-                    ObjectiveDimensionId = dimensionsByName["Produtos"]
+                    Dimension = "Produtos"
                 }
             ],
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Prioridade Estratégica 1",
                     Type = MetricType.Qualitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = portfolioObjectiveId,
+                    TemplateObjectiveId = portfolioObjectiveId,
                     TargetText = "Descreva o objetivo e os entregáveis da prioridade."
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Prioridade Estratégica 2",
                     Type = MetricType.Qualitative,
                     OrderIndex = 1,
-                    MissionTemplateObjectiveId = productsObjectiveId,
+                    TemplateObjectiveId = productsObjectiveId,
                     TargetText = "Descreva o objetivo e os entregáveis da prioridade."
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Execução do Plano no Ano",
                     Type = MetricType.Quantitative,
                     OrderIndex = 2,
-                    MissionTemplateObjectiveId = executionObjectiveId,
+                    TemplateObjectiveId = executionObjectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
@@ -425,11 +383,11 @@ public static class DbSeeder
         };
     }
 
-    private static MissionTemplate BuildOkrTemplate(Guid organizationId, IReadOnlyDictionary<string, Guid> dimensionsByName)
+    private static Template BuildOkrTemplate(Guid organizationId)
     {
         var objectiveId = Guid.NewGuid();
 
-        return new MissionTemplate
+        return new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -439,50 +397,50 @@ public static class DbSeeder
             MissionDescriptionPattern = "Missão seguindo o framework OKR com resultados-chave quantitativos.",
             Objectives =
             [
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = objectiveId,
                     OrganizationId = organizationId,
                     Name = "Objetivo Principal",
                     Description = "Objetivo aspiracional do ciclo de OKR.",
                     OrderIndex = 0,
-                    ObjectiveDimensionId = dimensionsByName["Clientes"]
+                    Dimension = "Clientes"
                 }
             ],
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Resultado-chave 1",
                     Type = MetricType.Quantitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Resultado-chave 2",
                     Type = MetricType.Quantitative,
                     OrderIndex = 1,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Resultado-chave 3",
                     Type = MetricType.Quantitative,
                     OrderIndex = 2,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage
@@ -491,11 +449,11 @@ public static class DbSeeder
         };
     }
 
-    private static MissionTemplate BuildPdiTemplate(Guid organizationId, IReadOnlyDictionary<string, Guid> dimensionsByName)
+    private static Template BuildPdiTemplate(Guid organizationId)
     {
         var objectiveId = Guid.NewGuid();
 
-        return new MissionTemplate
+        return new Template
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -505,46 +463,46 @@ public static class DbSeeder
             MissionDescriptionPattern = "Plano de desenvolvimento individual com ações qualitativas e acompanhamento de progresso.",
             Objectives =
             [
-                new MissionTemplateObjective
+                new TemplateObjective
                 {
                     Id = objectiveId,
                     OrganizationId = organizationId,
                     Name = "Desenvolvimento Individual",
                     Description = "Capacidades e competências a desenvolver no ciclo.",
                     OrderIndex = 0,
-                    ObjectiveDimensionId = dimensionsByName["Aprendizado e Crescimento"]
+                    Dimension = "Aprendizado e Crescimento"
                 }
             ],
             Metrics =
             [
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Ação de desenvolvimento 1",
                     Type = MetricType.Qualitative,
                     OrderIndex = 0,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     TargetText = "Descreva a ação de desenvolvimento"
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Ação de desenvolvimento 2",
                     Type = MetricType.Qualitative,
                     OrderIndex = 1,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     TargetText = "Descreva a ação de desenvolvimento"
                 },
-                new MissionTemplateMetric
+                new TemplateMetric
                 {
                     Id = Guid.NewGuid(),
                     OrganizationId = organizationId,
                     Name = "Progresso geral",
                     Type = MetricType.Quantitative,
                     OrderIndex = 2,
-                    MissionTemplateObjectiveId = objectiveId,
+                    TemplateObjectiveId = objectiveId,
                     QuantitativeType = QuantitativeMetricType.Achieve,
                     MaxValue = 100,
                     Unit = MetricUnit.Percentage

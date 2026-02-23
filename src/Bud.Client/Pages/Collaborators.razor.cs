@@ -1,6 +1,5 @@
 using Bud.Client.Services;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -12,11 +11,11 @@ namespace Bud.Client.Pages;
 public partial class Collaborators
 {
     private CreateCollaboratorRequest newCollaborator = new();
-    private List<Team> teams = new();
-    private List<Workspace> workspaces = new();
-    private List<LeaderCollaboratorResponse> leaders = new();
-    private List<Collaborator> allCollaborators = new();
-    private PagedResult<Collaborator>? collaborators;
+    private List<TeamResponse> teams = new();
+    private List<WorkspaceResponse> workspaces = new();
+    private List<CollaboratorLeaderResponse> leaders = new();
+    private List<CollaboratorResponse> allCollaborators = new();
+    private PagedResult<CollaboratorResponse>? collaborators;
     private string? search;
     private string? selectedTeamId;
     private string? createLeaderId;
@@ -27,24 +26,24 @@ public partial class Collaborators
     private bool showTeamDropdown = false;
 
     // Estado de equipes no modal de criação
-    private List<TeamSummaryDto> availableTeamsForCreate = new();
-    private List<TeamSummaryDto> assignedTeamsForCreate = new();
+    private List<CollaboratorTeamResponse> availableTeamsForCreate = new();
+    private List<CollaboratorTeamResponse> assignedTeamsForCreate = new();
     private bool createTeamsModified = false;
 
     // Estado do modal de edição
     private bool isEditModalOpen = false;
-    private Collaborator? selectedCollaborator = null;
-    private UpdateCollaboratorRequest editCollaborator = new();
+    private CollaboratorResponse? selectedCollaborator = null;
+    private CollaboratorEditModel editCollaborator = new();
     private string? editLeaderId;
-    private List<TeamSummaryDto> availableTeamsForEdit = new();
-    private List<TeamSummaryDto> assignedTeamsForEdit = new();
+    private List<CollaboratorTeamResponse> availableTeamsForEdit = new();
+    private List<CollaboratorTeamResponse> assignedTeamsForEdit = new();
     private bool teamsModified = false;
 
     // Estado do modal de detalhes
     private bool isDetailsModalOpen = false;
-    private Collaborator? detailsCollaborator = null;
-    private List<TeamSummaryDto>? detailsCollaboratorTeams = null;
-    private List<CollaboratorHierarchyNodeDto>? detailsSubordinates = null;
+    private CollaboratorResponse? detailsCollaborator = null;
+    private List<CollaboratorTeamResponse>? detailsCollaboratorTeams = null;
+    private List<CollaboratorSubordinateResponse>? detailsSubordinates = null;
 
     // Estado de confirmação de exclusão
     private Guid? deletingCollaboratorId = null;
@@ -93,24 +92,24 @@ public partial class Collaborators
     private async Task LoadTeams()
     {
         var result = await Api.GetTeamsAsync(null, null, null, 1, 100);
-        teams = result?.Items.ToList() ?? new List<Team>();
+        teams = result?.Items.ToList() ?? new List<TeamResponse>();
     }
 
     private async Task LoadWorkspaces()
     {
         var result = await Api.GetWorkspacesAsync(OrgContext.SelectedOrganizationId, null, 1, 100);
-        workspaces = result?.Items.ToList() ?? new List<Workspace>();
+        workspaces = result?.Items.ToList() ?? new List<WorkspaceResponse>();
     }
 
     private async Task LoadLeaders()
     {
-        leaders = await Api.GetLeadersAsync(OrgContext.SelectedOrganizationId) ?? new List<LeaderCollaboratorResponse>();
+        leaders = await Api.GetLeadersAsync(OrgContext.SelectedOrganizationId) ?? new List<CollaboratorLeaderResponse>();
     }
 
     private async Task LoadAllCollaborators()
     {
         var result = await Api.GetCollaboratorsAsync(null, null, 1, 100);
-        allCollaborators = result?.Items.ToList() ?? new List<Collaborator>();
+        allCollaborators = result?.Items.ToList() ?? new List<CollaboratorResponse>();
     }
 
     private async Task LoadCollaborators()
@@ -118,7 +117,7 @@ public partial class Collaborators
         var filterTeamId = Guid.TryParse(selectedTeamId, out var parsedTeamId)
             ? parsedTeamId
             : (Guid?)null;
-        collaborators = await Api.GetCollaboratorsAsync(filterTeamId, search, 1, 20) ?? new PagedResult<Collaborator>();
+        collaborators = await Api.GetCollaboratorsAsync(filterTeamId, search, 1, 20) ?? new PagedResult<CollaboratorResponse>();
     }
 
     // Filter methods
@@ -193,7 +192,7 @@ public partial class Collaborators
         createLeaderId = null;
         assignedTeamsForCreate = new();
         createTeamsModified = false;
-        availableTeamsForCreate = teams.Select(t => new TeamSummaryDto
+        availableTeamsForCreate = teams.Select(t => new CollaboratorTeamResponse
         {
             Id = t.Id,
             Name = t.Name,
@@ -237,7 +236,7 @@ public partial class Collaborators
                 // Assign teams if any were selected
                 if (created != null && createTeamsModified && assignedTeamsForCreate.Count > 0)
                 {
-                    await Api.UpdateCollaboratorTeamsAsync(created.Id, new UpdateCollaboratorTeamsRequest
+                    await Api.UpdateCollaboratorTeamsAsync(created.Id, new PatchCollaboratorTeamsRequest
                     {
                         TeamIds = assignedTeamsForCreate.Select(t => t.Id).ToList()
                     });
@@ -255,15 +254,14 @@ public partial class Collaborators
             "Não foi possível criar o colaborador. Verifique os dados e tente novamente.");
     }
 
-    private async Task OpenEditModal(Collaborator collaborator)
+    private async Task OpenEditModal(CollaboratorResponse collaborator)
     {
         selectedCollaborator = collaborator;
-        editCollaborator = new UpdateCollaboratorRequest
+        editCollaborator = new CollaboratorEditModel
         {
             FullName = collaborator.FullName,
             Email = collaborator.Email,
-            Role = collaborator.Role,
-            LeaderId = collaborator.LeaderId
+            Role = collaborator.Role
         };
         editLeaderId = collaborator.LeaderId?.ToString() ?? "";
 
@@ -279,14 +277,14 @@ public partial class Collaborators
     {
         isEditModalOpen = false;
         selectedCollaborator = null;
-        editCollaborator = new();
+        editCollaborator = new CollaboratorEditModel();
         editLeaderId = null;
         availableTeamsForEdit = new();
         assignedTeamsForEdit = new();
         teamsModified = false;
     }
 
-    private async Task OpenDetailsModal(Collaborator collaborator)
+    private async Task OpenDetailsModal(CollaboratorResponse collaborator)
     {
         detailsCollaborator = collaborator;
         detailsCollaboratorTeams = null;
@@ -313,18 +311,24 @@ public partial class Collaborators
     {
         if (selectedCollaborator == null) return;
 
-        editCollaborator.LeaderId = Guid.TryParse(editLeaderId, out var leaderId) ? leaderId : null;
+        var request = new PatchCollaboratorRequest
+        {
+            FullName = editCollaborator.FullName,
+            Email = editCollaborator.Email,
+            Role = editCollaborator.Role,
+            LeaderId = Guid.TryParse(editLeaderId, out var leaderId) ? leaderId : null
+        };
 
         await UiOps.RunAsync(
             async () =>
             {
-                var result = await Api.UpdateCollaboratorAsync(selectedCollaborator.Id, editCollaborator);
+                var result = await Api.UpdateCollaboratorAsync(selectedCollaborator.Id, request);
                 if (result != null)
                 {
                     // Update teams if modified
                     if (teamsModified)
                     {
-                        await Api.UpdateCollaboratorTeamsAsync(selectedCollaborator.Id, new UpdateCollaboratorTeamsRequest
+                        await Api.UpdateCollaboratorTeamsAsync(selectedCollaborator.Id, new PatchCollaboratorTeamsRequest
                         {
                             TeamIds = assignedTeamsForEdit.Select(t => t.Id).ToList()
                         });
@@ -390,13 +394,13 @@ public partial class Collaborators
         }
     }
 
-    private static string GetRoleLabel(CollaboratorRole role) => role switch
+    private static string GetRoleLabel(Bud.Shared.Contracts.CollaboratorRole role) => role switch
     {
         CollaboratorRole.Leader => "Lider",
         _ => "Contribuidor individual"
     };
 
-    private void OnTeamsChanged(List<TeamSummaryDto> teams)
+    private void OnTeamsChanged(List<CollaboratorTeamResponse> teams)
     {
         assignedTeamsForEdit = teams;
         teamsModified = true;
@@ -408,7 +412,7 @@ public partial class Collaborators
         availableTeamsForEdit = await Api.GetAvailableTeamsForCollaboratorAsync(selectedCollaborator.Id, search) ?? new();
     }
 
-    private void OnCreateTeamsChanged(List<TeamSummaryDto> updatedTeams)
+    private void OnCreateTeamsChanged(List<CollaboratorTeamResponse> updatedTeams)
     {
         assignedTeamsForCreate = updatedTeams;
         createTeamsModified = true;
@@ -421,7 +425,7 @@ public partial class Collaborators
             .Where(t => !assignedIds.Contains(t.Id))
             .Where(t => string.IsNullOrWhiteSpace(search) ||
                 t.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .Select(t => new TeamSummaryDto
+            .Select(t => new CollaboratorTeamResponse
             {
                 Id = t.Id,
                 Name = t.Name,
@@ -430,7 +434,7 @@ public partial class Collaborators
         return Task.CompletedTask;
     }
 
-    private static RenderFragment RenderOrgChartNode(CollaboratorHierarchyNodeDto node) => builder =>
+    private static RenderFragment RenderOrgChartNode(CollaboratorSubordinateResponse node) => builder =>
     {
         var seq = 0;
 
@@ -476,4 +480,11 @@ public partial class Collaborators
 
         builder.CloseElement();
     };
+
+    private sealed class CollaboratorEditModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public CollaboratorRole Role { get; set; } = CollaboratorRole.IndividualContributor;
+    }
 }

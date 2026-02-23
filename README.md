@@ -32,36 +32,39 @@ Este documento é voltado para devs que precisam:
 O Bud segue uma arquitetura em camadas com separação explícita de responsabilidades:
 
 - **API/Host (`Bud.Server`)**: exposição HTTP, autenticação/autorização, middleware e composição de dependências.
-- **Application**: casos de uso (`Command/Query`), orquestração de notificações e resultado unificado (`Result`).
-- **Domain**: conceitos de domínio, value objects e specifications.
-- **Infrastructure**: EF Core (`ApplicationDbContext`), repositórios (`Repositories/`) e serviços de infraestrutura (`Services/`).
+- **Application**: casos de uso (`Application/UseCases/`), portas de aplicação e orquestração de eventos de domínio.
+  - `Application/Common`: resultados e utilitários transversais.
+  - `Application/Mapping`: mapeamento entre read models/domínio e contratos de borda.
+- **Domain**: conceitos de domínio, value objects e interfaces de repositório.
+- **Infrastructure**: EF Core (`ApplicationDbContext`), repositórios (`Repositories/`), serviços de infraestrutura (`Services/`) e specifications de consulta (`Querying/`).
 - **Client (`Bud.Client`)**: SPA Blazor WASM com consumo da API.
-- **Shared (`Bud.Shared`)**: contratos e modelos compartilhados entre cliente e servidor.
+- **Shared (`Bud.Shared`)**: contratos de borda compartilhados entre cliente, servidor e MCP.
 
 ### Organização do backend (Bud.Server)
 
-- **Controllers** recebem requests, validam payloads (FluentValidation) e delegam para UseCases.
+- **Controllers** recebem requests, validam payloads (FluentValidation) e delegam para Use Cases.
   Validações dependentes de dados devem passar por abstrações/repositórios, não por acesso direto de validator ao `DbContext`.
-- **UseCases** centralizam o fluxo completo da aplicação (orquestração, autorização, notificações) e retornam `Result`/`Result<T>` (em `Application/Common/`).
-- **Infrastructure** (`Infrastructure/`) contém interfaces e implementações concretas:
-  - `Repositories/`: interfaces (`I*Repository`) e implementações dos repositórios.
-  - `Services/`: interfaces (`IAuthService`, `IMissionScopeResolver`, `IMissionProgressService`) e implementações (`AuthService`, `MissionScopeResolver`, `MissionProgressService`, `NotificationRecipientResolver`).
+- **Use Cases** (`Application/UseCases/{Domain}/`) centralizam o fluxo completo da aplicação (orquestração, autorização, notificações) e retornam `Result`/`Result<T>` (em `Application/Common/`). Cada use case é uma classe com método `ExecuteAsync`, injetada diretamente nos controllers (sem mediator).
+- **Infrastructure** (`Infrastructure/`) contém implementações concretas:
+  - `Repositories/`: implementações dos repositórios (`I*Repository` ficam em `Domain/Repositories/`).
+  - `Services/`: implementações de adapters (`AuthService`, `MissionScopeResolver`, `MissionProgressService`, `NotificationRecipientResolver`), com interfaces em `Application/Ports/`.
+  - `Querying/`: specifications de consulta para filtros reutilizáveis.
   - `ApplicationDbContext`, `Configurations/` e `DbSeeder`.
 - **Authorization** (`Authorization/`) contém serviços de autorização (`TenantAuthorizationService`, `OrganizationAuthorizationService`), policies, requirements e handlers.
-- **DependencyInjection** modulariza bootstrap (`BudApi`, `BudSecurity`, `BudData`, `BudApplication`).
+- **DependencyInjection** modulariza bootstrap (`BudApi`, `BudSecurity`, `BudInfrastructure`, `BudApplication`).
 
 ### Padrões arquiteturais adotados
 
-- **UseCases + Repositories (Clean Architecture)**
-  Controllers delegam para UseCases, que dependem de interfaces (portas) co-localizadas com suas implementações em `Infrastructure/`.
-  Repositórios e serviços definem interfaces e implementações no mesmo diretório. `Domain` não depende de `Application` nem de `Infrastructure`.
-  Referências: `docs/adr/ADR-0002-usecases-services.md`.
+- **Use Cases + Repositories (Clean Architecture)**
+  Controllers delegam para Use Cases (`Application/UseCases/`), que dependem de interfaces (portas) em `Domain/Repositories` e `Application/Ports`.
+  Implementações concretas ficam em `Infrastructure/Repositories` e `Infrastructure/Services`. `Domain` não depende de `Application` nem de `Infrastructure`.
+  Referências: `docs/adr/ADR-0002-arquitetura-ddd-estrita-e-regras-de-dependencia.md`.
 - **Policy-based Authorization (Requirement/Handler)**
   Regras de autorização centralizadas em policies e handlers, reduzindo condicionais espalhadas.
-  Referências: `docs/adr/ADR-0004-autenticacao-autorizacao.md`.
+  Referências: `docs/adr/ADR-0007-autenticacao-e-autorizacao-por-politicas.md`.
 - **Specification Pattern (consultas reutilizáveis)**
   Filtros de domínio encapsulados em specifications para evitar duplicação de predicados.
-  Referências: `src/Bud.Server/Domain/Specifications/`.
+  Referências: `src/Bud.Server/Infrastructure/Querying/`.
 - **Structured Logging (source-generated)**
   Logs com `[LoggerMessage]` definidos localmente por componente (`partial`), com `EventId` estável e sem catálogo central global.
 - **Governança arquitetural por testes + ADRs**  
@@ -69,12 +72,15 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
   Referências: `docs/adr/README.md` e `tests/Bud.Server.Tests/Architecture/ArchitectureTests.cs`.
 - **Aggregate Roots explícitas**
   Entidades raiz de agregado são marcadas com `IAggregateRoot` para tornar boundaries verificáveis por testes.
-  Referências: `docs/adr/ADR-0012-aggregate-roots-value-objects-invariantes.md`.
+  Referências: `docs/adr/ADR-0003-agregados-entidades-value-objects-e-invariantes.md`.
 - **Invariantes no domínio (modelo rico)**  
-  Regras centrais de negócio são aplicadas por métodos de agregado/entidade (`Create`, `Rename`, `SetScope`, etc.) com tradução para `Result` na camada de aplicação (UseCases).
+  Regras centrais de negócio são aplicadas por métodos de agregado/entidade (`Create`, `Rename`, `SetScope`, etc.) com tradução para `Result` na camada de aplicação (Use Cases).
   Inclui Value Objects formais (`PersonName`, `MissionScope`, `ConfidenceLevel`, `MetricRange`) para reduzir primitive obsession.
 - **Notification Orchestration (Application)**
-  Orquestração de notificações centralizada em `Application/Notifications/` (`INotificationOrchestrator`), desacoplada dos repositórios.
+  Orquestração de notificações centralizada em `Application/EventHandlers/` (`NotificationOrchestrator`), desacoplada dos repositórios.
+- **Domain Events + Unit of Work**
+  Eventos de domínio (`IDomainEvent`, `IHasDomainEvents`) são disparados por agregados e despachados via `IUnitOfWork`/`EfUnitOfWork` no commit. Handlers tipados (`IDomainEventNotifier<T>`) em `Application/EventHandlers/` reagem a eventos como `MissionCreatedDomainEvent`, `MissionUpdatedDomainEvent`, `MissionDeletedDomainEvent` e `MetricCheckinCreatedDomainEvent`.
+  Referências: `docs/adr/ADR-0009-eventos-de-dominio-e-notificacoes.md`.
 
 ### Multi-tenancy
 
@@ -89,17 +95,17 @@ Isolamento por organização (`OrganizationId`) com:
 
 1. Request chega no controller.
 2. Payload é validado.
-3. Controller chama o UseCase correspondente.
-4. UseCase aplica regras de autorização/orquestração e delega para repositórios (via interfaces definidas em `Infrastructure/`).
+3. Controller chama o Use Case correspondente.
+4. Use Case aplica regras de autorização/orquestração e delega para repositórios/ports (via interfaces em `Domain/Repositories` e `Application/Ports`).
 5. Repositório persiste/consulta via `ApplicationDbContext`.
-6. UseCase orquestra notificações quando aplicável (via `INotificationOrchestrator`).
+6. Use Case orquestra notificações quando aplicável (via `NotificationOrchestrator`).
 7. Resultado (`Result`) é mapeado para resposta HTTP.
 
 ### Testes e governança arquitetural
 
-- **Unit tests**: regras de negócio, validações, use cases e componentes de infraestrutura.
+- **Unit tests**: regras de negócio, validações, commands/queries e componentes de infraestrutura.
 - **Integration tests**: ciclo HTTP completo com PostgreSQL em container.
-- **Architecture tests**: evitam regressão de fronteira entre camadas (ex.: UseCase depender de Infrastructure diretamente), validam tenant isolation, autorização e boundaries de aggregate roots.
+- **Architecture tests**: evitam regressão de fronteira entre camadas (ex.: Use Case depender de Infrastructure diretamente), validam tenant isolation, autorização e boundaries de aggregate roots.
   A camada de infraestrutura exige `IEntityTypeConfiguration<T>` dedicada para todas as entidades do `ApplicationDbContext`.
 - **ADRs**: decisões arquiteturais versionadas em `docs/adr/`.
 
@@ -122,11 +128,11 @@ Para lista atualizada de ADRs e ordem recomendada de leitura, consulte:
 ```mermaid
 flowchart LR
     A[Bud.Client<br/>Blazor WASM] -->|HTTP + JWT + X-Tenant-Id| B[Bud.Server Controllers]
-    B --> C[Application UseCases<br/>Command/Query]
+    B --> C[Application<br/>Use Cases]
     C --> R[Infrastructure<br/>I*Repository + Repositories]
     R --> E[(PostgreSQL<br/>ApplicationDbContext)]
     C --> N[NotificationOrchestrator]
-    N --> P
+    N --> R
 ```
 
 #### Sequência de request com notificações
@@ -135,7 +141,7 @@ flowchart LR
 sequenceDiagram
     participant U as Usuário/Client
     participant C as Controller
-    participant UC as UseCase
+    participant UC as Use Case
     participant R as Repository
     participant NO as NotificationOrchestrator
     participant DB as PostgreSQL
@@ -159,8 +165,8 @@ flowchart TD
     ST[SubTeam]
     C[Collaborator]
     M[Mission]
-    MO[MissionObjective]
-    MM[MissionMetric]
+    MO[Objective]
+    MM[Metric]
     MC[MetricCheckin]
 
     O --> W
@@ -189,16 +195,18 @@ flowchart TD
 sequenceDiagram
     participant UI as Bud.Client
     participant API as Bud.Server
-    participant AUTH as AuthController/AuthUseCase
+    participant SESS as SessionsController/CreateSession
+    participant ME as MeController/ListMyOrganizations
     participant TENANT as TenantRequiredMiddleware
     participant CTRL as Controller
 
-    UI->>API: POST /api/auth/login
-    API->>AUTH: Valida e autentica por e-mail
-    AUTH-->>UI: JWT + dados básicos da sessão
+    UI->>API: POST /api/sessions
+    API->>SESS: Valida e autentica por e-mail
+    SESS-->>UI: JWT + dados básicos da sessão
 
-    UI->>API: GET /api/auth/my-organizations (X-User-Email)
-    API-->>UI: Lista de organizações disponíveis
+    UI->>API: GET /api/me/organizations
+    API->>ME: Lista organizações do usuário autenticado
+    ME-->>UI: Lista de organizações disponíveis
 
     UI->>UI: Usuário seleciona organização (ou "TODOS")
     UI->>API: Request com Authorization: Bearer + X-Tenant-Id (opcional)
@@ -217,7 +225,7 @@ sequenceDiagram
     participant TENANT as TenantRequiredMiddleware
     participant CTRL as Controller
     participant VAL as FluentValidation
-    participant UC as UseCase
+    participant UC as Use Case
     participant REPO as Repository
     participant DB as ApplicationDbContext/PostgreSQL
 
@@ -266,21 +274,25 @@ flowchart TB
       DependencyInjection
     end
     subgraph App["Application"]
-      UseCases
+      UseCases["Use Cases"]
+      Ports["Ports (IAuthService, etc.)"]
     end
     subgraph Domain["Domain"]
-      Specifications
+      RepoInterfaces["Interfaces (I*Repository)"]
       ValueObjects
     end
     subgraph Infra["Infrastructure"]
-      Interfaces["Interfaces (I*Repository)"]
       Repositories
+      Services["Services (adapters)"]
+      Specifications["Querying/Specifications"]
       DbContext
     end
 
     Controllers --> UseCases
-    UseCases --> Interfaces
-    Repositories -.-> Interfaces
+    UseCases --> RepoInterfaces
+    UseCases --> Ports
+    Repositories -.-> RepoInterfaces
+    Services -.-> Ports
     Repositories --> DbContext
     Repositories --> Specifications
     DependencyInjection --> Controllers
@@ -299,12 +311,15 @@ flowchart LR
 
     subgraph Api["Bud.Server (API/Aplicação)"]
       Controllers["Controllers"]
-      UseCases["UseCases"]
+      UseCases["Use Cases"]
       Authz["AuthN/AuthZ + Policies"]
     end
 
+    subgraph DomainLayer["Domain"]
+      RepoInterfaces["Interfaces (I*Repository)"]
+    end
+
     subgraph Infra["Infrastructure"]
-      Ports["Interfaces (I*Repository)"]
       Repos["Repositories"]
       Db["ApplicationDbContext"]
       Pg["PostgreSQL"]
@@ -313,8 +328,8 @@ flowchart LR
     UI --> ApiClient
     ApiClient --> Controllers
     Controllers --> UseCases
-    UseCases --> Ports
-    Repos -.-> Ports
+    UseCases --> RepoInterfaces
+    Repos -.-> RepoInterfaces
     Controllers --> Authz
     Repos --> Db
     Db --> Pg
@@ -327,7 +342,7 @@ Fluxo recomendado de contribuição para manter qualidade arquitetural e consist
 1. Crie uma branch curta e focada no objetivo da mudança.
 2. Escreva/atualize testes antes da implementação (TDD: Red -> Green -> Refactor).
 3. Implemente seguindo os padrões do projeto:
-   - Controllers -> UseCases -> Repositories (via interfaces em Infrastructure)
+   - Controllers -> Use Cases -> Repositories (via interfaces em Domain/Repositories)
    - autorização por policies/handlers
    - mensagens de erro/validação em pt-BR
 4. Atualize documentação OpenAPI (summary/description/status/errors) quando alterar contratos.
@@ -450,9 +465,10 @@ Se estiver rodando local com `DOTNET_ENVIRONMENT=Development`, defina:
 - `help_list_actions`
 - `help_action_schema`
 - `mission_create`, `mission_get`, `mission_list`, `mission_update`, `mission_delete`
-- `mission_objective_create`, `mission_objective_get`, `mission_objective_list`, `mission_objective_update`, `mission_objective_delete`
 - `mission_metric_create`, `mission_metric_get`, `mission_metric_list`, `mission_metric_update`, `mission_metric_delete`
 - `metric_checkin_create`, `metric_checkin_get`, `metric_checkin_list`, `metric_checkin_update`, `metric_checkin_delete`
+
+> **Nota:** as tools `mission_objective_*` existem no catálogo gerado (`mcp-tool-catalog.json`) mas ainda não estão implementadas em `McpToolService`. Serão ativadas quando o wiring for adicionado.
 
 ### Descoberta de parâmetros e bootstrap de sessão no MCP
 
@@ -532,7 +548,7 @@ export BUD_BASE_URL="http://localhost:5096"
 ### 2) Login e captura do token
 
 ```bash
-curl -s -X POST "$BUD_BASE_URL/api/auth/login" \
+curl -s -X POST "$BUD_BASE_URL/api/sessions" \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@getbud.co"}'
 ```
@@ -546,8 +562,8 @@ export BUD_TOKEN="<jwt>"
 ### 3) Descobrir organizações disponíveis
 
 ```bash
-curl -s "$BUD_BASE_URL/api/auth/my-organizations" \
-  -H "X-User-Email: admin@getbud.co"
+curl -s "$BUD_BASE_URL/api/me/organizations" \
+  -H "Authorization: Bearer $BUD_TOKEN"
 ```
 
 Copie um `id` e exporte:
@@ -589,9 +605,9 @@ sequenceDiagram
     participant Dev as Dev
     participant API as Bud.Server
 
-    Dev->>API: POST /api/auth/login (email)
+    Dev->>API: POST /api/sessions (email)
     API-->>Dev: token JWT
-    Dev->>API: GET /api/auth/my-organizations (X-User-Email)
+    Dev->>API: GET /api/me/organizations (Bearer)
     API-->>Dev: organizations[]
     Dev->>Dev: define BUD_ORG_ID
     Dev->>API: GET /api/missions (Bearer + X-Tenant-Id)
@@ -629,13 +645,13 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     A[Erro 401/403] --> B{Tem Bearer token?}
-    B -- Não --> C[Refaça login em /api/auth/login]
+    B -- Não --> C[Refaça login em /api/sessions]
     B -- Sim --> D{Endpoint é tenant-scoped?}
     D -- Não --> E[Validar payload/headers específicos]
     D -- Sim --> F{X-Tenant-Id foi enviado?}
     F -- Não --> G[Enviar X-Tenant-Id]
     F -- Sim --> H{Usuário pertence ao tenant?}
-    H -- Não --> I[Selecionar tenant válido em /api/auth/my-organizations]
+    H -- Não --> I[Selecionar tenant válido em /api/me/organizations]
     H -- Sim --> J[Validar policy/regra de autorização do endpoint]
 ```
 
@@ -708,16 +724,13 @@ Veja [DESIGN_TOKENS.md](DESIGN_TOKENS.md) para:
 - Convenções de nomenclatura
 - Boas práticas
 
-## Banco de Dados (Desenvolvimento)
+## Banco de Dados
 
-O schema do banco é criado automaticamente a partir do modelo EF Core via `EnsureCreated()` no startup em Development. Não são usadas migrations durante o desenvolvimento.
-
-Para recriar o banco após mudanças no modelo:
-```bash
-docker compose down -v && docker compose up --build
-```
-
-Quando o projeto se aproximar de produção, migrations serão reintroduzidas.
+- **Development**: o schema é criado automaticamente via `EnsureCreated()` no startup. Para recriar após mudanças no modelo:
+  ```bash
+  docker compose down -v && docker compose up --build
+  ```
+- **Production**: usa EF Core migrations (`dotnet-ef migrations bundle`) via target `prod-migrate` no `Dockerfile.Production`. Migrations ficam em `Infrastructure/Persistence/Migrations/`.
 
 ## Health checks
 
@@ -728,18 +741,23 @@ Quando o projeto se aproximar de produção, migrations serão reintroduzidas.
 
 Referência completa com exemplos interativos disponível em `/swagger` (ambiente Development).
 
-### Auth
+### Sessions (autenticação)
 
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/my-organizations`
+- `POST /api/sessions` — login por e-mail, retorna JWT
+- `DELETE /api/sessions/current` — logout
+
+### Me (dados do usuário autenticado)
+
+- `GET /api/me/organizations` — organizações disponíveis
+- `GET /api/me/dashboard` — dashboard do colaborador autenticado
+- `GET /api/me/missions` — missões do colaborador autenticado
 
 ### Organizations (CRUD + relacionamentos)
 
 - `POST /api/organizations`
 - `GET /api/organizations` — listagem paginada (`?search=&page=1&pageSize=10`)
 - `GET /api/organizations/{id}`
-- `PUT /api/organizations/{id}`
+- `PATCH /api/organizations/{id}`
 - `DELETE /api/organizations/{id}`
 - `GET /api/organizations/{id}/workspaces`
 - `GET /api/organizations/{id}/collaborators`
@@ -749,7 +767,7 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 - `POST /api/workspaces`
 - `GET /api/workspaces` — listagem paginada (`?organizationId=&search=&page=1&pageSize=10`)
 - `GET /api/workspaces/{id}`
-- `PUT /api/workspaces/{id}`
+- `PATCH /api/workspaces/{id}`
 - `DELETE /api/workspaces/{id}`
 - `GET /api/workspaces/{id}/teams`
 
@@ -758,94 +776,79 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 - `POST /api/teams`
 - `GET /api/teams` — listagem paginada (`?workspaceId=&parentTeamId=&search=&page=1&pageSize=10`)
 - `GET /api/teams/{id}`
-- `PUT /api/teams/{id}`
+- `PATCH /api/teams/{id}`
 - `DELETE /api/teams/{id}`
 - `GET /api/teams/{id}/subteams`
 - `GET /api/teams/{id}/collaborators`
-- `GET /api/teams/{id}/collaborators-summary`
-- `PUT /api/teams/{id}/collaborators`
-- `GET /api/teams/{id}/available-collaborators`
+- `GET /api/teams/{id}/collaborators/lookup`
+- `PATCH /api/teams/{id}/collaborators`
+- `GET /api/teams/{id}/collaborators/eligible-for-assignment`
 
 ### Collaborators (CRUD + relacionamentos)
 
 - `POST /api/collaborators`
 - `GET /api/collaborators` — listagem paginada (`?teamId=&search=&page=1&pageSize=10`)
 - `GET /api/collaborators/{id}`
-- `PUT /api/collaborators/{id}`
+- `PATCH /api/collaborators/{id}`
 - `DELETE /api/collaborators/{id}`
+- `GET /api/collaborators/lookup`
 - `GET /api/collaborators/leaders`
 - `GET /api/collaborators/{id}/subordinates`
 - `GET /api/collaborators/{id}/teams`
-- `PUT /api/collaborators/{id}/teams`
-- `GET /api/collaborators/{id}/available-teams`
+- `PATCH /api/collaborators/{id}/teams`
+- `GET /api/collaborators/{id}/teams/eligible-for-assignment`
 
 ### Missions (CRUD + consultas)
 
 - `POST /api/missions`
 - `GET /api/missions` — listagem paginada
 - `GET /api/missions/{id}`
-- `PUT /api/missions/{id}`
+- `PATCH /api/missions/{id}`
 - `DELETE /api/missions/{id}`
 - `GET /api/missions/progress`
-- `GET /api/missions/my-missions/{collaboratorId}`
 - `GET /api/missions/{id}/metrics`
 - `GET /api/missions/{id}/objectives`
 
-### Mission Objectives (CRUD)
+### Objectives (CRUD)
 
-- `POST /api/mission-objectives`
-- `GET /api/mission-objectives` — listagem paginada (filtro por `missionId`)
-- `GET /api/mission-objectives/{id}`
-- `PUT /api/mission-objectives/{id}`
-- `DELETE /api/mission-objectives/{id}`
-- `GET /api/mission-objectives/progress`
-- Campo opcional nos payloads de criação/atualização: `objectiveDimensionId` (GUID de `/api/objective-dimensions`).
+- `POST /api/objectives`
+- `GET /api/objectives` — listagem paginada (filtro por `missionId`)
+- `GET /api/objectives/{id}`
+- `PATCH /api/objectives/{id}`
+- `DELETE /api/objectives/{id}`
+- `GET /api/objectives/{objectiveId}/metrics`
+- `GET /api/objectives/progress`
+- Campo opcional nos payloads de criação/atualização: `dimension` (texto livre de até 100 caracteres).
 
-### Objective Dimensions (CRUD)
+### Metrics (CRUD + checkins)
 
-- `POST /api/objective-dimensions`
-- `GET /api/objective-dimensions` — listagem paginada
-- `GET /api/objective-dimensions/{id}`
-- `PUT /api/objective-dimensions/{id}`
-- `DELETE /api/objective-dimensions/{id}`
+- `POST /api/metrics`
+- `GET /api/metrics` — listagem paginada
+- `GET /api/metrics/{id}`
+- `PATCH /api/metrics/{id}`
+- `DELETE /api/metrics/{id}`
+- `GET /api/metrics/progress`
+- `POST /api/metrics/{metricId}/checkins` — cria checkin
+- `GET /api/metrics/{metricId}/checkins` — lista checkins da métrica
+- `GET /api/metrics/{metricId}/checkins/{checkinId}` — detalhe do checkin
+- `PATCH /api/metrics/{metricId}/checkins/{checkinId}` — atualiza checkin
+- `DELETE /api/metrics/{metricId}/checkins/{checkinId}` — remove checkin
 
-### Mission Metrics (CRUD)
+### Templates (CRUD)
 
-- `POST /api/mission-metrics`
-- `GET /api/mission-metrics` — listagem paginada
-- `GET /api/mission-metrics/{id}`
-- `PUT /api/mission-metrics/{id}`
-- `DELETE /api/mission-metrics/{id}`
-- `GET /api/mission-metrics/progress`
-
-### Metric Checkins (CRUD)
-
-- `POST /api/metric-checkins`
-- `GET /api/metric-checkins` — listagem paginada
-- `GET /api/metric-checkins/{id}`
-- `PUT /api/metric-checkins/{id}`
-- `DELETE /api/metric-checkins/{id}`
-
-### Mission Templates (CRUD)
-
-- `POST /api/mission-templates`
-- `GET /api/mission-templates` — listagem paginada
-- `GET /api/mission-templates/{id}`
-- `PUT /api/mission-templates/{id}`
-- `DELETE /api/mission-templates/{id}`
+- `POST /api/templates`
+- `GET /api/templates` — listagem paginada
+- `GET /api/templates/{id}`
+- `PATCH /api/templates/{id}`
+- `DELETE /api/templates/{id}`
 - Modelos padrão semeados para a organização bootstrap (`getbud.co`): `BSC`, `Mapa Estratégico`, `Planejamento Estratégico Anual`, `OKR` e `PDI` (todos com objetivos e métricas vinculadas).
 - Payloads de criação/atualização também aceitam `objectives` (objetivos do template) e `metrics[].missionTemplateObjectiveId` para vincular métricas a objetivos.
 
 ### Notifications
 
-- `GET /api/notifications` — listagem paginada
-- `GET /api/notifications/unread-count`
-- `PUT /api/notifications/{id}/read`
-- `PUT /api/notifications/read-all`
-
-### Dashboard
-
-- `GET /api/dashboard/my-dashboard`
+- `GET /api/notifications` — listagem paginada (filtro por `isRead`)
+- `PATCH /api/notifications/{id}` — marca como lida
+- `PATCH /api/notifications` — marca todas como lidas
 
 ### Exemplos de payloads de criação
 
@@ -897,10 +900,9 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 }
 ```
 
-**Metric Checkin:**
+**Metric Checkin** (`POST /api/metrics/{metricId}/checkins`)**:**
 ```json
 {
-  "missionMetricId": "00000000-0000-0000-0000-000000000000",
   "value": 42.5,
   "text": null,
   "checkinDate": "2026-02-07T00:00:00Z",

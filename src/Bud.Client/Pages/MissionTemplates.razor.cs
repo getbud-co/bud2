@@ -3,7 +3,6 @@
 using Bud.Client.Services;
 using Bud.Client.Shared.Missions;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
@@ -17,8 +16,7 @@ public partial class MissionTemplates : IDisposable
     [Inject] private UiOperationService UiOps { get; set; } = null!;
 
     // Data
-    private PagedResult<MissionTemplate>? _templates;
-    private IReadOnlyList<ObjectiveDimension> _objectiveDimensions = [];
+    private PagedResult<TemplateResponse>? _templates;
 
     // Filter
     private string? _search;
@@ -37,7 +35,6 @@ public partial class MissionTemplates : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await LoadTemplates();
-        await LoadObjectiveDimensions();
         OrgContext.OnOrganizationChanged += HandleOrganizationChanged;
     }
 
@@ -51,7 +48,6 @@ public partial class MissionTemplates : IDisposable
         try
         {
             await LoadTemplates();
-            await LoadObjectiveDimensions();
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
@@ -72,12 +68,7 @@ public partial class MissionTemplates : IDisposable
 
     private async Task LoadTemplates()
     {
-        _templates = await Api.GetMissionTemplatesAsync(_search, 1, 20) ?? new PagedResult<MissionTemplate>();
-    }
-
-    private async Task LoadObjectiveDimensions()
-    {
-        _objectiveDimensions = (await Api.GetObjectiveDimensionsAsync(null, 1, 200))?.Items ?? [];
+        _templates = await Api.GetTemplatesAsync(_search, 1, 20) ?? new PagedResult<TemplateResponse>();
     }
 
     // ---- Filter ----
@@ -107,7 +98,7 @@ public partial class MissionTemplates : IDisposable
         _isWizardOpen = true;
     }
 
-    private void OpenEditModal(MissionTemplate template)
+    private void OpenEditModal(TemplateResponse template)
     {
         _isEditMode = true;
         _editingTemplateId = template.Id;
@@ -123,7 +114,7 @@ public partial class MissionTemplates : IDisposable
                 o.Name,
                 o.Description,
                 o.Id,
-                o.ObjectiveDimensionId))
+                o.Dimension))
             .ToList();
 
         var metrics = template.Metrics
@@ -138,7 +129,7 @@ public partial class MissionTemplates : IDisposable
                 m.MaxValue,
                 m.TargetText,
                 m.Unit?.ToString(),
-                m.MissionTemplateObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.MissionTemplateObjectiveId.Value, out var tid)
+                m.TemplateObjectiveId.HasValue && objectiveIdToTempId.TryGetValue(m.TemplateObjectiveId.Value, out var tid)
                     ? tid
                     : null))
             .ToList();
@@ -183,7 +174,7 @@ public partial class MissionTemplates : IDisposable
         await UiOps.RunAsync(
             async () =>
             {
-                await Api.CreateMissionTemplateAsync(request);
+                await Api.CreateTemplateAsync(request);
                 await LoadTemplates();
                 ToastService.ShowSuccess("Modelo criado com sucesso!", $"O modelo '{result.Name}' foi criado.");
                 CloseWizard();
@@ -201,7 +192,7 @@ public partial class MissionTemplates : IDisposable
         await UiOps.RunAsync(
             async () =>
             {
-                await Api.UpdateMissionTemplateAsync(_editingTemplateId.Value, request);
+                await Api.UpdateTemplateAsync(_editingTemplateId.Value, request);
                 await LoadTemplates();
                 ToastService.ShowSuccess("Modelo atualizado", "As alterações foram salvas com sucesso.");
                 CloseWizard();
@@ -212,10 +203,10 @@ public partial class MissionTemplates : IDisposable
 
     // ---- Payload Builders ----
 
-    private CreateMissionTemplateRequest BuildCreateRequest(MissionWizardResult result)
+    private CreateTemplateRequest BuildCreateRequest(MissionWizardResult result)
     {
         var (objectives, metrics) = BuildTemplatePayload(result);
-        return new CreateMissionTemplateRequest
+        return new CreateTemplateRequest
         {
             Name = result.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(result.Description) ? null : result.Description.Trim(),
@@ -224,10 +215,10 @@ public partial class MissionTemplates : IDisposable
         };
     }
 
-    private UpdateMissionTemplateRequest BuildUpdateRequest(MissionWizardResult result)
+    private PatchTemplateRequest BuildUpdateRequest(MissionWizardResult result)
     {
         var (objectives, metrics) = BuildTemplatePayload(result);
-        return new UpdateMissionTemplateRequest
+        return new PatchTemplateRequest
         {
             Name = result.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(result.Description) ? null : result.Description.Trim(),
@@ -236,7 +227,7 @@ public partial class MissionTemplates : IDisposable
         };
     }
 
-    private static (List<MissionTemplateObjectiveDto> Objectives, List<MissionTemplateMetricDto> Metrics) BuildTemplatePayload(MissionWizardResult result)
+    private static (List<TemplateObjectiveRequest> Objectives, List<TemplateMetricRequest> Metrics) BuildTemplatePayload(MissionWizardResult result)
     {
         var objectiveIdByTempId = new Dictionary<string, Guid>();
 
@@ -246,19 +237,19 @@ public partial class MissionTemplates : IDisposable
                 var objectiveId = objective.OriginalId ?? Guid.NewGuid();
                 objectiveIdByTempId[objective.TempId] = objectiveId;
 
-                return new MissionTemplateObjectiveDto
+                return new TemplateObjectiveRequest
                 {
                     Id = objectiveId,
                     Name = objective.Name,
                     Description = objective.Description,
-                    ObjectiveDimensionId = objective.ObjectiveDimensionId,
+                    Dimension = objective.Dimension,
                     OrderIndex = index
                 };
             })
             .ToList();
 
         var metrics = result.Metrics
-            .Select((metric, index) => new MissionTemplateMetricDto
+            .Select((metric, index) => new TemplateMetricRequest
             {
                 Name = metric.Name,
                 Type = Enum.Parse<MetricType>(metric.Type),
@@ -268,7 +259,7 @@ public partial class MissionTemplates : IDisposable
                 MaxValue = metric.MaxValue,
                 Unit = ParseOptionalEnum<MetricUnit>(metric.Unit),
                 TargetText = metric.TargetText,
-                MissionTemplateObjectiveId = metric.ObjectiveTempId is not null && objectiveIdByTempId.TryGetValue(metric.ObjectiveTempId, out var objectiveId)
+                TemplateObjectiveId = metric.ObjectiveTempId is not null && objectiveIdByTempId.TryGetValue(metric.ObjectiveTempId, out var objectiveId)
                     ? objectiveId
                     : null
             })
@@ -308,7 +299,7 @@ public partial class MissionTemplates : IDisposable
             await UiOps.RunAsync(
                 async () =>
                 {
-                    await Api.DeleteMissionTemplateAsync(templateId);
+                    await Api.DeleteTemplateAsync(templateId);
                     ToastService.ShowSuccess("Modelo excluído", "O modelo foi removido com sucesso.");
                     await LoadTemplates();
                 },
@@ -329,7 +320,7 @@ public partial class MissionTemplates : IDisposable
         where TEnum : struct, Enum
         => Enum.TryParse<TEnum>(value, out var parsed) ? parsed : null;
 
-    private static string BuildMetricDetails(MissionTemplateMetric metric)
+    private static string BuildMetricDetails(TemplateMetricResponse metric)
     {
         return metric.Type == MetricType.Quantitative
             ? BuildQuantitativeDetails(metric.QuantitativeType?.ToString(), metric.MinValue, metric.MaxValue, metric.Unit?.ToString())

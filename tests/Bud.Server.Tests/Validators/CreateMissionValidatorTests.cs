@@ -1,6 +1,5 @@
 using Bud.Server.Validators;
 using Bud.Shared.Contracts;
-using Bud.Shared.Domain;
 using FluentAssertions;
 using Xunit;
 
@@ -21,8 +20,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -46,8 +45,8 @@ public class CreateMissionValidatorTests
             Name = name!,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -56,7 +55,7 @@ public class CreateMissionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == "Name");
+        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("Name"));
     }
 
     [Fact]
@@ -68,8 +67,8 @@ public class CreateMissionValidatorTests
             Name = new string('A', 201), // 201 characters
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -79,7 +78,7 @@ public class CreateMissionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e =>
-            e.PropertyName == "Name" &&
+            e.PropertyName.Contains("Name") &&
             e.ErrorMessage.Contains("200"));
     }
 
@@ -96,8 +95,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow.AddDays(7),
             EndDate = DateTime.UtcNow, // Before start date
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -107,7 +106,7 @@ public class CreateMissionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e =>
-            e.PropertyName == "EndDate" &&
+            e.PropertyName.Contains("EndDate") &&
             e.ErrorMessage.Contains("data de início"));
     }
 
@@ -121,8 +120,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = startDate,
             EndDate = startDate, // Same as start date
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -143,8 +142,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7), // After start date
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -165,8 +164,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = default(DateTime), // Empty date
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -175,7 +174,7 @@ public class CreateMissionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "StartDate");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("StartDate"));
     }
 
     [Fact]
@@ -187,8 +186,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = default(DateTime), // Empty date
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.NewGuid()
         };
 
@@ -197,7 +196,7 @@ public class CreateMissionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "EndDate");
+        result.Errors.Should().Contain(e => e.PropertyName.Contains("EndDate"));
     }
 
     #endregion
@@ -213,8 +212,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Team,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Team,
             ScopeId = Guid.NewGuid()
         };
 
@@ -235,8 +234,8 @@ public class CreateMissionValidatorTests
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = MissionStatus.Planned,
-            ScopeType = MissionScopeType.Organization,
+            Status = Bud.Shared.Contracts.MissionStatus.Planned,
+            ScopeType = Bud.Shared.Contracts.MissionScopeType.Organization,
             ScopeId = Guid.Empty // Empty GUID
         };
 
@@ -245,7 +244,7 @@ public class CreateMissionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == "ScopeId");
+        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("ScopeId"));
     }
 
     #endregion

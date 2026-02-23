@@ -1,8 +1,11 @@
-global using System.Net;
-global using System.Net.Http.Json;
+global using Bud.Shared.Contracts;
+global using Bud.Shared.Contracts.Common;
+global using Bud.Shared.Contracts.Requests;
+global using Bud.Shared.Contracts.Responses;
 global using Bud.Mcp.Auth;
 global using Bud.Mcp.Configuration;
 global using Bud.Mcp.Http;
-global using Bud.Shared.Contracts;
+global using Bud.Mcp.Tools;
+global using System.Net;
 global using FluentAssertions;
 global using Xunit;

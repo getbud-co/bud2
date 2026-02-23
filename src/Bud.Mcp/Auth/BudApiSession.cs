@@ -9,7 +9,7 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly BudMcpOptions _options = options;
-    private List<OrganizationSummaryDto>? _cachedOrganizations;
+    private List<MyOrganizationResponse>? _cachedOrganizations;
 
     public BudAuthContext? AuthContext { get; private set; }
     public Guid? CurrentTenantId { get; private set; }
@@ -32,11 +32,11 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
         }
 
         var loginResponse = await _httpClient.PostAsJsonAsync(
-            "/api/auth/login",
-            new AuthLoginRequest { Email = email.Trim() },
+            "/api/sessions",
+            new CreateSessionRequest { Email = email.Trim() },
             cancellationToken);
 
-        var loginPayload = await ReadSuccessResponseOrThrowAsync<AuthLoginResponse>(loginResponse, cancellationToken);
+        var loginPayload = await ReadSuccessResponseOrThrowAsync<SessionResponse>(loginResponse, cancellationToken);
         if (string.IsNullOrWhiteSpace(loginPayload.Token))
         {
             throw new InvalidOperationException("Falha ao autenticar: token JWT não foi retornado pela API.");
@@ -52,15 +52,15 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
         }
     }
 
-    public async Task<IReadOnlyList<OrganizationSummaryDto>> ListAvailableTenantsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<MyOrganizationResponse>> ListAvailableTenantsAsync(CancellationToken cancellationToken = default)
     {
         EnsureAuthenticated();
 
-        var request = CreateBaseRequest(HttpMethod.Get, "/api/auth/my-organizations");
-        request.Headers.TryAddWithoutValidation("X-User-Email", AuthContext!.Email);
+        var request = CreateBaseRequest(HttpMethod.Get, "/api/me/organizations");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AuthContext!.Token);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
-        var organizations = await ReadSuccessResponseOrThrowAsync<List<OrganizationSummaryDto>>(response, cancellationToken);
+        var organizations = await ReadSuccessResponseOrThrowAsync<List<MyOrganizationResponse>>(response, cancellationToken);
         _cachedOrganizations = organizations;
         return organizations;
     }

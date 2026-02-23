@@ -1,5 +1,5 @@
 using System.Reflection;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Xunit;
 
@@ -19,7 +19,9 @@ public sealed class AggregateRootArchitectureTests
             typeof(Team),
             typeof(Collaborator),
             typeof(Mission),
-            typeof(MissionTemplate)
+            typeof(Metric),
+            typeof(Template),
+            typeof(Notification)
         };
 
         var missingMarker = expectedAggregateRoots
@@ -35,12 +37,10 @@ public sealed class AggregateRootArchitectureTests
     {
         var nonRoots = new[]
         {
-            typeof(MissionMetric),
             typeof(MetricCheckin),
-            typeof(MissionTemplateObjective),
-            typeof(MissionTemplateMetric),
+            typeof(TemplateObjective),
+            typeof(TemplateMetric),
             typeof(CollaboratorTeam),
-            typeof(Notification),
             typeof(CollaboratorAccessLog)
         };
 

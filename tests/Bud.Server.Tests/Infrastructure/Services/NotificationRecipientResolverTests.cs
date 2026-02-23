@@ -1,7 +1,8 @@
-using Bud.Server.Infrastructure.Services;
+using Bud.Server.Application.Ports;
 using Bud.Server.Infrastructure.Persistence;
+using Bud.Server.Infrastructure.Services;
 using Bud.Server.Tests.Helpers;
-using Bud.Shared.Domain;
+using Bud.Server.Domain.Model;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -235,7 +236,7 @@ public class NotificationRecipientResolverTests
         };
         context.Missions.Add(mission);
 
-        var metric = new MissionMetric
+        var metric = new Metric
         {
             Id = Guid.NewGuid(),
             MissionId = mission.Id,
@@ -243,7 +244,7 @@ public class NotificationRecipientResolverTests
             Name = "Test Metric",
             Type = MetricType.Quantitative
         };
-        context.MissionMetrics.Add(metric);
+        context.Metrics.Add(metric);
         await context.SaveChangesAsync();
 
         // Act
