@@ -6,26 +6,59 @@
 @inject UiOperationService UiOps
 @implements IDisposable
 
-<ManagementPageHeader
-    Kicker="Missões"
-    Title="@GetFilterTitle()"
-    PrimaryActionText="Criar missão"
-    OnPrimaryAction="OpenCreateModal" />
-
 <GoalsFilterBar Filter="_filter"
-                ViewMode="@_viewMode"
                 FilterActiveOnly="_filterActiveOnly"
                 FilterStartDate="_filterStartDate"
                 FilterEndDate="_filterEndDate"
                 Search="@_search"
-                KanbanShowArchived="_kanbanShowArchived"
                 OnSetFilter="SetGoalFilter"
-                OnToggleViewMode="HandleToggleViewMode"
                 OnToggleActiveFilter="HandleToggleActiveFilter"
                 OnDateFilterApplied="HandleDateFilterApplied"
                 OnSearchSubmit="HandleSearchSubmit"
-                OnClearFilters="HandleClearFilters"
-                OnToggleKanbanArchived="HandleToggleKanbanArchived" />
+                OnClearFilters="HandleClearFilters" />
+
+<div class="goals-action-bar">
+    @if (_viewMode == "kanban")
+    {
+        <button class="filter-chip @(_kanbanShowArchived ? "active" : "")" title="Mostrar arquivados" @onclick="HandleToggleKanbanArchived">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+            </svg>
+        </button>
+    }
+    <button class="filter-chip" @onclick="HandleToggleViewMode">
+        @if (_viewMode == "list")
+        {
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+                <path d="M4 8H28M4 16H28M4 24H28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Vendo em lista</span>
+        }
+        else if (_viewMode == "grid")
+        {
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+                <rect x="4" y="6" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/>
+                <rect x="4" y="18" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/>
+                <rect x="20" y="6" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/>
+                <rect x="20" y="18" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>Vendo em grade</span>
+        }
+        else
+        {
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+                <rect x="4" y="4" width="7" height="24" rx="1" stroke="currentColor" stroke-width="2"/>
+                <rect x="13" y="4" width="7" height="24" rx="1" stroke="currentColor" stroke-width="2"/>
+                <rect x="22" y="4" width="7" height="24" rx="1" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>Vendo em kanban</span>
+        }
+    </button>
+    <button class="button primary" @onclick="OpenCreateModal">
+        <span class="button-icon-text">+</span>
+        Criar missão
+    </button>
+</div>
 
 @* Cards de Resumo *@
 <SummaryCards CssClass="goals-summary">
@@ -87,6 +120,7 @@ else
                           OnEdit="async () => await OpenEditWizard(goal)"
                           OnDeleteClick="() => HandleDeleteClick(goal.Id)"
                           OnToggleGoalExpand="ToggleChildGoalExpand"
+                          OnExpandModal="async (g) => await OpenDetailModal(g)"
                           OnCheckinClick="m => OpenCheckinModalForIndicator(goal, m)"
                           OnHistoryClick="m => OpenCheckinHistoryModal(goal, m)"
                           OnTaskStateChange="t => HandleTaskStateChange(goal.Id, t.task, t.newState)" />
@@ -118,4 +152,19 @@ else
                      IsLoading="_isLoadingCheckins"
                      OnClose="CloseCheckinHistoryModal"
                      OnNewCheckin="OpenCheckinFromHistory" />
+
+<GoalDetailModal IsOpen="_isDetailModalOpen"
+                 Goal="_detailModalGoal"
+                 Progress="@(_detailModalGoal != null ? _goalProgress.GetValueOrDefault(_detailModalGoal.Id) : null)"
+                 ParentName="@GetDetailModalParentName()"
+                 Indicators="@(_detailModalGoal != null ? _goalIndicatorsCache.GetValueOrDefault(_detailModalGoal.Id) : null)"
+                 Tasks="@(_detailModalGoal != null ? _goalTasksCache.GetValueOrDefault(_detailModalGoal.Id) : null)"
+                 ChildGoals="@(_detailModalGoal != null ? _goalChildrenCache.GetValueOrDefault(_detailModalGoal.Id) : null)"
+                 IndicatorProgressCache="_indicatorProgressCache"
+                 GoalProgressCache="_childGoalProgressCache"
+                 OnClose="CloseDetailModal"
+                 OnEdit="async () => { CloseDetailModal(); if (_detailModalGoal != null) await OpenEditWizard(_detailModalGoal); }"
+                 OnCheckinClick="m => { if (_detailModalGoal != null) OpenCheckinModalForIndicator(_detailModalGoal, m); }"
+                 OnHistoryClick="async m => { if (_detailModalGoal != null) await OpenCheckinHistoryModal(_detailModalGoal, m); }"
+                 OnTaskStateChange="async t => { if (_detailModalGoal != null) await HandleTaskStateChange(_detailModalGoal.Id, t.task, t.newState); }" />
 

@@ -60,6 +60,10 @@ public partial class Goals
     private List<CheckinResponse> _indicatorCheckins = new();
     private bool _isLoadingCheckins;
 
+    // Goal detail modal state
+    private bool _isDetailModalOpen;
+    private GoalResponse? _detailModalGoal;
+
     // Delete confirmation state
     private Guid? _deletingGoalId;
     private System.Threading.Timer? _deleteConfirmTimer;
@@ -377,6 +381,45 @@ public partial class Goals
         _isEditMode = false;
         _editingGoalId = null;
         _wizardInitialModel = null;
+    }
+
+    private async Task OpenDetailModal(GoalResponse goal)
+    {
+        _detailModalGoal = goal;
+        _isDetailModalOpen = true;
+
+        // Ensure data is loaded for this goal
+        if (!_goalIndicatorsCache.ContainsKey(goal.Id))
+        {
+            await ToggleExpand(goal.Id);
+        }
+    }
+
+    private void CloseDetailModal()
+    {
+        _isDetailModalOpen = false;
+        _detailModalGoal = null;
+    }
+
+    private string? GetDetailModalParentName()
+    {
+        if (_detailModalGoal?.ParentId == null || _goals == null) return null;
+
+        var parentId = _detailModalGoal.ParentId.Value;
+
+        // Check root goals
+        var parent = _goals.Items.FirstOrDefault(g => g.Id == parentId);
+        if (parent != null) return parent.Name;
+
+        // Check children cache
+        foreach (var children in _goalChildrenCache.Values)
+        {
+            if (children == null) continue;
+            parent = children.FirstOrDefault(g => g.Id == parentId);
+            if (parent != null) return parent.Name;
+        }
+
+        return null;
     }
 
     private string GetFilterTitle() => _filter switch
