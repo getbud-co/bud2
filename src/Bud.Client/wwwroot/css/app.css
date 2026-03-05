@@ -1357,30 +1357,33 @@ a {
 .chip {
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-2);
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: var(--radius-lg);
+    gap: var(--spacing-1);
+    padding: 6px;
+    border-radius: var(--radius-base);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-    background: var(--caramel-50);
-    border: 1px solid var(--caramel-200);
+    background: var(--caramel-100);
+    border: 1px solid var(--caramel-300);
     color: var(--color-text-primary);
     cursor: pointer;
     transition: all var(--transition-fast);
     white-space: nowrap;
+    min-height: 30px;
 }
 
 .chip:hover {
-    background: var(--caramel-100);
-    border-color: var(--caramel-300);
+    background: var(--caramel-200);
+    border-color: var(--caramel-400);
 }
 
 .chip-icon {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 12px;
+    line-height: 1;
 }
 
 .chip-select {
@@ -1558,8 +1561,7 @@ a {
 }
 
 .goal-form-context {
-    padding: var(--spacing-6);
-    padding-bottom: var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-6);
     margin-bottom: var(--spacing-2);
     border-bottom: 1px solid var(--caramel-200);
     flex-shrink: 0;
@@ -1865,19 +1867,21 @@ a {
    ======================================== */
 
 .goal-header {
-    margin-bottom: var(--spacing-6);
+    margin-bottom: var(--spacing-3);
 }
 
 .goal-title-input {
-    font-size: var(--font-size-title-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-title-md);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
     border: none;
     background: transparent;
     padding: 0;
-    margin-bottom: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
     width: 100%;
     outline: none;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
 }
 
 .goal-title-input::placeholder {
@@ -1885,13 +1889,15 @@ a {
 }
 
 .goal-subtitle-input {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-muted);
     border: none;
     background: transparent;
     padding: 0;
     width: 100%;
     outline: none;
+    line-height: 1.1;
 }
 
 .goal-subtitle-input::placeholder {
@@ -1900,15 +1906,16 @@ a {
 
 /* Inline goal form — label-free inputs */
 .goal-inline-title-input {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
     border: none;
     background: transparent;
     padding: 0;
-    margin-bottom: var(--spacing-1);
+    margin-bottom: var(--spacing-2);
     width: 100%;
     outline: none;
+    line-height: 1.1;
 }
 
 .goal-inline-title-input::placeholder {
@@ -1917,13 +1924,15 @@ a {
 
 .goal-inline-subtitle-input {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
     border: none;
     background: transparent;
     padding: 0;
-    margin-bottom: var(--spacing-1);
+    margin-bottom: var(--spacing-2);
     width: 100%;
     outline: none;
+    line-height: 1.15;
 }
 
 .goal-inline-subtitle-input::placeholder {
@@ -1932,7 +1941,7 @@ a {
 
 .goal-form-compact-row {
     display: flex;
-    gap: var(--spacing-3);
+    gap: var(--spacing-2);
     align-items: center;
 }
 
@@ -2735,6 +2744,23 @@ a {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-2);
+    padding-bottom: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+    border-bottom: 1px solid var(--caramel-200);
+}
+
+.goals-filter-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+/* Action Bar (view toggle + create button) */
+.goals-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--spacing-2);
     margin-bottom: var(--spacing-4);
 }
 
@@ -2858,6 +2884,33 @@ a {
     font-size: var(--font-size-xs);
 }
 
+/* Filter Dropdown Option (for scope/team dropdown) */
+.filter-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--neutral-950);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.filter-dropdown-option:hover {
+    background: var(--caramel-50);
+}
+
+.filter-dropdown-option.active {
+    background: var(--caramel-100);
+    font-weight: var(--font-weight-semibold);
+}
+
 /* Filter Panel */
 .goals-filter-panel {
     background: var(--color-surface);
@@ -2966,17 +3019,13 @@ a {
     transition: all var(--transition-fast);
 }
 
-.goal-card:hover {
-    border-color: var(--caramel-300);
-}
-
 /* Draft/Planned Mission Style */
 .goal-card.draft {
-    border: 1px dashed var(--neutral-200);
+    opacity: 0.7;
 }
 
 .goal-card.draft:hover {
-    border-color: var(--neutral-300);
+    opacity: 0.85;
 }
 
 .goal-card.draft .goal-card-title {
@@ -3122,6 +3171,19 @@ a {
     gap: var(--spacing-2);
 }
 
+/* Goal Caret Icon (left side toggle) */
+.goal-caret-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--neutral-500);
+    transition: transform var(--transition-fast);
+}
+
+.goal-caret-icon.expanded {
+    transform: rotate(180deg);
+}
+
 /* Mission Card Actions */
 .goal-card-actions {
     display: flex;
@@ -3148,6 +3210,16 @@ a {
     color: var(--neutral-950);
 }
 
+/* Hover-only action buttons (edit/delete) */
+.goal-action-hover-only {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.goal-card:hover .goal-action-hover-only {
+    opacity: 1;
+}
+
 .goal-expand-icon {
     transition: transform var(--transition-fast);
 }
@@ -3156,39 +3228,208 @@ a {
     transform: rotate(180deg);
 }
 
+/* Delete confirmation button */
+.goal-delete-confirm {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--red-500);
+}
+
 /* Mission Card Content (Expanded) */
 .goal-card-content {
     display: none;
     margin-top: var(--spacing-4);
-    padding-top: var(--spacing-4);
-    border-top: 1px solid var(--caramel-100);
+    padding-top: var(--spacing-2);
+    padding-left: 40px;
+    position: relative;
+}
+
+/* List view: offset content for left-side caret (20px caret + 24px gap) */
+.goals-list .goal-card-content {
+    padding-left: 84px;
 }
 
 .goal-card.expanded .goal-card-content {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+/* All direct children need position:relative for L-connectors */
+.goal-card-content > .indicator-row,
+.goal-card-content > .subgoal-section,
+.goal-card-content > .goal-tasks-section,
+.goal-card-content > .direct-indicators-label {
+    position: relative;
+}
+
+/* In tree layout, gap already controls spacing between siblings */
+.goal-card-content > .goal-tasks-section,
+.subgoal-indicators > .goal-tasks-section {
+    margin-top: 0;
+}
+
+/* L-connector for indicator rows */
+.goal-card-content > .indicator-row::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(50% + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+}
+
+/* L-connector for subgoal sections */
+.goal-card-content > .subgoal-section::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(24px + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+    z-index: 1;
+}
+
+/* L-connector for goal-tasks-section */
+.goal-card-content > .goal-tasks-section::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(24px + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+    z-index: 1;
+}
+
+/* Vertical continuation for non-last children */
+.goal-card-content > .subgoal-section:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 24px;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
+}
+
+.goal-card-content > .indicator-row:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 50%;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
+}
+
+/* Keep vertical continuation while there are next tree siblings */
+.goal-card-content > .goal-tasks-section:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 24px;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
+}
+
+/* ── Nested level: inside subgoal-indicators ── */
+.subgoal-indicators > .indicator-row,
+.subgoal-indicators > .subgoal-section,
+.subgoal-indicators > .goal-tasks-section {
+    position: relative;
+}
+
+.subgoal-indicators > .indicator-row::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(50% + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+}
+
+.subgoal-indicators > .subgoal-section::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(24px + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+    z-index: 1;
+}
+
+/* L-connector for nested goal-tasks-section */
+.subgoal-indicators > .goal-tasks-section::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: calc(-1 * var(--spacing-2));
+    height: calc(24px + var(--spacing-2));
+    width: 22px;
+    border-left: 1px solid var(--caramel-200);
+    border-bottom: 1px solid var(--caramel-200);
+    border-radius: 0 0 0 8px;
+    z-index: 1;
+}
+
+/* Vertical continuation for non-last nested children */
+.subgoal-indicators > .subgoal-section:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 24px;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
+}
+
+.subgoal-indicators > .indicator-row:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 50%;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
+}
+
+/* Keep vertical continuation while there are next nested tree siblings */
+.subgoal-indicators > .goal-tasks-section:has(~ .subgoal-section, ~ .indicator-row, ~ .goal-tasks-section)::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 24px;
+    bottom: 0;
+    border-left: 1px solid var(--caramel-200);
 }
 
 /* Metric Items in Expanded Card */
 .indicator-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 24px 1fr auto 193px 32px 20px;
     align-items: center;
     gap: var(--spacing-8);
-    padding: var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-4);
     background: var(--caramel-50);
     border-radius: var(--radius-sm);
-    margin-bottom: var(--spacing-2);
-}
-
-.indicator-row:last-child {
-    margin-bottom: 0;
 }
 
 .indicator-row-title {
     display: flex;
     align-items: center;
     gap: var(--spacing-4);
-    flex: 1;
-    min-width: 200px;
+    min-width: 0;
 }
 
 .indicator-row-icon {
@@ -3207,8 +3448,7 @@ a {
 }
 
 .indicator-row-period {
-    width: 180px;
-    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .indicator-period-label {
@@ -3224,8 +3464,6 @@ a {
 }
 
 .indicator-row-progress {
-    width: 193px;
-    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-1);
@@ -3240,7 +3478,7 @@ a {
 .indicator-progress-bar {
     position: relative;
     height: 8px;
-    background: var(--neutral-200);
+    background: white;
     border-radius: var(--radius-sm);
 }
 
@@ -3285,7 +3523,6 @@ a {
     height: 32px;
     border-radius: 50%;
     background: var(--caramel-200);
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3298,6 +3535,34 @@ a {
     text-transform: uppercase;
     line-height: 1;
     letter-spacing: -0.5px;
+}
+
+/* Indicator Type Icon */
+.indicator-row-type-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neutral-500);
+}
+
+/* Indicator Row Caret */
+.indicator-row-caret {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--neutral-500);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.indicator-row-caret:hover {
+    color: var(--neutral-950);
 }
 
 /* Metric Checkin Button */
@@ -3351,6 +3616,80 @@ a {
     color: var(--red-700);
 }
 
+
+/* Goal Detail Modal */
+.goal-detail-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+}
+
+.goal-detail-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 972px;
+    max-width: 95vw;
+    height: 85vh;
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2xl);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.goal-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-6);
+    border-bottom: 1px solid var(--caramel-200);
+    flex-shrink: 0;
+}
+
+.goal-detail-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.goal-detail-breadcrumb-parent {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
+    border: 1px solid var(--caramel-200);
+    border-radius: var(--radius-base);
+    background: var(--color-surface);
+}
+
+.goal-detail-parent-name {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--neutral-400);
+}
+
+.goal-detail-breadcrumb-current {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--neutral-950);
+}
+
+.goal-detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.goal-detail-content {
+    padding: var(--spacing-6);
+    overflow-y: auto;
+    flex: 1;
+}
 
 /* Empty State */
 .goals-empty {
@@ -3881,39 +4220,28 @@ a {
    ======================================== */
 
 .subgoal-section {
-    border: 1px solid var(--caramel-200);
+    background: transparent;
     border-radius: var(--radius-sm);
-    margin-bottom: var(--spacing-2);
-    overflow: hidden;
+    margin-bottom: 0;
 }
 
 .subgoal-section.expanded {
-    border-color: var(--caramel-300);
+    background: transparent;
 }
 
 .subgoal-header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-3);
-    padding: var(--spacing-3) var(--spacing-4);
+    gap: var(--spacing-6);
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--caramel-50);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
 .subgoal-header:hover {
-    background: var(--caramel-50);
-}
-
-.subgoal-expand-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    color: var(--neutral-500);
-    transition: transform 0.2s ease;
-}
-
-.subgoal-expand-icon.expanded {
-    transform: rotate(180deg);
+    background: var(--caramel-100);
 }
 
 .subgoal-header-info {
@@ -3923,7 +4251,7 @@ a {
 
 .subgoal-name {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     color: var(--neutral-950);
 }
 
@@ -3963,9 +4291,12 @@ a {
 }
 
 .subgoal-indicators {
-    padding: var(--spacing-2) var(--spacing-4) var(--spacing-3) var(--spacing-8);
-    border-top: 1px solid var(--caramel-100);
-    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) 0 var(--spacing-2) 40px;
+    margin-top: var(--spacing-2);
+    position: relative;
 }
 
 .direct-indicators-label {
@@ -5032,27 +5363,27 @@ a {
         display: none;
     }
 
-    /* Phase 4: Metric rows wrap */
+    /* Phase 4: Metric rows — collapse grid to 2 rows */
     .indicator-row {
-        flex-wrap: wrap;
+        grid-template-columns: 24px 1fr auto;
         gap: var(--spacing-3);
     }
 
     .indicator-row-period {
-        width: auto;
-        flex-shrink: 1;
-        flex: 1 1 140px;
+        grid-column: 2 / -1;
+        grid-row: 2;
     }
 
     .indicator-row-progress {
-        width: auto;
-        flex-shrink: 1;
-        flex: 1 1 160px;
+        display: none;
     }
 
-    .indicator-row-title {
-        min-width: 0;
-        flex-basis: 100%;
+    .indicator-row-avatar {
+        display: none;
+    }
+
+    .indicator-row-caret {
+        grid-row: 1;
     }
 
     /* Phase 4: Filter bars wrap */
@@ -5109,19 +5440,23 @@ a {
 
     /* Phase 4: Metric rows stack vertically */
     .indicator-row {
-        flex-direction: column;
-        align-items: stretch;
+        grid-template-columns: 24px 1fr 20px;
+        gap: var(--spacing-2);
     }
 
-    .indicator-row-title {
-        min-width: 0;
-        flex-basis: auto;
+    .indicator-row-period {
+        grid-column: 2;
+        grid-row: 2;
     }
 
-    .indicator-row-period,
     .indicator-row-progress {
-        width: 100%;
-        flex: 1 1 100%;
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+
+    .indicator-row-avatar,
+    .indicator-row-caret {
+        display: none;
     }
 
     /* Phase 4: Progress bar fluid */
@@ -5511,11 +5846,48 @@ a {
 
 .wizard-template-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: var(--spacing-4);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-3);
     padding: var(--spacing-4) var(--spacing-4);
     max-height: 60vh;
     overflow-y: auto;
+}
+
+.wizard-template-grid .template-picker-card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
+    text-align: left;
+}
+
+.wizard-template-grid .template-picker-card--selected {
+    border-color: var(--orange-300);
+    box-shadow: none;
+}
+
+.template-picker-radio {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--caramel-200);
+    margin-top: 1px;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.template-picker-card--selected .template-picker-radio {
+    border-color: var(--orange-500);
+    background: var(--orange-500);
+    box-shadow: inset 0 0 0 3px white;
+}
+
+.template-picker-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    min-width: 0;
 }
 
 /* ========================================
@@ -5534,10 +5906,10 @@ a {
    ======================================== */
 
 .wizard-add-item-container {
-    background: var(--caramel-50);
-    border: 1px solid var(--caramel-200);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--caramel-100);
+    border: 1px solid var(--caramel-300);
+    border-radius: var(--radius-base);
+    padding: 0;
     margin: var(--spacing-3) var(--spacing-4);
     flex: 1;
     overflow-y: auto;
@@ -5552,16 +5924,17 @@ a {
     width: 100%;
     background: none;
     border: none;
-    padding: 0;
+    border-bottom: 1px solid var(--caramel-300);
+    padding: var(--spacing-3) var(--spacing-4);
     font: inherit;
     color: inherit;
     text-align: left;
 }
 
 button.wizard-add-item-header {
-    padding-bottom: var(--spacing-3);
-    margin-bottom: var(--spacing-2);
-    border-bottom: 1px solid var(--caramel-200);
+    padding: var(--spacing-3) var(--spacing-4);
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--caramel-300);
 }
 
 .wizard-add-item-label {
@@ -5608,8 +5981,9 @@ button.wizard-add-item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: var(--spacing-4);
-    padding-top: var(--spacing-3);
+    margin-top: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+    border-top: 1px solid var(--caramel-300);
 }
 
 .wizard-add-item-container > .goal-form-tree {
@@ -5623,7 +5997,7 @@ button.wizard-add-item-header {
     border: none;
     border-radius: 0;
     background: transparent;
-    padding: var(--spacing-2) 0;
+    padding: var(--spacing-2) var(--spacing-4);
     overflow: visible;
 }
 
@@ -5765,9 +6139,9 @@ button.wizard-add-item-header {
 }
 
 .wizard-add-item-form {
-    margin-top: var(--spacing-3);
-    padding-top: var(--spacing-3);
-    border-top: 1px solid var(--caramel-200);
+    margin-top: 0;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-top: none;
 }
 
 .goal-form-tree-expanded .wizard-add-item-form {
@@ -5822,16 +6196,21 @@ button.wizard-add-item-header {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-1);
-    padding: var(--spacing-1) var(--spacing-2);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    background: var(--caramel-50);
-    color: var(--color-text-secondary);
+    padding: 6px;
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    background: var(--caramel-100);
+    border: 1px solid var(--caramel-300);
+    color: var(--color-text-primary);
 }
 
 .wizard-review-items {
-    border-top: 1px solid var(--caramel-200);
-    padding-top: var(--spacing-3);
+    background: var(--caramel-100);
+    border: 1px solid var(--caramel-300);
+    border-radius: var(--radius-base);
+    padding: var(--spacing-3) var(--spacing-4);
+    margin-top: var(--spacing-3);
 }
 
 .wizard-review-section-title {
@@ -5847,7 +6226,7 @@ button.wizard-add-item-header {
     gap: var(--spacing-2);
     padding: var(--spacing-2) 0;
     padding-left: calc(var(--review-depth, 0) * var(--spacing-5));
-    border-bottom: 1px solid var(--caramel-100);
+    border-bottom: 1px solid var(--caramel-300);
 }
 
 .wizard-review-item:last-child {

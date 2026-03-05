@@ -1,28 +1,43 @@
 @using Bud.Client.Services
 @using Bud.Shared.Contracts.Requests
 
+@{
+    var circumference = 2 * Math.PI * 19;
+    var dashOffset = circumference - (circumference * ProgressPercent / 100);
+}
+
 <div class="subgoal-section @(IsExpanded ? "expanded" : "")">
     <div class="subgoal-header" @onclick="() => OnToggleExpand.InvokeAsync()" @onclick:stopPropagation="true">
-        <svg class="subgoal-expand-icon @(IsExpanded ? "expanded" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        @* Progress Circle *@
+        <div class="goal-progress-circle" style="width: 40px; height: 40px; flex-shrink: 0;">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle class="progress-bg" cx="22" cy="22" r="19" />
+                <circle class="progress-value @GetProgressStatusClass()"
+                        cx="22" cy="22" r="19"
+                        stroke-dasharray="@circumference.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                        stroke-dashoffset="@dashOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+            </svg>
+            <div class="goal-progress-text">
+                <span class="goal-progress-number">@(ProgressPercent == 0 ? "00" : ProgressPercent.ToString())</span>
+                <span class="goal-progress-percent">%</span>
+            </div>
+        </div>
         <div class="subgoal-header-info">
             <div class="subgoal-name">@ChildGoal.Name</div>
-            @if (!string.IsNullOrWhiteSpace(ChildGoal.Dimension))
-            {
-                <div class="subgoal-description">Dimensão: @ChildGoal.Dimension</div>
-            }
-            @if (!string.IsNullOrWhiteSpace(ChildGoal.Description))
-            {
-                <div class="subgoal-description">@ChildGoal.Description</div>
-            }
         </div>
-        <div class="subgoal-progress-inline">
-            <div class="indicator-progress-bar">
-                <div class="indicator-progress-fill @GetProgressStatusClass()" style="width: @(ProgressPercent)%"></div>
-            </div>
-            <span class="subgoal-progress-value">@(ProgressPercent)%</span>
-        </div>
+        @* ArrowsOutSimple - abre modal *@
+        <button class="goal-action-btn" style="flex-shrink: 0;" @onclick="() => OnExpandModal.InvokeAsync(ChildGoal)" @onclick:stopPropagation="true" title="Expandir em modal">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                <path d="M20 4H28V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 28H4V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M28 4L19 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 28L13 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        @* Caret toggle *@
+        <svg class="goal-caret-icon @(IsExpanded ? "expanded" : "")" width="20" height="20" viewBox="0 0 32 32" fill="none">
+            <path d="M8 12L16 20L24 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
     </div>
     @if (IsExpanded)
     {
@@ -33,17 +48,6 @@
             }
             else if (_dataLoaded)
             {
-                @foreach (var child in _children!)
-                {
-                    <GoalChildSection ChildGoal="child"
-                                      GoalProgressResponse="@(_childProgressCache.GetValueOrDefault(child.Id))"
-                                      IsExpanded="@(_expandedChildren.Contains(child.Id))"
-                                      OnToggleExpand="() => ToggleChild(child.Id)"
-                                      Depth="@(Depth + 1)"
-                                      OnCheckinClick="OnCheckinClick"
-                                      OnHistoryClick="OnHistoryClick" />
-                }
-
                 @foreach (var indicator in _indicators!)
                 {
                     <IndicatorRow Goal="ChildGoal"
@@ -52,6 +56,18 @@
                                   IndicatorProgressResponse="@(_indicatorProgressCache.GetValueOrDefault(indicator.Id))"
                                   OnCheckinClick="OnCheckinClick"
                                   OnHistoryClick="OnHistoryClick" />
+                }
+
+                @foreach (var child in _children!)
+                {
+                    <GoalChildSection ChildGoal="child"
+                                      GoalProgressResponse="@(_childProgressCache.GetValueOrDefault(child.Id))"
+                                      IsExpanded="@(_expandedChildren.Contains(child.Id))"
+                                      OnToggleExpand="() => ToggleChild(child.Id)"
+                                      Depth="@(Depth + 1)"
+                                      OnCheckinClick="OnCheckinClick"
+                                      OnHistoryClick="OnHistoryClick"
+                                      OnExpandModal="OnExpandModal" />
                 }
 
                 @if (_tasks != null && _tasks.Count > 0)
@@ -83,6 +99,7 @@
     [Parameter] public EventCallback OnToggleExpand { get; set; }
     [Parameter] public EventCallback<IndicatorResponse> OnCheckinClick { get; set; }
     [Parameter] public EventCallback<IndicatorResponse> OnHistoryClick { get; set; }
+    [Parameter] public EventCallback<GoalResponse> OnExpandModal { get; set; }
     [Parameter] public int Depth { get; set; }
 
     private List<GoalResponse>? _children;
