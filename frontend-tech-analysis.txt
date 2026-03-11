@@ -1,0 +1,258 @@
+================================================================================
+ANÁLISE DE TECNOLOGIA FRONTEND — PROJETO BUD
+Data: Março 2026
+================================================================================
+
+
+1. CONTEXTO DO BACKEND ATUAL
+================================================================================
+
+API Surface:
+  - Protocolo: REST puro sobre HTTP/JSON
+  - 11 controllers, ~40+ endpoints
+  - Sem GraphQL, sem SignalR, sem WebSocket
+  - Paginação via ?page=N&pageSize=N, retorno PagedResult<T>
+  - OpenAPI disponível em /swagger e /openapi/v1.json (Development)
+
+Autenticação:
+  - JWT Bearer com chave simétrica (login por e-mail, sem senha)
+  - POST /api/sessions → retorna token JWT
+  - Token armazenado no localStorage do browser
+  - Header: Authorization: Bearer <token>
+
+Multi-tenancy:
+  - Isolamento por OrganizationId (row-level)
+  - Header X-Tenant-Id em toda requisição tenant-scoped
+  - TenantRequiredMiddleware enforça regras no servidor
+  - Omitir X-Tenant-Id = contexto global admin
+
+Contratos compartilhados:
+  - Bud.Shared.Contracts: DTOs de request/response (22 arquivos, 9 domínios)
+  - Bud.Shared.Kernel: value types e enums compartilhados
+  - Acoplamento compile-time entre backend e clientes .NET
+
+
+2. FRONTEND ATUAL (BLAZOR WEBASSEMBLY)
+================================================================================
+
+Framework:
+  - Blazor WebAssembly standalone, .NET 10.0
+  - Deploy: arquivos estáticos servidos via nginx
+  - nginx faz reverse proxy de /api/ para o backend
+
+Páginas (~8):
+  - Login, Dashboard, Organizations, Goals, GoalTemplates,
+    Workspaces, Teams, Collaborators
+
+Componentes (~28 custom):
+  - Goals (15): GoalCard, GoalFormModal, GoalFormTree, GoalDetailModal,
+    GoalChildSection, GoalKanbanView, GoalGridView, GoalsFilterBar,
+    GoalTemplatePicker, IndicatorRow, IndicatorFormModal, IndicatorFormFields,
+    CheckinModal, CheckinHistoryModal, TaskRow
+  - Common (13): Modal, Toast, ToastContainer, StatCard, SummaryCards,
+    PagedTableSection, ManagementPageHeader, CrudRowActions,
+    CollaboratorFormFields, DateRangePicker, NotificationDropdown,
+    TransferList, TeamCollaboratorSelector
+  - Layout (2): MainLayout + NavMenu, AuthLayout
+
+State Management:
+  - Sem Flux/Redux. Scoped services simples:
+    * AuthState       — sessão JWT no localStorage
+    * OrganizationContext — tenant selecionado no localStorage + evento OnOrganizationChanged
+    * ToastService    — singleton, notificações event-driven
+    * UiOperationService — wraps async ops com error handling + toast
+
+HTTP Client:
+  - ApiClient manual (~826 LOC, ~40 métodos)
+  - System.Net.Http.Json (sem code-gen, sem Refit)
+  - TenantDelegatingHandler injeta Authorization + X-Tenant-Id + X-User-Email
+  - Em 401: limpa sessão e redireciona para /login
+
+Complexidade: MÉDIA
+  - Multi-tenant com org switching
+  - Hierarquia de goals (pai/filho)
+  - Goals com indicadores, check-ins e progresso
+  - Views Kanban e Grid para goals
+  - Hierarquia de colaboradores (líderes/subordinados)
+  - TransferList many-to-many (team ↔ collaborator)
+  - Templates de goal
+  - Dashboard com stats
+  - Sistema de notificações
+
+
+3. RECOMENDAÇÃO PRINCIPAL: VITE + REACT + TYPESCRIPT
+================================================================================
+
+Por que essa stack:
+  - Ecossistema JS/TS mais maduro para apps SPA
+  - Type-safety recuperada via geração de client OpenAPI (orval)
+  - Modelo de deploy idêntico ao atual (static files + nginx)
+  - Sem complexidade desnecessária de SSR para app 100% autenticado
+  - Build muito rápido (esbuild/Vite vs webpack)
+  - Sem churn de framework agressivo
+
+Bibliotecas recomendadas:
+
+  Roteamento:    TanStack Router ou react-router v7
+  Data fetching: TanStack Query (cache, invalidação, loading states)
+  HTTP Client:   orval (geração automática a partir de /openapi/v1.json)
+  UI Components: shadcn/ui (Radix UI + Tailwind CSS)
+  Validação:     zod (client-side, complementa FluentValidation do server)
+  Toast:         sonner
+  Kanban/DnD:    @dnd-kit
+  Auth:          React Context + localStorage (mesmo modelo atual)
+
+Estrutura de pastas sugerida:
+
+  src/
+  ├── routes/              # pages (TanStack Router ou react-router)
+  │   ├── login.tsx
+  │   ├── dashboard.tsx
+  │   ├── goals/
+  │   ├── organizations/
+  │   ├── workspaces/
+  │   ├── teams/
+  │   ├── collaborators/
+  │   └── templates/
+  ├── lib/
+  │   ├── api/             # client gerado via orval (openapi/v1.json)
+  │   ├── auth/            # JWT context + localStorage
+  │   └── tenant/          # OrganizationContext (org switching)
+  ├── components/
+  │   ├── ui/              # shadcn/ui components
+  │   ├── goals/           # domain components
+  │   ├── indicators/
+  │   └── common/
+  └── middleware/          # auth guard (redirect /login)
+
+Mapeamento Blazor → React:
+
+  AuthState (localStorage)      → React Context + localStorage (ou zustand)
+  OrganizationContext            → React Context + localStorage + custom event
+  TenantDelegatingHandler        → axios interceptor ou fetch wrapper
+  ApiClient (826 LOC manual)     → gerado automaticamente via orval
+  UiOperationService             → TanStack Query useMutation com onError global
+  ToastService                   → sonner
+  FluentValidation (server)      → mantido no server; zod para validação client
+  Modal, DateRangePicker etc.    → shadcn/ui (Radix primitives)
+  GoalKanbanView                 → @dnd-kit
+
+
+4. ANÁLISE DETALHADA: NEXT.JS
+================================================================================
+
+O que é o Next.js hoje:
+  - Framework React full-stack mantido pela Vercel
+  - App Router (v13+): Server Components (RSC) + Client Components
+  - Principal diferencial: SSR, SSG, ISR (Incremental Static Regeneration)
+
+Por que o Next.js foi considerado:
+  - "Default seguro" do ecossistema React
+  - File-based routing conveniente
+  - Middleware nativo para auth guards (middleware.ts)
+  - Layouts aninhados via App Router
+  - Ecossistema enorme de templates e tutoriais
+
+Por que NÃO é a melhor escolha para o Bud:
+
+  App 100% autenticado
+    → SEO é irrelevante (não há páginas públicas)
+    → SSR/SSG não agrega valor
+
+  Dados tenant-scoped e privados
+    → Sem benefício em pré-renderizar no servidor
+    → Cada request precisa do JWT + X-Tenant-Id de qualquer forma
+
+  Deploy atual: static files via nginx
+    → Next.js requer Node.js em produção
+    → static export (output: 'export') existe, mas perde os features que
+      diferenciam o Next.js do Vite
+
+  App altamente interativo
+    → A maioria dos componentes seria "use client"
+    → Pagaria o custo do framework sem o benefício
+
+  Complexidade desnecessária
+    → Server/Client boundary mental overhead
+    → Caching layers do Next.js (fetch cache, revalidação)
+    → Hydration de Server Components
+
+  Infra adicional
+    → Node.js runtime para gerenciar, monitorar e escalar
+    → Docker image maior
+    → Acoplamento com Vercel para features avançados
+
+Quando Next.js faria sentido para o Bud:
+  - Se fossem adicionar páginas públicas (landing, pricing, blog) com SEO
+  - Se quisessem um BFF (Backend for Frontend) para agregar chamadas de API
+  - Se a Vercel fosse o target de deploy
+
+
+5. COMPARAÇÃO DIRETA: NEXT.JS VS VITE + REACT SPA
+================================================================================
+
+  Aspecto                | Next.js (App Router)         | Vite + React SPA
+  -----------------------+------------------------------+------------------------
+  Routing                | File-based (automático)      | TanStack Router / RR7
+  SSR/SSG                | Sim, nativo                  | Não (desnecessário)
+  Deploy                 | Node.js server ou static*    | Static files (nginx)
+  Bundle size            | Maior (framework overhead)   | Menor
+  Build speed            | Mais lento (turbopack)       | Muito rápido (esbuild)
+  Complexidade           | Alta (RSC, Server Actions)   | Baixa (React puro)
+  Infra necessária       | Node.js runtime              | Mesma de hoje (nginx)
+  Data fetching          | fetch nativo + TanStack Q    | TanStack Query
+  Auth middleware        | middleware.ts (edge)         | Route guard component
+  UI Libraries           | Mesmas (shadcn/ui, etc.)     | Mesmas
+  API client gerado      | Mesmo (orval)                | Mesmo (orval)
+  Curva de aprendizado   | Maior                        | Menor
+  Framework churn        | Alto (breaking changes freq) | Estável
+
+  * static export com limitações: perde ISR, Server Components, middleware
+
+
+6. ALTERNATIVAS AVALIADAS
+================================================================================
+
+Vue 3 + Nuxt 3:
+  - Quando faz sentido: equipe com preferência por Vue, quer opção opinada
+  - Trade-off: ecossistema menor que React; menos libs de UI de qualidade
+  - Conclusão: viável, mas menor pool de talentos
+
+SvelteKit:
+  - Quando faz sentido: DX moderna, menos boilerplate, bundle pequeno
+  - Trade-off: ecossistema significativamente menor; difícil contratar
+  - Conclusão: interessante tecnicamente, arriscado para times maiores
+
+Angular:
+  - Quando faz sentido: apps enterprise muito maiores com time dedicado
+  - Trade-off: overhead significativo para a complexidade média do Bud
+  - Conclusão: não recomendado
+
+HTMX + Razor Pages:
+  - Trade-off: perde riqueza de interação client-side (kanban, modals, forms)
+  - Conclusão: não adequado para o nível de interatividade do Bud
+
+Blazor Server:
+  - Se estão saindo de Blazor WASM, provavelmente querem sair do Blazor
+  - Adiciona WebSocket permanente e dependência de servidor .NET para UI
+  - Conclusão: não recomendado como substituto
+
+
+7. RESUMO DECISÓRIO
+================================================================================
+
+  Se...                                          | Então...
+  -----------------------------------------------+---------------------------
+  Querem pragmatismo, deploy simples, menos infra | Vite + React + TypeScript
+  Querem o "default da industria" React           | Next.js
+  Planejam paginas publicas com SEO no futuro     | Next.js
+  Querem manter exatamente o deploy atual (nginx) | Vite + React + TypeScript
+  Time tem forte preferencia por Vue              | Vue 3 + Nuxt 3
+
+RECOMENDACAO FINAL: Vite + React + TypeScript
+  Motivo: perfil do app (100% autenticado, tenant-scoped, sem SEO, deploy
+  static) torna o SSR do Next.js irrelevante. O Vite entrega o mesmo
+  ecossistema React com menos complexidade, build mais rapido e modelo de
+  deploy identico ao atual.
+
+================================================================================
