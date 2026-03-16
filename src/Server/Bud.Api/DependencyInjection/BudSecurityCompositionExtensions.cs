@@ -70,11 +70,6 @@ public static class BudSecurityCompositionExtensions
                 policy.RequireAuthenticatedUser();
                 policy.AddRequirements(new GlobalAdminRequirement());
             });
-            options.AddPolicy(AuthorizationPolicies.TenantOrganizationMatch, policy =>
-            {
-                policy.RequireAuthenticatedUser();
-                policy.AddRequirements(new TenantOrganizationMatchRequirement());
-            });
             options.AddPolicy(AuthorizationPolicies.OrganizationOwner, policy =>
             {
                 policy.RequireAuthenticatedUser();
@@ -89,7 +84,6 @@ public static class BudSecurityCompositionExtensions
 
         services.AddScoped<IAuthorizationHandler, TenantSelectedHandler>();
         services.AddScoped<IAuthorizationHandler, GlobalAdminHandler>();
-        services.AddScoped<IAuthorizationHandler, TenantOrganizationMatchHandler>();
         services.AddScoped<IAuthorizationHandler, OrganizationOwnerHandler>();
         services.AddScoped<IAuthorizationHandler, OrganizationWriteHandler>();
         services.AddHttpContextAccessor();

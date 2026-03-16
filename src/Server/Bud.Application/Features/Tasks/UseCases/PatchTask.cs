@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,12 +6,10 @@ namespace Bud.Application.Features.Tasks;
 
 public sealed partial class PatchTask(
     ITaskRepository taskRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchTask> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<TaskResponse>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchTaskRequest request,
         CancellationToken cancellationToken = default)
@@ -24,13 +21,6 @@ public sealed partial class PatchTask(
         {
             LogTaskPatchFailed(logger, id, "Not found");
             return Result<TaskResponse>.NotFound(UserErrorMessages.TaskNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, task.OrganizationId, cancellationToken);
-        if (!canUpdate)
-        {
-            LogTaskPatchFailed(logger, id, "Forbidden");
-            return Result<TaskResponse>.Forbidden(UserErrorMessages.TaskUpdateForbidden);
         }
 
         try

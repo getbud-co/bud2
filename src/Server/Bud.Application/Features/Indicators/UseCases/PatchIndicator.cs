@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -8,40 +7,20 @@ namespace Bud.Application.Features.Indicators;
 
 public sealed partial class PatchIndicator(
     IIndicatorRepository indicatorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchIndicator> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Indicator>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchIndicatorRequest request,
         CancellationToken cancellationToken = default)
     {
         LogPatchingIndicator(logger, id);
 
-        var indicatorForAuthorization = await indicatorRepository.GetByIdAsync(id, cancellationToken);
-
-        if (indicatorForAuthorization is null)
-        {
-            LogIndicatorPatchFailed(logger, id, "Not found");
-            return Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanAccessTenantOrganizationAsync(
-            user,
-            indicatorForAuthorization.OrganizationId,
-            cancellationToken);
-        if (!canUpdate)
-        {
-            LogIndicatorPatchFailed(logger, id, "Forbidden");
-            return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorUpdateForbidden);
-        }
-
         var indicator = await indicatorRepository.GetByIdForUpdateAsync(id, cancellationToken);
         if (indicator is null)
         {
-            LogIndicatorPatchFailed(logger, id, "Not found for update");
+            LogIndicatorPatchFailed(logger, id, "Not found");
             return Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 

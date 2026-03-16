@@ -39,7 +39,7 @@ public sealed class TasksController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await createTask.ExecuteAsync(User, request, cancellationToken);
+        var result = await createTask.ExecuteAsync(request, cancellationToken);
         return FromResult(result, task => CreatedAtAction(nameof(Update), new { id = task.Id }, task));
     }
 
@@ -64,7 +64,7 @@ public sealed class TasksController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await patchTask.ExecuteAsync(User, id, request, cancellationToken);
+        var result = await patchTask.ExecuteAsync(id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -80,7 +80,7 @@ public sealed class TasksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTask.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteTask.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

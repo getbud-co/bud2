@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -8,13 +7,11 @@ namespace Bud.Application.Features.Indicators;
 
 public sealed partial class PatchCheckin(
     IIndicatorRepository indicatorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<PatchCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Checkin>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid indicatorId,
         Guid checkinId,
         PatchCheckinRequest request,
@@ -27,13 +24,6 @@ public sealed partial class PatchCheckin(
         {
             LogCheckinPatchFailed(logger, checkinId, "Not found");
             return Result<Checkin>.NotFound(UserErrorMessages.CheckinNotFound);
-        }
-
-        var hasTenantAccess = await authorizationGateway.CanAccessTenantOrganizationAsync(user, checkin.OrganizationId, cancellationToken);
-        if (!hasTenantAccess)
-        {
-            LogCheckinPatchFailed(logger, checkinId, "Forbidden (tenant)");
-            return Result<Checkin>.Forbidden(UserErrorMessages.CheckinUpdateForbidden);
         }
 
         if (!tenantProvider.IsGlobalAdmin && tenantProvider.CollaboratorId != checkin.CollaboratorId)

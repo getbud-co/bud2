@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -8,12 +7,10 @@ namespace Bud.Application.Features.Indicators;
 
 public sealed partial class CreateIndicator(
     IIndicatorRepository indicatorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateIndicator> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Indicator>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateIndicatorRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -25,13 +22,6 @@ public sealed partial class CreateIndicator(
         {
             LogIndicatorCreationFailed(logger, request.Name, "Goal not found");
             return Result<Indicator>.NotFound(UserErrorMessages.GoalNotFound);
-        }
-
-        var canCreate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, goal.OrganizationId, cancellationToken);
-        if (!canCreate)
-        {
-            LogIndicatorCreationFailed(logger, request.Name, "Forbidden");
-            return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorCreateForbidden);
         }
 
         try

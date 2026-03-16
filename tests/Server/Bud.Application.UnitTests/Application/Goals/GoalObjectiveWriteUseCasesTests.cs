@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using FluentAssertions;
@@ -10,21 +9,18 @@ namespace Bud.Application.UnitTests.Application.Goals;
 
 public sealed class GoalObjectiveWriteUseCasesTests
 {
-    private static readonly ClaimsPrincipal _user = new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test")]));
-
     private readonly Mock<IGoalRepository> _repository = new();
     private readonly Mock<ICollaboratorRepository> _collaboratorRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task DefineMissionObjective_WhenTenantNotSelected_ReturnsForbidden()
     {
         _tenantProvider.SetupGet(t => t.TenantId).Returns((Guid?)null);
 
-        var useCase = new CreateGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, _authorizationGateway.Object, NullLogger<CreateGoal>.Instance);
+        var useCase = new CreateGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, NullLogger<CreateGoal>.Instance);
 
-        var result = await useCase.ExecuteAsync(_user, new CreateGoalRequest
+        var result = await useCase.ExecuteAsync(new CreateGoalRequest
         {
             ParentId = Guid.NewGuid(),
             Name = "Objetivo",
@@ -46,10 +42,6 @@ public sealed class GoalObjectiveWriteUseCasesTests
 
         _tenantProvider.SetupGet(t => t.TenantId).Returns(organizationId);
 
-        _authorizationGateway
-            .Setup(g => g.CanAccessTenantOrganizationAsync(_user, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var parentGoal = new Goal
         {
             Id = parentId,
@@ -64,9 +56,9 @@ public sealed class GoalObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentGoal);
 
-        var useCase = new CreateGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, _authorizationGateway.Object, NullLogger<CreateGoal>.Instance);
+        var useCase = new CreateGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, NullLogger<CreateGoal>.Instance);
 
-        var result = await useCase.ExecuteAsync(_user, new CreateGoalRequest
+        var result = await useCase.ExecuteAsync(new CreateGoalRequest
         {
             ParentId = parentId,
             Name = "Objetivo",
@@ -90,9 +82,9 @@ public sealed class GoalObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Goal?)null);
 
-        var useCase = new PatchGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, _authorizationGateway.Object, NullLogger<PatchGoal>.Instance);
+        var useCase = new PatchGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, NullLogger<PatchGoal>.Instance);
 
-        var result = await useCase.ExecuteAsync(_user, Guid.NewGuid(), new PatchGoalRequest { Name = "X" });
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchGoalRequest { Name = "X" });
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -118,13 +110,9 @@ public sealed class GoalObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(objective.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(objective);
 
-        _authorizationGateway
-            .Setup(g => g.CanAccessTenantOrganizationAsync(_user, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new PatchGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, NullLogger<PatchGoal>.Instance);
 
-        var useCase = new PatchGoal(_repository.Object, _collaboratorRepository.Object, _tenantProvider.Object, _authorizationGateway.Object, NullLogger<PatchGoal>.Instance);
-
-        var result = await useCase.ExecuteAsync(_user, objective.Id, new PatchGoalRequest
+        var result = await useCase.ExecuteAsync(objective.Id, new PatchGoalRequest
         {
             Name = "Atualizado",
             Description = "Nova descrição"
@@ -141,9 +129,9 @@ public sealed class GoalObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Goal?)null);
 
-        var useCase = new DeleteGoal(_repository.Object, _tenantProvider.Object, _authorizationGateway.Object, NullLogger<DeleteGoal>.Instance);
+        var useCase = new DeleteGoal(_repository.Object, _tenantProvider.Object, NullLogger<DeleteGoal>.Instance);
 
-        var result = await useCase.ExecuteAsync(_user, Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);

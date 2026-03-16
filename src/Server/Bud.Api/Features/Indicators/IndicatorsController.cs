@@ -52,7 +52,7 @@ public sealed class IndicatorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await createIndicator.ExecuteAsync(User, request, cancellationToken);
+        var result = await createIndicator.ExecuteAsync(request, cancellationToken);
         return FromResult(result, indicator => CreatedAtAction(nameof(GetById), new { id = indicator.Id }, indicator));
     }
 
@@ -77,7 +77,7 @@ public sealed class IndicatorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await patchIndicator.ExecuteAsync(User, id, request, cancellationToken);
+        var result = await patchIndicator.ExecuteAsync(id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -93,7 +93,7 @@ public sealed class IndicatorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteIndicator.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteIndicator.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -176,7 +176,7 @@ public sealed class IndicatorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await createCheckin.ExecuteAsync(User, indicatorId, request, cancellationToken);
+        var result = await createCheckin.ExecuteAsync(indicatorId, request, cancellationToken);
         return FromResult(result, checkin =>
             CreatedAtAction(nameof(GetCheckinById), new { indicatorId, checkinId = checkin.Id }, checkin));
     }
@@ -239,7 +239,7 @@ public sealed class IndicatorsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await patchCheckin.ExecuteAsync(User, indicatorId, checkinId, request, cancellationToken);
+        var result = await patchCheckin.ExecuteAsync(indicatorId, checkinId, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -255,7 +255,7 @@ public sealed class IndicatorsController(
         Guid checkinId,
         CancellationToken cancellationToken)
     {
-        var result = await deleteCheckin.ExecuteAsync(User, indicatorId, checkinId, cancellationToken);
+        var result = await deleteCheckin.ExecuteAsync(indicatorId, checkinId, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

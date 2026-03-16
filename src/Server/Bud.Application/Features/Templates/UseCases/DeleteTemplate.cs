@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,12 +6,10 @@ namespace Bud.Application.Features.Templates;
 
 public sealed partial class DeleteTemplate(
     ITemplateRepository templateRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<DeleteTemplate> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -23,13 +20,6 @@ public sealed partial class DeleteTemplate(
         {
             LogTemplateDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.TemplateNotFound);
-        }
-
-        var canDelete = await authorizationGateway.CanAccessTenantOrganizationAsync(user, template.OrganizationId, cancellationToken);
-        if (!canDelete)
-        {
-            LogTemplateDeletionFailed(logger, id, "Forbidden");
-            return Result.Forbidden(UserErrorMessages.TemplateDeleteForbidden);
         }
 
         await templateRepository.RemoveAsync(template, cancellationToken);

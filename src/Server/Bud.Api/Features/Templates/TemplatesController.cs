@@ -36,7 +36,7 @@ public sealed class TemplatesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await createTemplate.ExecuteAsync(User, request, cancellationToken);
+        var result = await createTemplate.ExecuteAsync(request, cancellationToken);
         return FromResult(result, template => CreatedAtAction(nameof(GetById), new { id = template.Id }, template));
     }
 
@@ -59,7 +59,7 @@ public sealed class TemplatesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await patchTemplate.ExecuteAsync(User, id, request, cancellationToken);
+        var result = await patchTemplate.ExecuteAsync(id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -73,7 +73,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTemplate.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteTemplate.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
