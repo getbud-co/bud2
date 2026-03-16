@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,12 +6,10 @@ namespace Bud.Application.Features.Tasks;
 
 public sealed partial class CreateTask(
     ITaskRepository taskRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateTask> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<TaskResponse>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateTaskRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -23,13 +20,6 @@ public sealed partial class CreateTask(
         {
             LogTaskCreationFailed(logger, request.Name, "Goal not found");
             return Result<TaskResponse>.NotFound(UserErrorMessages.GoalNotFound);
-        }
-
-        var canCreate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, goal.OrganizationId, cancellationToken);
-        if (!canCreate)
-        {
-            LogTaskCreationFailed(logger, request.Name, "Forbidden");
-            return Result<TaskResponse>.Forbidden(UserErrorMessages.TaskCreateForbidden);
         }
 
         try

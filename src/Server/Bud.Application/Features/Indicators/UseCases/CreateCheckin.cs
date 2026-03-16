@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -9,13 +8,11 @@ namespace Bud.Application.Features.Indicators;
 public sealed partial class CreateCheckin(
     IIndicatorRepository indicatorRepository,
     ICollaboratorRepository collaboratorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Checkin>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid indicatorId,
         CreateCheckinRequest request,
         CancellationToken cancellationToken = default)
@@ -27,13 +24,6 @@ public sealed partial class CreateCheckin(
         {
             LogCheckinCreationFailed(logger, indicatorId, "Indicator not found");
             return Result<Checkin>.NotFound(UserErrorMessages.IndicatorNotFound);
-        }
-
-        var hasTenantAccess = await authorizationGateway.CanAccessTenantOrganizationAsync(user, indicator.OrganizationId, cancellationToken);
-        if (!hasTenantAccess)
-        {
-            LogCheckinCreationFailed(logger, indicatorId, "Forbidden (tenant)");
-            return Result<Checkin>.Forbidden(UserErrorMessages.CheckinCreateForbidden);
         }
 
         var collaboratorId = tenantProvider.CollaboratorId;

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -11,19 +10,16 @@ namespace Bud.Application.UnitTests.Application.Indicators;
 
 public sealed class IndicatorWriteUseCasesTests
 {
-    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test")]));
-
     [Fact]
     public async Task DefineMissionMetric_WhenMissionNotFound_ReturnsNotFound()
     {
         var metricRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>(MockBehavior.Strict);
 
         metricRepository
             .Setup(repository => repository.GetGoalByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Goal?)null);
 
-        var useCase = new CreateIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<CreateIndicator>.Instance);
+        var useCase = new CreateIndicator(metricRepository.Object, NullLogger<CreateIndicator>.Instance);
 
         var request = new CreateIndicatorRequest
         {
@@ -33,52 +29,11 @@ public sealed class IndicatorWriteUseCasesTests
             TargetText = "Descricao"
         };
 
-        var result = await useCase.ExecuteAsync(User, request);
+        var result = await useCase.ExecuteAsync(request);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.Should().Be("Meta não encontrada.");
-        authorizationGateway.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task DefineMissionMetric_WhenUnauthorized_ReturnsForbidden()
-    {
-        var organizationId = Guid.NewGuid();
-        var mission = new Goal
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Mission",
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddDays(7),
-            Status = GoalStatus.Planned,
-            OrganizationId = organizationId
-        };
-
-        var metricRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
-        metricRepository
-            .Setup(repository => repository.GetGoalByIdAsync(mission.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mission);
-
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var useCase = new CreateIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<CreateIndicator>.Instance);
-
-        var request = new CreateIndicatorRequest
-        {
-            GoalId = mission.Id,
-            Name = "Metrica",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
-            TargetText = "Descricao"
-        };
-
-        var result = await useCase.ExecuteAsync(User, request);
-
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
     }
 
     [Fact]
@@ -106,12 +61,7 @@ public sealed class IndicatorWriteUseCasesTests
             .Setup(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new CreateIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<CreateIndicator>.Instance);
+        var useCase = new CreateIndicator(metricRepository.Object, NullLogger<CreateIndicator>.Instance);
 
         var request = new CreateIndicatorRequest
         {
@@ -121,7 +71,7 @@ public sealed class IndicatorWriteUseCasesTests
             TargetText = "Achieve excellent quality"
         };
 
-        var result = await useCase.ExecuteAsync(User, request);
+        var result = await useCase.ExecuteAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Quality Assessment");
@@ -132,29 +82,14 @@ public sealed class IndicatorWriteUseCasesTests
     }
 
     [Fact]
-    public async Task ReviseMissionMetricDefinition_WhenUnauthorized_ReturnsForbidden()
+    public async Task ReviseMissionMetricDefinition_WhenNotFound_ReturnsNotFound()
     {
-        var organizationId = Guid.NewGuid();
-        var metric = new Indicator
-        {
-            Id = Guid.NewGuid(),
-            Name = "Metrica",
-            Type = IndicatorType.Qualitative,
-            GoalId = Guid.NewGuid(),
-            OrganizationId = organizationId
-        };
-
         var metricRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
         metricRepository
-            .Setup(repository => repository.GetByIdAsync(metric.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(metric);
+            .Setup(repository => repository.GetByIdForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Indicator?)null);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var useCase = new PatchIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<PatchIndicator>.Instance);
+        var useCase = new PatchIndicator(metricRepository.Object, NullLogger<PatchIndicator>.Instance);
 
         var request = new PatchIndicatorRequest
         {
@@ -163,10 +98,10 @@ public sealed class IndicatorWriteUseCasesTests
             TargetText = "Descricao"
         };
 
-        var result = await useCase.ExecuteAsync(User, metric.Id, request);
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), request);
 
         result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
+        result.ErrorType.Should().Be(ErrorType.NotFound);
     }
 
     [Fact]
@@ -186,21 +121,13 @@ public sealed class IndicatorWriteUseCasesTests
 
         var metricRepository = new Mock<IIndicatorRepository>();
         metricRepository
-            .Setup(repository => repository.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(metric);
-        metricRepository
             .Setup(repository => repository.GetByIdForUpdateAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
             .Setup(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, organizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new PatchIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<PatchIndicator>.Instance);
+        var useCase = new PatchIndicator(metricRepository.Object, NullLogger<PatchIndicator>.Instance);
 
         var request = new PatchIndicatorRequest
         {
@@ -211,7 +138,7 @@ public sealed class IndicatorWriteUseCasesTests
             Unit = Bud.Shared.Kernel.IndicatorUnit.Points
         };
 
-        var result = await useCase.ExecuteAsync(User, indicatorId, request);
+        var result = await useCase.ExecuteAsync(indicatorId, request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Updated Metric");
@@ -233,9 +160,6 @@ public sealed class IndicatorWriteUseCasesTests
 
         var metricRepository = new Mock<IIndicatorRepository>();
         metricRepository
-            .Setup(repository => repository.GetByIdAsync(metric.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(metric);
-        metricRepository
             .Setup(repository => repository.GetByIdForUpdateAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         metricRepository
@@ -245,14 +169,9 @@ public sealed class IndicatorWriteUseCasesTests
             .Setup(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(gateway => gateway.CanAccessTenantOrganizationAsync(User, metric.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new DeleteIndicator(metricRepository.Object, NullLogger<DeleteIndicator>.Instance);
 
-        var useCase = new DeleteIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<DeleteIndicator>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, metric.Id);
+        var result = await useCase.ExecuteAsync(metric.Id);
 
         result.IsSuccess.Should().BeTrue();
         metricRepository.Verify(repository => repository.RemoveAsync(metric, It.IsAny<CancellationToken>()), Times.Once);
@@ -264,18 +183,15 @@ public sealed class IndicatorWriteUseCasesTests
     {
         var metricRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
         metricRepository
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Indicator?)null);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>(MockBehavior.Strict);
+        var useCase = new DeleteIndicator(metricRepository.Object, NullLogger<DeleteIndicator>.Instance);
 
-        var useCase = new DeleteIndicator(metricRepository.Object, authorizationGateway.Object, NullLogger<DeleteIndicator>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.Should().Be("Indicador não encontrado.");
-        authorizationGateway.VerifyNoOtherCalls();
     }
 }

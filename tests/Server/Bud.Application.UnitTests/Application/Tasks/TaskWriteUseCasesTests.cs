@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -11,8 +10,6 @@ namespace Bud.Application.UnitTests.Application.Tasks;
 
 public sealed class TaskWriteUseCasesTests
 {
-    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test")]));
-
     private static Goal MakeGoal() => new()
     {
         Id = Guid.NewGuid(),
@@ -38,14 +35,13 @@ public sealed class TaskWriteUseCasesTests
     public async Task CreateTask_WhenGoalNotFound_ReturnsNotFound()
     {
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>(MockBehavior.Strict);
 
         repo.Setup(r => r.GetGoalByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Goal?)null);
 
-        var useCase = new CreateTask(repo.Object, auth.Object, NullLogger<CreateTask>.Instance);
+        var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTaskRequest
+        var result = await useCase.ExecuteAsync(new CreateTaskRequest
         {
             GoalId = Guid.NewGuid(),
             Name = "Tarefa",
@@ -54,33 +50,6 @@ public sealed class TaskWriteUseCasesTests
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
-        auth.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task CreateTask_WhenUnauthorized_ReturnsForbidden()
-    {
-        var goal = MakeGoal();
-        var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>();
-
-        repo.Setup(r => r.GetGoalByIdAsync(goal.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(goal);
-
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, goal.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var useCase = new CreateTask(repo.Object, auth.Object, NullLogger<CreateTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, new CreateTaskRequest
-        {
-            GoalId = goal.Id,
-            Name = "Tarefa",
-            State = TaskState.ToDo
-        });
-
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
     }
 
     [Fact]
@@ -88,7 +57,6 @@ public sealed class TaskWriteUseCasesTests
     {
         var goal = MakeGoal();
         var repo = new Mock<ITaskRepository>();
-        var auth = new Mock<IApplicationAuthorizationGateway>();
 
         repo.Setup(r => r.GetGoalByIdAsync(goal.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(goal);
@@ -97,12 +65,9 @@ public sealed class TaskWriteUseCasesTests
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, goal.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
-        var useCase = new CreateTask(repo.Object, auth.Object, NullLogger<CreateTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, new CreateTaskRequest
+        var result = await useCase.ExecuteAsync(new CreateTaskRequest
         {
             GoalId = goal.Id,
             Name = "Implementar feature",
@@ -125,7 +90,6 @@ public sealed class TaskWriteUseCasesTests
         var goal = MakeGoal();
         var dueDate = new DateTime(2026, 12, 31);
         var repo = new Mock<ITaskRepository>();
-        var auth = new Mock<IApplicationAuthorizationGateway>();
 
         repo.Setup(r => r.GetGoalByIdAsync(goal.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(goal);
@@ -134,12 +98,9 @@ public sealed class TaskWriteUseCasesTests
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, goal.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
-        var useCase = new CreateTask(repo.Object, auth.Object, NullLogger<CreateTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, new CreateTaskRequest
+        var result = await useCase.ExecuteAsync(new CreateTaskRequest
         {
             GoalId = goal.Id,
             Name = "Tarefa com prazo",
@@ -157,39 +118,16 @@ public sealed class TaskWriteUseCasesTests
     public async Task PatchTask_WhenNotFound_ReturnsNotFound()
     {
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>(MockBehavior.Strict);
 
         repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GoalTask?)null);
 
-        var useCase = new PatchTask(repo.Object, auth.Object, NullLogger<PatchTask>.Instance);
+        var useCase = new PatchTask(repo.Object, NullLogger<PatchTask>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, Guid.NewGuid(), new PatchTaskRequest());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchTaskRequest());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
-        auth.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task PatchTask_WhenUnauthorized_ReturnsForbidden()
-    {
-        var task = MakeTask();
-        var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>();
-
-        repo.Setup(r => r.GetByIdAsync(task.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(task);
-
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, task.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var useCase = new PatchTask(repo.Object, auth.Object, NullLogger<PatchTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, task.Id, new PatchTaskRequest());
-
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
     }
 
     [Fact]
@@ -197,24 +135,20 @@ public sealed class TaskWriteUseCasesTests
     {
         var task = MakeTask();
         var repo = new Mock<ITaskRepository>();
-        var auth = new Mock<IApplicationAuthorizationGateway>();
 
         repo.Setup(r => r.GetByIdAsync(task.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(task);
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, task.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new PatchTask(repo.Object, auth.Object, NullLogger<PatchTask>.Instance);
+        var useCase = new PatchTask(repo.Object, NullLogger<PatchTask>.Instance);
 
         var request = new PatchTaskRequest
         {
             State = TaskState.Done
         };
 
-        var result = await useCase.ExecuteAsync(User, task.Id, request);
+        var result = await useCase.ExecuteAsync(task.Id, request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.State.Should().Be(TaskState.Done);
@@ -226,24 +160,20 @@ public sealed class TaskWriteUseCasesTests
         var task = MakeTask();
         var dueDate = new DateTime(2026, 9, 30);
         var repo = new Mock<ITaskRepository>();
-        var auth = new Mock<IApplicationAuthorizationGateway>();
 
         repo.Setup(r => r.GetByIdAsync(task.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(task);
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, task.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new PatchTask(repo.Object, auth.Object, NullLogger<PatchTask>.Instance);
+        var useCase = new PatchTask(repo.Object, NullLogger<PatchTask>.Instance);
 
         var request = new PatchTaskRequest
         {
             DueDate = dueDate
         };
 
-        var result = await useCase.ExecuteAsync(User, task.Id, request);
+        var result = await useCase.ExecuteAsync(task.Id, request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.DueDate.Should().Be(dueDate);
@@ -255,39 +185,16 @@ public sealed class TaskWriteUseCasesTests
     public async Task DeleteTask_WhenNotFound_ReturnsNotFound()
     {
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>(MockBehavior.Strict);
 
         repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GoalTask?)null);
 
-        var useCase = new DeleteTask(repo.Object, auth.Object, NullLogger<DeleteTask>.Instance);
+        var useCase = new DeleteTask(repo.Object, NullLogger<DeleteTask>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
-        auth.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task DeleteTask_WhenUnauthorized_ReturnsForbidden()
-    {
-        var task = MakeTask();
-        var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
-        var auth = new Mock<IApplicationAuthorizationGateway>();
-
-        repo.Setup(r => r.GetByIdAsync(task.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(task);
-
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, task.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var useCase = new DeleteTask(repo.Object, auth.Object, NullLogger<DeleteTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, task.Id);
-
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
     }
 
     [Fact]
@@ -295,7 +202,6 @@ public sealed class TaskWriteUseCasesTests
     {
         var task = MakeTask();
         var repo = new Mock<ITaskRepository>();
-        var auth = new Mock<IApplicationAuthorizationGateway>();
 
         repo.Setup(r => r.GetByIdAsync(task.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(task);
@@ -304,12 +210,9 @@ public sealed class TaskWriteUseCasesTests
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        auth.Setup(a => a.CanAccessTenantOrganizationAsync(User, task.OrganizationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new DeleteTask(repo.Object, NullLogger<DeleteTask>.Instance);
 
-        var useCase = new DeleteTask(repo.Object, auth.Object, NullLogger<DeleteTask>.Instance);
-
-        var result = await useCase.ExecuteAsync(User, task.Id);
+        var result = await useCase.ExecuteAsync(task.Id);
 
         result.IsSuccess.Should().BeTrue();
         repo.Verify(r => r.RemoveAsync(task, It.IsAny<CancellationToken>()), Times.Once);

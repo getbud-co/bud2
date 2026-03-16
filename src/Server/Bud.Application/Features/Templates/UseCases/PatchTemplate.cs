@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -8,12 +7,10 @@ namespace Bud.Application.Features.Templates;
 
 public sealed partial class PatchTemplate(
     ITemplateRepository templateRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchTemplate> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Template>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchTemplateRequest request,
         CancellationToken cancellationToken = default)
@@ -25,13 +22,6 @@ public sealed partial class PatchTemplate(
         {
             LogTemplatePatchFailed(logger, id, "Not found");
             return Result<Template>.NotFound(UserErrorMessages.TemplateNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, template.OrganizationId, cancellationToken);
-        if (!canUpdate)
-        {
-            LogTemplatePatchFailed(logger, id, "Forbidden");
-            return Result<Template>.Forbidden(UserErrorMessages.TemplateUpdateForbidden);
         }
 
         try

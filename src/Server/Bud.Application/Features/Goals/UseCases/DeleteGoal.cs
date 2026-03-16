@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -8,12 +7,10 @@ namespace Bud.Application.Features.Goals;
 public sealed partial class DeleteGoal(
     IGoalRepository goalRepository,
     ITenantProvider tenantProvider,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<DeleteGoal> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -24,13 +21,6 @@ public sealed partial class DeleteGoal(
         {
             LogGoalDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.GoalNotFound);
-        }
-
-        var canDelete = await authorizationGateway.CanAccessTenantOrganizationAsync(user, goal.OrganizationId, cancellationToken);
-        if (!canDelete)
-        {
-            LogGoalDeletionFailed(logger, id, "Forbidden");
-            return Result.Forbidden(UserErrorMessages.GoalDeleteForbidden);
         }
 
         goal.MarkAsDeleted(tenantProvider.CollaboratorId);

@@ -25,14 +25,4 @@ public sealed class ApplicationAuthorizationGateway(IAuthorizationService author
 
         return result.Succeeded;
     }
-
-    public async Task<bool> CanAccessTenantOrganizationAsync(ClaimsPrincipal user, Guid organizationId, CancellationToken cancellationToken = default)
-    {
-        var result = await authorizationService.AuthorizeAsync(
-            user,
-            new OrganizationResource(organizationId),
-            AuthorizationPolicies.TenantOrganizationMatch);
-
-        return result.Succeeded;
-    }
 }

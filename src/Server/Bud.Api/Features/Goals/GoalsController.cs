@@ -46,7 +46,7 @@ public sealed class GoalsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await createGoal.ExecuteAsync(User, request, cancellationToken);
+        var result = await createGoal.ExecuteAsync(request, cancellationToken);
         return FromResult(result, goal => CreatedAtAction(nameof(GetById), new { id = goal.Id }, goal));
     }
 
@@ -73,7 +73,7 @@ public sealed class GoalsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var result = await patchGoal.ExecuteAsync(User, id, request, cancellationToken);
+        var result = await patchGoal.ExecuteAsync(id, request, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -87,7 +87,7 @@ public sealed class GoalsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteGoal.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteGoal.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 

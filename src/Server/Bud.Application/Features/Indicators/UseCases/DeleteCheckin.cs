@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,13 +6,11 @@ namespace Bud.Application.Features.Indicators;
 
 public sealed partial class DeleteCheckin(
     IIndicatorRepository indicatorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<DeleteCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid indicatorId,
         Guid checkinId,
         CancellationToken cancellationToken = default)
@@ -25,13 +22,6 @@ public sealed partial class DeleteCheckin(
         {
             LogCheckinDeletionFailed(logger, checkinId, "Not found");
             return Result.NotFound(UserErrorMessages.CheckinNotFound);
-        }
-
-        var hasTenantAccess = await authorizationGateway.CanAccessTenantOrganizationAsync(user, checkin.OrganizationId, cancellationToken);
-        if (!hasTenantAccess)
-        {
-            LogCheckinDeletionFailed(logger, checkinId, "Forbidden (tenant)");
-            return Result.Forbidden(UserErrorMessages.CheckinDeleteForbidden);
         }
 
         if (!tenantProvider.IsGlobalAdmin && tenantProvider.CollaboratorId != checkin.CollaboratorId)

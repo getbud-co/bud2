@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -9,12 +8,10 @@ public sealed partial class CreateGoal(
     IGoalRepository goalRepository,
     ICollaboratorRepository collaboratorRepository,
     ITenantProvider tenantProvider,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateGoal> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Goal>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateGoalRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -24,13 +21,6 @@ public sealed partial class CreateGoal(
         if (!organizationId.HasValue)
         {
             LogGoalCreationFailed(logger, request.Name, "Tenant not selected");
-            return Result<Goal>.Forbidden(UserErrorMessages.GoalCreateForbidden);
-        }
-
-        var canCreate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, organizationId.Value, cancellationToken);
-        if (!canCreate)
-        {
-            LogGoalCreationFailed(logger, request.Name, "Forbidden");
             return Result<Goal>.Forbidden(UserErrorMessages.GoalCreateForbidden);
         }
 

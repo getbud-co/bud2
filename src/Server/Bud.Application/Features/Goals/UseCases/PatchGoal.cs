@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -9,12 +8,10 @@ public sealed partial class PatchGoal(
     IGoalRepository goalRepository,
     ICollaboratorRepository collaboratorRepository,
     ITenantProvider tenantProvider,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchGoal> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Goal>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchGoalRequest request,
         CancellationToken cancellationToken = default)
@@ -26,13 +23,6 @@ public sealed partial class PatchGoal(
         {
             LogGoalPatchFailed(logger, id, "Not found");
             return Result<Goal>.NotFound(UserErrorMessages.GoalNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanAccessTenantOrganizationAsync(user, goal.OrganizationId, cancellationToken);
-        if (!canUpdate)
-        {
-            LogGoalPatchFailed(logger, id, "Forbidden");
-            return Result<Goal>.Forbidden(UserErrorMessages.GoalUpdateForbidden);
         }
 
         if (goal.ParentId.HasValue && request.StartDate.HasValue)
