@@ -2,7 +2,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Goals;
+namespace Bud.Application.Features.Goals.UseCases;
 
 public sealed partial class PatchGoal(
     IGoalRepository goalRepository,

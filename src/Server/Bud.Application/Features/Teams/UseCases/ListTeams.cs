@@ -3,7 +3,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Teams;
+namespace Bud.Application.Features.Teams.UseCases;
 
 public sealed class ListTeams(ITeamRepository teamRepository)
 {

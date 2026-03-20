@@ -395,7 +395,7 @@ public partial class Collaborators
         }
     }
 
-    private static string GetRoleLabel(Bud.Shared.Kernel.CollaboratorRole role) => role switch
+    private static string GetRoleLabel(Bud.Shared.Kernel.Enums.CollaboratorRole role) => role switch
     {
         CollaboratorRole.Leader => "Lider",
         _ => "Contribuidor individual"

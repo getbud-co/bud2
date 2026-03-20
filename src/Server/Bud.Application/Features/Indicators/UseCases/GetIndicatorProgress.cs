@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Indicators;
+namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed class GetIndicatorProgress(IIndicatorProgressReadStore indicatorProgressReadStore)
 {

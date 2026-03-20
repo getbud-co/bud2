@@ -2,7 +2,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Tasks;
+namespace Bud.Application.Features.Tasks.UseCases;
 
 public sealed partial class DeleteTask(
     ITaskRepository taskRepository,

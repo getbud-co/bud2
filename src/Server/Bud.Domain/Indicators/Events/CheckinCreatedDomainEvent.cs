@@ -1,4 +1,4 @@
-namespace Bud.Domain.Indicators;
+namespace Bud.Domain.Indicators.Events;
 
 public sealed record CheckinCreatedDomainEvent(
     Guid CheckinId,

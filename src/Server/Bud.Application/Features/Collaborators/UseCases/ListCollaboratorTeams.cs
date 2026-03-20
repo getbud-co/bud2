@@ -1,6 +1,6 @@
 using Bud.Application.Common;
 
-namespace Bud.Application.Features.Collaborators;
+namespace Bud.Application.Features.Collaborators.UseCases;
 
 public sealed class ListCollaboratorTeams(ICollaboratorRepository collaboratorRepository)
 {

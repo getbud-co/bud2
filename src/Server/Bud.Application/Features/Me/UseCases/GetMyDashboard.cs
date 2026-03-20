@@ -3,7 +3,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Me;
+namespace Bud.Application.Features.Me.UseCases;
 
 public sealed class GetMyDashboard(
     IMyDashboardReadStore dashboardReadStore,

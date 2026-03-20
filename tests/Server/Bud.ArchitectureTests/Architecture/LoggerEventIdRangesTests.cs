@@ -12,29 +12,30 @@ public sealed class LoggerEventIdRangesTests
     [Fact]
     public void UseCases_ShouldUseReservedEventIdRangesPerDomain()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var useCasesRoot = Path.Combine(repositoryRoot, "src", "Server", "Bud.Application", "UseCases");
+        var repositoryRoot = TestRepositoryRoot.Find();
+        var featuresRoot = Path.Combine(repositoryRoot, "src", "Server", "Bud.Application", "Features");
 
-        var ranges = new Dictionary<string, (int Min, int Max)>
+        var ranges = new Dictionary<string, Func<string, (int Min, int Max)?>>
         {
-            ["Goals"] = (4000, 4009),
-            ["Organizations"] = (4010, 4019),
-            ["Workspaces"] = (4020, 4029),
-            ["Teams"] = (4030, 4039),
-            ["Collaborators"] = (4040, 4049),
-            ["Indicators"] = (4050, 4059),
-            ["Checkins"] = (4060, 4069),
-            ["Templates"] = (4070, 4079),
-            ["Tasks"] = (4080, 4089),
-            ["Sessions"] = (4090, 4099),
-            ["Notifications"] = (4090, 4099)
+            ["Goals"] = static _ => (4000, 4009),
+            ["Organizations"] = static _ => (4010, 4019),
+            ["Workspaces"] = static _ => (4020, 4029),
+            ["Teams"] = static _ => (4030, 4039),
+            ["Collaborators"] = static _ => (4040, 4049),
+            ["Indicators"] = static fileName => fileName.Contains("Checkin", StringComparison.Ordinal)
+                ? (4060, 4069)
+                : (4050, 4059),
+            ["Templates"] = static _ => (4070, 4079),
+            ["Tasks"] = static _ => (4080, 4089),
+            ["Sessions"] = static _ => (4090, 4099),
+            ["Notifications"] = static _ => (4090, 4099)
         };
 
         var violations = new List<string>();
 
-        foreach (var (folder, range) in ranges)
+        foreach (var (feature, rangeResolver) in ranges)
         {
-            var folderPath = Path.Combine(useCasesRoot, folder);
+            var folderPath = Path.Combine(featuresRoot, feature, "UseCases");
             if (!Directory.Exists(folderPath))
             {
                 continue;
@@ -43,37 +44,26 @@ public sealed class LoggerEventIdRangesTests
             var files = Directory.EnumerateFiles(folderPath, "*.cs", SearchOption.TopDirectoryOnly);
             foreach (var file in files)
             {
+                var range = rangeResolver(Path.GetFileName(file));
+                if (!range.HasValue)
+                {
+                    continue;
+                }
+
                 var content = File.ReadAllText(file);
                 var matches = LoggerEventIdRegex.Matches(content);
                 foreach (Match match in matches)
                 {
                     var id = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
-                    if (id < range.Min || id > range.Max)
+                    if (id < range.Value.Min || id > range.Value.Max)
                     {
                         var relativePath = Path.GetRelativePath(repositoryRoot, file);
-                        violations.Add($"{relativePath}: EventId {id} fora da faixa {range.Min}-{range.Max}.");
+                        violations.Add($"{relativePath}: EventId {id} fora da faixa {range.Value.Min}-{range.Value.Max}.");
                     }
                 }
             }
         }
 
         violations.Should().BeEmpty("EventId dos use cases deve respeitar a faixa reservada por domínio.");
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var current = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(current))
-        {
-            var candidate = Path.Combine(current, "Bud.slnx");
-            if (File.Exists(candidate))
-            {
-                return current;
-            }
-
-            current = Directory.GetParent(current)?.FullName ?? string.Empty;
-        }
-
-        throw new InvalidOperationException("Não foi possível localizar a raiz do repositório.");
     }
 }

@@ -1,6 +1,6 @@
 using Bud.Application.Common;
 
-namespace Bud.Application.Features.Me;
+namespace Bud.Application.Features.Me.UseCases;
 
 public sealed class ListMyOrganizations(IMyOrganizationsReadStore myOrganizationsReadStore)
 {

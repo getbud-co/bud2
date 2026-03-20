@@ -107,7 +107,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
 
         // Act
@@ -153,7 +153,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission Forbidden",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             CollaboratorId = org2Collaborator.Id
         };
 
@@ -174,7 +174,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             CollaboratorId = Guid.NewGuid() // Non-existent ID
         };
 
@@ -195,7 +195,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission",
             StartDate = DateTime.UtcNow.AddDays(7),
             EndDate = DateTime.UtcNow, // Before start date
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
 
         // Act
@@ -279,7 +279,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Test Mission for GetById",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
         var createResponse = await _client.PostAsJsonAsync("/api/goals", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Goal>();
@@ -322,7 +322,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission Filter Test",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         });
 
         // Act - Filter with All
@@ -347,7 +347,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
                 Name = $"Mission {i}",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             });
         }
 
@@ -462,7 +462,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Org Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         });
 
         await _client.PostAsJsonAsync("/api/goals", new CreateGoalRequest
@@ -470,7 +470,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Collaborator Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             CollaboratorId = collaborator!.Id
         });
 
@@ -500,7 +500,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Original Name",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
         var createResponse = await _client.PostAsJsonAsync("/api/goals", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Goal>();
@@ -510,7 +510,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Updated Name",
             StartDate = created!.StartDate,
             EndDate = created.EndDate,
-            Status = Bud.Shared.Kernel.GoalStatus.Active
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Active
         };
 
         // Act
@@ -538,7 +538,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Name = "Mission to Delete",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
         var createResponse = await _client.PostAsJsonAsync("/api/goals", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Goal>();

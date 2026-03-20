@@ -3,7 +3,7 @@ using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Templates;
+namespace Bud.Application.Features.Templates.UseCases;
 
 public sealed partial class PatchTemplate(
     ITemplateRepository templateRepository,

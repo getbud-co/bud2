@@ -42,7 +42,7 @@ public sealed class PatchTemplateValidatorTests
                 new()
                 {
                     Name = "Métrica Qualitativa",
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TargetText = "Texto alvo"
                 }
@@ -221,7 +221,7 @@ public sealed class PatchTemplateValidatorTests
                 new()
                 {
                     Name = "", // Invalid: empty name
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TargetText = "Texto alvo"
                 }
@@ -259,7 +259,7 @@ public sealed class PatchTemplateValidatorTests
                 new()
                 {
                     Name = "Métrica 1",
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TemplateGoalId = Guid.NewGuid()
                 }

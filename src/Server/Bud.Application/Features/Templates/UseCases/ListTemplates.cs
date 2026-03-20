@@ -3,7 +3,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Templates;
+namespace Bud.Application.Features.Templates.UseCases;
 
 public sealed class ListTemplates(ITemplateRepository templateRepository)
 {

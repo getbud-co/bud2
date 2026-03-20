@@ -1,6 +1,6 @@
 using Bud.Application.Common;
 
-namespace Bud.Application.Features.Goals;
+namespace Bud.Application.Features.Goals.UseCases;
 
 public sealed class ListGoals(IGoalRepository goalRepository)
 {

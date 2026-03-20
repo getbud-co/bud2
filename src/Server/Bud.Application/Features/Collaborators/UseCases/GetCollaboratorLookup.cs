@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Collaborators;
+namespace Bud.Application.Features.Collaborators.UseCases;
 
 public sealed class GetCollaboratorLookup(ICollaboratorRepository collaboratorRepository)
 {

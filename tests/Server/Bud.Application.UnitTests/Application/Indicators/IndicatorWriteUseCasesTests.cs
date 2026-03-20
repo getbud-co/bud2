@@ -25,7 +25,7 @@ public sealed class IndicatorWriteUseCasesTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Metrica",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Descricao"
         };
 
@@ -67,7 +67,7 @@ public sealed class IndicatorWriteUseCasesTests
         {
             GoalId = mission.Id,
             Name = "Quality Assessment",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Achieve excellent quality"
         };
 
@@ -94,7 +94,7 @@ public sealed class IndicatorWriteUseCasesTests
         var request = new PatchIndicatorRequest
         {
             Name = "Nova Metrica",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Descricao"
         };
 
@@ -132,10 +132,10 @@ public sealed class IndicatorWriteUseCasesTests
         var request = new PatchIndicatorRequest
         {
             Name = "Updated Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         var result = await useCase.ExecuteAsync(indicatorId, request);

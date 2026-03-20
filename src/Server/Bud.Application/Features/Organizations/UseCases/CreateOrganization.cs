@@ -2,7 +2,7 @@ using Bud.Application.Common;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Organizations;
+namespace Bud.Application.Features.Organizations.UseCases;
 
 public sealed partial class CreateOrganization(
     IOrganizationRepository organizationRepository,

@@ -27,7 +27,7 @@ public sealed class TemplateUseCasesTests
                 new TemplateIndicatorRequest
                 {
                     Name = "Metric",
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TargetText = "Target"
                 }

@@ -4,7 +4,7 @@ using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Bud.Application.Features.Organizations;
+namespace Bud.Application.Features.Organizations.UseCases;
 
 public sealed partial class DeleteOrganization(
     IOrganizationRepository organizationRepository,

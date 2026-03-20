@@ -4,7 +4,7 @@ using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Collaborators;
+namespace Bud.Application.Features.Collaborators.UseCases;
 
 public sealed partial class PatchCollaborator(
     ICollaboratorRepository collaboratorRepository,

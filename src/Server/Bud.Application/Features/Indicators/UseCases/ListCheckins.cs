@@ -1,6 +1,6 @@
 using Bud.Application.Common;
 
-namespace Bud.Application.Features.Indicators;
+namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed class ListCheckins(IIndicatorRepository indicatorRepository)
 {

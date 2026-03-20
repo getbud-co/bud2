@@ -1,4 +1,4 @@
-namespace Bud.Shared.Kernel;
+namespace Bud.Shared.Kernel.Enums;
 
 public enum GoalStatus
 {

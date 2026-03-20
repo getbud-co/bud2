@@ -1,4 +1,4 @@
-namespace Bud.Shared.Kernel;
+namespace Bud.Shared.Kernel.Enums;
 
 #pragma warning disable CA1720
 public enum IndicatorUnit

@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Goals;
+namespace Bud.Application.Features.Goals.UseCases;
 
 public sealed class ListGoalProgress(IGoalProgressReadStore goalProgressReadStore)
 {

@@ -60,7 +60,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             FullName = "Novo Colaborador",
             Email = $"novo-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.CollaboratorRole.IndividualContributor
         };
 
         var response = await tenantClient.PostAsJsonAsync("/api/collaborators", request);
@@ -88,7 +88,7 @@ public class CollaboratorsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             FullName = "Colaborador Atualizado",
             Email = $"atualizado-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.CollaboratorRole.IndividualContributor
         };
 
         var response = await tenantClient.PatchAsJsonAsync($"/api/collaborators/{target.Id}", request);

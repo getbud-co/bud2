@@ -3,7 +3,7 @@ using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Indicators;
+namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed partial class PatchIndicator(
     IIndicatorRepository indicatorRepository,

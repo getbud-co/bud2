@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Application.Ports;
 
-namespace Bud.Application.Features.Notifications;
+namespace Bud.Application.Features.Notifications.UseCases;
 
 public sealed class PatchNotification(
     INotificationRepository notificationRepository,

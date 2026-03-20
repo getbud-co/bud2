@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Organizations;
+namespace Bud.Application.Features.Organizations.UseCases;
 
 public sealed class ListOrganizationCollaborators(IOrganizationRepository organizationRepository)
 {
