@@ -1,5 +1,7 @@
 global using Bud.Domain.Goals;
+global using Bud.Domain.Goals.Events;
 global using Bud.Domain.Indicators;
+global using Bud.Domain.Indicators.Events;
 global using Bud.Domain.Notifications;
 global using Bud.Domain.Organizations;
 global using Bud.Domain.Collaborators;

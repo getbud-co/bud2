@@ -18,7 +18,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Quality Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Achieve high quality standards"
         };
 
@@ -38,7 +38,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Quality Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = null
         };
 
@@ -57,7 +57,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Quality Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = ""
         };
 
@@ -76,7 +76,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Quality Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = new string('A', 1001) // 1001 characters
         };
 
@@ -102,10 +102,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = null, // Missing QuantitativeType
             MinValue = 50m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -126,8 +126,8 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = 50m,
             Unit = null // Missing Unit
         };
@@ -152,10 +152,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = 50m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -174,10 +174,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = null, // Missing MinValue
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -198,10 +198,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = -10m, // Negative value
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -222,10 +222,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = 0m, // Zero is valid
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -248,10 +248,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Error Rate",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBelow,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
             MaxValue = 5m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -270,10 +270,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Error Rate",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBelow,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
             MaxValue = null, // Missing MaxValue
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -294,10 +294,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Error Rate",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBelow,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
             MaxValue = -5m, // Negative value
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -322,11 +322,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 100m,
             MaxValue = 500m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -345,11 +345,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = null, // Missing MinValue
             MaxValue = 500m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -370,11 +370,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 100m,
             MaxValue = null, // Missing MaxValue
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -395,11 +395,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 500m, // Greater than MaxValue
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -420,11 +420,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 100m, // Equal to MaxValue
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -445,11 +445,11 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = -10m, // Negative value
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -474,10 +474,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Sales Target",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Achieve,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -496,10 +496,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Sales Target",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Achieve,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
             MaxValue = null, // Missing MaxValue
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -520,10 +520,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Sales Target",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Achieve,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
             MaxValue = -50m, // Negative value
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -548,10 +548,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Cost Reduction",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Reduce,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
             MaxValue = 50m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -570,10 +570,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Cost Reduction",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Reduce,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
             MaxValue = null, // Missing MaxValue
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -594,10 +594,10 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = "Cost Reduction",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Reduce,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
             MaxValue = -10m, // Negative value
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -624,7 +624,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.Empty, // Empty GUID
             Name = "Test Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"
         };
 
@@ -647,7 +647,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = name!,
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"
         };
 
@@ -667,7 +667,7 @@ public class CreateMetricValidatorTests
         {
             GoalId = Guid.NewGuid(),
             Name = new string('A', 201), // 201 characters
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"
         };
 

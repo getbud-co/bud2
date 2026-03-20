@@ -2,7 +2,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Templates;
+namespace Bud.Application.Features.Templates.UseCases;
 
 public sealed partial class DeleteTemplate(
     ITemplateRepository templateRepository,

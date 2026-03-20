@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Teams;
+namespace Bud.Application.Features.Teams.UseCases;
 
 public sealed class GetTeamCollaboratorLookup(ITeamRepository teamRepository)
 {

@@ -4,7 +4,7 @@ using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Workspaces;
+namespace Bud.Application.Features.Workspaces.UseCases;
 
 public sealed partial class CreateWorkspace(
     IWorkspaceRepository workspaceRepository,

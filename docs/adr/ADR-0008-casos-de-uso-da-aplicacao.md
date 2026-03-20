@@ -14,6 +14,7 @@ Modelar a aplicação por feature, co-localizando em `src/Server/Bud.Application
 - Mappers de contrato (ex: `CollaboratorsContractMapper`).
 - Read models internos (ex: `GoalProgressSnapshot`).
 - Policies de negócio do feature (ex: `GoalDateRangePolicy`).
+- Namespaces explícitos espelham `RootNamespace + subpasta`; por exemplo, use cases ficam em `Bud.Application.Features.<Feature>.UseCases`.
 
 Manter em `src/Server/Bud.Application/Ports/` apenas abstrações transversais, sem dono funcional específico, como tenant/auth.
 

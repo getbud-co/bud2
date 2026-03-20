@@ -1,6 +1,6 @@
 using Bud.Application.Common;
 
-namespace Bud.Application.Features.Templates;
+namespace Bud.Application.Features.Templates.UseCases;
 
 public sealed class GetTemplateById(ITemplateRepository templateRepository)
 {

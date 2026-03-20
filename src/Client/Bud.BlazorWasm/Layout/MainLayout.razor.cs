@@ -192,8 +192,8 @@ public partial class MainLayout : IDisposable
 
         return AuthState.SessionResponse.Role switch
         {
-            Bud.Shared.Kernel.CollaboratorRole.Leader => "Líder",
-            Bud.Shared.Kernel.CollaboratorRole.IndividualContributor => "Colaborador",
+            Bud.Shared.Kernel.Enums.CollaboratorRole.Leader => "Líder",
+            Bud.Shared.Kernel.Enums.CollaboratorRole.IndividualContributor => "Colaborador",
             _ => "Sem perfil"
         };
     }

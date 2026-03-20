@@ -48,6 +48,7 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 - **Controllers** recebem requests, validam payloads (FluentValidation) e delegam para Use Cases.
   Validações dependentes de dados devem passar por abstrações/repositórios, não por acesso direto de validator ao `DbContext`.
 - **Use Cases** (`src/Server/Bud.Application/Features/<Feature>/UseCases/`) centralizam o fluxo completo da aplicação (orquestração, autorização, notificações) e retornam `Result`/`Result<T>` (`src/Server/Bud.Application/Common/`). Cada use case é uma classe com método `ExecuteAsync`, injetada diretamente nos controllers.
+  Os namespaces explícitos espelham a estrutura física: `Bud.Application.Features.<Feature>.UseCases`.
 - **Infrastructure** (`src/Server/Bud.Infrastructure/`) contém implementações concretas:
   - pastas por feature: implementações dos repositórios e adapters concretos associados à capacidade (`Goals/`, `Me/`, `Notifications/`, `Organizations/`, `Sessions/`, etc.).
   - `Authorization/`: adapters transversais de tenant/autorização que não pertencem a uma feature específica.
@@ -101,7 +102,8 @@ Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a 
 | Use case (listagem) | `List{RecursoPlural}` | `ListGoals` |
 | Use case (sub-recurso) | `List{Pai}{SubRecurso}` | `ListGoalIndicators` |
 | Método do use case | Sempre `ExecuteAsync` | `CreateGoal.ExecuteAsync(...)` |
-| Diretório do use case | `Application/{Feature}/UseCases/` | `Application/Goals/UseCases/` |
+| Diretório do use case | `Application/Features/{Feature}/UseCases/` | `Application/Features/Goals/UseCases/` |
+| Namespace do use case | `Bud.Application.Features.{Feature}.UseCases` | `Bud.Application.Features.Goals.UseCases` |
 | Request DTO (criação) | `Create{Recurso}Request` | `CreateGoalRequest` |
 | Request DTO (atualização) | `Patch{Recurso}Request` | `PatchGoalRequest` |
 | Response DTO | `{Recurso}Response` | `GoalResponse` |
@@ -122,9 +124,9 @@ Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a 
 ```
 POST /api/goals
   → GoalsController.Create
-    → CreateGoal.ExecuteAsync (Application/Goals/UseCases/)
-      → IGoalRepository.AddAsync (Application/Goals/)
-        → GoalRepository (Infrastructure/Goals/)
+    → CreateGoal.ExecuteAsync (Application/Features/Goals/UseCases/)
+      → IGoalRepository.AddAsync (Application/Features/Goals/)
+        → GoalRepository (Infrastructure/Features/Goals/)
     Payload: CreateGoalRequest (Bud.Shared/Contracts/Requests/)
     Retorno: GoalResponse (Bud.Shared/Contracts/Responses/)
 ```
@@ -134,14 +136,14 @@ POST /api/goals
 ```
 GET /api/goals/{id}/indicators
   → GoalsController.GetIndicators
-    → ListGoalIndicators.ExecuteAsync (Application/Goals/UseCases/)
-      → IIndicatorRepository.GetByGoalIdAsync (Application/Indicators/)
+    → ListGoalIndicators.ExecuteAsync (Application/Features/Goals/UseCases/)
+      → IIndicatorRepository.GetByGoalIdAsync (Application/Features/Indicators/)
     Retorno: PagedResult<IndicatorResponse>
 ```
 
 ### Modelo de domínio (DDD)
 
-O Bud usa DDD com aggregate roots explícitos. Entidades de domínio ficam em `Domain/<Feature>/`, interfaces de repositório ficam em `Application/Features/<Feature>/`, value objects em `Domain/ValueObjects/` e eventos de domínio dentro das features correspondentes.
+O Bud usa DDD com aggregate roots explícitos. Entidades de domínio ficam em `Domain/<Feature>/`, interfaces de repositório ficam em `Application/Features/<Feature>/`, value objects em `Domain/ValueObjects/` e eventos de domínio em `Domain/<Feature>/Events/`, com namespaces espelhando essas pastas.
 
 #### Aggregate roots e boundaries
 
@@ -828,7 +830,7 @@ dotnet test tests/Server/Bud.Api.IntegrationTests
 
 Observação:
 
-- `dotnet test` usa `Bud.slnx` e executa também `tests/Client/Bud.Mcp.Tests`.
+- `dotnet test Bud.sln` executa também `tests/Client/Bud.Mcp.Tests`.
 - Testes de integração usam PostgreSQL via Testcontainers.
 - Use `dotnet test --nologo` para saída mais limpa no terminal.
 - A solução usa `TreatWarningsAsErrors=true`; avisos quebram build/test.

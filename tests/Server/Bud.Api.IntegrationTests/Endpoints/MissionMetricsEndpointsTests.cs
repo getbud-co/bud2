@@ -79,7 +79,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
                 Name = "Test Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             });
 
         return (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
@@ -97,7 +97,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Quality Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Achieve high quality standards"
         };
 
@@ -127,10 +127,10 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Story Points",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepAbove,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
             MinValue = 50m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Points
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Points
         };
 
         // Act
@@ -159,10 +159,10 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Error Rate",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBelow,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
             MaxValue = 5m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -191,11 +191,11 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Response Time",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 100m,
             MaxValue = 500m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -222,7 +222,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = Guid.NewGuid(), // Non-existent goal
             Name = "Test Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Test"
         };
 
@@ -243,10 +243,10 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Sales Target",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Achieve,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Integer
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Integer
         };
 
         // Act
@@ -275,10 +275,10 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Cost Reduction",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Reduce,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
             MaxValue = 50m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
         };
 
         // Act
@@ -311,7 +311,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission.Id,
             Name = "Original Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Original text"
         };
 
@@ -322,11 +322,11 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var updateRequest = new PatchIndicatorRequest
         {
             Name = "Updated Metric",
-            Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
-            QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.KeepBetween,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
             MinValue = 50m,
             MaxValue = 100m,
-            Unit = Bud.Shared.Kernel.IndicatorUnit.Hours
+            Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Hours
         };
 
         // Act
@@ -362,7 +362,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
             {
                 GoalId = mission1.Id,
                 Name = "Metric Mission 1",
-                Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Test"
             });
 
@@ -371,7 +371,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
             {
                 GoalId = mission2.Id,
                 Name = "Metric Mission 2",
-                Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Test"
             });
 
@@ -444,7 +444,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
                 Name = "Mission Org 2",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             });
         var mission = await missionResponse.Content.ReadFromJsonAsync<Goal>();
 
@@ -455,7 +455,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         {
             GoalId = mission!.Id,
             Name = "Metric Forbidden",
-            Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Teste"
         };
 

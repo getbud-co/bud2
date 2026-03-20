@@ -37,7 +37,7 @@ public sealed class CollaboratorWriteUseCasesTests
         {
             FullName = "User",
             Email = "user@test.com",
-            Role = Bud.Shared.Kernel.CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.CollaboratorRole.IndividualContributor
         };
 
         var result = await useCase.ExecuteAsync(User, request);
@@ -62,7 +62,7 @@ public sealed class CollaboratorWriteUseCasesTests
         {
             FullName = "User",
             Email = "user@test.com",
-            Role = Bud.Shared.Kernel.CollaboratorRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.CollaboratorRole.IndividualContributor
         };
 
         var result = await useCase.ExecuteAsync(User, Guid.NewGuid(), request);

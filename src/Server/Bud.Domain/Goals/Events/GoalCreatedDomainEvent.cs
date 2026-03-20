@@ -1,4 +1,4 @@
-namespace Bud.Domain.Goals;
+namespace Bud.Domain.Goals.Events;
 
 public sealed record GoalCreatedDomainEvent(
     Guid GoalId,

@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Sessions;
+namespace Bud.Application.Features.Sessions.UseCases;
 
 public sealed partial class DeleteCurrentSession(ILogger<DeleteCurrentSession> logger)
 {

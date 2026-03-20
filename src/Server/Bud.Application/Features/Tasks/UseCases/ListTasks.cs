@@ -1,7 +1,7 @@
 using Bud.Application.Common;
 using Bud.Application.Features.Goals;
 
-namespace Bud.Application.Features.Tasks;
+namespace Bud.Application.Features.Tasks.UseCases;
 
 public sealed class ListTasks(ITaskRepository taskRepository, IGoalRepository goalRepository)
 {

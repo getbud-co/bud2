@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Bud.Api.Controllers;
 using Bud.Api.DependencyInjection;
@@ -14,6 +15,7 @@ namespace Bud.ArchitectureTests.Architecture;
 public sealed class ArchitectureTests
 {
     private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
+    private static readonly Regex NamespaceRegex = new(@"^\s*namespace\s+(?<namespace>[A-Za-z0-9_.]+)\s*[;{]", RegexOptions.Multiline | RegexOptions.Compiled);
 
     [Fact]
     public void Domain_should_not_reference_other_solution_projects()
@@ -117,7 +119,7 @@ public sealed class ArchitectureTests
     [Fact]
     public void Application_repositories_should_not_depend_on_http_response_contracts()
     {
-        var repositoryRoot = FindRepositoryRoot();
+        var repositoryRoot = TestRepositoryRoot.Find();
         var repositoryFiles = Directory
             .EnumerateFiles(Path.Combine(repositoryRoot, "src", "Server", "Bud.Application"), "*.cs", SearchOption.AllDirectories)
             .Where(path => Path.GetFileName(path).StartsWith('I') && Path.GetFileName(path).EndsWith("Repository.cs", StringComparison.Ordinal))
@@ -142,7 +144,7 @@ public sealed class ArchitectureTests
     [Fact]
     public void Value_object_guardrails_document_should_point_to_new_application_paths()
     {
-        var repositoryRoot = FindRepositoryRoot();
+        var repositoryRoot = TestRepositoryRoot.Find();
         var filePath = Path.Combine(repositoryRoot, "docs", "architecture", "value-object-mapping-guardrails.md");
 
         File.Exists(filePath).Should().BeTrue();
@@ -152,9 +154,68 @@ public sealed class ArchitectureTests
         content.Should().NotContain("src/Bud.Server/");
     }
 
+    [Fact]
+    public void Explicit_namespaces_should_match_project_root_namespace_and_folder_structure()
+    {
+        var repositoryRoot = TestRepositoryRoot.Find();
+        var projectFiles = Directory
+            .EnumerateFiles(repositoryRoot, "*.csproj", SearchOption.AllDirectories)
+            .Where(path => path.Contains($"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                || path.Contains($"{Path.DirectorySeparatorChar}tests{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .ToList();
+
+        projectFiles.Should().NotBeEmpty();
+
+        var mismatches = new List<string>();
+
+        foreach (var projectFile in projectFiles)
+        {
+            var projectDirectory = Path.GetDirectoryName(projectFile)!;
+            var document = XDocument.Load(projectFile);
+            var rootNamespace = document.Descendants("RootNamespace").Select(static element => element.Value).SingleOrDefault();
+            var assemblyName = document.Descendants("AssemblyName").Select(static element => element.Value).SingleOrDefault();
+            var baseNamespace = !string.IsNullOrWhiteSpace(rootNamespace)
+                ? rootNamespace
+                : !string.IsNullOrWhiteSpace(assemblyName)
+                    ? assemblyName
+                    : Path.GetFileNameWithoutExtension(projectFile);
+
+            foreach (var sourceFile in Directory.EnumerateFiles(projectDirectory, "*.cs", SearchOption.AllDirectories))
+            {
+                if (sourceFile.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || sourceFile.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var content = File.ReadAllText(sourceFile);
+                var match = NamespaceRegex.Match(content);
+                if (!match.Success)
+                {
+                    continue;
+                }
+
+                var relativeDirectory = Path.GetDirectoryName(Path.GetRelativePath(projectDirectory, sourceFile));
+                var expectedNamespace = string.IsNullOrEmpty(relativeDirectory)
+                    ? baseNamespace
+                    : $"{baseNamespace}.{relativeDirectory.Replace(Path.DirectorySeparatorChar, '.')}";
+                var declaredNamespace = match.Groups["namespace"].Value;
+
+                if (!string.Equals(declaredNamespace, expectedNamespace, StringComparison.Ordinal))
+                {
+                    mismatches.Add($"{Path.GetRelativePath(repositoryRoot, sourceFile)} => {declaredNamespace} (esperado: {expectedNamespace})");
+                }
+            }
+        }
+
+        mismatches.Should().BeEmpty();
+    }
+
     private static HashSet<string> GetProjectReferenceNames(string relativeProjectPath)
     {
-        var projectPath = Path.Combine(FindRepositoryRoot(), relativeProjectPath.Replace('/', Path.DirectorySeparatorChar));
+        var projectPath = Path.Combine(TestRepositoryRoot.Find(), relativeProjectPath.Replace('/', Path.DirectorySeparatorChar));
         var document = XDocument.Load(projectPath);
 
         return document.Descendants("ProjectReference")
@@ -163,22 +224,5 @@ public sealed class ArchitectureTests
             .Select(static value => value!.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar))
             .Select(static value => Path.GetFileNameWithoutExtension(value))
             .ToHashSet(StringComparer.Ordinal);
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "Bud.slnx")))
-            {
-                return directory.FullName;
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new InvalidOperationException("Não foi possível localizar a raiz do repositório.");
     }
 }

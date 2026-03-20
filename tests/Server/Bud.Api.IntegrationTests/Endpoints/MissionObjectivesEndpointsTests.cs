@@ -79,7 +79,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
                 Name = "Test Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             });
 
         return (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
@@ -94,7 +94,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Dimension = dimension,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
 
     #region Create Tests
@@ -127,7 +127,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Name = "Objetivo",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
 
         var response = await _client.PostAsJsonAsync("/api/goals", request);
@@ -339,7 +339,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
                 Name = "Mission Org 2",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
             });
         var mission = await missionResponse.Content.ReadFromJsonAsync<Goal>();
 
@@ -352,7 +352,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Name = "Objetivo Proibido",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = Bud.Shared.Kernel.GoalStatus.Planned,
+            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
         };
 
         var response = await tenantClient.PostAsJsonAsync("/api/goals", request);
@@ -378,7 +378,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             {
                 GoalId = objective!.Id,
                 Name = "Métrica do Objetivo",
-                Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Teste"
             });
 
@@ -400,7 +400,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             {
                 GoalId = objective!.Id,
                 Name = "Métrica do Objetivo",
-                Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "T1"
             });
 
@@ -409,7 +409,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             {
                 GoalId = mission.Id,
                 Name = "Métrica Direta",
-                Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "T2"
             });
 

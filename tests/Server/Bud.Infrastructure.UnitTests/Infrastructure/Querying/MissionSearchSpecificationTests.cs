@@ -2,7 +2,7 @@ using Bud.Infrastructure.Querying;
 using FluentAssertions;
 using Xunit;
 
-namespace Bud.Application.UnitTests.Application.Common.Specifications;
+namespace Bud.Infrastructure.UnitTests.Infrastructure.Querying;
 
 public sealed class MissionSearchSpecificationTests
 {

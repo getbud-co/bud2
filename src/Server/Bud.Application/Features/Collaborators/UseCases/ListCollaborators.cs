@@ -3,7 +3,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 
-namespace Bud.Application.Features.Collaborators;
+namespace Bud.Application.Features.Collaborators.UseCases;
 
 public sealed class ListCollaborators(ICollaboratorRepository collaboratorRepository)
 {

@@ -2,7 +2,7 @@ using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Indicators;
+namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed partial class DeleteIndicator(
     IIndicatorRepository indicatorRepository,

@@ -4,7 +4,7 @@ using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace Bud.Application.Features.Teams;
+namespace Bud.Application.Features.Teams.UseCases;
 
 public sealed partial class PatchTeam(
     ITeamRepository teamRepository,

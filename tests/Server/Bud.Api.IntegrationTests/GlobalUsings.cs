@@ -1,5 +1,7 @@
 global using Bud.Domain.Goals;
+global using Bud.Domain.Goals.Events;
 global using Bud.Domain.Indicators;
+global using Bud.Domain.Indicators.Events;
 global using Bud.Domain.Notifications;
 global using Bud.Domain.Organizations;
 global using Bud.Domain.Collaborators;
@@ -21,3 +23,4 @@ global using Bud.Shared.Contracts.Features.Teams;
 global using Bud.Shared.Contracts.Features.Templates;
 global using Bud.Shared.Contracts.Features.Workspaces;
 global using Bud.Shared.Kernel;
+global using Bud.Shared.Kernel.Enums;

@@ -42,18 +42,18 @@ public sealed class CreateTemplateValidatorTests
                 new TemplateIndicatorRequest
                 {
                     Name = "Métrica Qualitativa",
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TargetText = "Texto alvo"
                 },
                 new TemplateIndicatorRequest
                 {
                     Name = "Métrica Quantitativa",
-                    Type = Bud.Shared.Kernel.IndicatorType.Quantitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                     OrderIndex = 1,
-                    QuantitativeType = Bud.Shared.Kernel.QuantitativeIndicatorType.Achieve,
+                    QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
                     MaxValue = 100m,
-                    Unit = Bud.Shared.Kernel.IndicatorUnit.Percentage
+                    Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
                 }
             ]
         };
@@ -314,7 +314,7 @@ public sealed class CreateTemplateValidatorTests
                 new TemplateIndicatorRequest
                 {
                     Name = "", // Invalid: empty name
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TargetText = "Texto alvo"
                 }
@@ -352,7 +352,7 @@ public sealed class CreateTemplateValidatorTests
                 new TemplateIndicatorRequest
                 {
                     Name = "Métrica 1",
-                    Type = Bud.Shared.Kernel.IndicatorType.Qualitative,
+                    Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
                     TemplateGoalId = Guid.NewGuid()
                 }

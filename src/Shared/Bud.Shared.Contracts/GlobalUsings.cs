@@ -9,3 +9,4 @@ global using Bud.Shared.Contracts.Features.Tasks;
 global using Bud.Shared.Contracts.Features.Teams;
 global using Bud.Shared.Contracts.Features.Templates;
 global using Bud.Shared.Contracts.Features.Workspaces;
+global using Bud.Shared.Kernel.Enums;

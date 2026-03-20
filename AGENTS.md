@@ -39,6 +39,7 @@ This is the canonical agent contract for this repository.
 - Preserve architectural boundaries:
   - Controllers -> Use Cases.
   - Use Cases -> Repository interfaces (`Application/Features/<Feature>/`), feature ports (`Application/Features/<Feature>/`) e ports transversais (`Application/Ports`).
+  - Explicit namespaces MUST mirror `RootNamespace + folder path` (ex: `Bud.Application.Features.Goals.UseCases`, `Bud.Domain.Goals.Events`, `Bud.Shared.Kernel.Enums`).
   - Domain MUST NOT reference `Bud.Infrastructure` (or sub-namespaces).
   - Domain MUST NOT depend on `Infrastructure/`.
   - Application MUST depend only on abstractions (repository interfaces in `Application/Features/<Feature>/`, ports feature-scoped em `Application/Features/<Feature>/` e ports transversais em `Application/Ports`).
