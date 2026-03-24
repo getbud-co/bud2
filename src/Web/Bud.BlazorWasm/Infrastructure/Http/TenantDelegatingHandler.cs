@@ -40,10 +40,17 @@ public sealed class TenantDelegatingHandler(
         var response = await base.SendAsync(request, cancellationToken);
 
         // If 401 Unauthorized, clear session and redirect to login
+        // Skip redirect if already on the login page or if this is the login request itself
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            await authState.ClearAsync();
-            navigationManager.NavigateTo("/login", forceLoad: true);
+            var isLoginRequest = request.RequestUri?.AbsolutePath.EndsWith("/api/sessions", StringComparison.OrdinalIgnoreCase) == true;
+            var isOnLoginPage = navigationManager.Uri.Contains("/login", StringComparison.OrdinalIgnoreCase);
+
+            if (!isLoginRequest && !isOnLoginPage)
+            {
+                await authState.ClearAsync();
+                navigationManager.NavigateTo("/login", forceLoad: true);
+            }
         }
 
         return response;

@@ -29,8 +29,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseMiddleware<LogEnrichmentMiddleware>();
-app.UseMiddleware<Bud.Api.Middleware.SecurityHeadersMiddleware>();
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseMiddleware<Bud.Api.Middleware.RequestTelemetryMiddleware>();
 
 app.UseRouting();
@@ -38,6 +42,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCors(BudApiCompositionExtensions.LocalDevelopmentCorsPolicy);
 }
+
+app.UseMiddleware<Bud.Api.Middleware.SecurityHeadersMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
