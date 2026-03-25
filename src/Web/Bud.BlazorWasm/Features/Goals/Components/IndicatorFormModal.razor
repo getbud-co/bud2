@@ -1,9 +1,0 @@
-@if (IsOpen)
-{
-    <Modal Title="@(IsEditMode ? "Editar indicador" : "Novo indicador")" Size="md" OnClose="HandleClose">
-        <ChildContent>
-            <IndicatorFormFields Model="_model" OnSave="HandleSave" OnCancel="HandleClose" />
-        </ChildContent>
-    </Modal>
-}
-

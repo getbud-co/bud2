@@ -13,7 +13,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
       target: dev-api
     container_name: bud-api
@@ -27,40 +27,34 @@ services:
     ports:
       - "8082:8080"
     volumes:
-      - ./src:/src/src
-      - ./Directory.Build.props:/src/Directory.Build.props
+      - ./backend/src:/src/src
+      - ./backend/Directory.Build.props:/src/Directory.Build.props
       - nuget_cache:/root/.nuget/packages
       - dotnet_obj:/tmp/obj
       - dotnet_bin:/tmp/bin
     depends_on:
       - db
 
-  web:
+  frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
-      target: dev-web
-    container_name: bud-web
+    container_name: bud-frontend
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      Api__BaseUrl: http://localhost:8082
-      DOTNET_USE_POLLING_FILE_WATCHER: "1"
-      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
-      DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER: "1"
+      NEXT_PUBLIC_API_URL: http://localhost:8082
     ports:
-      - "8080:8080"
+      - "8080:3000"
     volumes:
-      - ./src:/src/src
-      - ./Directory.Build.props:/src/Directory.Build.props
-      - nuget_cache:/root/.nuget/packages
-      - dotnet_obj:/tmp/obj
-      - dotnet_bin:/tmp/bin
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/.next
+      - /app/node_modules
     depends_on:
       - api
 
   mcp:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
       target: dev-mcp
     container_name: bud-mcp
@@ -75,8 +69,8 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - ./src:/src/src
-      - ./Directory.Build.props:/src/Directory.Build.props
+      - ./backend/src:/src/src
+      - ./backend/Directory.Build.props:/src/Directory.Build.props
       - nuget_cache:/root/.nuget/packages
       - dotnet_obj:/tmp/obj
       - dotnet_bin:/tmp/bin

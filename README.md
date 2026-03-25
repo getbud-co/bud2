@@ -1,14 +1,30 @@
 # Bud
 
-A aplicação combina API ASP.NET Core, frontend Blazor WebAssembly (SPA)
-utilizando PostgreSQL.
+Monorepo que combina API ASP.NET Core 10, frontend Next.js e MCP server,
+utilizando PostgreSQL como banco de dados.
+
+## Estrutura do Repositório
+
+```
+bud/
+├── backend/          # .NET API, MCP, testes
+├── frontend/         # Next.js SPA
+├── docs/             # Documentação e ADRs
+├── scripts/          # Deploy scripts (GCP)
+├── compose.yml       # Docker Compose para dev
+├── CLAUDE.md         # Instruções para agentes
+├── DEPLOY.md         # Guia de deploy
+└── README.md         # Este arquivo
+```
+
+Veja [`backend/README.md`](backend/README.md) e [`frontend/README.md`](frontend/README.md) para detalhes de cada parte.
 
 ## Para quem é este README
 
 Este documento é voltado para devs que precisam:
-- entender rapidamente a arquitetura e os padrões do Bud,
-- subir o ambiente local,
-- executar fluxos principais de desenvolvimento com segurança.
+- entender a arquitetura do monorepo,
+- subir o ambiente local com Docker Compose,
+- executar fluxos principais de desenvolvimento.
 
 ## Índice
 
@@ -34,14 +50,23 @@ Este documento é voltado para devs que precisam:
 
 O Bud segue uma arquitetura em camadas com separação explícita de responsabilidades:
 
+### Backend (`backend/src/`)
+
 - **API (`Bud.Api`)**: exposição HTTP, autenticação/autorização, middleware e composição de dependências.
-- **Application (`src/Api/Bud.Application`)**: casos de uso, portas de aplicação, mapeamentos, read models e orquestração de eventos de domínio.
+- **Application (`Bud.Application`)**: casos de uso, portas de aplicação, mapeamentos, read models e orquestração de eventos de domínio.
   - `Common`: resultados e utilitários transversais.
   - `Mapping`: mapeamento entre read models/domínio e contratos de borda.
-- **Domain (`src/Api/Bud.Domain`)**: entidades, aggregate roots, value objects, eventos de domínio, primitivos e interfaces de repositório.
-- **Infrastructure (`src/Api/Bud.Infrastructure`)**: EF Core (`ApplicationDbContext`), repositórios, serviços de infraestrutura, migrations e specifications de consulta.
-- **Client (`Bud.BlazorWasm`)**: SPA Blazor WASM com consumo da API.
+- **Domain (`Bud.Domain`)**: entidades, aggregate roots, value objects, eventos de domínio, primitivos e interfaces de repositório.
+- **Infrastructure (`Bud.Infrastructure`)**: EF Core (`ApplicationDbContext`), repositórios, serviços de infraestrutura, migrations e specifications de consulta.
+- **MCP Server (`Bud.Mcp`)**: HTTP MCP server para integração com clientes conversacionais.
 - **Shared (`Bud.Shared`)**: contratos de borda compartilhados entre cliente, servidor e MCP.
+
+### Frontend (`frontend/`)
+
+- **Next.js 15** com App Router
+- TypeScript + Tailwind CSS
+- NextAuth.js para autenticação
+- Substitui o Blazor WASM anterior
 
 ### Organização do backend (`src/Api/*`)
 

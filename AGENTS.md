@@ -5,6 +5,22 @@ Contract-Version: 2026-02-23
 This is the canonical agent contract for this repository.
 `CLAUDE.md` should point to this file and must not diverge.
 
+## Monorepo Structure (Updated 2026-03-25)
+
+The repository is organized as a monorepo with isolated backend and frontend directories:
+
+- **`backend/`**: ASP.NET Core 10 API, MCP server, and all backend tests
+  - Solution file: `backend/Bud.sln`
+  - Dockerfile: `backend/Dockerfile` (dev targets) and `backend/Dockerfile.Production` (prod targets)
+  - Tests run from: `backend/` directory
+
+- **`frontend/`**: Next.js 15 frontend (replaces Blazor WASM)
+  - Package file: `frontend/package.json`
+  - Dockerfile: `frontend/Dockerfile`
+
+- **`docs/`**, **`scripts/`**: Shared documentation and deployment scripts
+- **`compose.yml`**: Development orchestration (at root)
+
 ## Quick Reference (Top 5 Rules)
 
 1. **pt-BR**: All user-facing messages must be in Brazilian Portuguese.
