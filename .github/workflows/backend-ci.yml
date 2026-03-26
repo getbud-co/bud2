@@ -1,0 +1,75 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+  pull_request:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('backend/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - run: dotnet restore Bud.sln
+
+      - run: dotnet build Bud.sln --no-restore -c Release
+
+      # Invariant check BEFORE tests (fail fast on catalog drift)
+      - name: Verify MCP tool catalog
+        run: dotnet run --project src/Mcp/Bud.Mcp -- check-tool-catalog --fail-on-diff
+        env:
+          BUD_API_BASE_URL: http://localhost:5000
+
+      - name: Run tests
+        run: |
+          dotnet test Bud.sln --no-build -c Release \
+            --logger trx \
+            --results-directory TestResults \
+            --collect:"XPlat Code Coverage"
+
+      - uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Backend Tests
+          path: backend/TestResults/**/*.trx
+          reporter: dotnet-trx
+
+      - uses: danielpalme/ReportGenerator-GitHub-Action@5
+        if: always()
+        with:
+          reports: backend/TestResults/**/coverage.cobertura.xml
+          targetdir: backend/TestResults/coverage-report
+          reporttypes: MarkdownSummaryGithub
+
+      - name: Coverage summary
+        if: always()
+        run: cat TestResults/coverage-report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: backend/TestResults/
