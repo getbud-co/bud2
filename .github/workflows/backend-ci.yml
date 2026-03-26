@@ -21,9 +21,9 @@ jobs:
         working-directory: backend/
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           global-json-file: backend/global.json
 
@@ -68,7 +68,7 @@ jobs:
         if: always()
         run: cat TestResults/coverage-report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: test-results
