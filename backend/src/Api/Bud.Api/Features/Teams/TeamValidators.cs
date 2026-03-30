@@ -11,9 +11,6 @@ public sealed class CreateTeamValidator : AbstractValidator<CreateTeamRequest>
             .NotEmpty().WithMessage("Nome é obrigatório.")
             .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres.");
 
-        RuleFor(x => x.WorkspaceId)
-            .NotEmpty().WithMessage("Workspace é obrigatório.");
-
         RuleFor(x => x.LeaderId)
             .NotEmpty().WithMessage("Líder é obrigatório.");
     }

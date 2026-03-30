@@ -9,8 +9,8 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
-    public Guid GoalId { get; set; }
-    public Goal Goal { get; set; } = null!;
+    public Guid MissionId { get; set; }
+    public Mission Mission { get; set; } = null!;
 
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
@@ -29,14 +29,14 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    public static Indicator Create(Guid id, Guid organizationId, Guid goalId, string name, IndicatorType type)
+    public static Indicator Create(Guid id, Guid organizationId, Guid missionId, string name, IndicatorType type)
     {
         if (organizationId == Guid.Empty)
         {
             throw new DomainInvariantException("Indicador deve pertencer a uma organização válida.");
         }
 
-        if (goalId == Guid.Empty)
+        if (missionId == Guid.Empty)
         {
             throw new DomainInvariantException("Indicador deve pertencer a uma meta válida.");
         }
@@ -45,7 +45,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
         {
             Id = id,
             OrganizationId = organizationId,
-            GoalId = goalId
+            MissionId = missionId
         };
 
         indicator.UpdateDefinition(name, type);
@@ -100,7 +100,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
     public Checkin CreateCheckin(
         Guid checkinId,
-        Guid collaboratorId,
+        Guid employeeId,
         decimal? value,
         string? text,
         DateTime checkinDate,
@@ -113,7 +113,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             checkinId,
             OrganizationId,
             Id,
-            collaboratorId,
+            employeeId,
             value,
             text,
             checkinDate,
@@ -124,7 +124,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             checkin.Id,
             Id,
             OrganizationId,
-            collaboratorId,
+            employeeId,
             Name));
 
         return checkin;

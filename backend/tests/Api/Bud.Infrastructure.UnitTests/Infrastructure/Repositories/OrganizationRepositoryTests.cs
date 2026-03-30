@@ -62,56 +62,6 @@ public sealed class OrganizationRepositoryTests
 
     #endregion
 
-    #region GetByIdWithOwnerAsync Tests
-
-    [Fact]
-    public async Task GetByIdWithOwnerAsync_WhenExists_ReturnsOrganizationWithOwner()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org = CreateTestOrganization();
-        context.Organizations.Add(org);
-        await context.SaveChangesAsync();
-
-        var owner = new Collaborator
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Owner User",
-            Email = "owner@test.com",
-            OrganizationId = org.Id
-        };
-        context.Collaborators.Add(owner);
-        org.OwnerId = owner.Id;
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetByIdWithOwnerAsync(org.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(org.Id);
-        result.Owner.Should().NotBeNull();
-        result.Owner!.Id.Should().Be(owner.Id);
-    }
-
-    [Fact]
-    public async Task GetByIdWithOwnerAsync_WhenNotFound_ReturnsNull()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        // Act
-        var result = await repository.GetByIdWithOwnerAsync(Guid.NewGuid());
-
-        // Assert
-        result.Should().BeNull();
-    }
-
-    #endregion
-
     #region GetAllAsync Tests
 
     [Fact]
@@ -182,10 +132,10 @@ public sealed class OrganizationRepositoryTests
 
     #endregion
 
-    #region GetWorkspacesAsync Tests
+    #region GetEmployeesAsync Tests
 
     [Fact]
-    public async Task GetWorkspacesAsync_ReturnsWorkspacesForOrganization()
+    public async Task GetEmployeesAsync_ReturnsEmployeesForOrganization()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -195,13 +145,13 @@ public sealed class OrganizationRepositoryTests
         context.Organizations.Add(org);
         await context.SaveChangesAsync();
 
-        context.Workspaces.AddRange(
-            new Workspace { Id = Guid.NewGuid(), Name = "WS Alpha", OrganizationId = org.Id },
-            new Workspace { Id = Guid.NewGuid(), Name = "WS Beta", OrganizationId = org.Id });
+        context.Employees.AddRange(
+            new Employee { Id = Guid.NewGuid(), FullName = "Alice", Email = "alice@test.com", OrganizationId = org.Id },
+            new Employee { Id = Guid.NewGuid(), FullName = "Bob", Email = "bob@test.com", OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetWorkspacesAsync(org.Id, 1, 10);
+        var result = await repository.GetEmployeesAsync(org.Id, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -209,32 +159,7 @@ public sealed class OrganizationRepositoryTests
     }
 
     [Fact]
-    public async Task GetWorkspacesAsync_DoesNotReturnWorkspacesFromOtherOrganizations()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org1 = CreateTestOrganization("Org 1");
-        var org2 = CreateTestOrganization("Org 2");
-        context.Organizations.AddRange(org1, org2);
-        await context.SaveChangesAsync();
-
-        context.Workspaces.AddRange(
-            new Workspace { Id = Guid.NewGuid(), Name = "WS Org1", OrganizationId = org1.Id },
-            new Workspace { Id = Guid.NewGuid(), Name = "WS Org2", OrganizationId = org2.Id });
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetWorkspacesAsync(org1.Id, 1, 10);
-
-        // Assert
-        result.Items.Should().HaveCount(1);
-        result.Items[0].Name.Should().Be("WS Org1");
-    }
-
-    [Fact]
-    public async Task GetWorkspacesAsync_ReturnsPaginatedResults()
+    public async Task GetEmployeesAsync_ReturnsPaginatedResults()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -246,70 +171,10 @@ public sealed class OrganizationRepositoryTests
 
         for (int i = 0; i < 5; i++)
         {
-            context.Workspaces.Add(new Workspace
+            context.Employees.Add(new Employee
             {
                 Id = Guid.NewGuid(),
-                Name = $"Workspace {i:D2}",
-                OrganizationId = org.Id
-            });
-        }
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetWorkspacesAsync(org.Id, 1, 2);
-
-        // Assert
-        result.Items.Should().HaveCount(2);
-        result.Total.Should().Be(5);
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(2);
-    }
-
-    #endregion
-
-    #region GetCollaboratorsAsync Tests
-
-    [Fact]
-    public async Task GetCollaboratorsAsync_ReturnsCollaboratorsForOrganization()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org = CreateTestOrganization();
-        context.Organizations.Add(org);
-        await context.SaveChangesAsync();
-
-        context.Collaborators.AddRange(
-            new Collaborator { Id = Guid.NewGuid(), FullName = "Alice", Email = "alice@test.com", OrganizationId = org.Id },
-            new Collaborator { Id = Guid.NewGuid(), FullName = "Bob", Email = "bob@test.com", OrganizationId = org.Id });
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetCollaboratorsAsync(org.Id, 1, 10);
-
-        // Assert
-        result.Items.Should().HaveCount(2);
-        result.Total.Should().Be(2);
-    }
-
-    [Fact]
-    public async Task GetCollaboratorsAsync_ReturnsPaginatedResults()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org = CreateTestOrganization();
-        context.Organizations.Add(org);
-        await context.SaveChangesAsync();
-
-        for (int i = 0; i < 5; i++)
-        {
-            context.Collaborators.Add(new Collaborator
-            {
-                Id = Guid.NewGuid(),
-                FullName = $"Collaborator {i:D2}",
+                FullName = $"Employee {i:D2}",
                 Email = $"collab{i}@test.com",
                 OrganizationId = org.Id
             });
@@ -317,7 +182,7 @@ public sealed class OrganizationRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetCollaboratorsAsync(org.Id, 1, 2);
+        var result = await repository.GetEmployeesAsync(org.Id, 1, 2);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -364,10 +229,10 @@ public sealed class OrganizationRepositoryTests
 
     #endregion
 
-    #region HasWorkspacesAsync Tests
+    #region HasEmployeesAsync Tests
 
     [Fact]
-    public async Task HasWorkspacesAsync_WhenHasWorkspaces_ReturnsTrue()
+    public async Task HasEmployeesAsync_WhenHasEmployees_ReturnsTrue()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -377,50 +242,7 @@ public sealed class OrganizationRepositoryTests
         context.Organizations.Add(org);
         await context.SaveChangesAsync();
 
-        context.Workspaces.Add(new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id });
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.HasWorkspacesAsync(org.Id);
-
-        // Assert
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task HasWorkspacesAsync_WhenNoWorkspaces_ReturnsFalse()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org = CreateTestOrganization();
-        context.Organizations.Add(org);
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.HasWorkspacesAsync(org.Id);
-
-        // Assert
-        result.Should().BeFalse();
-    }
-
-    #endregion
-
-    #region HasCollaboratorsAsync Tests
-
-    [Fact]
-    public async Task HasCollaboratorsAsync_WhenHasCollaborators_ReturnsTrue()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
-
-        var org = CreateTestOrganization();
-        context.Organizations.Add(org);
-        await context.SaveChangesAsync();
-
-        context.Collaborators.Add(new Collaborator
+        context.Employees.Add(new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Test",
@@ -430,14 +252,14 @@ public sealed class OrganizationRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.HasCollaboratorsAsync(org.Id);
+        var result = await repository.HasEmployeesAsync(org.Id);
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public async Task HasCollaboratorsAsync_WhenNoCollaborators_ReturnsFalse()
+    public async Task HasEmployeesAsync_WhenNoEmployees_ReturnsFalse()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -448,7 +270,7 @@ public sealed class OrganizationRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.HasCollaboratorsAsync(org.Id);
+        var result = await repository.HasEmployeesAsync(org.Id);
 
         // Assert
         result.Should().BeFalse();

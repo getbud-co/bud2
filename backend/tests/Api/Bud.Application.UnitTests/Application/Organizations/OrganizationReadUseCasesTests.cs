@@ -70,29 +70,12 @@ public sealed class OrganizationReadUseCasesTests
     }
 
     [Fact]
-    public async Task GetWorkspacesAsync_WithNonExistingOrganization_ReturnsNotFound()
+    public async Task GetEmployeesAsync_WithNonExistingOrganization_ReturnsNotFound()
     {
         // Arrange
         _orgRepo.Setup(r => r.ExistsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-        var useCase = new ListOrganizationWorkspaces(_orgRepo.Object);
-
-        // Act
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), 1, 10);
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("Organização não encontrada.");
-    }
-
-    [Fact]
-    public async Task GetCollaboratorsAsync_WithNonExistingOrganization_ReturnsNotFound()
-    {
-        // Arrange
-        _orgRepo.Setup(r => r.ExistsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
-
-        var useCase = new ListOrganizationCollaborators(_orgRepo.Object);
+        var useCase = new ListOrganizationEmployees(_orgRepo.Object);
 
         // Act
         var result = await useCase.ExecuteAsync(Guid.NewGuid(), 1, 10);

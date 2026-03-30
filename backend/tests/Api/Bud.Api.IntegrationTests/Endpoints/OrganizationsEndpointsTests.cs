@@ -27,31 +27,24 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
         // Check if admin leader already exists (ignore query filters like DbSeeder does)
-        var existingLeader = await dbContext.Collaborators
+        var existingLeader = await dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == "admin@getbud.co");
 
         if (existingLeader != null)
         {
-            // Ensure org, workspace, and team exist
+            // Ensure org and team exist
             var existingOrg = await dbContext.Organizations.IgnoreQueryFilters().FirstOrDefaultAsync();
             if (existingOrg == null)
             {
-                existingOrg = new Organization { Id = Guid.NewGuid(), Name = "getbud.co", OwnerId = existingLeader.Id };
+                existingOrg = new Organization { Id = Guid.NewGuid(), Name = "getbud.co" };
                 dbContext.Organizations.Add(existingOrg);
-            }
-
-            var existingWorkspace = await dbContext.Workspaces.IgnoreQueryFilters().FirstOrDefaultAsync();
-            if (existingWorkspace == null)
-            {
-                existingWorkspace = new Workspace { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id };
-                dbContext.Workspaces.Add(existingWorkspace);
             }
 
             var existingTeam = await dbContext.Teams.IgnoreQueryFilters().FirstOrDefaultAsync();
             if (existingTeam == null)
             {
-                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", WorkspaceId = existingWorkspace.Id, OrganizationId = existingOrg.Id, LeaderId = existingLeader.Id };
+                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id, LeaderId = existingLeader.Id };
                 dbContext.Teams.Add(existingTeam);
             }
 
@@ -59,49 +52,38 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             return existingLeader.Id;
         }
 
-        // Create hierarchy: Org -> Workspace -> Team -> Leader
+        // Create hierarchy: Org -> Team -> Leader
         var org = new Organization
         {
             Id = Guid.NewGuid(),
-            Name = "getbud.co",
-            OwnerId = null
+            Name = "getbud.co"
         };
         dbContext.Organizations.Add(org);
 
-        var workspace = new Workspace
-        {
-            Id = Guid.NewGuid(),
-            Name = "Bud",
-            OrganizationId = org.Id
-        };
-        dbContext.Workspaces.Add(workspace);
-
-        var adminLeader = new Collaborator
+        var adminLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             TeamId = null,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(adminLeader);
+        dbContext.Employees.Add(adminLeader);
         await dbContext.SaveChangesAsync();
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Bud",
-            WorkspaceId = workspace.Id,
             OrganizationId = org.Id,
             LeaderId = adminLeader.Id
         };
         dbContext.Teams.Add(team);
         await dbContext.SaveChangesAsync();
 
-        // Update collaborator's team and org owner
+        // Update employee's team
         adminLeader.TeamId = team.Id;
-        org.OwnerId = adminLeader.Id;
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -111,11 +93,9 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Create_WithValidRequest_ReturnsCreated()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         var request = new CreateOrganizationRequest
         {
-            Name = "test-org.com",
-            OwnerId = leaderId,
+            Name = "test-org.com"
         };
 
         // Act
@@ -127,18 +107,15 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         organization.Should().NotBeNull();
         organization!.Name.Should().Be("test-org.com");
         organization.Id.Should().NotBeEmpty();
-        organization.OwnerId.Should().Be(leaderId);
     }
 
     [Fact]
     public async Task Create_WithEmptyName_ReturnsBadRequest()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         var request = new CreateOrganizationRequest
         {
-            Name = "",
-            OwnerId = leaderId,
+            Name = ""
         };
 
         // Act
@@ -152,11 +129,9 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task GetById_WithExistingId_ReturnsOk()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         var createRequest = new CreateOrganizationRequest
         {
-            Name = "getbyid-test.com",
-            OwnerId = leaderId,
+            Name = "getbyid-test.com"
         };
         var createResponse = await _client.PostAsJsonAsync("/api/organizations", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Organization>();
@@ -189,16 +164,13 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task GetAll_ReturnsPagedResult()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         await _client.PostAsJsonAsync("/api/organizations", new CreateOrganizationRequest
         {
-            Name = "org1.com",
-            OwnerId = leaderId,
+            Name = "org1.com"
         });
         await _client.PostAsJsonAsync("/api/organizations", new CreateOrganizationRequest
         {
-            Name = "org2.com",
-            OwnerId = leaderId,
+            Name = "org2.com"
         });
 
         // Act
@@ -259,11 +231,9 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Update_WithValidRequest_ReturnsOk()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         var createRequest = new CreateOrganizationRequest
         {
-            Name = "original.com",
-            OwnerId = leaderId,
+            Name = "original.com"
         };
         var createResponse = await _client.PostAsJsonAsync("/api/organizations", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Organization>();
@@ -298,11 +268,9 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Delete_WithExistingId_ReturnsNoContent()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
         var createRequest = new CreateOrganizationRequest
         {
-            Name = "to-delete.com",
-            OwnerId = leaderId,
+            Name = "to-delete.com"
         };
         var createResponse = await _client.PostAsJsonAsync("/api/organizations", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Organization>();
@@ -335,36 +303,35 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Create_WithNonAdminUser_ReturnsForbidden()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
+        await GetOrCreateAdminLeader();
 
-        // Create a non-admin collaborator for testing
+        // Create a non-admin employee for testing
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
         var org = await dbContext.Organizations.IgnoreQueryFilters().FirstAsync();
         var team = await dbContext.Teams.IgnoreQueryFilters().FirstAsync();
 
-        var nonAdminCollaborator = new Collaborator
+        var nonAdminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-create-{Guid.NewGuid()}@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        dbContext.Collaborators.Add(nonAdminCollaborator);
+        dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
             org.Id,
-            nonAdminCollaborator.Email,
-            nonAdminCollaborator.Id);
+            nonAdminEmployee.Email,
+            nonAdminEmployee.Id);
 
         var request = new CreateOrganizationRequest
         {
-            Name = "unauthorized-org.com",
-            OwnerId = leaderId,
+            Name = "unauthorized-org.com"
         };
 
         // Act
@@ -380,29 +347,29 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         // Arrange
         await GetOrCreateAdminLeader();
 
-        // Create a non-admin collaborator
+        // Create a non-admin employee
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
         var org = await dbContext.Organizations.IgnoreQueryFilters().FirstAsync();
         var team = await dbContext.Teams.IgnoreQueryFilters().FirstAsync();
 
-        var nonAdminCollaborator = new Collaborator
+        var nonAdminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-update-{Guid.NewGuid()}@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        dbContext.Collaborators.Add(nonAdminCollaborator);
+        dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
             org.Id,
-            nonAdminCollaborator.Email,
-            nonAdminCollaborator.Id);
+            nonAdminEmployee.Email,
+            nonAdminEmployee.Id);
 
         var request = new PatchOrganizationRequest { Name = "updated.com" };
 
@@ -419,29 +386,29 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         // Arrange
         await GetOrCreateAdminLeader();
 
-        // Create a non-admin collaborator
+        // Create a non-admin employee
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
         var org = await dbContext.Organizations.IgnoreQueryFilters().FirstAsync();
         var team = await dbContext.Teams.IgnoreQueryFilters().FirstAsync();
 
-        var nonAdminCollaborator = new Collaborator
+        var nonAdminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-delete-{Guid.NewGuid()}@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        dbContext.Collaborators.Add(nonAdminCollaborator);
+        dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
             org.Id,
-            nonAdminCollaborator.Email,
-            nonAdminCollaborator.Id);
+            nonAdminEmployee.Email,
+            nonAdminEmployee.Id);
 
         // Act
         var response = await nonAdminClient.DeleteAsync($"/api/organizations/{org.Id}");

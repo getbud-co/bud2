@@ -5,7 +5,7 @@ namespace Bud.Api.MultiTenancy;
 public sealed class JwtTenantProvider : ITenantProvider
 {
     public Guid? TenantId { get; }
-    public Guid? CollaboratorId { get; }
+    public Guid? EmployeeId { get; }
     public bool IsGlobalAdmin { get; }
     public string? UserEmail { get; }
 
@@ -38,10 +38,10 @@ public sealed class JwtTenantProvider : ITenantProvider
             }
         }
 
-        var collaboratorClaim = user.FindFirst("collaborator_id")?.Value;
-        if (Guid.TryParse(collaboratorClaim, out var collabId))
+        var employeeClaim = user.FindFirst("employee_id")?.Value;
+        if (Guid.TryParse(employeeClaim, out var collabId))
         {
-            CollaboratorId = collabId;
+            EmployeeId = collabId;
         }
     }
 }

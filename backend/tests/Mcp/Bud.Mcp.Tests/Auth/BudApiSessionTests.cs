@@ -31,7 +31,7 @@ public sealed class BudApiSessionTests
                     Email = "user@getbud.co",
                     DisplayName = "Usuário",
                     IsGlobalAdmin = false,
-                    CollaboratorId = Guid.NewGuid(),
+                    EmployeeId = Guid.NewGuid(),
                     OrganizationId = Guid.NewGuid()
                 });
             }

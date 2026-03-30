@@ -5,7 +5,7 @@ namespace Bud.Shared.Contracts.Features.Indicators;
 
 public sealed class CreateIndicatorRequest
 {
-    public Guid GoalId { get; set; }
+    public Guid MissionId { get; set; }
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
     public QuantitativeIndicatorType? QuantitativeType { get; set; }

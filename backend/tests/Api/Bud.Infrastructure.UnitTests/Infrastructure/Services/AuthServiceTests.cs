@@ -52,16 +52,16 @@ public class AuthServiceTests
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Admin Org" };
         context.Organizations.Add(org);
-        var adminCollaborator = new Collaborator
+        var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador Global",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             IsGlobalAdmin = true
         };
-        context.Collaborators.Add(adminCollaborator);
+        context.Employees.Add(adminEmployee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -100,43 +100,35 @@ public class AuthServiceTests
 
     #endregion
 
-    #region Collaborator Login Tests
+    #region Employee Login Tests
 
     [Fact]
-    public async Task Login_WithExistingCollaborator_ReturnsCollaboratorData()
+    public async Task Login_WithExistingEmployee_ReturnsEmployeeData()
     {
         // Arrange
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var workspace = new Workspace
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Workspace",
-            OrganizationId = org.Id
-        };
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Test Team",
             OrganizationId = org.Id,
-            WorkspaceId = workspace.Id,
             LeaderId = Guid.NewGuid()
         };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "John Doe",
             Email = "john.doe@example.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -151,46 +143,44 @@ public class AuthServiceTests
         result.Value!.IsGlobalAdmin.Should().BeFalse();
         result.Value!.Email.Should().Be("john.doe@example.com");
         result.Value!.DisplayName.Should().Be("John Doe");
-        result.Value!.CollaboratorId.Should().Be(collaborator.Id);
-        result.Value!.Role.Should().Be(CollaboratorRole.IndividualContributor);
+        result.Value!.EmployeeId.Should().Be(employee.Id);
+        result.Value!.Role.Should().Be(EmployeeRole.IndividualContributor);
         result.Value!.OrganizationId.Should().Be(org.Id);
     }
 
     [Fact]
-    public async Task Login_WithExistingCollaborator_RegistersAccessLog()
+    public async Task Login_WithExistingEmployee_RegistersAccessLog()
     {
         // Arrange
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Test Workspace", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        var collaborator = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Jane Doe",
             Email = "jane.doe@example.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
 
         // Act
-        var result = await service.LoginAsync(new CreateSessionRequest { Email = collaborator.Email });
+        var result = await service.LoginAsync(new CreateSessionRequest { Email = employee.Email });
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var accessLogs = await context.CollaboratorAccessLogs.ToListAsync();
+        var accessLogs = await context.EmployeeAccessLogs.ToListAsync();
         accessLogs.Should().ContainSingle();
-        accessLogs[0].CollaboratorId.Should().Be(collaborator.Id);
+        accessLogs[0].EmployeeId.Should().Be(employee.Id);
         accessLogs[0].OrganizationId.Should().Be(org.Id);
         accessLogs[0].AccessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
     }
@@ -263,34 +253,26 @@ public class AuthServiceTests
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var workspace = new Workspace
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Workspace",
-            OrganizationId = org.Id
-        };
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Test Team",
             OrganizationId = org.Id,
-            WorkspaceId = workspace.Id,
             LeaderId = Guid.NewGuid()
         };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Test User",
             Email = expectedEmail,
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -303,38 +285,36 @@ public class AuthServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value!.Email.Should().Be(expectedEmail);
-        result.Value!.CollaboratorId.Should().Be(collaborator.Id);
+        result.Value!.EmployeeId.Should().Be(employee.Id);
     }
 
     #endregion
 
-    #region Global Admin with Collaborator Tests
+    #region Global Admin with Employee Tests
 
     [Fact]
-    public async Task Login_WithGlobalAdminEmailAndExistingCollaborator_ReturnsGlobalAdminWithCollaboratorData()
+    public async Task Login_WithGlobalAdminEmailAndExistingEmployee_ReturnsGlobalAdminWithEmployeeData()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var globalAdminEmail = "admin@getbud.co";
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Admin Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Admin Workspace", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        var adminCollaborator = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Admin Collaborator",
+            FullName = "Admin Employee",
             Email = globalAdminEmail,
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             TeamId = team.Id,
             IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.Add(adminCollaborator);
+        context.Employees.Add(adminEmployee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -347,36 +327,34 @@ public class AuthServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value!.IsGlobalAdmin.Should().BeTrue();
-        result.Value!.CollaboratorId.Should().Be(adminCollaborator.Id);
+        result.Value!.EmployeeId.Should().Be(adminEmployee.Id);
         result.Value!.OrganizationId.Should().Be(org.Id);
-        result.Value!.DisplayName.Should().Be("Admin Collaborator");
+        result.Value!.DisplayName.Should().Be("Admin Employee");
     }
 
     [Fact]
-    public async Task Login_WithGlobalAdminEmailAndExistingCollaborator_RegistersAccessLog()
+    public async Task Login_WithGlobalAdminEmailAndExistingEmployee_RegistersAccessLog()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var globalAdminEmail = "admin@getbud.co";
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Admin Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Admin Workspace", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        var adminCollaborator = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Admin Collaborator",
+            FullName = "Admin Employee",
             Email = globalAdminEmail,
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             TeamId = team.Id,
             IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.Add(adminCollaborator);
+        context.Employees.Add(adminEmployee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -386,9 +364,9 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var accessLogs = await context.CollaboratorAccessLogs.ToListAsync();
+        var accessLogs = await context.EmployeeAccessLogs.ToListAsync();
         accessLogs.Should().ContainSingle();
-        accessLogs[0].CollaboratorId.Should().Be(adminCollaborator.Id);
+        accessLogs[0].EmployeeId.Should().Be(adminEmployee.Id);
         accessLogs[0].OrganizationId.Should().Be(org.Id);
     }
 
@@ -399,22 +377,22 @@ public class AuthServiceTests
     [Fact]
     public async Task Login_WithIsGlobalAdminTrue_ReturnsGlobalAdmin()
     {
-        // Arrange - collaborator with arbitrary email but IsGlobalAdmin = true
+        // Arrange - employee with arbitrary email but IsGlobalAdmin = true
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Any Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Custom Admin",
             Email = "custom.admin@anycompany.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -426,29 +404,29 @@ public class AuthServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsGlobalAdmin.Should().BeTrue();
         result.Value!.DisplayName.Should().Be("Custom Admin");
-        result.Value!.CollaboratorId.Should().Be(collaborator.Id);
+        result.Value!.EmployeeId.Should().Be(employee.Id);
     }
 
     [Fact]
     public async Task Login_WithIsGlobalAdminFalse_AndAdminEmail_ReturnsRegularUser()
     {
-        // Arrange - collaborator with admin@getbud.co email but IsGlobalAdmin = false
+        // Arrange - employee with admin@getbud.co email but IsGlobalAdmin = false
         // Proves that the email alone no longer grants admin privileges
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Not Actually Admin",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             IsGlobalAdmin = false
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -467,7 +445,7 @@ public class AuthServiceTests
     #region GetMyOrganizations Tests
 
     [Fact]
-    public async Task GetMyOrganizations_WithIsGlobalAdminCollaborator_ReturnsAllOrganizations()
+    public async Task GetMyOrganizations_WithIsGlobalAdminEmployee_ReturnsAllOrganizations()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -477,16 +455,16 @@ public class AuthServiceTests
         var org3 = new Organization { Id = Guid.NewGuid(), Name = "Org 3" };
         context.Organizations.AddRange(org1, org2, org3);
 
-        var adminCollaborator = new Collaborator
+        var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Global Admin",
             Email = "globaladmin@anycompany.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org1.Id,
             IsGlobalAdmin = true
         };
-        context.Collaborators.Add(adminCollaborator);
+        context.Employees.Add(adminEmployee);
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);
@@ -512,21 +490,19 @@ public class AuthServiceTests
         var org2 = new Organization { Id = Guid.NewGuid(), Name = "Other Org" };
         context.Organizations.AddRange(org1, org2);
 
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Workspace", OrganizationId = org1.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org1.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        context.Workspaces.Add(workspace);
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org1.Id, LeaderId = Guid.NewGuid() };
         context.Teams.Add(team);
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "User",
             Email = userEmail,
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org1.Id,
             TeamId = team.Id
         };
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);
@@ -542,33 +518,29 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task GetMyOrganizations_WithOrganizationOwner_ReturnsOwnedOrganizations()
+    public async Task GetMyOrganizations_WithEmployee_ReturnsOrganizations()
     {
         // Arrange
         using var context = CreateInMemoryContext();
 
-        var ownerEmail = "owner@example.com";
+        var ownerEmail = "employee@example.com";
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Owned Org" };
         context.Organizations.Add(org);
 
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Workspace", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        context.Workspaces.Add(workspace);
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
         context.Teams.Add(team);
 
-        var ownerCollaborator = new Collaborator
+        var ownerEmployee = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Owner",
+            FullName = "Employee",
             Email = ownerEmail,
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        context.Collaborators.Add(ownerCollaborator);
-
-        org.OwnerId = ownerCollaborator.Id;
+        context.Employees.Add(ownerEmployee);
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);

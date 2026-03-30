@@ -9,16 +9,5 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
     {
         builder.Property(o => o.Name)
             .HasMaxLength(200);
-
-        builder.HasOne(o => o.Owner)
-            .WithMany()
-            .HasForeignKey(o => o.OwnerId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
-
-        builder.HasMany(o => o.Workspaces)
-            .WithOne(w => w.Organization)
-            .HasForeignKey(w => w.OrganizationId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

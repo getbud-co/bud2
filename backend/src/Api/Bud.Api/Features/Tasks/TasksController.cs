@@ -23,15 +23,15 @@ public sealed class TasksController(
     /// <response code="400">Payload inválido ou erro de validação.</response>
     /// <response code="404">Meta não encontrada.</response>
     /// <response code="403">Sem permissão para criar tarefa.</response>
-    [HttpPost("goals/{goalId:guid}/tasks")]
+    [HttpPost("missions/{missionId:guid}/tasks")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TaskResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<TaskResponse>> Create(Guid goalId, CreateTaskRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaskResponse>> Create(Guid missionId, CreateTaskRequest request, CancellationToken cancellationToken)
     {
-        request.GoalId = goalId;
+        request.MissionId = missionId;
 
         var validationResult = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -40,14 +40,14 @@ public sealed class TasksController(
         }
 
         var command = new CreateTaskCommand(
-            goalId,
+            missionId,
             request.Name,
             request.Description,
             request.State,
             request.DueDate);
 
-        var result = await createTask.ExecuteAsync(command, cancellationToken);
-        return FromResult<GoalTask, TaskResponse>(result, task =>
+        var result = await createTask.ExecuteAsync(User, command, cancellationToken);
+        return FromResult<MissionTask, TaskResponse>(result, task =>
             CreatedAtAction(nameof(Update), new { id = task.Id }, task.ToResponse()));
     }
 
@@ -78,7 +78,7 @@ public sealed class TasksController(
             request.State,
             request.DueDate);
 
-        var result = await patchTask.ExecuteAsync(id, command, cancellationToken);
+        var result = await patchTask.ExecuteAsync(User, id, command, cancellationToken);
         return FromResultOk(result, task => task.ToResponse());
     }
 
@@ -94,7 +94,7 @@ public sealed class TasksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTask.ExecuteAsync(id, cancellationToken);
+        var result = await deleteTask.ExecuteAsync(User, id, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

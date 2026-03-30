@@ -7,21 +7,21 @@ namespace Bud.Infrastructure.Features.Tasks;
 
 public sealed class TaskRepository(ApplicationDbContext dbContext) : ITaskRepository
 {
-    public async Task<GoalTask?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.GoalTasks.FindAsync([id], ct);
+    public async Task<MissionTask?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.MissionTasks.FindAsync([id], ct);
 
-    public async Task<Goal?> GetGoalByIdAsync(Guid goalId, CancellationToken ct = default)
-        => await dbContext.Goals
+    public async Task<Mission?> GetMissionByIdAsync(Guid missionId, CancellationToken ct = default)
+        => await dbContext.Missions
             .AsNoTracking()
-            .FirstOrDefaultAsync(g => g.Id == goalId, ct);
+            .FirstOrDefaultAsync(g => g.Id == missionId, ct);
 
-    public async Task<PagedResult<GoalTask>> GetByGoalIdAsync(Guid goalId, int page, int pageSize, CancellationToken ct = default)
+    public async Task<PagedResult<MissionTask>> GetByMissionIdAsync(Guid missionId, int page, int pageSize, CancellationToken ct = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
-        var query = dbContext.GoalTasks
+        var query = dbContext.MissionTasks
             .AsNoTracking()
-            .Where(t => t.GoalId == goalId);
+            .Where(t => t.MissionId == missionId);
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -31,7 +31,7 @@ public sealed class TaskRepository(ApplicationDbContext dbContext) : ITaskReposi
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<GoalTask>
+        return new PagedResult<MissionTask>
         {
             Items = items,
             Total = total,
@@ -40,21 +40,21 @@ public sealed class TaskRepository(ApplicationDbContext dbContext) : ITaskReposi
         };
     }
 
-    public async Task<List<GoalTask>> GetActiveTasksForGoalsAsync(List<Guid> goalIds, CancellationToken ct = default)
-        => await dbContext.GoalTasks
+    public async Task<List<MissionTask>> GetActiveTasksForMissionsAsync(List<Guid> missionIds, CancellationToken ct = default)
+        => await dbContext.MissionTasks
             .AsNoTracking()
-            .Where(t => goalIds.Contains(t.GoalId)
+            .Where(t => missionIds.Contains(t.MissionId)
                 && (t.State == TaskState.ToDo || t.State == TaskState.Doing))
             .OrderBy(t => t.State)
             .ThenBy(t => t.Name)
             .ToListAsync(ct);
 
-    public async Task AddAsync(GoalTask entity, CancellationToken ct = default)
-        => await dbContext.GoalTasks.AddAsync(entity, ct);
+    public async Task AddAsync(MissionTask entity, CancellationToken ct = default)
+        => await dbContext.MissionTasks.AddAsync(entity, ct);
 
-    public Task RemoveAsync(GoalTask entity, CancellationToken ct = default)
+    public Task RemoveAsync(MissionTask entity, CancellationToken ct = default)
     {
-        dbContext.GoalTasks.Remove(entity);
+        dbContext.MissionTasks.Remove(entity);
         return Task.CompletedTask;
     }
 

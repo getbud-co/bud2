@@ -18,29 +18,29 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         _factory = factory;
     }
 
-    private async Task<(Guid orgId, Guid collaboratorId, HttpClient client)> SetupTenantUser()
+    private async Task<(Guid orgId, Guid employeeId, HttpClient client)> SetupTenantUser()
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var org = await dbContext.Organizations.IgnoreQueryFilters().FirstAsync();
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "NotificationResponse User",
             Email = $"notif-{Guid.NewGuid()}@example.com",
             OrganizationId = org.Id,
-            Role = CollaboratorRole.IndividualContributor
+            Role = EmployeeRole.IndividualContributor
         };
-        dbContext.Collaborators.Add(collaborator);
+        dbContext.Employees.Add(employee);
         await dbContext.SaveChangesAsync();
 
-        var client = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
-        return (org.Id, collaborator.Id, client);
+        var client = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);
+        return (org.Id, employee.Id, client);
     }
 
-    private async Task SeedNotifications(Guid orgId, Guid collaboratorId, int count, bool read = false)
+    private async Task SeedNotifications(Guid orgId, Guid employeeId, int count, bool read = false)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -50,11 +50,11 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             dbContext.Notifications.Add(new Notification
             {
                 Id = Guid.NewGuid(),
-                RecipientCollaboratorId = collaboratorId,
+                RecipientEmployeeId = employeeId,
                 OrganizationId = orgId,
                 Title = $"NotificationResponse {i}",
                 Message = $"Message {i}",
-                Type = NotificationType.GoalCreated,
+                Type = NotificationType.MissionCreated,
                 IsRead = read,
                 CreatedAtUtc = DateTime.UtcNow.AddMinutes(-i),
                 ReadAtUtc = read ? DateTime.UtcNow : null,
@@ -69,8 +69,8 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task GetAll_WithNotifications_ReturnsPagedResult()
     {
         // Arrange
-        var (orgId, collaboratorId, client) = await SetupTenantUser();
-        await SeedNotifications(orgId, collaboratorId, 5);
+        var (orgId, employeeId, client) = await SetupTenantUser();
+        await SeedNotifications(orgId, employeeId, 5);
 
         // Act
         var response = await client.GetAsync("/api/notifications?page=1&pageSize=3");
@@ -88,9 +88,9 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task GetAll_WithIsReadFalseFilter_ReturnsOnlyUnread()
     {
         // Arrange
-        var (orgId, collaboratorId, client) = await SetupTenantUser();
-        await SeedNotifications(orgId, collaboratorId, 3, read: false);
-        await SeedNotifications(orgId, collaboratorId, 2, read: true);
+        var (orgId, employeeId, client) = await SetupTenantUser();
+        await SeedNotifications(orgId, employeeId, 3, read: false);
+        await SeedNotifications(orgId, employeeId, 2, read: true);
 
         // Act
         var response = await client.GetAsync("/api/notifications?isRead=false&page=1&pageSize=10");
@@ -107,7 +107,7 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task MarkAsRead_WithValidNotification_ReturnsNoContent()
     {
         // Arrange
-        var (orgId, collaboratorId, client) = await SetupTenantUser();
+        var (orgId, employeeId, client) = await SetupTenantUser();
 
         Guid notificationId;
         using (var scope = _factory.Services.CreateScope())
@@ -116,11 +116,11 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             var notification = new Notification
             {
                 Id = Guid.NewGuid(),
-                RecipientCollaboratorId = collaboratorId,
+                RecipientEmployeeId = employeeId,
                 OrganizationId = orgId,
                 Title = "To Read",
                 Message = "To be read",
-                Type = NotificationType.GoalCreated,
+                Type = NotificationType.MissionCreated,
                 IsRead = false,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -147,8 +147,8 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task MarkAllAsRead_MarksAllUnread()
     {
         // Arrange
-        var (orgId, collaboratorId, client) = await SetupTenantUser();
-        await SeedNotifications(orgId, collaboratorId, 3, read: false);
+        var (orgId, employeeId, client) = await SetupTenantUser();
+        await SeedNotifications(orgId, employeeId, 3, read: false);
 
         // Act
         var response = await client.PatchAsync("/api/notifications", null);

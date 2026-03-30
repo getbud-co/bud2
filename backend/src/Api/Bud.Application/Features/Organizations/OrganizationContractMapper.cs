@@ -1,5 +1,3 @@
-using Bud.Application.Features.Collaborators;
-
 namespace Bud.Application.Features.Organizations;
 
 public static class OrganizationContractMapper
@@ -9,9 +7,7 @@ public static class OrganizationContractMapper
         return new OrganizationResponse
         {
             Id = source.Id,
-            Name = source.Name,
-            OwnerId = source.OwnerId,
-            Owner = source.Owner?.ToCollaboratorResponse()
+            Name = source.Name
         };
     }
 }

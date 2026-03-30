@@ -3,7 +3,7 @@ namespace Bud.Application.Features.Me;
 public interface IMyDashboardReadStore
 {
     Task<DashboardSnapshot?> GetMyDashboardAsync(
-        Guid collaboratorId,
+        Guid employeeId,
         Guid? teamId,
         CancellationToken ct = default);
 }

@@ -15,34 +15,34 @@ public sealed class CreateTemplateValidator : AbstractValidator<CreateTemplateRe
             .MaximumLength(1000).WithMessage("Descrição deve ter no máximo 1000 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.Description));
 
-        RuleFor(x => x.GoalNamePattern)
+        RuleFor(x => x.MissionNamePattern)
             .MaximumLength(200).WithMessage("Padrão de nome deve ter no máximo 200 caracteres.")
-            .When(x => !string.IsNullOrEmpty(x.GoalNamePattern));
+            .When(x => !string.IsNullOrEmpty(x.MissionNamePattern));
 
-        RuleFor(x => x.GoalDescriptionPattern)
+        RuleFor(x => x.MissionDescriptionPattern)
             .MaximumLength(1000).WithMessage("Padrão de descrição deve ter no máximo 1000 caracteres.")
-            .When(x => !string.IsNullOrEmpty(x.GoalDescriptionPattern));
+            .When(x => !string.IsNullOrEmpty(x.MissionDescriptionPattern));
 
-        RuleForEach(x => x.Goals)
-            .SetValidator(new TemplateGoalDtoValidator());
+        RuleForEach(x => x.Missions)
+            .SetValidator(new TemplateMissionDtoValidator());
 
         RuleForEach(x => x.Indicators)
             .SetValidator(new TemplateIndicatorDtoValidator());
 
         RuleFor(x => x)
-            .Must(HaveValidGoalReferences)
+            .Must(HaveValidMissionReferences)
             .WithMessage("Um ou mais indicadores referenciam metas inexistentes no template.");
     }
 
-    private static bool HaveValidGoalReferences(CreateTemplateRequest request)
+    private static bool HaveValidMissionReferences(CreateTemplateRequest request)
     {
-        var goalIds = request.Goals
+        var missionIds = request.Missions
             .Where(g => g.Id.HasValue)
             .Select(g => g.Id!.Value)
             .ToHashSet();
 
         return request.Indicators.All(indicator =>
-            indicator.TemplateGoalId is null || goalIds.Contains(indicator.TemplateGoalId.Value));
+            indicator.TemplateMissionId is null || missionIds.Contains(indicator.TemplateMissionId.Value));
     }
 }
 
@@ -59,18 +59,18 @@ public sealed class PatchTemplateValidator : AbstractValidator<PatchTemplateRequ
             .MaximumLength(1000).WithMessage("Descrição deve ter no máximo 1000 caracteres.")
             .When(x => x.Description.HasValue && !string.IsNullOrEmpty(x.Description.Value));
 
-        RuleFor(x => x.GoalNamePattern.Value)
+        RuleFor(x => x.MissionNamePattern.Value)
             .MaximumLength(200).WithMessage("Padrão de nome deve ter no máximo 200 caracteres.")
-            .When(x => x.GoalNamePattern.HasValue && !string.IsNullOrEmpty(x.GoalNamePattern.Value));
+            .When(x => x.MissionNamePattern.HasValue && !string.IsNullOrEmpty(x.MissionNamePattern.Value));
 
-        RuleFor(x => x.GoalDescriptionPattern.Value)
+        RuleFor(x => x.MissionDescriptionPattern.Value)
             .MaximumLength(1000).WithMessage("Padrão de descrição deve ter no máximo 1000 caracteres.")
-            .When(x => x.GoalDescriptionPattern.HasValue && !string.IsNullOrEmpty(x.GoalDescriptionPattern.Value));
+            .When(x => x.MissionDescriptionPattern.HasValue && !string.IsNullOrEmpty(x.MissionDescriptionPattern.Value));
 
-        When(x => x.Goals.HasValue && x.Goals.Value is not null, () =>
+        When(x => x.Missions.HasValue && x.Missions.Value is not null, () =>
         {
-            RuleForEach(x => x.Goals.Value!)
-                .SetValidator(new TemplateGoalDtoValidator());
+            RuleForEach(x => x.Missions.Value!)
+                .SetValidator(new TemplateMissionDtoValidator());
         });
 
         When(x => x.Indicators.HasValue && x.Indicators.Value is not null, () =>
@@ -80,25 +80,25 @@ public sealed class PatchTemplateValidator : AbstractValidator<PatchTemplateRequ
         });
 
         RuleFor(x => x)
-            .Must(HaveValidGoalReferences)
+            .Must(HaveValidMissionReferences)
             .WithMessage("Um ou mais indicadores referenciam metas inexistentes no template.");
     }
 
-    private static bool HaveValidGoalReferences(PatchTemplateRequest request)
+    private static bool HaveValidMissionReferences(PatchTemplateRequest request)
     {
-        var goalIds = request.Goals.AsEnumerable()
+        var missionIds = request.Missions.AsEnumerable()
             .Where(g => g.Id.HasValue)
             .Select(g => g.Id!.Value)
             .ToHashSet();
 
         return request.Indicators.AsEnumerable().All(indicator =>
-            indicator.TemplateGoalId is null || goalIds.Contains(indicator.TemplateGoalId.Value));
+            indicator.TemplateMissionId is null || missionIds.Contains(indicator.TemplateMissionId.Value));
     }
 }
 
-public sealed class TemplateGoalDtoValidator : AbstractValidator<TemplateGoalRequest>
+public sealed class TemplateMissionDtoValidator : AbstractValidator<TemplateMissionRequest>
 {
-    public TemplateGoalDtoValidator()
+    public TemplateMissionDtoValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Nome é obrigatório.")

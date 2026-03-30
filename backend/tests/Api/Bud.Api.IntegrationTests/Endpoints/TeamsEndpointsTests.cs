@@ -21,12 +21,18 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateGlobalAdminClient();
     }
 
+    private void SetTenantHeader(Guid orgId)
+    {
+        _client.DefaultRequestHeaders.Remove("X-Tenant-Id");
+        _client.DefaultRequestHeaders.Add("X-Tenant-Id", orgId.ToString());
+    }
+
     private async Task<Guid> GetOrCreateAdminLeader()
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var existingLeader = await dbContext.Collaborators
+        var existingLeader = await dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == "admin@getbud.co");
 
@@ -35,29 +41,25 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             return existingLeader.Id;
         }
 
-        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co", OwnerId = null };
+        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co" };
         dbContext.Organizations.Add(org);
 
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
-        dbContext.Workspaces.Add(workspace);
-
-        // Create collaborator first (without team) so we can reference it as team leader
-        var adminLeader = new Collaborator
+        // Create employee first (without team) so we can reference it as team leader
+        var adminLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             TeamId = null,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(adminLeader);
+        dbContext.Employees.Add(adminLeader);
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "getbud.co",
-            WorkspaceId = workspace.Id,
             OrganizationId = org.Id,
             LeaderId = adminLeader.Id
         };
@@ -65,66 +67,60 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         await dbContext.SaveChangesAsync();
 
-        // Now update collaborator's team and organization owner
+        // Now update employee's team
         adminLeader.TeamId = team.Id;
-        org.OwnerId = adminLeader.Id;
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
     }
 
-    private async Task<(Organization org, Workspace workspace, Guid leaderId)> CreateTestHierarchy()
+    private async Task<(Organization org, Guid leaderId)> CreateTestHierarchy()
     {
-        var adminLeaderId = await GetOrCreateAdminLeader();
         var orgResponse = await _client.PostAsJsonAsync("/api/organizations",
             new CreateOrganizationRequest
             {
-                Name = "test-org.com",
-                OwnerId = adminLeaderId,
+                Name = "test-org.com"
             });
         var org = await orgResponse.Content.ReadFromJsonAsync<Organization>();
 
-        var workspaceResponse = await _client.PostAsJsonAsync("/api/workspaces",
-            new CreateWorkspaceRequest { Name = "Test Workspace", OrganizationId = org!.Id });
-        var workspace = await workspaceResponse.Content.ReadFromJsonAsync<Workspace>();
-
-        // Create a Leader collaborator in the new org (required for team creation)
+        // Create a Leader employee in the new org (required for team creation)
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Líder Teste",
             Email = $"leader-{Guid.NewGuid():N}@test-org.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org!.Id,
             TeamId = null
         };
-        dbContext.Collaborators.Add(leader);
+        dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
 
-        return (org!, workspace!, leader.Id);
+        SetTenantHeader(org!.Id);
+        return (org!, leader.Id);
     }
 
-    private async Task<Collaborator> CreateNonOwnerCollaborator(Guid organizationId)
+    private async Task<Employee> CreateNonLeaderEmployee(Guid organizationId)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@example.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = organizationId,
             TeamId = null
         };
 
-        dbContext.Collaborators.Add(collaborator);
+        dbContext.Employees.Add(employee);
         await dbContext.SaveChangesAsync();
 
-        return collaborator;
+        return employee;
     }
 
     #region Create Tests
@@ -158,18 +154,18 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Create_WithValidParentTeam_ReturnsCreated()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (org, leaderId) = await CreateTestHierarchy();
 
         // Create parent team
+        SetTenantHeader(org.Id);
         var parentResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Parent Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Parent Team", LeaderId = leaderId });
         var parentTeam = await parentResponse.Content.ReadFromJsonAsync<Team>();
 
         // Create child team
         var request = new CreateTeamRequest
         {
             Name = "Child Team",
-            WorkspaceId = workspace.Id,
             LeaderId = leaderId,
             ParentTeamId = parentTeam!.Id
         };
@@ -186,17 +182,16 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Create_AsNonOwner_ReturnsForbidden()
+    public async Task Create_AsNonLeader_ReturnsForbidden()
     {
         // Arrange
-        var (org, workspace, leaderId) = await CreateTestHierarchy();
-        var collaborator = await CreateNonOwnerCollaborator(org.Id);
-        var tenantClient = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
+        var (org, leaderId) = await CreateTestHierarchy();
+        var employee = await CreateNonLeaderEmployee(org.Id);
+        var tenantClient = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);
 
         var request = new CreateTeamRequest
         {
-            Name = "Team NonOwner",
-            WorkspaceId = workspace.Id,
+            Name = "Team NonLeader",
             LeaderId = leaderId
         };
 
@@ -208,30 +203,24 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Create_WithParentInDifferentWorkspace_ReturnsBadRequest()
+    public async Task Create_WithParentInDifferentOrganization_ReturnsBadRequest()
     {
-        // Arrange: Create two workspaces
-        var (org, _, leaderId) = await CreateTestHierarchy();
+        // Arrange: create two organizations
+        var (orgA, leaderIdA) = await CreateTestHierarchy();
+        var (orgB, leaderIdB) = await CreateTestHierarchy();
 
-        var workspace1Response = await _client.PostAsJsonAsync("/api/workspaces",
-            new CreateWorkspaceRequest { Name = "Workspace 1", OrganizationId = org.Id });
-        var workspace1 = (await workspace1Response.Content.ReadFromJsonAsync<Workspace>())!;
-
-        var workspace2Response = await _client.PostAsJsonAsync("/api/workspaces",
-            new CreateWorkspaceRequest { Name = "Workspace 2", OrganizationId = org.Id });
-        var workspace2 = (await workspace2Response.Content.ReadFromJsonAsync<Workspace>())!;
-
-        // Create parent team in workspace1
+        // Create parent team in org A
+        SetTenantHeader(orgA.Id);
         var parentResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Parent Team", WorkspaceId = workspace1.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Parent Team", LeaderId = leaderIdA });
         var parentTeam = await parentResponse.Content.ReadFromJsonAsync<Team>();
 
-        // Try to create child team in workspace2 with parent from workspace1
+        // Try to create child team in org B with parent from org A
+        SetTenantHeader(orgB.Id);
         var request = new CreateTeamRequest
         {
             Name = "Child Team",
-            WorkspaceId = workspace2.Id,
-            LeaderId = leaderId,
+            LeaderId = leaderIdB,
             ParentTeamId = parentTeam!.Id
         };
 
@@ -239,7 +228,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsJsonAsync("/api/teams", request);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion
@@ -250,22 +239,24 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetAll_WithTenantClient_ShouldNotReturnTeamsFromAnotherTenant()
     {
         // Arrange
-        var (orgA, workspaceA, leaderIdA) = await CreateTestHierarchy();
-        var (orgB, workspaceB, leaderIdB) = await CreateTestHierarchy();
+        var (orgA, leaderIdA) = await CreateTestHierarchy();
+        var (orgB, leaderIdB) = await CreateTestHierarchy();
 
         var teamAName = $"Isolated-A-{Guid.NewGuid():N}";
         var teamBName = $"Isolated-B-{Guid.NewGuid():N}";
 
+        SetTenantHeader(orgA.Id);
         var teamAResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = teamAName, WorkspaceId = workspaceA.Id, LeaderId = leaderIdA });
+            new CreateTeamRequest { Name = teamAName, LeaderId = leaderIdA });
         teamAResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
+        SetTenantHeader(orgB.Id);
         var teamBResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = teamBName, WorkspaceId = workspaceB.Id, LeaderId = leaderIdB });
+            new CreateTeamRequest { Name = teamBName, LeaderId = leaderIdB });
         teamBResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var collaboratorA = await CreateNonOwnerCollaborator(orgA.Id);
-        var tenantClientA = _factory.CreateTenantClient(orgA.Id, collaboratorA.Email, collaboratorA.Id);
+        var employeeA = await CreateNonLeaderEmployee(orgA.Id);
+        var tenantClientA = _factory.CreateTenantClient(orgA.Id, employeeA.Email, employeeA.Id);
 
         // Act
         var visibleResponse = await tenantClientA.GetAsync($"/api/teams?search={teamAName}");
@@ -292,10 +283,10 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Patch_SettingSelfAsParent_ReturnsBadRequest()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Test Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Test Team", LeaderId = leaderId });
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
         // Try to set itself as parent
@@ -317,15 +308,15 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Update_WithValidParent_ReturnsOk()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         // Create two teams
         var team1Response = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team 1", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team 1", LeaderId = leaderId });
         var team1 = await team1Response.Content.ReadFromJsonAsync<Team>();
 
         var team2Response = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team 2", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team 2", LeaderId = leaderId });
         var team2 = await team2Response.Content.ReadFromJsonAsync<Team>();
 
         // Update team2 to have team1 as parent
@@ -348,17 +339,17 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Update_WhenNotOwner_ReturnsForbidden()
+    public async Task Update_WhenNotLeader_ReturnsForbidden()
     {
         // Arrange
-        var (org, workspace, leaderId) = await CreateTestHierarchy();
+        var (org, leaderId) = await CreateTestHierarchy();
 
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team A", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team A", LeaderId = leaderId });
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
-        var collaborator = await CreateNonOwnerCollaborator(org.Id);
-        var tenantClient = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
+        var employee = await CreateNonLeaderEmployee(org.Id);
+        var tenantClient = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);
 
         var updateRequest = new PatchTeamRequest
         {
@@ -378,13 +369,13 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     #region Delete Tests
 
     [Fact]
-    public async Task Delete_Team_WithNoGoals_ReturnsNoContent()
+    public async Task Delete_Team_WithNoMissions_ReturnsNoContent()
     {
-        // Arrange — Goals no longer have TeamId, so HasGoalsAsync always returns false.
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        // Arrange — Missions no longer have TeamId, so HasMissionsAsync always returns false.
+        var (_, leaderId) = await CreateTestHierarchy();
 
         var teamResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team deletable", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team deletable", LeaderId = leaderId });
         var team = (await teamResponse.Content.ReadFromJsonAsync<Team>())!;
 
         // Act
@@ -398,11 +389,11 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_WithSubTeams_ReturnsConflict()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         // Create parent team
         var parentResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Parent Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Parent Team", LeaderId = leaderId });
         var parentTeam = await parentResponse.Content.ReadFromJsonAsync<Team>();
 
         // Create sub-team
@@ -410,7 +401,6 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new CreateTeamRequest
             {
                 Name = "Sub Team",
-                WorkspaceId = workspace.Id,
                 LeaderId = leaderId,
                 ParentTeamId = parentTeam!.Id
             });
@@ -426,10 +416,10 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Delete_WithoutSubTeams_ReturnsNoContent()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team to Delete", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team to Delete", LeaderId = leaderId });
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
         // Act
@@ -444,17 +434,17 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Delete_WhenNotOwner_ReturnsForbidden()
+    public async Task Delete_WhenNotLeader_ReturnsForbidden()
     {
         // Arrange
-        var (org, workspace, leaderId) = await CreateTestHierarchy();
+        var (org, leaderId) = await CreateTestHierarchy();
 
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Team B", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Team B", LeaderId = leaderId });
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
-        var collaborator = await CreateNonOwnerCollaborator(org.Id);
-        var tenantClient = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
+        var employee = await CreateNonLeaderEmployee(org.Id);
+        var tenantClient = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);
 
         // Act
         var response = await tenantClient.DeleteAsync($"/api/teams/{team!.Id}");
@@ -471,11 +461,11 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetSubTeams_ReturnsSubTeamsOnly()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         // Create parent team
         var parentResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Parent Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Parent Team", LeaderId = leaderId });
         var parentTeam = await parentResponse.Content.ReadFromJsonAsync<Team>();
 
         // Create sub-teams
@@ -483,7 +473,6 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new CreateTeamRequest
             {
                 Name = "Sub Team 1",
-                WorkspaceId = workspace.Id,
                 LeaderId = leaderId,
                 ParentTeamId = parentTeam!.Id
             });
@@ -492,14 +481,13 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new CreateTeamRequest
             {
                 Name = "Sub Team 2",
-                WorkspaceId = workspace.Id,
                 LeaderId = leaderId,
                 ParentTeamId = parentTeam.Id
             });
 
         // Create unrelated team
         await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Unrelated Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Unrelated Team", LeaderId = leaderId });
 
         // Act
         var response = await _client.GetAsync($"/api/teams/{parentTeam.Id}/subteams");
@@ -531,51 +519,51 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     #endregion
 
-    #region GetCollaborators Tests
+    #region GetEmployees Tests
 
     [Fact]
-    public async Task GetCollaborators_ReturnsTeamCollaborators()
+    public async Task GetEmployees_ReturnsTeamEmployees()
     {
         // Arrange
-        var (org, workspace, leaderId) = await CreateTestHierarchy();
+        var (org, leaderId) = await CreateTestHierarchy();
 
         var teamResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Test Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Test Team", LeaderId = leaderId });
         var team = await teamResponse.Content.ReadFromJsonAsync<Team>();
 
-        // Create collaborators directly in database (since API doesn't support creating with TeamId)
+        // Create employees directly in database (since API doesn't support creating with TeamId)
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var collab1 = new Collaborator
+        var collab1 = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Collaborator 1",
+            FullName = "Employee 1",
             Email = "collab1@example.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             TeamId = team!.Id
         };
 
-        var collab2 = new Collaborator
+        var collab2 = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Collaborator 2",
+            FullName = "Employee 2",
             Email = "collab2@example.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
 
-        dbContext.Collaborators.AddRange(collab1, collab2);
+        dbContext.Employees.AddRange(collab1, collab2);
         await dbContext.SaveChangesAsync();
 
         // Act
-        var response = await _client.GetAsync($"/api/teams/{team.Id}/collaborators");
+        var response = await _client.GetAsync($"/api/teams/{team.Id}/employees");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<Collaborator>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Employee>>();
         result.Should().NotBeNull();
         result!.Items.Should().HaveCount(2);
         result.Items.Should().OnlyContain(c => c.TeamId == team.Id);
@@ -583,56 +571,56 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     #endregion
 
-    #region Leader CollaboratorTeam Sync Tests
+    #region Leader EmployeeTeam Sync Tests
 
     [Fact]
-    public async Task Create_ShouldIncludeLeaderInCollaboratorSummaries()
+    public async Task Create_ShouldIncludeLeaderInEmployeeSummaries()
     {
         // Arrange
-        var (_, workspace, leaderId) = await CreateTestHierarchy();
+        var (_, leaderId) = await CreateTestHierarchy();
 
         // Act: create team
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Leader Sync Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Leader Sync Team", LeaderId = leaderId });
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
-        // Assert: leader should be in collaborators summary projection
-        var summariesResponse = await _client.GetAsync($"/api/teams/{team!.Id}/collaborators/lookup");
+        // Assert: leader should be in employees summary projection
+        var summariesResponse = await _client.GetAsync($"/api/teams/{team!.Id}/employees/lookup");
         summariesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var summaries = await summariesResponse.Content.ReadFromJsonAsync<List<CollaboratorLookupResponse>>();
+        var summaries = await summariesResponse.Content.ReadFromJsonAsync<List<EmployeeLookupResponse>>();
         summaries.Should().NotBeNull();
         summaries.Should().Contain(c => c.Id == leaderId);
     }
 
     [Fact]
-    public async Task PatchCollaborators_WithoutLeader_ShouldReturnBadRequest()
+    public async Task PatchEmployees_WithoutLeader_ShouldReturnBadRequest()
     {
         // Arrange
-        var (org, workspace, leaderId) = await CreateTestHierarchy();
+        var (org, leaderId) = await CreateTestHierarchy();
 
         var createResponse = await _client.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Leader Protected Team", WorkspaceId = workspace.Id, LeaderId = leaderId });
+            new CreateTeamRequest { Name = "Leader Protected Team", LeaderId = leaderId });
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var team = await createResponse.Content.ReadFromJsonAsync<Team>();
 
-        // Create another collaborator to use in the update
+        // Create another employee to use in the update
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
-        var otherCollab = new Collaborator
+        var otherCollab = new Employee
         {
             Id = Guid.NewGuid(),
-            FullName = "Other Collaborator",
+            FullName = "Other Employee",
             Email = $"other-{Guid.NewGuid():N}@test-org.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(otherCollab);
+        dbContext.Employees.Add(otherCollab);
         await dbContext.SaveChangesAsync();
 
-        // Act: update collaborators WITHOUT the leader
-        var updateResponse = await _client.PatchAsJsonAsync($"/api/teams/{team!.Id}/collaborators",
-            new PatchTeamCollaboratorsRequest { CollaboratorIds = new List<Guid> { otherCollab.Id } });
+        // Act: update employees WITHOUT the leader
+        var updateResponse = await _client.PatchAsJsonAsync($"/api/teams/{team!.Id}/employees",
+            new PatchTeamEmployeesRequest { EmployeeIds = new List<Guid> { otherCollab.Id } });
 
         // Assert
         updateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);

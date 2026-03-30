@@ -11,7 +11,7 @@ internal static class SessionsContractMapper
             Email = source.Email,
             DisplayName = source.DisplayName,
             IsGlobalAdmin = source.IsGlobalAdmin,
-            CollaboratorId = source.CollaboratorId,
+            EmployeeId = source.EmployeeId,
             Role = source.Role,
             OrganizationId = source.OrganizationId
         };

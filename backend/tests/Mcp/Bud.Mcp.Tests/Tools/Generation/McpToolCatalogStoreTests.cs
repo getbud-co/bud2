@@ -13,7 +13,7 @@ public sealed class McpToolCatalogStoreTests
           "version": 1,
           "tools": [
             {
-              "name": "goal_create",
+              "name": "mission_create",
               "description": "Cria uma missão.",
               "inputSchema": {
                 "type": "object",
@@ -23,7 +23,7 @@ public sealed class McpToolCatalogStoreTests
               }
             },
             {
-              "name": "goal_get",
+              "name": "mission_get",
               "description": "Busca por id.",
               "inputSchema": {
                 "type": "object",
@@ -40,7 +40,7 @@ public sealed class McpToolCatalogStoreTests
         var tools = McpToolCatalogStore.ParseToolsFromCatalogJson(catalogJson);
 
         tools.Should().HaveCount(2);
-        tools.Select(tool => tool.Name).Should().Contain(["goal_create", "goal_get"]);
+        tools.Select(tool => tool.Name).Should().Contain(["mission_create", "mission_get"]);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class McpToolCatalogStoreTests
               "version": 1,
               "tools": [
                 {
-                  "name": "goal_create",
+                  "name": "mission_create",
                   "description": "Cria uma missão.",
                   "inputSchema": {
                     "type": "object",
@@ -77,7 +77,7 @@ public sealed class McpToolCatalogStoreTests
             var tools = McpToolCatalogStore.LoadToolsOrThrow();
 
             tools.Should().ContainSingle();
-            tools[0].Name.Should().Be("goal_create");
+            tools[0].Name.Should().Be("mission_create");
         });
     }
 

@@ -28,78 +28,78 @@ public class NotificationOrchestrator
         _unitOfWork = unitOfWork;
     }
 
-    public virtual async Task NotifyGoalCreatedAsync(
-        Guid goalId,
+    public virtual async Task NotifyMissionCreatedAsync(
+        Guid missionId,
         Guid organizationId,
-        string goalName,
-        Guid? actorCollaboratorId,
+        string missionName,
+        Guid? actorEmployeeId,
         CancellationToken cancellationToken = default)
     {
-        var actorName = actorCollaboratorId.HasValue
-            ? await _notificationRecipientResolver.ResolveCollaboratorNameAsync(actorCollaboratorId.Value, cancellationToken)
+        var actorName = actorEmployeeId.HasValue
+            ? await _notificationRecipientResolver.ResolveEmployeeNameAsync(actorEmployeeId.Value, cancellationToken)
             : null;
 
         var message = actorName is not null
-            ? $"{actorName} criou a meta '{goalName}'"
-            : $"Uma nova meta foi criada: '{goalName}'";
+            ? $"{actorName} criou a meta '{missionName}'"
+            : $"Uma nova meta foi criada: '{missionName}'";
 
-        await NotifyGoalEventAsync(goalId, organizationId, "Nova meta criada", message, NotificationType.GoalCreated, cancellationToken);
+        await NotifyMissionEventAsync(missionId, organizationId, "Nova meta criada", message, NotificationType.MissionCreated, cancellationToken);
     }
 
-    public virtual async Task NotifyGoalUpdatedAsync(
-        Guid goalId,
+    public virtual async Task NotifyMissionUpdatedAsync(
+        Guid missionId,
         Guid organizationId,
-        string goalName,
-        Guid? actorCollaboratorId,
+        string missionName,
+        Guid? actorEmployeeId,
         CancellationToken cancellationToken = default)
     {
-        var actorName = actorCollaboratorId.HasValue
-            ? await _notificationRecipientResolver.ResolveCollaboratorNameAsync(actorCollaboratorId.Value, cancellationToken)
+        var actorName = actorEmployeeId.HasValue
+            ? await _notificationRecipientResolver.ResolveEmployeeNameAsync(actorEmployeeId.Value, cancellationToken)
             : null;
 
         var message = actorName is not null
-            ? $"{actorName} atualizou a meta '{goalName}'"
-            : $"A meta '{goalName}' foi atualizada";
+            ? $"{actorName} atualizou a meta '{missionName}'"
+            : $"A meta '{missionName}' foi atualizada";
 
-        await NotifyGoalEventAsync(goalId, organizationId, "Meta atualizada", message, NotificationType.GoalUpdated, cancellationToken);
+        await NotifyMissionEventAsync(missionId, organizationId, "Meta atualizada", message, NotificationType.MissionUpdated, cancellationToken);
     }
 
-    public virtual async Task NotifyGoalDeletedAsync(
-        Guid goalId,
+    public virtual async Task NotifyMissionDeletedAsync(
+        Guid missionId,
         Guid organizationId,
-        string goalName,
-        Guid? actorCollaboratorId,
+        string missionName,
+        Guid? actorEmployeeId,
         CancellationToken cancellationToken = default)
     {
-        var actorName = actorCollaboratorId.HasValue
-            ? await _notificationRecipientResolver.ResolveCollaboratorNameAsync(actorCollaboratorId.Value, cancellationToken)
+        var actorName = actorEmployeeId.HasValue
+            ? await _notificationRecipientResolver.ResolveEmployeeNameAsync(actorEmployeeId.Value, cancellationToken)
             : null;
 
         var message = actorName is not null
-            ? $"{actorName} removeu a meta '{goalName}'"
-            : $"A meta '{goalName}' foi removida";
+            ? $"{actorName} removeu a meta '{missionName}'"
+            : $"A meta '{missionName}' foi removida";
 
-        await NotifyGoalEventAsync(goalId, organizationId, "Meta removida", message, NotificationType.GoalDeleted, cancellationToken);
+        await NotifyMissionEventAsync(missionId, organizationId, "Meta removida", message, NotificationType.MissionDeleted, cancellationToken);
     }
 
     public virtual async Task NotifyCheckinCreatedAsync(
         Guid checkinId,
         Guid indicatorId,
         Guid organizationId,
-        Guid? excludeCollaboratorId,
+        Guid? excludeEmployeeId,
         string indicatorName,
         CancellationToken cancellationToken = default)
     {
-        var goalId = await _notificationRecipientResolver.ResolveGoalIdFromIndicatorAsync(indicatorId, cancellationToken);
-        if (!goalId.HasValue)
+        var missionId = await _notificationRecipientResolver.ResolveMissionIdFromIndicatorAsync(indicatorId, cancellationToken);
+        if (!missionId.HasValue)
         {
             return;
         }
 
-        var recipients = await _notificationRecipientResolver.ResolveGoalRecipientsAsync(
-            goalId.Value,
+        var recipients = await _notificationRecipientResolver.ResolveMissionRecipientsAsync(
+            missionId.Value,
             organizationId,
-            excludeCollaboratorId,
+            excludeEmployeeId,
             cancellationToken);
 
         if (recipients.Count == 0)
@@ -107,8 +107,8 @@ public class NotificationOrchestrator
             return;
         }
 
-        var actorName = excludeCollaboratorId.HasValue
-            ? await _notificationRecipientResolver.ResolveCollaboratorNameAsync(excludeCollaboratorId.Value, cancellationToken)
+        var actorName = excludeEmployeeId.HasValue
+            ? await _notificationRecipientResolver.ResolveEmployeeNameAsync(excludeEmployeeId.Value, cancellationToken)
             : null;
 
         var message = actorName is not null
@@ -126,16 +126,16 @@ public class NotificationOrchestrator
             cancellationToken);
     }
 
-    private async Task NotifyGoalEventAsync(
-        Guid goalId,
+    private async Task NotifyMissionEventAsync(
+        Guid missionId,
         Guid organizationId,
         string title,
         string message,
         NotificationType type,
         CancellationToken cancellationToken)
     {
-        var recipients = await _notificationRecipientResolver.ResolveGoalRecipientsAsync(
-            goalId,
+        var recipients = await _notificationRecipientResolver.ResolveMissionRecipientsAsync(
+            missionId,
             organizationId,
             null,
             cancellationToken);
@@ -151,8 +151,8 @@ public class NotificationOrchestrator
             title,
             message,
             type,
-            goalId,
-            "Goal",
+            missionId,
+            "Mission",
             cancellationToken);
     }
 

@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Bud.Application.Common;
+using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 using FluentAssertions;
 using Moq;
@@ -8,6 +10,8 @@ namespace Bud.Application.UnitTests.Application.Indicators;
 
 public sealed class IndicatorReadUseCasesTests
 {
+    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
+
     [Fact]
     public async Task ViewMissionMetricDetails_WhenMetricExists_ReturnsSuccess()
     {
@@ -18,9 +22,13 @@ public sealed class IndicatorReadUseCasesTests
             .Setup(repository => repository.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Indicator { Id = indicatorId, Name = "X", OrganizationId = Guid.NewGuid() });
 
-        var useCase = new GetIndicatorById(metricRepository.Object);
+        _authorizationGateway
+            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
-        var result = await useCase.ExecuteAsync(indicatorId);
+        var useCase = new GetIndicatorById(metricRepository.Object, _authorizationGateway.Object);
+
+        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(indicatorId);
@@ -36,9 +44,9 @@ public sealed class IndicatorReadUseCasesTests
             .Setup(repository => repository.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Indicator?)null);
 
-        var useCase = new GetIndicatorById(metricRepository.Object);
+        var useCase = new GetIndicatorById(metricRepository.Object, _authorizationGateway.Object);
 
-        var result = await useCase.ExecuteAsync(indicatorId);
+        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -48,7 +56,7 @@ public sealed class IndicatorReadUseCasesTests
     [Fact]
     public async Task BrowseMissionMetrics_DelegatesToRepository()
     {
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var metricRepository = new Mock<IIndicatorRepository>();
 
         var pagedResult = new PagedResult<Indicator>
@@ -60,16 +68,16 @@ public sealed class IndicatorReadUseCasesTests
         };
 
         metricRepository
-            .Setup(repository => repository.GetAllAsync(goalId, null, 1, 10, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetAllAsync(missionId, null, 1, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
         var useCase = new ListIndicators(metricRepository.Object);
 
-        var result = await useCase.ExecuteAsync(goalId, null, 1, 10);
+        var result = await useCase.ExecuteAsync(missionId, null, 1, 10);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().HaveCount(1);
-        metricRepository.Verify(repository => repository.GetAllAsync(goalId, null, 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+        metricRepository.Verify(repository => repository.GetAllAsync(missionId, null, 1, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

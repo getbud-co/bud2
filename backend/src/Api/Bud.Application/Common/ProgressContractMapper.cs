@@ -3,11 +3,11 @@ namespace Bud.Application.Common;
 
 internal static class ProgressContractMapper
 {
-    public static GoalProgressResponse ToResponse(this GoalProgressSnapshot source)
+    public static MissionProgressResponse ToResponse(this MissionProgressSnapshot source)
     {
-        return new GoalProgressResponse
+        return new MissionProgressResponse
         {
-            GoalId = source.GoalId,
+            MissionId = source.MissionId,
             OverallProgress = source.OverallProgress,
             ExpectedProgress = source.ExpectedProgress,
             AverageConfidence = source.AverageConfidence,
@@ -19,7 +19,7 @@ internal static class ProgressContractMapper
             TodoTasks = source.TodoTasks,
             DoingTasks = source.DoingTasks,
             LastCheckinDate = source.LastCheckinDate,
-            DistinctCollaboratorIds = source.DistinctCollaboratorIds
+            DistinctEmployeeIds = source.DistinctEmployeeIds
         };
     }
 
@@ -32,7 +32,7 @@ internal static class ProgressContractMapper
             Confidence = source.Confidence,
             HasCheckins = source.HasCheckins,
             IsOutdated = source.IsOutdated,
-            LastCheckinCollaboratorName = source.LastCheckinCollaboratorName
+            LastCheckinEmployeeName = source.LastCheckinEmployeeName
         };
     }
 }

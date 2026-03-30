@@ -19,7 +19,7 @@ public sealed class IndicatorConfiguration : IEntityTypeConfiguration<Indicator>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(i => i.OrganizationId);
-        builder.HasIndex(i => i.GoalId);
+        builder.HasIndex(i => i.MissionId);
 
         builder.HasMany(i => i.Checkins)
             .WithOne(c => c.Indicator)

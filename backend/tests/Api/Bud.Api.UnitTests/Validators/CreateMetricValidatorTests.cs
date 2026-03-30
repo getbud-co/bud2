@@ -16,7 +16,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Quality Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Achieve high quality standards"
@@ -36,7 +36,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Quality Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = null
@@ -55,7 +55,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Quality Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = ""
@@ -74,7 +74,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Quality Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = new string('A', 1001) // 1001 characters
@@ -100,7 +100,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = null, // Missing QuantitativeType
@@ -124,7 +124,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -150,7 +150,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -172,7 +172,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -196,7 +196,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -220,7 +220,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -246,7 +246,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Error Rate",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
@@ -268,7 +268,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Error Rate",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
@@ -292,7 +292,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Error Rate",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
@@ -320,7 +320,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -343,7 +343,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -368,7 +368,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -393,7 +393,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -418,7 +418,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -443,7 +443,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -472,7 +472,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Sales Target",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -494,7 +494,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Sales Target",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -518,7 +518,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Sales Target",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -546,7 +546,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Cost Reduction",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
@@ -568,7 +568,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Cost Reduction",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
@@ -592,7 +592,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Cost Reduction",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
@@ -622,7 +622,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.Empty, // Empty GUID
+            MissionId = Guid.Empty, // Empty GUID
             Name = "Test Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"
@@ -633,7 +633,7 @@ public class CreateMetricValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("GoalId"));
+        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("MissionId"));
     }
 
     [Theory]
@@ -645,7 +645,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = name!,
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"
@@ -665,7 +665,7 @@ public class CreateMetricValidatorTests
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = new string('A', 201), // 201 characters
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Description"

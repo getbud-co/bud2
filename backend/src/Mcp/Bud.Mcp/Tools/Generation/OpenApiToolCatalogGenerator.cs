@@ -23,17 +23,17 @@ public sealed class OpenApiToolCatalogGenerator
 
     private static readonly ToolOperationMap[] ToolMappings =
     [
-        new("goal_create", "Cria uma meta.", "post", "/api/goals", ToolSchemaKind.Create),
-        new("goal_get", "Busca uma meta por ID.", "get", "/api/goals/{id}", ToolSchemaKind.GetById),
-        new("goal_list", "Lista metas com filtros.", "get", "/api/goals", ToolSchemaKind.List),
-        new("goal_update", "Atualiza uma meta.", "patch", "/api/goals/{id}", ToolSchemaKind.Update),
-        new("goal_delete", "Remove uma meta.", "delete", "/api/goals/{id}", ToolSchemaKind.Delete),
+        new("mission_create", "Cria uma meta.", "post", "/api/missions", ToolSchemaKind.Create),
+        new("mission_get", "Busca uma meta por ID.", "get", "/api/missions/{id}", ToolSchemaKind.GetById),
+        new("mission_list", "Lista metas com filtros.", "get", "/api/missions", ToolSchemaKind.List),
+        new("mission_update", "Atualiza uma meta.", "patch", "/api/missions/{id}", ToolSchemaKind.Update),
+        new("mission_delete", "Remove uma meta.", "delete", "/api/missions/{id}", ToolSchemaKind.Delete),
 
-        new("goal_indicator_create", "Cria um indicador de meta.", "post", "/api/indicators", ToolSchemaKind.Create),
-        new("goal_indicator_get", "Busca um indicador por ID.", "get", "/api/indicators/{id}", ToolSchemaKind.GetById),
-        new("goal_indicator_list", "Lista indicadores de meta.", "get", "/api/indicators", ToolSchemaKind.List),
-        new("goal_indicator_update", "Atualiza um indicador de meta.", "patch", "/api/indicators/{id}", ToolSchemaKind.Update),
-        new("goal_indicator_delete", "Remove um indicador de meta.", "delete", "/api/indicators/{id}", ToolSchemaKind.Delete),
+        new("mission_indicator_create", "Cria um indicador de meta.", "post", "/api/indicators", ToolSchemaKind.Create),
+        new("mission_indicator_get", "Busca um indicador por ID.", "get", "/api/indicators/{id}", ToolSchemaKind.GetById),
+        new("mission_indicator_list", "Lista indicadores de meta.", "get", "/api/indicators", ToolSchemaKind.List),
+        new("mission_indicator_update", "Atualiza um indicador de meta.", "patch", "/api/indicators/{id}", ToolSchemaKind.Update),
+        new("mission_indicator_delete", "Remove um indicador de meta.", "delete", "/api/indicators/{id}", ToolSchemaKind.Delete),
 
         new("indicator_checkin_create", "Cria um check-in de indicador.", "post", "/api/indicators/{indicatorId}/checkins", ToolSchemaKind.Create),
         new("indicator_checkin_get", "Busca um check-in por ID.", "get", "/api/indicators/{indicatorId}/checkins/{checkinId}", ToolSchemaKind.GetById),

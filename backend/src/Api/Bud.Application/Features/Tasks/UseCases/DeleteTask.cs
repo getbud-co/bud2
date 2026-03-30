@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,9 +8,16 @@ namespace Bud.Application.Features.Tasks.UseCases;
 public sealed partial class DeleteTask(
     ITaskRepository taskRepository,
     ILogger<DeleteTask> logger,
-    IUnitOfWork? unitOfWork = null)
+    IUnitOfWork? unitOfWork = null,
+    IApplicationAuthorizationGateway? authorizationGateway = null)
 {
+    public Task<Result> ExecuteAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, cancellationToken);
+
     public async Task<Result> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -20,6 +28,16 @@ public sealed partial class DeleteTask(
         {
             LogTaskDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.TaskNotFound);
+        }
+
+        if (authorizationGateway is not null)
+        {
+            var canWrite = await authorizationGateway.CanWriteAsync(user, new TaskResource(id), cancellationToken);
+            if (!canWrite)
+            {
+                LogTaskDeletionFailed(logger, id, UserErrorMessages.TaskDeleteForbidden);
+                return Result.Forbidden(UserErrorMessages.TaskDeleteForbidden);
+            }
         }
 
         await taskRepository.RemoveAsync(task, cancellationToken);

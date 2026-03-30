@@ -6,22 +6,22 @@ namespace Bud.Api.UnitTests.Validators;
 
 public sealed class CreateObjectiveValidatorTests
 {
-    private readonly CreateGoalValidator _validator = new();
+    private readonly CreateMissionValidator _validator = new();
 
-    private static CreateGoalRequest ValidChildGoalRequest(string name = "Objetivo 1") => new()
+    private static CreateMissionRequest ValidChildMissionRequest(string name = "Objetivo 1") => new()
     {
         ParentId = Guid.NewGuid(),
         Name = name,
         Description = "Descrição",
         StartDate = DateTime.UtcNow,
         EndDate = DateTime.UtcNow.AddDays(30),
-        Status = GoalStatus.Planned
+        Status = MissionStatus.Planned
     };
 
     [Fact]
     public async Task Validate_WithValidRequest_Passes()
     {
-        var request = ValidChildGoalRequest();
+        var request = ValidChildMissionRequest();
 
         var result = await _validator.ValidateAsync(request);
 
@@ -35,7 +35,7 @@ public sealed class CreateObjectiveValidatorTests
     [InlineData(null)]
     public async Task Validate_WithEmptyName_Fails(string? name)
     {
-        var request = ValidChildGoalRequest(name!);
+        var request = ValidChildMissionRequest(name!);
 
         var result = await _validator.ValidateAsync(request);
 
@@ -46,7 +46,7 @@ public sealed class CreateObjectiveValidatorTests
     [Fact]
     public async Task Validate_WithNameLongerThan200_Fails()
     {
-        var request = ValidChildGoalRequest(new string('A', 201));
+        var request = ValidChildMissionRequest(new string('A', 201));
 
         var result = await _validator.ValidateAsync(request);
 
@@ -59,14 +59,14 @@ public sealed class CreateObjectiveValidatorTests
     [Fact]
     public async Task Validate_WithDescriptionLongerThan1000_Fails()
     {
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             ParentId = Guid.NewGuid(),
             Name = "Objetivo 1",
             Description = new string('A', 1001),
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Planned
+            Status = MissionStatus.Planned
         };
 
         var result = await _validator.ValidateAsync(request);
@@ -80,14 +80,14 @@ public sealed class CreateObjectiveValidatorTests
     [Fact]
     public async Task Validate_WithNullDescription_Passes()
     {
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             ParentId = Guid.NewGuid(),
             Name = "Objetivo 1",
             Description = null,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Planned
+            Status = MissionStatus.Planned
         };
 
         var result = await _validator.ValidateAsync(request);

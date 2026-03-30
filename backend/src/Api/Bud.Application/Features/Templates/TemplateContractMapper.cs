@@ -10,16 +10,16 @@ public static class TemplateContractMapper
             OrganizationId = source.OrganizationId,
             Name = source.Name,
             Description = source.Description,
-            GoalNamePattern = source.GoalNamePattern,
-            GoalDescriptionPattern = source.GoalDescriptionPattern,
-            Goals = source.Goals.Select(g => g.ToResponse(source.Indicators)).ToList(),
+            MissionNamePattern = source.MissionNamePattern,
+            MissionDescriptionPattern = source.MissionDescriptionPattern,
+            Missions = source.Missions.Select(g => g.ToResponse(source.Indicators)).ToList(),
             Indicators = source.Indicators.Select(i => i.ToResponse()).ToList()
         };
     }
 
-    public static TemplateGoalResponse ToResponse(this TemplateGoal source, IEnumerable<TemplateIndicator> allIndicators)
+    public static TemplateMissionResponse ToResponse(this TemplateMission source, IEnumerable<TemplateIndicator> allIndicators)
     {
-        return new TemplateGoalResponse
+        return new TemplateMissionResponse
         {
             Id = source.Id,
             OrganizationId = source.OrganizationId,
@@ -30,7 +30,7 @@ public static class TemplateContractMapper
             OrderIndex = source.OrderIndex,
             Dimension = source.Dimension,
             Indicators = allIndicators
-                .Where(i => i.TemplateGoalId == source.Id)
+                .Where(i => i.TemplateMissionId == source.Id)
                 .Select(i => i.ToResponse())
                 .ToList()
         };
@@ -43,7 +43,7 @@ public static class TemplateContractMapper
             Id = source.Id,
             OrganizationId = source.OrganizationId,
             TemplateId = source.TemplateId,
-            TemplateGoalId = source.TemplateGoalId,
+            TemplateMissionId = source.TemplateMissionId,
             Name = source.Name,
             Type = source.Type,
             OrderIndex = source.OrderIndex,

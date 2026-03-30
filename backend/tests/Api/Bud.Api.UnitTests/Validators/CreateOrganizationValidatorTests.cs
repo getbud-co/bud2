@@ -14,8 +14,7 @@ public class CreateOrganizationValidatorTests
         // Arrange
         var request = new CreateOrganizationRequest
         {
-            Name = "test.com",
-            OwnerId = Guid.NewGuid(),
+            Name = "test.com"
         };
 
         // Act
@@ -36,7 +35,6 @@ public class CreateOrganizationValidatorTests
         var request = new CreateOrganizationRequest
         {
             Name = name!,
-            OwnerId = Guid.NewGuid(),
         };
 
         // Act
@@ -56,7 +54,6 @@ public class CreateOrganizationValidatorTests
         var request = new CreateOrganizationRequest
         {
             Name = $"{longLabel}.com",
-            OwnerId = Guid.NewGuid(),
         };
 
         // Act
@@ -76,7 +73,6 @@ public class CreateOrganizationValidatorTests
         var request = new CreateOrganizationRequest
         {
             Name = $"{label}.com.br",
-            OwnerId = Guid.NewGuid(),
         };
 
         // Act
@@ -98,7 +94,6 @@ public class CreateOrganizationValidatorTests
         var request = new CreateOrganizationRequest
         {
             Name = domain,
-            OwnerId = Guid.NewGuid(),
         };
 
         // Act
@@ -123,7 +118,6 @@ public class CreateOrganizationValidatorTests
         var request = new CreateOrganizationRequest
         {
             Name = domain,
-            OwnerId = Guid.NewGuid(),
         };
 
         // Act
@@ -132,23 +126,5 @@ public class CreateOrganizationValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName.Contains("Name"));
-    }
-
-    [Fact]
-    public async Task Validate_WithEmptyOwnerId_ShouldFail()
-    {
-        // Arrange
-        var request = new CreateOrganizationRequest
-        {
-            Name = "test.com",
-            OwnerId = Guid.Empty,
-        };
-
-        // Act
-        var result = await _validator.ValidateAsync(request);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName.Contains("OwnerId"));
     }
 }

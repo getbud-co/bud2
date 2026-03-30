@@ -1,6 +1,6 @@
-global using CollaboratorRole = Bud.Shared.Kernel.Enums.CollaboratorRole;
-global using GoalFilter = Bud.Shared.Kernel.Enums.GoalFilter;
+global using EmployeeRole = Bud.Shared.Kernel.Enums.EmployeeRole;
+global using MissionFilter = Bud.Shared.Kernel.Enums.MissionFilter;
 global using IndicatorType = Bud.Shared.Kernel.Enums.IndicatorType;
 global using IndicatorUnit = Bud.Shared.Kernel.Enums.IndicatorUnit;
-global using GoalStatus = Bud.Shared.Kernel.Enums.GoalStatus;
+global using MissionStatus = Bud.Shared.Kernel.Enums.MissionStatus;
 global using QuantitativeIndicatorType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType;

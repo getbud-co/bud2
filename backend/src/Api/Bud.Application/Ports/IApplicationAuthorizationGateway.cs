@@ -4,7 +4,7 @@ namespace Bud.Application.Ports;
 
 public interface IApplicationAuthorizationGateway
 {
-    Task<bool> IsOrganizationOwnerAsync(ClaimsPrincipal user, Guid organizationId, CancellationToken cancellationToken = default);
+    Task<bool> CanReadAsync<TResource>(ClaimsPrincipal user, TResource resource, CancellationToken cancellationToken = default);
 
-    Task<bool> CanWriteOrganizationAsync(ClaimsPrincipal user, Guid organizationId, CancellationToken cancellationToken = default);
+    Task<bool> CanWriteAsync<TResource>(ClaimsPrincipal user, TResource resource, CancellationToken cancellationToken = default);
 }

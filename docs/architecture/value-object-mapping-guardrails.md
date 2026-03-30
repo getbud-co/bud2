@@ -7,8 +7,8 @@ Formato por linha:
 
 Linhas iniciadas com `#` são comentários.
 
-src/Api/Bud.Application/Features/Collaborators/UseCases/PatchCollaborator.cs|PersonName.TryCreate(requestedFullName||UpdateProfile(|
+src/Api/Bud.Application/Features/Employees/UseCases/PatchEmployee.cs|PersonName.TryCreate(requestedFullName||UpdateProfile(|
 src/Api/Bud.Application/Features/Indicators/UseCases/CreateCheckin.cs|indicator.CreateCheckin(|
 src/Api/Bud.Application/Features/Indicators/UseCases/PatchCheckin.cs|indicator.UpdateCheckin(|
-src/Api/Bud.Application/Features/Goals/UseCases/CreateGoal.cs|goal.CollaboratorId|
-src/Api/Bud.Application/Features/Goals/UseCases/PatchGoal.cs|goal.CollaboratorId|
+src/Api/Bud.Application/Features/Missions/UseCases/CreateMission.cs|mission.EmployeeId|
+src/Api/Bud.Application/Features/Missions/UseCases/PatchMission.cs|mission.EmployeeId|

@@ -18,7 +18,7 @@ public sealed partial class DeleteOrganization(
     {
         LogDeletingOrganization(logger, id);
 
-        var organization = await organizationRepository.GetByIdWithOwnerAsync(id, cancellationToken);
+        var organization = await organizationRepository.GetByIdAsync(id, cancellationToken);
         if (organization is null)
         {
             LogOrganizationDeletionFailed(logger, id, "Not found");
@@ -33,17 +33,9 @@ public sealed partial class DeleteOrganization(
                 ErrorType.Validation);
         }
 
-        if (await organizationRepository.HasWorkspacesAsync(id, cancellationToken))
+        if (await organizationRepository.HasEmployeesAsync(id, cancellationToken))
         {
-            LogOrganizationDeletionFailed(logger, id, "Has workspaces");
-            return Result.Failure(
-                "Não é possível excluir a organização porque ela possui workspaces associados. Exclua os workspaces primeiro.",
-                ErrorType.Conflict);
-        }
-
-        if (await organizationRepository.HasCollaboratorsAsync(id, cancellationToken))
-        {
-            LogOrganizationDeletionFailed(logger, id, "Has collaborators");
+            LogOrganizationDeletionFailed(logger, id, "Has employees");
             return Result.Failure(
                 "Não é possível excluir a organização porque ela possui colaboradores associados. Remova os colaboradores primeiro.",
                 ErrorType.Conflict);

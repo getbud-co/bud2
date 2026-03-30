@@ -63,8 +63,8 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Name = "Valid Template",
             Description = "A valid mission template",
-            GoalNamePattern = "Mission - {name}",
-            GoalDescriptionPattern = "Description for {name}",
+            MissionNamePattern = "Mission - {name}",
+            MissionDescriptionPattern = "Description for {name}",
             Indicators = new List<TemplateIndicatorRequest>
             {
                 new()
@@ -95,8 +95,8 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         template.Should().NotBeNull();
         template!.Name.Should().Be("Valid Template");
         template.Description.Should().Be("A valid mission template");
-        template.GoalNamePattern.Should().Be("Mission - {name}");
-        template.GoalDescriptionPattern.Should().Be("Description for {name}");
+        template.MissionNamePattern.Should().Be("Mission - {name}");
+        template.MissionDescriptionPattern.Should().Be("Description for {name}");
         template.Indicators.Should().HaveCount(2);
     }
 
@@ -104,15 +104,15 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
     public async Task Create_WithObjectivesAndObjectiveMetric_ReturnsCreatedWithObjectiveLink()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var request = new CreateTemplateRequest
         {
             Name = "Template com objetivos",
-            Goals =
+            Missions =
             [
-                new TemplateGoalRequest
+                new TemplateMissionRequest
                 {
-                    Id = goalId,
+                    Id = missionId,
                     Name = "Objetivo estratégico",
                     OrderIndex = 0
                 }
@@ -124,7 +124,7 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
                     Name = "Métrica vinculada",
                     Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                     OrderIndex = 0,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = Bud.Shared.Kernel.Enums.IndicatorUnit.Percentage
@@ -139,9 +139,9 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var template = await response.Content.ReadFromJsonAsync<Template>();
         template.Should().NotBeNull();
-        template!.Goals.Should().ContainSingle();
+        template!.Missions.Should().ContainSingle();
         template.Indicators.Should().ContainSingle();
-        template.Indicators.First().TemplateGoalId.Should().Be(template.Goals.First().Id);
+        template.Indicators.First().TemplateMissionId.Should().Be(template.Missions.First().Id);
     }
 
     [Fact]
@@ -235,8 +235,8 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Name = "Updated Template Name",
             Description = "Updated description",
-            GoalNamePattern = "Updated - {name}",
-            GoalDescriptionPattern = "Updated desc for {name}",
+            MissionNamePattern = "Updated - {name}",
+            MissionDescriptionPattern = "Updated desc for {name}",
             Indicators = new List<TemplateIndicatorRequest>
             {
                 new()
@@ -261,8 +261,8 @@ public class TemplatesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         updated.Should().NotBeNull();
         updated!.Name.Should().Be("Updated Template Name");
         updated.Description.Should().Be("Updated description");
-        updated.GoalNamePattern.Should().Be("Updated - {name}");
-        updated.GoalDescriptionPattern.Should().Be("Updated desc for {name}");
+        updated.MissionNamePattern.Should().Be("Updated - {name}");
+        updated.MissionDescriptionPattern.Should().Be("Updated desc for {name}");
         updated.Indicators.Should().HaveCount(1);
     }
 

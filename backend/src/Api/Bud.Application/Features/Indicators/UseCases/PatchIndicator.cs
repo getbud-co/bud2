@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -16,9 +17,17 @@ public sealed record PatchIndicatorCommand(
 public sealed partial class PatchIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<PatchIndicator> logger,
-    IUnitOfWork? unitOfWork = null)
+    IUnitOfWork? unitOfWork = null,
+    IApplicationAuthorizationGateway? authorizationGateway = null)
 {
+    public Task<Result<Indicator>> ExecuteAsync(
+        Guid id,
+        PatchIndicatorCommand command,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, command, cancellationToken);
+
     public async Task<Result<Indicator>> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid id,
         PatchIndicatorCommand command,
         CancellationToken cancellationToken = default)
@@ -30,6 +39,16 @@ public sealed partial class PatchIndicator(
         {
             LogIndicatorPatchFailed(logger, id, "Not found");
             return Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound);
+        }
+
+        if (authorizationGateway is not null)
+        {
+            var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
+            if (!canWrite)
+            {
+                LogIndicatorPatchFailed(logger, id, UserErrorMessages.IndicatorUpdateForbidden);
+                return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorUpdateForbidden);
+            }
         }
 
         try

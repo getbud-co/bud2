@@ -4,7 +4,7 @@ public sealed record CheckinCreatedDomainEvent(
     Guid CheckinId,
     Guid IndicatorId,
     Guid OrganizationId,
-    Guid CollaboratorId,
+    Guid EmployeeId,
     string IndicatorName) : IDomainEvent
 {
     public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;

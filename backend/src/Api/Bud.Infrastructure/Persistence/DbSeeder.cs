@@ -18,14 +18,13 @@ public static class DbSeeder
             budOrg = new Organization
             {
                 Id = Guid.NewGuid(),
-                Name = DefaultOrganizationName,
-                OwnerId = null
+                Name = DefaultOrganizationName
             };
             context.Organizations.Add(budOrg);
             await context.SaveChangesAsync();
         }
 
-        var adminLeader = await context.Collaborators
+        var adminLeader = await context.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c =>
                 c.OrganizationId == budOrg.Id &&
@@ -33,28 +32,22 @@ public static class DbSeeder
 
         if (adminLeader is null)
         {
-            adminLeader = new Collaborator
+            adminLeader = new Employee
             {
                 Id = Guid.NewGuid(),
                 FullName = "Administrador Global",
                 Email = DefaultAdminEmail,
-                Role = CollaboratorRole.Leader,
+                Role = EmployeeRole.Leader,
                 OrganizationId = budOrg.Id,
                 IsGlobalAdmin = true
             };
-            context.Collaborators.Add(adminLeader);
+            context.Employees.Add(adminLeader);
             await context.SaveChangesAsync();
         }
 
         if (!adminLeader.IsGlobalAdmin)
         {
             adminLeader.IsGlobalAdmin = true;
-            await context.SaveChangesAsync();
-        }
-
-        if (budOrg.OwnerId != adminLeader.Id)
-        {
-            budOrg.OwnerId = adminLeader.Id;
             await context.SaveChangesAsync();
         }
 
@@ -93,10 +86,10 @@ public static class DbSeeder
 
     private static Template BuildBscTemplate(Guid organizationId)
     {
-        var financeiraGoalId = Guid.NewGuid();
-        var clientesGoalId = Guid.NewGuid();
-        var processosGoalId = Guid.NewGuid();
-        var aprendizadoGoalId = Guid.NewGuid();
+        var financeiraMissionId = Guid.NewGuid();
+        var clientesMissionId = Guid.NewGuid();
+        var processosMissionId = Guid.NewGuid();
+        var aprendizadoMissionId = Guid.NewGuid();
 
         return new Template
         {
@@ -104,40 +97,40 @@ public static class DbSeeder
             OrganizationId = organizationId,
             Name = "BSC",
             Description = "Balanced Scorecard — framework para equilibrar execução estratégica entre finanças, clientes, processos e aprendizado.",
-            GoalNamePattern = "BSC — ",
-            GoalDescriptionPattern = "Meta estratégica baseada nas perspectivas do Balanced Scorecard.",
-            Goals =
+            MissionNamePattern = "BSC — ",
+            MissionDescriptionPattern = "Meta estratégica baseada nas perspectivas do Balanced Scorecard.",
+            Missions =
             [
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = financeiraGoalId,
+                    Id = financeiraMissionId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva Financeira",
                     Description = "Objetivos de desempenho econômico e sustentabilidade financeira.",
                     OrderIndex = 0,
                     Dimension = "Financeira"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = clientesGoalId,
+                    Id = clientesMissionId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Clientes",
                     Description = "Objetivos relacionados à proposta de valor e satisfação do cliente.",
                     OrderIndex = 1,
                     Dimension = "Clientes"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = processosGoalId,
+                    Id = processosMissionId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Processos Internos",
                     Description = "Objetivos de eficiência e excelência operacional.",
                     OrderIndex = 2,
                     Dimension = "Processos Internos"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = aprendizadoGoalId,
+                    Id = aprendizadoMissionId,
                     OrganizationId = organizationId,
                     Name = "Perspectiva de Aprendizado e Crescimento",
                     Description = "Objetivos de capacidade organizacional, pessoas e inovação.",
@@ -154,7 +147,7 @@ public static class DbSeeder
                     Name = "Resultado Financeiro",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 0,
-                    TemplateGoalId = financeiraGoalId,
+                    TemplateMissionId = financeiraMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -166,7 +159,7 @@ public static class DbSeeder
                     Name = "Satisfação de Clientes",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 1,
-                    TemplateGoalId = clientesGoalId,
+                    TemplateMissionId = clientesMissionId,
                     QuantitativeType = QuantitativeIndicatorType.KeepAbove,
                     MinValue = 70,
                     MaxValue = 100,
@@ -179,7 +172,7 @@ public static class DbSeeder
                     Name = "Eficiência de Processos Internos",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 2,
-                    TemplateGoalId = processosGoalId,
+                    TemplateMissionId = processosMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -191,7 +184,7 @@ public static class DbSeeder
                     Name = "Capacitação e Aprendizado",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 3,
-                    TemplateGoalId = aprendizadoGoalId,
+                    TemplateMissionId = aprendizadoMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -202,10 +195,10 @@ public static class DbSeeder
 
     private static Template BuildStrategicMapTemplate(Guid organizationId)
     {
-        var crescimentoGoalId = Guid.NewGuid();
-        var processosGoalId = Guid.NewGuid();
-        var clientesGoalId = Guid.NewGuid();
-        var financeiraGoalId = Guid.NewGuid();
+        var crescimentoMissionId = Guid.NewGuid();
+        var processosMissionId = Guid.NewGuid();
+        var clientesMissionId = Guid.NewGuid();
+        var financeiraMissionId = Guid.NewGuid();
 
         return new Template
         {
@@ -213,40 +206,40 @@ public static class DbSeeder
             OrganizationId = organizationId,
             Name = "Mapa Estratégico",
             Description = "Mapa Estratégico — template para explicitar objetivos estratégicos e relações de causa e efeito.",
-            GoalNamePattern = "Mapa Estratégico — ",
-            GoalDescriptionPattern = "Meta para construção e acompanhamento do mapa estratégico.",
-            Goals =
+            MissionNamePattern = "Mapa Estratégico — ",
+            MissionDescriptionPattern = "Meta para construção e acompanhamento do mapa estratégico.",
+            Missions =
             [
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = crescimentoGoalId,
+                    Id = crescimentoMissionId,
                     OrganizationId = organizationId,
                     Name = "Capacidades Organizacionais",
                     Description = "Base de pessoas, cultura e inovação que viabiliza a estratégia.",
                     OrderIndex = 0,
                     Dimension = "Aprendizado e Crescimento"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = processosGoalId,
+                    Id = processosMissionId,
                     OrganizationId = organizationId,
                     Name = "Excelência de Processos",
                     Description = "Processos críticos para entregar valor com previsibilidade.",
                     OrderIndex = 1,
                     Dimension = "Processos Internos"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = clientesGoalId,
+                    Id = clientesMissionId,
                     OrganizationId = organizationId,
                     Name = "Valor para Clientes",
                     Description = "Resultados percebidos pelos clientes e posicionamento competitivo.",
                     OrderIndex = 2,
                     Dimension = "Clientes"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = financeiraGoalId,
+                    Id = financeiraMissionId,
                     OrganizationId = organizationId,
                     Name = "Resultados Financeiros",
                     Description = "Impacto econômico final esperado da estratégia.",
@@ -263,7 +256,7 @@ public static class DbSeeder
                     Name = "Objetivo Estratégico 1",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 0,
-                    TemplateGoalId = crescimentoGoalId,
+                    TemplateMissionId = crescimentoMissionId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
                 new TemplateIndicator
@@ -273,7 +266,7 @@ public static class DbSeeder
                     Name = "Objetivo Estratégico 2",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 1,
-                    TemplateGoalId = processosGoalId,
+                    TemplateMissionId = processosMissionId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
                 new TemplateIndicator
@@ -283,7 +276,7 @@ public static class DbSeeder
                     Name = "Objetivo Estratégico 3",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 2,
-                    TemplateGoalId = clientesGoalId,
+                    TemplateMissionId = clientesMissionId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 },
                 new TemplateIndicator
@@ -293,7 +286,7 @@ public static class DbSeeder
                     Name = "Objetivo Estratégico 4",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 3,
-                    TemplateGoalId = financeiraGoalId,
+                    TemplateMissionId = financeiraMissionId,
                     TargetText = "Descreva o objetivo e as relações de causa e efeito."
                 }
             ]
@@ -302,9 +295,9 @@ public static class DbSeeder
 
     private static Template BuildAnnualStrategicPlanningTemplate(Guid organizationId)
     {
-        var portfolioGoalId = Guid.NewGuid();
-        var executionGoalId = Guid.NewGuid();
-        var productsGoalId = Guid.NewGuid();
+        var portfolioMissionId = Guid.NewGuid();
+        var executionMissionId = Guid.NewGuid();
+        var productsMissionId = Guid.NewGuid();
 
         return new Template
         {
@@ -312,31 +305,31 @@ public static class DbSeeder
             OrganizationId = organizationId,
             Name = "Planejamento Estratégico Anual",
             Description = "Template para consolidar prioridades, entregas e marcos estratégicos de um ciclo anual.",
-            GoalNamePattern = "Plano Estratégico Anual — ",
-            GoalDescriptionPattern = "Planejamento estratégico anual com marcos e prioridades do ciclo.",
-            Goals =
+            MissionNamePattern = "Plano Estratégico Anual — ",
+            MissionDescriptionPattern = "Planejamento estratégico anual com marcos e prioridades do ciclo.",
+            Missions =
             [
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = portfolioGoalId,
+                    Id = portfolioMissionId,
                     OrganizationId = organizationId,
                     Name = "Priorização Estratégica",
                     Description = "Definição das frentes prioritárias do ano.",
                     OrderIndex = 0,
                     Dimension = "Financeira"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = executionGoalId,
+                    Id = executionMissionId,
                     OrganizationId = organizationId,
                     Name = "Execução e Governança",
                     Description = "Ritmo e disciplina de execução do plano.",
                     OrderIndex = 1,
                     Dimension = "Processos Internos"
                 },
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = productsGoalId,
+                    Id = productsMissionId,
                     OrganizationId = organizationId,
                     Name = "Evolução de Produtos",
                     Description = "Resultados estratégicos esperados para produtos no ciclo.",
@@ -353,7 +346,7 @@ public static class DbSeeder
                     Name = "Prioridade Estratégica 1",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 0,
-                    TemplateGoalId = portfolioGoalId,
+                    TemplateMissionId = portfolioMissionId,
                     TargetText = "Descreva o objetivo e os entregáveis da prioridade."
                 },
                 new TemplateIndicator
@@ -363,7 +356,7 @@ public static class DbSeeder
                     Name = "Prioridade Estratégica 2",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 1,
-                    TemplateGoalId = productsGoalId,
+                    TemplateMissionId = productsMissionId,
                     TargetText = "Descreva o objetivo e os entregáveis da prioridade."
                 },
                 new TemplateIndicator
@@ -373,7 +366,7 @@ public static class DbSeeder
                     Name = "Execução do Plano no Ano",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 2,
-                    TemplateGoalId = executionGoalId,
+                    TemplateMissionId = executionMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -384,7 +377,7 @@ public static class DbSeeder
 
     private static Template BuildOkrTemplate(Guid organizationId)
     {
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
 
         return new Template
         {
@@ -392,13 +385,13 @@ public static class DbSeeder
             OrganizationId = organizationId,
             Name = "OKR",
             Description = "Objectives and Key Results — framework para definir e acompanhar objetivos com resultados-chave mensuráveis.",
-            GoalNamePattern = "OKR — ",
-            GoalDescriptionPattern = "Meta seguindo o framework OKR com resultados-chave quantitativos.",
-            Goals =
+            MissionNamePattern = "OKR — ",
+            MissionDescriptionPattern = "Meta seguindo o framework OKR com resultados-chave quantitativos.",
+            Missions =
             [
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = goalId,
+                    Id = missionId,
                     OrganizationId = organizationId,
                     Name = "Objetivo Principal",
                     Description = "Objetivo aspiracional do ciclo de OKR.",
@@ -415,7 +408,7 @@ public static class DbSeeder
                     Name = "Resultado-chave 1",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 0,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -427,7 +420,7 @@ public static class DbSeeder
                     Name = "Resultado-chave 2",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 1,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -439,7 +432,7 @@ public static class DbSeeder
                     Name = "Resultado-chave 3",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 2,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage
@@ -450,7 +443,7 @@ public static class DbSeeder
 
     private static Template BuildPdiTemplate(Guid organizationId)
     {
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
 
         return new Template
         {
@@ -458,13 +451,13 @@ public static class DbSeeder
             OrganizationId = organizationId,
             Name = "PDI",
             Description = "Plano de Desenvolvimento Individual — framework para acompanhar ações de desenvolvimento pessoal e profissional.",
-            GoalNamePattern = "PDI — ",
-            GoalDescriptionPattern = "Plano de desenvolvimento individual com ações qualitativas e acompanhamento de progresso.",
-            Goals =
+            MissionNamePattern = "PDI — ",
+            MissionDescriptionPattern = "Plano de desenvolvimento individual com ações qualitativas e acompanhamento de progresso.",
+            Missions =
             [
-                new TemplateGoal
+                new TemplateMission
                 {
-                    Id = goalId,
+                    Id = missionId,
                     OrganizationId = organizationId,
                     Name = "Desenvolvimento Individual",
                     Description = "Capacidades e competências a desenvolver no ciclo.",
@@ -481,7 +474,7 @@ public static class DbSeeder
                     Name = "Ação de desenvolvimento 1",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 0,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     TargetText = "Descreva a ação de desenvolvimento"
                 },
                 new TemplateIndicator
@@ -491,7 +484,7 @@ public static class DbSeeder
                     Name = "Ação de desenvolvimento 2",
                     Type = IndicatorType.Qualitative,
                     OrderIndex = 1,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     TargetText = "Descreva a ação de desenvolvimento"
                 },
                 new TemplateIndicator
@@ -501,7 +494,7 @@ public static class DbSeeder
                     Name = "Progresso geral",
                     Type = IndicatorType.Quantitative,
                     OrderIndex = 2,
-                    TemplateGoalId = goalId,
+                    TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
                     Unit = IndicatorUnit.Percentage

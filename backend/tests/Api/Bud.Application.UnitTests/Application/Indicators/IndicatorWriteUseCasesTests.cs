@@ -13,8 +13,8 @@ public sealed class IndicatorWriteUseCasesTests
         var metricRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
 
         metricRepository
-            .Setup(repository => repository.GetGoalByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Goal?)null);
+            .Setup(repository => repository.GetMissionByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Mission?)null);
 
         var useCase = new CreateIndicator(metricRepository.Object, NullLogger<CreateIndicator>.Instance);
 
@@ -37,19 +37,19 @@ public sealed class IndicatorWriteUseCasesTests
     public async Task DefineMissionMetric_WhenAuthorized_CreatesMetricViaRepository()
     {
         var organizationId = Guid.NewGuid();
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = GoalStatus.Planned,
+            Status = MissionStatus.Planned,
             OrganizationId = organizationId
         };
 
         var metricRepository = new Mock<IIndicatorRepository>();
         metricRepository
-            .Setup(repository => repository.GetGoalByIdAsync(mission.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetMissionByIdAsync(mission.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mission);
         metricRepository
             .Setup(repository => repository.AddAsync(It.IsAny<Indicator>(), It.IsAny<CancellationToken>()))
@@ -72,7 +72,7 @@ public sealed class IndicatorWriteUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Quality Assessment");
-        result.Value.GoalId.Should().Be(mission.Id);
+        result.Value.MissionId.Should().Be(mission.Id);
         result.Value.OrganizationId.Should().Be(organizationId);
         metricRepository.Verify(repository => repository.AddAsync(It.IsAny<Indicator>(), It.IsAny<CancellationToken>()), Times.Once);
         metricRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -112,7 +112,7 @@ public sealed class IndicatorWriteUseCasesTests
             Id = indicatorId,
             Name = "Original",
             Type = IndicatorType.Qualitative,
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             OrganizationId = organizationId
         };
 
@@ -149,7 +149,7 @@ public sealed class IndicatorWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Metrica",
             Type = IndicatorType.Qualitative,
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             OrganizationId = Guid.NewGuid()
         };
 

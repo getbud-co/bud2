@@ -7,7 +7,7 @@ public sealed record BudAuthContext(
     string Email,
     string DisplayName,
     bool IsGlobalAdmin,
-    Guid? CollaboratorId,
+    Guid? EmployeeId,
     Guid? OrganizationId)
 {
     public static BudAuthContext FromResponse(SessionResponse response)
@@ -17,7 +17,7 @@ public sealed record BudAuthContext(
             response.Email,
             response.DisplayName,
             response.IsGlobalAdmin,
-            response.CollaboratorId,
+            response.EmployeeId,
             response.OrganizationId);
     }
 }

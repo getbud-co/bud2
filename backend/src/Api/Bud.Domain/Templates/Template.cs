@@ -8,10 +8,10 @@ public sealed class Template : ITenantEntity, IAggregateRoot
 
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string? GoalNamePattern { get; set; }
-    public string? GoalDescriptionPattern { get; set; }
+    public string? MissionNamePattern { get; set; }
+    public string? MissionDescriptionPattern { get; set; }
 
-    public ICollection<TemplateGoal> Goals { get; set; } = new List<TemplateGoal>();
+    public ICollection<TemplateMission> Missions { get; set; } = new List<TemplateMission>();
     public ICollection<TemplateIndicator> Indicators { get; set; } = new List<TemplateIndicator>();
 
     public static Template Create(
@@ -19,8 +19,8 @@ public sealed class Template : ITenantEntity, IAggregateRoot
         Guid organizationId,
         string name,
         string? description,
-        string? goalNamePattern,
-        string? goalDescriptionPattern)
+        string? missionNamePattern,
+        string? missionDescriptionPattern)
     {
         var template = new Template
         {
@@ -28,15 +28,15 @@ public sealed class Template : ITenantEntity, IAggregateRoot
             OrganizationId = organizationId,
         };
 
-        template.UpdateBasics(name, description, goalNamePattern, goalDescriptionPattern);
+        template.UpdateBasics(name, description, missionNamePattern, missionDescriptionPattern);
         return template;
     }
 
     public void UpdateBasics(
         string name,
         string? description,
-        string? goalNamePattern,
-        string? goalDescriptionPattern)
+        string? missionNamePattern,
+        string? missionDescriptionPattern)
     {
         if (!EntityName.TryCreate(name, out var entityName))
         {
@@ -45,42 +45,42 @@ public sealed class Template : ITenantEntity, IAggregateRoot
 
         Name = entityName.Value;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-        GoalNamePattern = string.IsNullOrWhiteSpace(goalNamePattern) ? null : goalNamePattern.Trim();
-        GoalDescriptionPattern = string.IsNullOrWhiteSpace(goalDescriptionPattern) ? null : goalDescriptionPattern.Trim();
+        MissionNamePattern = string.IsNullOrWhiteSpace(missionNamePattern) ? null : missionNamePattern.Trim();
+        MissionDescriptionPattern = string.IsNullOrWhiteSpace(missionDescriptionPattern) ? null : missionDescriptionPattern.Trim();
     }
 
     public void ReplaceIndicators(IEnumerable<TemplateIndicatorDraft> indicatorDrafts)
-        => ReplaceGoalsAndIndicators([], indicatorDrafts);
+        => ReplaceMissionsAndIndicators([], indicatorDrafts);
 
-    public void ReplaceGoalsAndIndicators(
-        IEnumerable<TemplateGoalDraft> goalDrafts,
+    public void ReplaceMissionsAndIndicators(
+        IEnumerable<TemplateMissionDraft> missionDrafts,
         IEnumerable<TemplateIndicatorDraft> indicatorDrafts)
     {
-        ArgumentNullException.ThrowIfNull(goalDrafts);
+        ArgumentNullException.ThrowIfNull(missionDrafts);
         ArgumentNullException.ThrowIfNull(indicatorDrafts);
 
-        var goalList = goalDrafts
-            .Select(goal => TemplateGoal.Create(
-                goal.Id ?? Guid.NewGuid(),
+        var missionList = missionDrafts
+            .Select(mission => TemplateMission.Create(
+                mission.Id ?? Guid.NewGuid(),
                 OrganizationId,
                 Id,
-                goal.Name,
-                goal.Description,
-                goal.OrderIndex,
-                goal.Dimension,
-                goal.ParentId))
+                mission.Name,
+                mission.Description,
+                mission.OrderIndex,
+                mission.Dimension,
+                mission.ParentId))
             .ToList();
 
-        var goalIds = goalList
-            .Select(goal => goal.Id)
+        var missionIds = missionList
+            .Select(mission => mission.Id)
             .ToHashSet();
 
-        Goals = goalList;
+        Missions = missionList;
 
         Indicators = indicatorDrafts
             .Select(indicator =>
             {
-                if (indicator.TemplateGoalId.HasValue && !goalIds.Contains(indicator.TemplateGoalId.Value))
+                if (indicator.TemplateMissionId.HasValue && !missionIds.Contains(indicator.TemplateMissionId.Value))
                 {
                     throw new DomainInvariantException("O indicador referencia uma meta de template inexistente.");
                 }
@@ -92,7 +92,7 @@ public sealed class Template : ITenantEntity, IAggregateRoot
                     indicator.Name,
                     indicator.Type,
                     indicator.OrderIndex,
-                    indicator.TemplateGoalId,
+                    indicator.TemplateMissionId,
                     indicator.QuantitativeType,
                     indicator.MinValue,
                     indicator.MaxValue,

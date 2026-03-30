@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 
@@ -6,15 +7,17 @@ namespace Bud.Application.Features.Notifications.UseCases;
 public sealed class PatchNotification(
     INotificationRepository notificationRepository,
     ITenantProvider tenantProvider,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid notificationId,
         CancellationToken cancellationToken = default)
     {
-        if (tenantProvider.CollaboratorId is null)
+        if (tenantProvider.EmployeeId is null)
         {
-            return Result.Forbidden(UserErrorMessages.CollaboratorNotIdentified);
+            return Result.Forbidden(UserErrorMessages.EmployeeNotIdentified);
         }
 
         var notification = await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
@@ -23,7 +26,8 @@ public sealed class PatchNotification(
             return Result.NotFound(UserErrorMessages.NotificationNotFound);
         }
 
-        if (notification.RecipientCollaboratorId != tenantProvider.CollaboratorId.Value)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new NotificationResource(notificationId), cancellationToken);
+        if (!canWrite)
         {
             return Result.Forbidden(UserErrorMessages.NotificationPatchForbidden);
         }
