@@ -42,6 +42,12 @@ public sealed partial class PatchOrganization(
             if (command.Name.HasValue)
             {
                 organization.Rename(command.Name.Value ?? string.Empty);
+
+                if (await organizationRepository.ExistsByNameAsync(organization.Name, organization.Id, cancellationToken))
+                {
+                    LogOrganizationPatchFailed(logger, id, "Organization domain already exists");
+                    return Result<Organization>.Failure(UserErrorMessages.OrganizationNameConflict, ErrorType.Conflict);
+                }
             }
 
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);

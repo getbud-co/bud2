@@ -30,13 +30,46 @@ public sealed class OrganizationUseCasesTests
     [Fact]
     public async Task CreateAsync_WithValidRequest_ReturnsSuccess()
     {
+        _orgRepo.Setup(r => r.ExistsByNameAsync("test-org.com", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         var useCase = CreateRegisterOrganization();
 
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Test Org"));
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com"));
 
         result.IsSuccess.Should().BeTrue();
         _orgRepo.Verify(r => r.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()), Times.Once);
         _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithDuplicateDomain_ReturnsConflict()
+    {
+        _orgRepo.Setup(r => r.ExistsByNameAsync("test-org.com", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var useCase = CreateRegisterOrganization();
+
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.Should().Be("Já existe uma organização cadastrada com este domínio.");
+        _orgRepo.Verify(r => r.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithInvalidDomain_ReturnsValidationError()
+    {
+        var useCase = CreateRegisterOrganization();
+
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Organizacao Teste"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Should().Be("O nome da organização deve ser um domínio válido (ex: empresa.com.br).");
+        _orgRepo.Verify(r => r.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()), Times.Never);
+        _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -76,13 +109,51 @@ public sealed class OrganizationUseCasesTests
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "Test Org" };
         _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.ExistsByNameAsync("updated.com", orgId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         var useCase = CreateRenameOrganization();
 
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name"));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com"));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Name.Should().Be("New Name");
+        result.Value!.Name.Should().Be("updated.com");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithDuplicateDomain_ReturnsConflict()
+    {
+        var orgId = Guid.NewGuid();
+        var org = new Organization { Id = orgId, Name = "test-org.com" };
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.ExistsByNameAsync("updated.com", orgId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var useCase = CreateRenameOrganization();
+
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.Should().Be("Já existe uma organização cadastrada com este domínio.");
+        _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithInvalidDomain_ReturnsValidationError()
+    {
+        var orgId = Guid.NewGuid();
+        var org = new Organization { Id = orgId, Name = "test-org.com" };
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+
+        var useCase = CreateRenameOrganization();
+
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("Nome Invalido"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Should().Be("O nome da organização deve ser um domínio válido (ex: empresa.com.br).");
+        _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -120,7 +191,7 @@ public sealed class OrganizationUseCasesTests
     public async Task DeleteAsync_WithEmployees_ReturnsConflict()
     {
         var orgId = Guid.NewGuid();
-        var org = new Organization { Id = orgId, Name = "Test Org" };
+        var org = new Organization { Id = orgId, Name = "test-org.com" };
         _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
         _orgRepo.Setup(r => r.HasEmployeesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -137,7 +208,7 @@ public sealed class OrganizationUseCasesTests
     public async Task DeleteAsync_WithValidOrganization_Succeeds()
     {
         var orgId = Guid.NewGuid();
-        var org = new Organization { Id = orgId, Name = "Test Org" };
+        var org = new Organization { Id = orgId, Name = "test-org.com" };
         _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
         _orgRepo.Setup(r => r.HasEmployeesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 

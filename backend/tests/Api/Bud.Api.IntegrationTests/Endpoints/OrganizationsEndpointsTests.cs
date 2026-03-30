@@ -93,9 +93,10 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Create_WithValidRequest_ReturnsCreated()
     {
         // Arrange
+        var organizationDomain = $"test-org-{Guid.NewGuid():N}.com";
         var request = new CreateOrganizationRequest
         {
-            Name = "test-org.com"
+            Name = organizationDomain
         };
 
         // Act
@@ -105,7 +106,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var organization = await response.Content.ReadFromJsonAsync<Organization>();
         organization.Should().NotBeNull();
-        organization!.Name.Should().Be("test-org.com");
+        organization!.Name.Should().Be(organizationDomain);
         organization.Id.Should().NotBeEmpty();
     }
 
@@ -126,12 +127,32 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     }
 
     [Fact]
+    public async Task Create_WithDuplicateDomain_ReturnsConflict()
+    {
+        var request = new CreateOrganizationRequest
+        {
+            Name = $"duplicate-{Guid.NewGuid():N}.com"
+        };
+
+        var firstResponse = await _client.PostAsJsonAsync("/api/organizations", request);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var secondResponse = await _client.PostAsJsonAsync("/api/organizations", request);
+
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await secondResponse.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Já existe uma organização cadastrada com este domínio.");
+    }
+
+    [Fact]
     public async Task GetById_WithExistingId_ReturnsOk()
     {
         // Arrange
+        var organizationDomain = $"getbyid-test-{Guid.NewGuid():N}.com";
         var createRequest = new CreateOrganizationRequest
         {
-            Name = "getbyid-test.com"
+            Name = organizationDomain
         };
         var createResponse = await _client.PostAsJsonAsync("/api/organizations", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Organization>();
@@ -144,7 +165,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         var organization = await response.Content.ReadFromJsonAsync<Organization>();
         organization.Should().NotBeNull();
         organization!.Id.Should().Be(created.Id);
-        organization.Name.Should().Be("getbyid-test.com");
+        organization.Name.Should().Be(organizationDomain);
     }
 
     [Fact]
@@ -164,13 +185,15 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task GetAll_ReturnsPagedResult()
     {
         // Arrange
+        var firstDomain = $"org1-{Guid.NewGuid():N}.com";
+        var secondDomain = $"org2-{Guid.NewGuid():N}.com";
         await _client.PostAsJsonAsync("/api/organizations", new CreateOrganizationRequest
         {
-            Name = "org1.com"
+            Name = firstDomain
         });
         await _client.PostAsJsonAsync("/api/organizations", new CreateOrganizationRequest
         {
-            Name = "org2.com"
+            Name = secondDomain
         });
 
         // Act
@@ -231,14 +254,16 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     public async Task Update_WithValidRequest_ReturnsOk()
     {
         // Arrange
+        var originalDomain = $"original-{Guid.NewGuid():N}.com";
+        var updatedDomain = $"updated-{Guid.NewGuid():N}.com";
         var createRequest = new CreateOrganizationRequest
         {
-            Name = "original.com"
+            Name = originalDomain
         };
         var createResponse = await _client.PostAsJsonAsync("/api/organizations", createRequest);
         var created = await createResponse.Content.ReadFromJsonAsync<Organization>();
 
-        var updateRequest = new PatchOrganizationRequest { Name = "updated.com" };
+        var updateRequest = new PatchOrganizationRequest { Name = updatedDomain };
 
         // Act
         var response = await _client.PatchAsJsonAsync($"/api/organizations/{created!.Id}", updateRequest);
@@ -247,7 +272,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<Organization>();
         updated.Should().NotBeNull();
-        updated!.Name.Should().Be("updated.com");
+        updated!.Name.Should().Be(updatedDomain);
     }
 
     [Fact]
