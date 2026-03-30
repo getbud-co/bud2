@@ -12,7 +12,6 @@ public static class EmployeesContractMapper
             Email = source.Email,
             Role = source.Role,
             OrganizationId = source.OrganizationId,
-            TeamId = source.TeamId,
             LeaderId = source.LeaderId,
             IsGlobalAdmin = source.IsGlobalAdmin
         };

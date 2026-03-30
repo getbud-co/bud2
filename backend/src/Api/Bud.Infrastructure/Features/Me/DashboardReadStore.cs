@@ -13,9 +13,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
     {
         var employee = await dbContext.Employees
             .AsNoTracking()
-            .Include(c => c.Team)
             .Include(c => c.Leader)
-                .ThenInclude(l => l!.Team)
             .FirstOrDefaultAsync(c => c.Id == employeeId, ct);
 
         if (employee is null)
@@ -52,22 +50,26 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         }
         else
         {
-            var primaryTeamId = employee.TeamId;
+            var teamIds = await dbContext.EmployeeTeams
+                .AsNoTracking()
+                .Where(cteam => cteam.EmployeeId == employee.Id)
+                .Select(cteam => cteam.TeamId)
+                .Distinct()
+                .ToListAsync(ct);
 
-            if (primaryTeamId.HasValue)
+            if (teamIds.Count > 0)
             {
-                var team = await dbContext.Teams
+                var teams = await dbContext.Teams
                     .AsNoTracking()
                     .Include(t => t.Leader)
-                    .FirstOrDefaultAsync(t => t.Id == primaryTeamId.Value, ct);
-
-                leaderSource = team?.Leader;
-                teamNameOverride = team?.Name;
+                    .Where(t => teamIds.Contains(t.Id))
+                    .ToListAsync(ct);
 
                 var memberIds = await dbContext.EmployeeTeams
                     .AsNoTracking()
-                    .Where(cteam => cteam.TeamId == primaryTeamId.Value)
+                    .Where(cteam => teamIds.Contains(cteam.TeamId))
                     .Select(cteam => cteam.EmployeeId)
+                    .Distinct()
                     .ToListAsync(ct);
 
                 teamMembers = memberIds.Count > 0
@@ -76,13 +78,48 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                         .Where(c => memberIds.Contains(c.Id))
                         .ToListAsync(ct)
                     : [];
+
+                if (teams.Count == 1)
+                {
+                    leaderSource = teams[0].Leader;
+                    teamNameOverride = teams[0].Name;
+                }
+                else
+                {
+                    leaderSource = employee.Leader
+                        ?? (employee.Role == EmployeeRole.Leader ? employee : null);
+                }
             }
             else
             {
                 leaderSource = employee.Leader
                     ?? (employee.Role == EmployeeRole.Leader ? employee : null);
+
+                if (leaderSource is not null)
+                {
+                    var leaderTeamNames = await dbContext.EmployeeTeams
+                        .AsNoTracking()
+                        .Where(cteam => cteam.EmployeeId == leaderSource.Id)
+                        .Include(cteam => cteam.Team)
+                        .Select(cteam => cteam.Team.Name)
+                        .Distinct()
+                        .ToListAsync(ct);
+
+                    if (leaderTeamNames.Count == 1)
+                    {
+                        teamNameOverride = leaderTeamNames[0];
+                    }
+                }
+
                 teamMembers = [];
             }
+        }
+
+        if (leaderSource is not null)
+        {
+            teamMembers = teamMembers
+                .Where(member => member.Id != leaderSource.Id)
+                .ToList();
         }
 
         var teamHealth = await BuildTeamHealthAsync(leaderSource, teamMembers, employee.Id, employee.OrganizationId, teamNameOverride, ct);

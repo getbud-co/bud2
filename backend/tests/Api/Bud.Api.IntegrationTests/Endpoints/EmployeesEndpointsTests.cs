@@ -68,6 +68,58 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
+    public async Task Create_WithTeamId_AssignsMembershipAndAppearsInTeamEmployees()
+    {
+        await GetOrCreateAdminLeader();
+        var orgResponse = await _adminClient.PostAsJsonAsync("/api/organizations",
+            new CreateOrganizationRequest
+            {
+                Name = $"employee-team-{Guid.NewGuid():N}.com"
+            });
+        var org = (await orgResponse.Content.ReadFromJsonAsync<Organization>())!;
+
+        var leader = await CreateLeaderEmployee(org.Id);
+        var leaderClient = _factory.CreateTenantClient(org.Id, leader.Email, leader.Id);
+
+        var teamResponse = await leaderClient.PostAsJsonAsync("/api/teams",
+            new CreateTeamRequest
+            {
+                Name = $"Time {Guid.NewGuid():N}",
+                LeaderId = leader.Id
+            });
+        teamResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var team = (await teamResponse.Content.ReadFromJsonAsync<Team>())!;
+
+        var createRequest = new CreateEmployeeRequest
+        {
+            FullName = "Colaborador com Time",
+            Email = $"employee-team-{Guid.NewGuid():N}@test.com",
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor,
+            TeamId = team.Id
+        };
+
+        var createResponse = await leaderClient.PostAsJsonAsync("/api/employees", createRequest);
+
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var employee = await createResponse.Content.ReadFromJsonAsync<EmployeeResponse>();
+        employee.Should().NotBeNull();
+        var employeeId = employee!.Id;
+
+        var employeeTeamsResponse = await leaderClient.GetAsync($"/api/employees/{employeeId}/teams");
+        employeeTeamsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var employeeTeams = await employeeTeamsResponse.Content.ReadFromJsonAsync<List<EmployeeTeamResponse>>();
+        employeeTeams.Should().NotBeNull();
+        employeeTeams!.Should().Contain(t => t.Id == team.Id);
+
+        var teamEmployeesResponse = await leaderClient.GetAsync($"/api/teams/{team.Id}/employees");
+
+        teamEmployeesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pagedEmployees = await teamEmployeesResponse.Content.ReadFromJsonAsync<PagedResult<Employee>>();
+        pagedEmployees.Should().NotBeNull();
+        pagedEmployees!.Items.Should().Contain(e => e.Id == employee.Id);
+    }
+
+    [Fact]
     public async Task Update_AsNonLeader_ReturnsForbidden()
     {
         await GetOrCreateAdminLeader();
@@ -92,6 +144,43 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var response = await tenantClient.PatchAsJsonAsync($"/api/employees/{target.Id}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Update_WithLeaderFromAnotherOrganization_ReturnsBadRequest()
+    {
+        await GetOrCreateAdminLeader();
+
+        var org1Response = await _adminClient.PostAsJsonAsync("/api/organizations",
+            new CreateOrganizationRequest
+            {
+                Name = $"employee-org1-{Guid.NewGuid():N}.com"
+            });
+        var org1 = (await org1Response.Content.ReadFromJsonAsync<Organization>())!;
+
+        var org2Response = await _adminClient.PostAsJsonAsync("/api/organizations",
+            new CreateOrganizationRequest
+            {
+                Name = $"employee-org2-{Guid.NewGuid():N}.com"
+            });
+        var org2 = (await org2Response.Content.ReadFromJsonAsync<Organization>())!;
+
+        var leaderInOrg1 = await CreateLeaderEmployee(org1.Id);
+        var target = await CreateEmployee(org1.Id);
+        var foreignLeader = await CreateLeaderEmployee(org2.Id);
+        var leaderClient = _factory.CreateTenantClient(org1.Id, leaderInOrg1.Email, leaderInOrg1.Id);
+
+        var request = new PatchEmployeeRequest
+        {
+            LeaderId = foreignLeader.Id
+        };
+
+        var response = await leaderClient.PatchAsJsonAsync($"/api/employees/{target.Id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Errors.Should().ContainKey("LeaderId.Value");
     }
 
     [Fact]

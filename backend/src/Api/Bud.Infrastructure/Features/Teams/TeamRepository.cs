@@ -51,7 +51,13 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
 
     public async Task<PagedResult<Employee>> GetEmployeesAsync(Guid teamId, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.Employees.AsNoTracking().Where(c => c.TeamId == teamId);
+        var teamEmployeeIds = dbContext.EmployeeTeams
+            .Where(ct2 => ct2.TeamId == teamId)
+            .Select(ct2 => ct2.EmployeeId);
+
+        var query = dbContext.Employees
+            .AsNoTracking()
+            .Where(c => teamEmployeeIds.Contains(c.Id));
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -104,8 +110,23 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
     public async Task<bool> HasSubTeamsAsync(Guid teamId, CancellationToken ct = default)
         => await dbContext.Teams.AnyAsync(t => t.ParentTeamId == teamId, ct);
 
-    public Task<bool> HasMissionsAsync(Guid teamId, CancellationToken ct = default)
-        => Task.FromResult(false);
+    public async Task<bool> HasMissionsAsync(Guid teamId, CancellationToken ct = default)
+    {
+        var employeeIds = await dbContext.EmployeeTeams
+            .AsNoTracking()
+            .Where(employeeTeam => employeeTeam.TeamId == teamId)
+            .Select(employeeTeam => employeeTeam.EmployeeId)
+            .ToListAsync(ct);
+
+        if (employeeIds.Count == 0)
+        {
+            return false;
+        }
+
+        return await dbContext.Missions
+            .AsNoTracking()
+            .AnyAsync(mission => mission.EmployeeId.HasValue && employeeIds.Contains(mission.EmployeeId.Value), ct);
+    }
 
     public async Task AddAsync(Team entity, CancellationToken ct = default)
         => await dbContext.Teams.AddAsync(entity, ct);

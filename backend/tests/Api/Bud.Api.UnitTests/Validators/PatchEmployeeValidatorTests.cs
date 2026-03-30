@@ -11,11 +11,15 @@ public sealed class PatchEmployeeValidatorTests
     public async Task Validate_WithInvalidLeader_ShouldFail()
     {
         var employeeRepository = new Mock<IEmployeeRepository>();
+        var tenantProvider = new Mock<ITenantProvider>();
+        var tenantId = Guid.NewGuid();
+
+        tenantProvider.SetupGet(x => x.TenantId).Returns(tenantId);
         employeeRepository
-            .Setup(x => x.IsValidLeaderAsync(It.IsAny<Guid>(), null, It.IsAny<CancellationToken>()))
+            .Setup(x => x.IsValidLeaderAsync(It.IsAny<Guid>(), tenantId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var validator = new PatchEmployeeValidator(employeeRepository.Object);
+        var validator = new PatchEmployeeValidator(employeeRepository.Object, tenantProvider.Object);
         var request = new PatchEmployeeRequest
         {
             FullName = "John Doe",

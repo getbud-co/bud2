@@ -51,10 +51,12 @@ public sealed class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRe
 public sealed class PatchEmployeeValidator : AbstractValidator<PatchEmployeeRequest>
 {
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly ITenantProvider _tenantProvider;
 
-    public PatchEmployeeValidator(IEmployeeRepository employeeRepository)
+    public PatchEmployeeValidator(IEmployeeRepository employeeRepository, ITenantProvider tenantProvider)
     {
         _employeeRepository = employeeRepository;
+        _tenantProvider = tenantProvider;
 
         RuleFor(x => x.FullName.Value)
             .NotEmpty().WithMessage("Nome completo é obrigatório.")
@@ -83,6 +85,6 @@ public sealed class PatchEmployeeValidator : AbstractValidator<PatchEmployeeRequ
             return true;
         }
 
-        return await _employeeRepository.IsValidLeaderAsync(leaderId.Value, null, cancellationToken);
+        return await _employeeRepository.IsValidLeaderAsync(leaderId.Value, _tenantProvider.TenantId, cancellationToken);
     }
 }
