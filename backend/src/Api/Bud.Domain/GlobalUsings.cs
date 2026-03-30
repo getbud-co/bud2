@@ -1,3 +1,5 @@
+global using Bud.Domain.Cycles;
+global using Bud.Domain.Cycles.Events;
 global using Bud.Domain.Goals;
 global using Bud.Domain.Goals.Events;
 global using Bud.Domain.Indicators;

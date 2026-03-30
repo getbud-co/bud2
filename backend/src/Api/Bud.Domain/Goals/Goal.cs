@@ -7,6 +7,13 @@ public sealed class Goal : ITenantEntity, IAggregateRoot, IHasDomainEvents
     private readonly List<IDomainEvent> _domainEvents = [];
 
     public Guid Id { get; set; }
+
+    // Organization
+    public Guid OrganizationId { get; set; }
+    public Organization Organization { get; set; } = null!;
+
+    // Cycle
+
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Dimension { get; set; }
@@ -14,9 +21,6 @@ public sealed class Goal : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public DateTime EndDate { get; set; }
     public GoalStatus Status { get; set; }
 
-    // Tenant discriminator — always set to the owning organization
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
 
     // Recursive parent-child relationship
     public Guid? ParentId { get; set; }
