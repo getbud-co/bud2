@@ -12,6 +12,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import type { CompanyProfile } from "@/lib/tempStorage/config-store";
+import { LoadingScreen } from "@/components/screens/LoadingScreen";
+import { ServerErrorScreen } from "@/components/screens/ServerErrorScreen";
 
 const COOKIE_NAME = "selectedOrgId";
 const COOKIE_OPTIONS = {
@@ -40,13 +42,28 @@ export function OrganizationProvider({
   children: ReactNode;
   initialOrgId?: string;
 }) {
-  const { data: organizations = [], isLoading } = useQuery<CompanyProfile[]>({
+  const {
+    data: organizations = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery<CompanyProfile[]>({
     queryKey: ["organizations"],
     queryFn: async () => {
       const res = await fetch("/api/organizations");
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`) as Error & {
+          status: number;
+        };
+        err.status = res.status;
+        throw err;
+      }
       return res.json() as Promise<CompanyProfile[]>;
     },
   });
+
+  const isServerError =
+    isError && ((error as { status?: number })?.status ?? 0) >= 500;
 
   const [activeOrgId, setActiveOrgId] = useState<string | null>(
     initialOrgId ?? null,
@@ -94,6 +111,9 @@ export function OrganizationProvider({
     }),
     [organizations, activeOrganization, activeOrgId, isLoading, setActiveOrg],
   );
+
+  if (isLoading) return <LoadingScreen />;
+  if (isServerError) return <ServerErrorScreen />;
 
   return (
     <OrganizationContext.Provider value={value}>
