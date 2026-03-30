@@ -1,100 +1,39 @@
-# Bud Web - Frontend
+# Bud 2.0 Web Application
 
-Frontend Next.js da aplicação Bud.
+> web application for bud 2.0 project
 
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS (puro, sem componentes pré-built)
-- **Auth**: NextAuth.js + backend sessions
-- **Testing**: Vitest + Testing Library (planejado)
-
-## Estrutura
+## 🚀 Requisitos
 
 ```
-frontend/
-├── src/
-│   ├── app/               # App Router (routes, layouts, pages)
-│   │   ├── (auth)/        # Route group: login, register
-│   │   ├── (dashboard)/   # Route group: app autenticada
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/        # React components
-│   ├── lib/
-│   │   ├── api.ts         # Client HTTP para API
-│   │   └── auth.ts        # NextAuth config
-│   ├── hooks/             # Custom React hooks
-│   ├── stores/            # Estado global (Zustand)
-│   └── types/             # TypeScript types
-├── public/                # Static assets
-├── package.json
-├── tsconfig.json
-├── next.config.ts
-├── tailwind.config.ts
-└── Dockerfile             # Build + nginx
+ Node @22.14.0
+ Yarn @1.22.22
 ```
 
-## Setup Local
+## 🚀 Instalando Web Application
 
-### Pré-requisitos
+Para instalar o Web Application, siga estas etapas:
 
-- Node.js 20+ com npm
-
-### Iniciar
-
-```bash
-cd frontend
-npm install
-npm run dev
+```
+ yarn install 
 ```
 
-Abre http://localhost:3000
+## ☕ Usando Web Application
 
-### Variáveis de Ambiente
+Para usar Web Application, siga estas etapas:
 
-Criar `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8082
+```
+ yarn dev
 ```
 
-## Desenvolvimento
+## ☕ Usando Docker
 
-### Build para Produção
+Para rodar a imagem da aplicação, é necessário adicionar o arquivo .env como no exemplo:
 
-```bash
-npm run build
-npm run start
+```
+ docker run -d -p 3000:3000 --env-file .env bud-web:latest
 ```
 
-### Type Checking
 
-```bash
-npm run type-check
-```
+## 📝 Licença
 
-### Testes (planejado)
-
-```bash
-npm test
-```
-
-## API Client
-
-O cliente HTTP para a API está em `src/lib/api.ts`.
-
-Futuramente, pode ser gerado automaticamente a partir do OpenAPI com:
-
-```bash
-npx openapi-typescript http://localhost:8082/openapi/v1.json -o src/types/api.ts
-npx openapi-fetch -i src/types/api.ts
-```
-
-## Deploy
-
-Ver `../DEPLOY.md` para instruções de deploy no GCP Cloud Run.
-
-## Migração de Blazor WASM
-
-Este projeto substitui `Bud.BlazorWasm`. A migração de funcionalidades será feita gradualmente conforme necessário.
+Esse projeto está sob licença. Veja o arquivo [LICENÇA](LICENSE.md) para mais detalhes.
