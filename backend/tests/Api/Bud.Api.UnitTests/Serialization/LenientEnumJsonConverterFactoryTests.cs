@@ -22,7 +22,7 @@ public sealed class LenientEnumJsonConverterFactoryTests
         var result = JsonSerializer.Deserialize<TestEnumPayload>(json, CreateOptions());
 
         result.Should().NotBeNull();
-        result!.Status.Should().Be(GoalStatus.Planned);
+        result!.Status.Should().Be(MissionStatus.Planned);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public sealed class LenientEnumJsonConverterFactoryTests
         var result = JsonSerializer.Deserialize<TestEnumPayload>(json, CreateOptions());
 
         result.Should().NotBeNull();
-        result!.Status.Should().Be(GoalStatus.Planned);
+        result!.Status.Should().Be(MissionStatus.Planned);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class LenientEnumJsonConverterFactoryTests
 
     private sealed class TestEnumPayload
     {
-        public GoalStatus Status { get; init; }
+        public MissionStatus Status { get; init; }
     }
 
     private sealed class TestNullableEnumPayload

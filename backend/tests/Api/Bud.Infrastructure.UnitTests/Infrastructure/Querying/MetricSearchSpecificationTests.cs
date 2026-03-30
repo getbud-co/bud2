@@ -10,9 +10,9 @@ public sealed class MetricSearchSpecificationTests
 
     private static readonly List<Indicator> Data =
     [
-        new() { Id = Guid.NewGuid(), Name = "Receita Mensal", GoalId = MissionId },
-        new() { Id = Guid.NewGuid(), Name = "NPS Score", GoalId = MissionId },
-        new() { Id = Guid.NewGuid(), Name = "Taxa de Conversão", GoalId = MissionId }
+        new() { Id = Guid.NewGuid(), Name = "Receita Mensal", MissionId = MissionId },
+        new() { Id = Guid.NewGuid(), Name = "NPS Score", MissionId = MissionId },
+        new() { Id = Guid.NewGuid(), Name = "Taxa de Conversão", MissionId = MissionId }
     ];
 
     [Fact]

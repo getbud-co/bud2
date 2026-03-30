@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -13,9 +14,17 @@ public sealed record PatchTaskCommand(
 public sealed partial class PatchTask(
     ITaskRepository taskRepository,
     ILogger<PatchTask> logger,
-    IUnitOfWork? unitOfWork = null)
+    IUnitOfWork? unitOfWork = null,
+    IApplicationAuthorizationGateway? authorizationGateway = null)
 {
-    public async Task<Result<GoalTask>> ExecuteAsync(
+    public Task<Result<MissionTask>> ExecuteAsync(
+        Guid id,
+        PatchTaskCommand command,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, command, cancellationToken);
+
+    public async Task<Result<MissionTask>> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid id,
         PatchTaskCommand command,
         CancellationToken cancellationToken = default)
@@ -26,7 +35,17 @@ public sealed partial class PatchTask(
         if (task is null)
         {
             LogTaskPatchFailed(logger, id, "Not found");
-            return Result<GoalTask>.NotFound(UserErrorMessages.TaskNotFound);
+            return Result<MissionTask>.NotFound(UserErrorMessages.TaskNotFound);
+        }
+
+        if (authorizationGateway is not null)
+        {
+            var canWrite = await authorizationGateway.CanWriteAsync(user, new TaskResource(id), cancellationToken);
+            if (!canWrite)
+            {
+                LogTaskPatchFailed(logger, id, UserErrorMessages.TaskUpdateForbidden);
+                return Result<MissionTask>.Forbidden(UserErrorMessages.TaskUpdateForbidden);
+            }
         }
 
         try
@@ -40,12 +59,12 @@ public sealed partial class PatchTask(
             await unitOfWork.CommitAsync(taskRepository.SaveChangesAsync, cancellationToken);
 
             LogTaskPatched(logger, id, task.Name);
-            return Result<GoalTask>.Success(task);
+            return Result<MissionTask>.Success(task);
         }
         catch (DomainInvariantException ex)
         {
             LogTaskPatchFailed(logger, id, ex.Message);
-            return Result<GoalTask>.Failure(ex.Message, ErrorType.Validation);
+            return Result<MissionTask>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 

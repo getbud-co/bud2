@@ -15,7 +15,6 @@ public class TeamValidatorTests
         var request = new CreateTeamRequest
         {
             Name = "Test Team",
-            WorkspaceId = Guid.NewGuid(),
             LeaderId = Guid.NewGuid()
         };
 
@@ -31,7 +30,6 @@ public class TeamValidatorTests
         var request = new CreateTeamRequest
         {
             Name = "",
-            WorkspaceId = Guid.NewGuid(),
             LeaderId = Guid.NewGuid()
         };
 
@@ -42,30 +40,12 @@ public class TeamValidatorTests
     }
 
     [Fact]
-    public void CreateTeamValidator_WithEmptyWorkspaceId_FailsValidation()
-    {
-        var validator = new CreateTeamValidator();
-        var request = new CreateTeamRequest
-        {
-            Name = "Test Team",
-            WorkspaceId = Guid.Empty,
-            LeaderId = Guid.NewGuid()
-        };
-
-        var result = validator.Validate(request);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName.Contains("WorkspaceId") && e.ErrorMessage == "Workspace é obrigatório.");
-    }
-
-    [Fact]
     public void CreateTeamValidator_WithEmptyLeaderId_FailsValidation()
     {
         var validator = new CreateTeamValidator();
         var request = new CreateTeamRequest
         {
             Name = "Test Team",
-            WorkspaceId = Guid.NewGuid(),
             LeaderId = Guid.Empty
         };
 
@@ -82,7 +62,6 @@ public class TeamValidatorTests
         var request = new CreateTeamRequest
         {
             Name = new string('A', 201),
-            WorkspaceId = Guid.NewGuid(),
             LeaderId = Guid.NewGuid()
         };
 

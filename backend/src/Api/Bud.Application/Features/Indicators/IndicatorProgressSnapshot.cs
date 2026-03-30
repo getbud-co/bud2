@@ -7,5 +7,5 @@ public sealed class IndicatorProgressSnapshot
     public int Confidence { get; set; }
     public bool HasCheckins { get; set; }
     public bool IsOutdated { get; set; }
-    public string? LastCheckinCollaboratorName { get; set; }
+    public string? LastCheckinEmployeeName { get; set; }
 }

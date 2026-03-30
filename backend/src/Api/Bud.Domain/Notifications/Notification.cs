@@ -3,8 +3,8 @@ namespace Bud.Domain.Notifications;
 public sealed class Notification : ITenantEntity, IAggregateRoot
 {
     public Guid Id { get; set; }
-    public Guid RecipientCollaboratorId { get; set; }
-    public Collaborator RecipientCollaborator { get; set; } = null!;
+    public Guid RecipientEmployeeId { get; set; }
+    public Employee RecipientEmployee { get; set; } = null!;
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
     public string Title { get; set; } = string.Empty;
@@ -18,7 +18,7 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
 
     public static Notification Create(
         Guid id,
-        Guid recipientCollaboratorId,
+        Guid recipientEmployeeId,
         Guid organizationId,
         string title,
         string message,
@@ -27,7 +27,7 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
         Guid? relatedEntityId = null,
         string? relatedEntityType = null)
     {
-        if (recipientCollaboratorId == Guid.Empty)
+        if (recipientEmployeeId == Guid.Empty)
         {
             throw new DomainInvariantException("A notificação deve ter um destinatário válido.");
         }
@@ -50,7 +50,7 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
         return new Notification
         {
             Id = id,
-            RecipientCollaboratorId = recipientCollaboratorId,
+            RecipientEmployeeId = recipientEmployeeId,
             OrganizationId = organizationId,
             Title = normalizedTitle.Value,
             Message = normalizedMessage.Value,

@@ -20,12 +20,12 @@ public sealed class CheckinConfiguration : IEntityTypeConfiguration<Checkin>
 
         builder.HasIndex(c => c.OrganizationId);
 
-        builder.HasOne(c => c.Collaborator)
+        builder.HasOne(c => c.Employee)
             .WithMany()
-            .HasForeignKey(c => c.CollaboratorId)
+            .HasForeignKey(c => c.EmployeeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(c => c.IndicatorId);
-        builder.HasIndex(c => c.CollaboratorId);
+        builder.HasIndex(c => c.EmployeeId);
     }
 }

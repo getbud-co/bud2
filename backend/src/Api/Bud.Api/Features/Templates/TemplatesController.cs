@@ -35,22 +35,22 @@ public sealed class TemplatesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var goals = request.Goals
-            .Select(g => new TemplateGoalDraft(g.Id, g.ParentId, g.Name, g.Description, g.OrderIndex, g.Dimension))
+        var missions = request.Missions
+            .Select(g => new TemplateMissionDraft(g.Id, g.ParentId, g.Name, g.Description, g.OrderIndex, g.Dimension))
             .ToList();
         var indicators = request.Indicators
-            .Select(i => new TemplateIndicatorDraft(i.Name, i.Type, i.OrderIndex, i.TemplateGoalId, i.QuantitativeType, i.MinValue, i.MaxValue, i.Unit, i.TargetText))
+            .Select(i => new TemplateIndicatorDraft(i.Name, i.Type, i.OrderIndex, i.TemplateMissionId, i.QuantitativeType, i.MinValue, i.MaxValue, i.Unit, i.TargetText))
             .ToList();
 
         var command = new CreateTemplateCommand(
             request.Name,
             request.Description,
-            request.GoalNamePattern,
-            request.GoalDescriptionPattern,
-            goals,
+            request.MissionNamePattern,
+            request.MissionDescriptionPattern,
+            missions,
             indicators);
 
-        var result = await createTemplate.ExecuteAsync(command, cancellationToken);
+        var result = await createTemplate.ExecuteAsync(User, command, cancellationToken);
         return FromResult<Template, TemplateResponse>(result, template =>
             CreatedAtAction(nameof(GetById), new { id = template.Id }, template.ToResponse()));
     }
@@ -74,22 +74,22 @@ public sealed class TemplatesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var goals = (request.Goals.HasValue ? request.Goals.Value ?? [] : [])
-            .Select(g => new TemplateGoalDraft(g.Id, g.ParentId, g.Name, g.Description, g.OrderIndex, g.Dimension))
+        var missions = (request.Missions.HasValue ? request.Missions.Value ?? [] : [])
+            .Select(g => new TemplateMissionDraft(g.Id, g.ParentId, g.Name, g.Description, g.OrderIndex, g.Dimension))
             .ToList();
         var indicators = (request.Indicators.HasValue ? request.Indicators.Value ?? [] : [])
-            .Select(i => new TemplateIndicatorDraft(i.Name, i.Type, i.OrderIndex, i.TemplateGoalId, i.QuantitativeType, i.MinValue, i.MaxValue, i.Unit, i.TargetText))
+            .Select(i => new TemplateIndicatorDraft(i.Name, i.Type, i.OrderIndex, i.TemplateMissionId, i.QuantitativeType, i.MinValue, i.MaxValue, i.Unit, i.TargetText))
             .ToList();
 
         var command = new PatchTemplateCommand(
             request.Name,
             request.Description,
-            request.GoalNamePattern,
-            request.GoalDescriptionPattern,
-            goals,
+            request.MissionNamePattern,
+            request.MissionDescriptionPattern,
+            missions,
             indicators);
 
-        var result = await patchTemplate.ExecuteAsync(id, command, cancellationToken);
+        var result = await patchTemplate.ExecuteAsync(User, id, command, cancellationToken);
         return FromResultOk(result, template => template.ToResponse());
     }
 
@@ -103,7 +103,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTemplate.ExecuteAsync(id, cancellationToken);
+        var result = await deleteTemplate.ExecuteAsync(User, id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -117,7 +117,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TemplateResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getTemplateById.ExecuteAsync(id, cancellationToken);
+        var result = await getTemplateById.ExecuteAsync(User, id, cancellationToken);
         return FromResultOk(result, template => template.ToResponse());
     }
 

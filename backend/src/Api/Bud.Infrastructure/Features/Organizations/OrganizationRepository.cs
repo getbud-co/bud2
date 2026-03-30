@@ -13,11 +13,6 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == id, ct);
 
-    public async Task<Organization?> GetByIdWithOwnerAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Organizations
-            .Include(o => o.Owner)
-            .FirstOrDefaultAsync(o => o.Id == id, ct);
-
     public async Task<PagedResult<Organization>> GetAllAsync(
         string? search, int page, int pageSize, CancellationToken ct = default)
     {
@@ -26,7 +21,6 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .Include(o => o.Owner)
             .OrderBy(o => o.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -41,33 +35,10 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         };
     }
 
-    public async Task<PagedResult<Workspace>> GetWorkspacesAsync(
+    public async Task<PagedResult<Employee>> GetEmployeesAsync(
         Guid organizationId, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.Workspaces
-            .AsNoTracking()
-            .Where(w => w.OrganizationId == organizationId);
-
-        var total = await query.CountAsync(ct);
-        var items = await query
-            .OrderBy(w => w.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
-        return new PagedResult<Workspace>
-        {
-            Items = items,
-            Total = total,
-            Page = page,
-            PageSize = pageSize
-        };
-    }
-
-    public async Task<PagedResult<Collaborator>> GetCollaboratorsAsync(
-        Guid organizationId, int page, int pageSize, CancellationToken ct = default)
-    {
-        var query = dbContext.Collaborators
+        var query = dbContext.Employees
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId);
 
@@ -79,7 +50,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<Collaborator>
+        return new PagedResult<Employee>
         {
             Items = items,
             Total = total,
@@ -91,11 +62,8 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 
-    public async Task<bool> HasWorkspacesAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Workspaces.AnyAsync(w => w.OrganizationId == organizationId, ct);
-
-    public async Task<bool> HasCollaboratorsAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Collaborators.AnyAsync(c => c.OrganizationId == organizationId, ct);
+    public async Task<bool> HasEmployeesAsync(Guid organizationId, CancellationToken ct = default)
+        => await dbContext.Employees.AnyAsync(c => c.OrganizationId == organizationId, ct);
 
     public async Task AddAsync(Organization entity, CancellationToken ct = default)
         => await dbContext.Organizations.AddAsync(entity, ct);

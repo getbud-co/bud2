@@ -26,20 +26,20 @@ public static class JwtTestHelper
     public static string GenerateTenantUserToken(
         string email,
         Guid organizationId,
-        Guid collaboratorId)
+        Guid employeeId)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.Email, email),
             new("email", email),
             new("organization_id", organizationId.ToString()),
-            new("collaborator_id", collaboratorId.ToString())
+            new("employee_id", employeeId.ToString())
         };
 
         return GenerateToken(claims);
     }
 
-    public static string GenerateTenantUserTokenWithoutCollaborator(
+    public static string GenerateTenantUserTokenWithoutEmployee(
         string email,
         Guid organizationId)
     {

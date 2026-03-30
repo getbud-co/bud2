@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -13,43 +14,68 @@ public sealed record CreateCheckinCommand(
 
 public sealed partial class CreateCheckin(
     IIndicatorRepository indicatorRepository,
-    ICollaboratorRepository collaboratorRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
-    IUnitOfWork? unitOfWork = null)
+    IUnitOfWork? unitOfWork = null,
+    IApplicationAuthorizationGateway? authorizationGateway = null)
 {
+    public Task<Result<Checkin>> ExecuteAsync(
+        ClaimsPrincipal user,
+        Guid indicatorId,
+        CreateCheckinCommand command,
+        CancellationToken cancellationToken = default)
+        => ExecuteAsyncInternal(user, indicatorId, command, cancellationToken);
+
     public async Task<Result<Checkin>> ExecuteAsync(
         Guid indicatorId,
         CreateCheckinCommand command,
         CancellationToken cancellationToken = default)
+        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId, command, cancellationToken);
+
+    private async Task<Result<Checkin>> ExecuteAsyncInternal(
+        ClaimsPrincipal user,
+        Guid indicatorId,
+        CreateCheckinCommand command,
+        CancellationToken cancellationToken)
     {
         LogCreatingCheckin(logger, indicatorId);
 
-        var indicator = await indicatorRepository.GetIndicatorWithGoalAsync(indicatorId, cancellationToken);
+        var indicator = await indicatorRepository.GetIndicatorWithMissionAsync(indicatorId, cancellationToken);
         if (indicator is null)
         {
             LogCheckinCreationFailed(logger, indicatorId, "Indicator not found");
             return Result<Checkin>.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 
-        var collaboratorId = tenantProvider.CollaboratorId;
-        if (!collaboratorId.HasValue)
+        if (authorizationGateway is not null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Collaborator not identified");
-            return Result<Checkin>.Forbidden(UserErrorMessages.CollaboratorNotIdentified);
+            var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(indicatorId), cancellationToken);
+            if (!canWrite)
+            {
+                LogCheckinCreationFailed(logger, indicatorId, UserErrorMessages.CheckinCreateForbidden);
+                return Result<Checkin>.Forbidden(UserErrorMessages.CheckinCreateForbidden);
+            }
         }
 
-        var collaborator = await collaboratorRepository.GetByIdAsync(collaboratorId.Value, cancellationToken);
-        if (collaborator is null)
+        var employeeId = tenantProvider.EmployeeId;
+        if (!employeeId.HasValue)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Collaborator not found");
-            return Result<Checkin>.NotFound(UserErrorMessages.CollaboratorNotFound);
+            LogCheckinCreationFailed(logger, indicatorId, "Employee not identified");
+            return Result<Checkin>.Forbidden(UserErrorMessages.EmployeeNotIdentified);
         }
 
-        var goal = indicator.Goal;
-        if (goal.Status != GoalStatus.Active)
+        var employee = await employeeRepository.GetByIdAsync(employeeId.Value, cancellationToken);
+        if (employee is null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Goal not active");
+            LogCheckinCreationFailed(logger, indicatorId, "Employee not found");
+            return Result<Checkin>.NotFound(UserErrorMessages.EmployeeNotFound);
+        }
+
+        var mission = indicator.Mission;
+        if (mission.Status != MissionStatus.Active)
+        {
+            LogCheckinCreationFailed(logger, indicatorId, "Mission not active");
             return Result<Checkin>.Failure(
                 "Não é possível fazer check-in em indicadores de metas que não estão ativas.",
                 ErrorType.Validation);
@@ -59,7 +85,7 @@ public sealed partial class CreateCheckin(
         {
             var checkin = indicator.CreateCheckin(
                 Guid.NewGuid(),
-                collaboratorId.Value,
+                employeeId.Value,
                 command.Value,
                 command.Text,
                 DateTime.SpecifyKind(command.CheckinDate, DateTimeKind.Utc),

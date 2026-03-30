@@ -35,7 +35,7 @@ public sealed class ToolCatalogCommandRunnerTests
 
             var generated = await McpToolCatalogStore.TryReadRawAsync();
             generated.Should().NotBeNullOrWhiteSpace();
-            generated.Should().Contain("goal_create");
+            generated.Should().Contain("mission_create");
         });
     }
 
@@ -135,13 +135,13 @@ public sealed class ToolCatalogCommandRunnerTests
     {
       "openapi": "3.0.1",
       "paths": {
-        "/api/goals": {
+        "/api/missions": {
           "post": {
             "requestBody": {
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/CreateGoalRequest"
+                    "$ref": "#/components/schemas/CreateMissionRequest"
                   }
                 }
               }
@@ -149,9 +149,9 @@ public sealed class ToolCatalogCommandRunnerTests
           },
           "get": { "parameters": [] }
         },
-        "/api/goals/{id}": {
+        "/api/missions/{id}": {
           "get": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] },
-          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchGoalRequest" } } } } },
+          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchMissionRequest" } } } } },
           "delete": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] }
         },
         "/api/indicators": {
@@ -175,7 +175,7 @@ public sealed class ToolCatalogCommandRunnerTests
       },
       "components": {
         "schemas": {
-          "CreateGoalRequest": {
+          "CreateMissionRequest": {
             "type": "object",
             "required": ["name", "startDate", "endDate", "status"],
             "properties": {
@@ -185,7 +185,7 @@ public sealed class ToolCatalogCommandRunnerTests
               "status": { "type": "integer", "format": "int32" }
             }
           },
-          "PatchGoalRequest": {
+          "PatchMissionRequest": {
             "type": "object",
             "required": ["name"],
             "properties": {
@@ -194,9 +194,9 @@ public sealed class ToolCatalogCommandRunnerTests
           },
           "CreateIndicatorRequest": {
             "type": "object",
-            "required": ["goalId", "name", "type"],
+            "required": ["missionId", "name", "type"],
             "properties": {
-              "goalId": { "type": "string", "format": "uuid" },
+              "missionId": { "type": "string", "format": "uuid" },
               "name": { "type": "string" },
               "type": { "type": "integer", "format": "int32" }
             }
@@ -232,13 +232,13 @@ public sealed class ToolCatalogCommandRunnerTests
     {
       "openapi": "3.0.1",
       "paths": {
-        "/api/goals": {
+        "/api/missions": {
           "post": {
             "requestBody": {
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/CreateGoalRequest"
+                    "$ref": "#/components/schemas/CreateMissionRequest"
                   }
                 }
               }
@@ -246,9 +246,9 @@ public sealed class ToolCatalogCommandRunnerTests
           },
           "get": { "parameters": [] }
         },
-        "/api/goals/{id}": {
+        "/api/missions/{id}": {
           "get": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] },
-          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchGoalRequest" } } } } },
+          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchMissionRequest" } } } } },
           "delete": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] }
         },
         "/api/indicators": {
@@ -272,14 +272,14 @@ public sealed class ToolCatalogCommandRunnerTests
       },
       "components": {
         "schemas": {
-          "CreateGoalRequest": {
+          "CreateMissionRequest": {
             "type": "object",
             "required": ["name"],
             "properties": {
               "name": { "type": "string" }
             }
           },
-          "PatchGoalRequest": {
+          "PatchMissionRequest": {
             "type": "object",
             "required": ["name"],
             "properties": {
@@ -288,9 +288,9 @@ public sealed class ToolCatalogCommandRunnerTests
           },
           "CreateIndicatorRequest": {
             "type": "object",
-            "required": ["goalId"],
+            "required": ["missionId"],
             "properties": {
-              "goalId": { "type": "string", "format": "uuid" }
+              "missionId": { "type": "string", "format": "uuid" }
             }
           },
           "PatchIndicatorRequest": {

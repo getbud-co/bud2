@@ -16,73 +16,73 @@ public sealed class DomainEventNotificationHandlersTests
     }
 
     [Fact]
-    public async Task GoalCreatedHandler_ShouldNotifyGoalCreated()
+    public async Task MissionCreatedHandler_ShouldNotifyMissionCreated()
     {
         var orchestratorMock = CreateOrchestratorMock();
         orchestratorMock
-            .Setup(o => o.NotifyGoalCreatedAsync(
+            .Setup(o => o.NotifyMissionCreatedAsync(
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new GoalCreatedDomainEventNotifier(orchestratorMock.Object);
-        var domainEvent = new GoalCreatedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
+        var handler = new MissionCreatedDomainEventNotifier(orchestratorMock.Object);
+        var domainEvent = new MissionCreatedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
 
         orchestratorMock.Verify(
-            o => o.NotifyGoalCreatedAsync(
-                domainEvent.GoalId,
+            o => o.NotifyMissionCreatedAsync(
+                domainEvent.MissionId,
                 domainEvent.OrganizationId,
-                domainEvent.GoalName,
-                domainEvent.ActorCollaboratorId,
+                domainEvent.MissionName,
+                domainEvent.ActorEmployeeId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task GoalUpdatedHandler_ShouldNotifyGoalUpdated()
+    public async Task MissionUpdatedHandler_ShouldNotifyMissionUpdated()
     {
         var orchestratorMock = CreateOrchestratorMock();
         orchestratorMock
-            .Setup(o => o.NotifyGoalUpdatedAsync(
+            .Setup(o => o.NotifyMissionUpdatedAsync(
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new GoalUpdatedDomainEventNotifier(orchestratorMock.Object);
-        var domainEvent = new GoalUpdatedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
+        var handler = new MissionUpdatedDomainEventNotifier(orchestratorMock.Object);
+        var domainEvent = new MissionUpdatedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
 
         orchestratorMock.Verify(
-            o => o.NotifyGoalUpdatedAsync(
-                domainEvent.GoalId,
+            o => o.NotifyMissionUpdatedAsync(
+                domainEvent.MissionId,
                 domainEvent.OrganizationId,
-                domainEvent.GoalName,
-                domainEvent.ActorCollaboratorId,
+                domainEvent.MissionName,
+                domainEvent.ActorEmployeeId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task GoalDeletedHandler_ShouldNotifyGoalDeleted()
+    public async Task MissionDeletedHandler_ShouldNotifyMissionDeleted()
     {
         var orchestratorMock = CreateOrchestratorMock();
         orchestratorMock
-            .Setup(o => o.NotifyGoalDeletedAsync(
+            .Setup(o => o.NotifyMissionDeletedAsync(
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var handler = new GoalDeletedDomainEventNotifier(orchestratorMock.Object);
-        var domainEvent = new GoalDeletedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
+        var handler = new MissionDeletedDomainEventNotifier(orchestratorMock.Object);
+        var domainEvent = new MissionDeletedDomainEvent(Guid.NewGuid(), Guid.NewGuid(), "Meta", Guid.NewGuid());
 
         await handler.HandleAsync(domainEvent, CancellationToken.None);
 
         orchestratorMock.Verify(
-            o => o.NotifyGoalDeletedAsync(
-                domainEvent.GoalId,
+            o => o.NotifyMissionDeletedAsync(
+                domainEvent.MissionId,
                 domainEvent.OrganizationId,
-                domainEvent.GoalName,
-                domainEvent.ActorCollaboratorId,
+                domainEvent.MissionName,
+                domainEvent.ActorEmployeeId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -116,7 +116,7 @@ public sealed class DomainEventNotificationHandlersTests
                 domainEvent.CheckinId,
                 domainEvent.IndicatorId,
                 domainEvent.OrganizationId,
-                domainEvent.CollaboratorId,
+                domainEvent.EmployeeId,
                 domainEvent.IndicatorName,
                 It.IsAny<CancellationToken>()),
             Times.Once);

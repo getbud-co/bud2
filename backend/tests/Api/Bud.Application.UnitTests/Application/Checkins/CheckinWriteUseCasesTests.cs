@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -7,17 +8,19 @@ namespace Bud.Application.UnitTests.Application.Checkins;
 
 public sealed class CheckinWriteUseCasesTests
 {
+    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
+
     [Fact]
-    public async Task CreateAsync_WhenCollaboratorNotIdentified_ReturnsForbidden()
+    public async Task CreateAsync_WhenEmployeeNotIdentified_ReturnsForbidden()
     {
         var orgId = Guid.NewGuid();
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Missão",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(1),
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = orgId
         };
         var metric = new Indicator
@@ -25,25 +28,25 @@ public sealed class CheckinWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Métrica",
             Type = IndicatorType.Qualitative,
-            GoalId = mission.Id,
-            Goal = mission,
+            MissionId = mission.Id,
+            Mission = mission,
             OrganizationId = orgId
         };
 
         var checkinRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
         checkinRepository
-            .Setup(r => r.GetIndicatorWithGoalAsync(metric.Id, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
 
-        var collaboratorRepository = new Mock<ICollaboratorRepository>(MockBehavior.Strict);
+        var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
-        tenantProvider.SetupGet(t => t.CollaboratorId).Returns((Guid?)null);
+        tenantProvider.SetupGet(t => t.EmployeeId).Returns((Guid?)null);
 
         var useCase = new CreateCheckin(
             checkinRepository.Object,
-            collaboratorRepository.Object,
+            employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance);
 
@@ -51,22 +54,22 @@ public sealed class CheckinWriteUseCasesTests
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
-        result.Error.Should().Be("Colaborador não identificado.");
-        collaboratorRepository.VerifyNoOtherCalls();
+        result.Error.Should().Be("Funcionário não identificado.");
+        employeeRepository.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task CreateAsync_WhenCollaboratorDoesNotExist_ReturnsNotFound()
+    public async Task CreateAsync_WhenEmployeeDoesNotExist_ReturnsNotFound()
     {
         var orgId = Guid.NewGuid();
-        var collaboratorId = Guid.NewGuid();
-        var goal = new Goal
+        var employeeId = Guid.NewGuid();
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Meta",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(1),
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = orgId
         };
         var indicator = new Indicator
@@ -74,27 +77,27 @@ public sealed class CheckinWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Indicador",
             Type = IndicatorType.Qualitative,
-            GoalId = goal.Id,
-            Goal = goal,
+            MissionId = mission.Id,
+            Mission = mission,
             OrganizationId = orgId
         };
 
         var indicatorRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
         indicatorRepository
-            .Setup(r => r.GetIndicatorWithGoalAsync(indicator.Id, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetIndicatorWithMissionAsync(indicator.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(indicator);
 
-        var collaboratorRepository = new Mock<ICollaboratorRepository>(MockBehavior.Strict);
-        collaboratorRepository
-            .Setup(r => r.GetByIdAsync(collaboratorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Collaborator?)null);
+        var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
+        employeeRepository
+            .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee?)null);
 
         var tenantProvider = new Mock<ITenantProvider>(MockBehavior.Strict);
-        tenantProvider.SetupGet(t => t.CollaboratorId).Returns(collaboratorId);
+        tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
         var useCase = new CreateCheckin(
             indicatorRepository.Object,
-            collaboratorRepository.Object,
+            employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance);
 
@@ -102,21 +105,21 @@ public sealed class CheckinWriteUseCasesTests
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("Colaborador não encontrado.");
+        result.Error.Should().Be("Funcionário não encontrado.");
     }
 
     [Fact]
     public async Task CreateAsync_WhenSuccess_RegistersCheckinCreatedDomainEvent()
     {
         var orgId = Guid.NewGuid();
-        var collaboratorId = Guid.NewGuid();
-        var mission = new Goal
+        var employeeId = Guid.NewGuid();
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Missão",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(1),
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = orgId
         };
         var metric = new Indicator
@@ -124,8 +127,8 @@ public sealed class CheckinWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Métrica",
             Type = IndicatorType.Quantitative,
-            GoalId = mission.Id,
-            Goal = mission,
+            MissionId = mission.Id,
+            Mission = mission,
             OrganizationId = orgId,
             QuantitativeType = QuantitativeIndicatorType.KeepAbove,
             MinValue = 0m,
@@ -134,7 +137,7 @@ public sealed class CheckinWriteUseCasesTests
 
         var checkinRepository = new Mock<IIndicatorRepository>();
         checkinRepository
-            .Setup(r => r.GetIndicatorWithGoalAsync(metric.Id, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
         checkinRepository
             .Setup(r => r.AddCheckinAsync(It.IsAny<Checkin>(), It.IsAny<CancellationToken>()))
@@ -143,18 +146,18 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var collaboratorRepository = new Mock<ICollaboratorRepository>();
-        collaboratorRepository
-            .Setup(r => r.GetByIdAsync(collaboratorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Collaborator { Id = collaboratorId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+        var employeeRepository = new Mock<IEmployeeRepository>();
+        employeeRepository
+            .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
-        tenantProvider.SetupGet(t => t.CollaboratorId).Returns(collaboratorId);
+        tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
         var useCase = new CreateCheckin(
             checkinRepository.Object,
-            collaboratorRepository.Object,
+            employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance);
 
@@ -168,21 +171,21 @@ public sealed class CheckinWriteUseCasesTests
         created.CheckinId.Should().Be(result.Value!.Id);
         created.IndicatorId.Should().Be(metric.Id);
         created.OrganizationId.Should().Be(orgId);
-        created.CollaboratorId.Should().Be(collaboratorId);
+        created.EmployeeId.Should().Be(employeeId);
     }
 
     [Fact]
     public async Task CreateAsync_WhenMissionNotActive_ReturnsValidation()
     {
         var orgId = Guid.NewGuid();
-        var collaboratorId = Guid.NewGuid();
-        var mission = new Goal
+        var employeeId = Guid.NewGuid();
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Missão",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(1),
-            Status = GoalStatus.Planned,
+            Status = MissionStatus.Planned,
             OrganizationId = orgId
         };
         var metric = new Indicator
@@ -190,28 +193,28 @@ public sealed class CheckinWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Métrica",
             Type = IndicatorType.Quantitative,
-            GoalId = mission.Id,
-            Goal = mission,
+            MissionId = mission.Id,
+            Mission = mission,
             OrganizationId = orgId
         };
 
         var checkinRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
         checkinRepository
-            .Setup(r => r.GetIndicatorWithGoalAsync(metric.Id, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
 
-        var collaboratorRepository = new Mock<ICollaboratorRepository>();
-        collaboratorRepository
-            .Setup(r => r.GetByIdAsync(collaboratorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Collaborator { Id = collaboratorId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+        var employeeRepository = new Mock<IEmployeeRepository>();
+        employeeRepository
+            .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
-        tenantProvider.SetupGet(t => t.CollaboratorId).Returns(collaboratorId);
+        tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
         var useCase = new CreateCheckin(
             checkinRepository.Object,
-            collaboratorRepository.Object,
+            employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance);
 
@@ -228,7 +231,7 @@ public sealed class CheckinWriteUseCasesTests
         var checkin = new Checkin
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = Guid.NewGuid(),
+            EmployeeId = Guid.NewGuid(),
             OrganizationId = Guid.NewGuid(),
             CheckinDate = DateTime.UtcNow,
             ConfidenceLevel = 3
@@ -239,20 +242,21 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetCheckinByIdAsync(checkin.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checkin);
 
-        var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
-        tenantProvider.SetupGet(t => t.CollaboratorId).Returns(Guid.NewGuid());
+        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
+        authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         var useCase = new PatchCheckin(
             checkinRepository.Object,
-            tenantProvider.Object,
+            authorizationGateway.Object,
             NullLogger<PatchCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
+        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
-        result.Error.Should().Be("Apenas o autor pode editar este check-in.");
+        result.Error.Should().Be("Você não tem permissão para atualizar este check-in.");
     }
 
     [Fact]
@@ -263,7 +267,7 @@ public sealed class CheckinWriteUseCasesTests
         var checkin = new Checkin
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = Guid.NewGuid(),
+            EmployeeId = Guid.NewGuid(),
             OrganizationId = orgId,
             IndicatorId = indicatorId,
             CheckinDate = DateTime.UtcNow,
@@ -275,7 +279,7 @@ public sealed class CheckinWriteUseCasesTests
             Id = indicatorId,
             Name = "Métrica",
             Type = IndicatorType.Quantitative,
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             OrganizationId = orgId,
             QuantitativeType = QuantitativeIndicatorType.KeepAbove,
             MinValue = 0m,
@@ -293,15 +297,17 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(true);
+        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
+        authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = new PatchCheckin(
             checkinRepository.Object,
-            tenantProvider.Object,
+            authorizationGateway.Object,
             NullLogger<PatchCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(25m, null, DateTime.UtcNow, null, 4));
+        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(25m, null, DateTime.UtcNow, null, 4));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Value.Should().Be(25m);
@@ -314,7 +320,7 @@ public sealed class CheckinWriteUseCasesTests
         var checkin = new Checkin
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = Guid.NewGuid(),
+            EmployeeId = Guid.NewGuid(),
             OrganizationId = Guid.NewGuid(),
             CheckinDate = DateTime.UtcNow,
             ConfidenceLevel = 3
@@ -331,15 +337,17 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(true);
+        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
+        authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = new DeleteCheckin(
             checkinRepository.Object,
-            tenantProvider.Object,
+            authorizationGateway.Object,
             NullLogger<DeleteCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id);
+        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id);
 
         result.IsSuccess.Should().BeTrue();
         checkinRepository.Verify(r => r.RemoveCheckinAsync(checkin, It.IsAny<CancellationToken>()), Times.Once);

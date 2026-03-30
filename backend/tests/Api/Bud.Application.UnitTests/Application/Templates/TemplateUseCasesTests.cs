@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Bud.Application.Ports;
 using Moq;
 using Xunit;
 
@@ -8,12 +10,16 @@ namespace Bud.Application.UnitTests.Application.Templates;
 public sealed class TemplateUseCasesTests
 {
     private readonly Mock<ITemplateRepository> _repository = new();
+    private readonly Mock<ITenantProvider> _tenantProvider = new();
+    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task CreateStrategicTemplate_WithValidRequest_CreatesTemplate()
     {
+        _tenantProvider.SetupGet(x => x.TenantId).Returns(Guid.NewGuid());
         var useCase = new CreateTemplate(
             _repository.Object,
+            _tenantProvider.Object,
             NullLogger<CreateTemplate>.Instance);
 
         var result = await useCase.ExecuteAsync(new CreateTemplateCommand(
@@ -38,7 +44,7 @@ public sealed class TemplateUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Original",
             OrganizationId = Guid.NewGuid(),
-            Goals = new List<TemplateGoal>(),
+            Missions = new List<TemplateMission>(),
             Indicators = new List<TemplateIndicator>()
         };
 
@@ -127,9 +133,13 @@ public sealed class TemplateUseCasesTests
             .Setup(repository => repository.GetByIdReadOnlyAsync(templateId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Template { Id = templateId, Name = "Template", OrganizationId = Guid.NewGuid() });
 
-        var useCase = new GetTemplateById(_repository.Object);
+        _authorizationGateway
+            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<TemplateResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
-        var result = await useCase.ExecuteAsync(templateId);
+        var useCase = new GetTemplateById(_repository.Object, _authorizationGateway.Object);
+
+        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), templateId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(templateId);

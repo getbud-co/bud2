@@ -5,12 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Teams.UseCases;
 
-public sealed record CreateTeamCommand(string Name, Guid WorkspaceId, Guid LeaderId, Guid? ParentTeamId);
+public sealed record CreateTeamCommand(string Name, Guid LeaderId, Guid? ParentTeamId);
 
 public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
-    IWorkspaceRepository workspaceRepository,
-    ICollaboratorRepository collaboratorRepository,
+    IEmployeeRepository employeeRepository,
+    ITenantProvider tenantProvider,
     IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateTeam> logger,
     IUnitOfWork? unitOfWork = null)
@@ -20,16 +20,20 @@ public sealed partial class CreateTeam(
         CreateTeamCommand command,
         CancellationToken cancellationToken = default)
     {
-        LogCreatingTeam(logger, command.Name, command.WorkspaceId);
+        LogCreatingTeam(logger, command.Name);
 
-        var workspace = await workspaceRepository.GetByIdAsync(command.WorkspaceId, cancellationToken);
-        if (workspace is null)
+        if (tenantProvider.TenantId is null)
         {
-            LogTeamCreationFailed(logger, command.Name, "Workspace not found");
-            return Result<Team>.NotFound(UserErrorMessages.WorkspaceNotFound);
+            LogTeamCreationFailed(logger, command.Name, "Tenant not selected");
+            return Result<Team>.Forbidden(UserErrorMessages.TeamCreateForbidden);
         }
 
-        var canCreate = await authorizationGateway.IsOrganizationOwnerAsync(user, workspace.OrganizationId, cancellationToken);
+        var organizationId = tenantProvider.TenantId.Value;
+
+        var canCreate = await authorizationGateway.CanWriteAsync(
+            user,
+            new CreateTeamContext(organizationId),
+            cancellationToken);
         if (!canCreate)
         {
             LogTeamCreationFailed(logger, command.Name, "Forbidden");
@@ -45,17 +49,17 @@ public sealed partial class CreateTeam(
                 return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
             }
 
-            if (parentTeam.WorkspaceId != command.WorkspaceId)
+            if (parentTeam.OrganizationId != organizationId)
             {
-                LogTeamCreationFailed(logger, command.Name, "Parent team belongs to different workspace");
-                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameWorkspace);
+                LogTeamCreationFailed(logger, command.Name, "Parent team belongs to different organization");
+                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameOrganization);
             }
         }
 
-        var leaderValidation = await CollaboratorLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
-            collaboratorRepository,
+        var leaderValidation = await EmployeeLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
+            employeeRepository,
             command.LeaderId,
-            workspace.OrganizationId,
+            organizationId,
             cancellationToken);
         if (leaderValidation is not null)
         {
@@ -67,15 +71,14 @@ public sealed partial class CreateTeam(
         {
             var team = Team.Create(
                 Guid.NewGuid(),
-                workspace.OrganizationId,
-                command.WorkspaceId,
+                organizationId,
                 command.Name,
                 command.LeaderId,
                 command.ParentTeamId);
 
-            team.CollaboratorTeams.Add(new CollaboratorTeam
+            team.EmployeeTeams.Add(new EmployeeTeam
             {
-                CollaboratorId = command.LeaderId,
+                EmployeeId = command.LeaderId,
                 TeamId = team.Id,
                 AssignedAt = DateTime.UtcNow
             });
@@ -93,8 +96,8 @@ public sealed partial class CreateTeam(
         }
     }
 
-    [LoggerMessage(EventId = 4030, Level = LogLevel.Information, Message = "Creating team '{Name}' in workspace {WorkspaceId}")]
-    private static partial void LogCreatingTeam(ILogger logger, string name, Guid workspaceId);
+    [LoggerMessage(EventId = 4030, Level = LogLevel.Information, Message = "Creating team '{Name}'")]
+    private static partial void LogCreatingTeam(ILogger logger, string name);
 
     [LoggerMessage(EventId = 4031, Level = LogLevel.Information, Message = "Team created successfully: {TeamId} - '{Name}'")]
     private static partial void LogTeamCreated(ILogger logger, Guid teamId, string name);

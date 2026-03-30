@@ -16,10 +16,10 @@ public sealed class TeamsController(
     GetTeamById getTeamById,
     ListTeams listTeams,
     ListSubTeams listSubTeams,
-    ListTeamCollaborators listTeamCollaborators,
-    GetTeamCollaboratorLookup listTeamCollaboratorOptions,
-    PatchTeamCollaborators patchTeamCollaborators,
-    ListAvailableCollaboratorsForTeam listAvailableCollaboratorsForTeam,
+    ListTeamEmployees listTeamEmployees,
+    GetTeamEmployeeLookup listTeamEmployeeOptions,
+    PatchTeamEmployees patchTeamEmployees,
+    ListAvailableEmployeesForTeam listAvailableEmployeesForTeam,
     IValidator<CreateTeamRequest> createValidator,
     IValidator<PatchTeamRequest> updateValidator) : ApiControllerBase
 {
@@ -28,7 +28,6 @@ public sealed class TeamsController(
     /// </summary>
     /// <response code="201">Time criado com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Workspace não encontrado.</response>
     /// <response code="403">Sem permissão para criar time.</response>
     [HttpPost]
     [Consumes("application/json")]
@@ -46,7 +45,6 @@ public sealed class TeamsController(
 
         var command = new CreateTeamCommand(
             request.Name,
-            request.WorkspaceId,
             request.LeaderId,
             request.ParentTeamId);
 
@@ -113,7 +111,7 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TeamResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getTeamById.ExecuteAsync(id, cancellationToken);
+        var result = await getTeamById.ExecuteAsync(User, id, cancellationToken);
         return FromResultOk(result, team => team.ToResponse());
     }
 
@@ -126,7 +124,6 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(PagedResult<TeamResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<TeamResponse>>> GetAll(
-        [FromQuery] Guid? workspaceId,
         [FromQuery] Guid? parentTeamId,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -146,7 +143,6 @@ public sealed class TeamsController(
         }
 
         var result = await listTeams.ExecuteAsync(
-            workspaceId,
             parentTeamId,
             searchValidation.Value,
             page,
@@ -187,11 +183,11 @@ public sealed class TeamsController(
     /// <response code="200">Lista retornada com sucesso.</response>
     /// <response code="400">Parâmetros inválidos.</response>
     /// <response code="404">Time não encontrado.</response>
-    [HttpGet("{id:guid}/collaborators")]
-    [ProducesResponseType(typeof(PagedResult<CollaboratorResponse>), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}/employees")]
+    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<CollaboratorResponse>>> GetCollaborators(
+    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetEmployees(
         Guid id,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -203,32 +199,32 @@ public sealed class TeamsController(
             return paginationValidation;
         }
 
-        var result = await listTeamCollaborators.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToCollaboratorResponse()));
+        var result = await listTeamEmployees.ExecuteAsync(id, page, pageSize, cancellationToken);
+        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
     }
 
     /// <summary>
     /// Lista opções simplificadas de colaboradores do time.
     /// </summary>
-    [HttpGet("{id:guid}/collaborators/lookup")]
-    [ProducesResponseType(typeof(List<CollaboratorLookupResponse>), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}/employees/lookup")]
+    [ProducesResponseType(typeof(List<EmployeeLookupResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<CollaboratorLookupResponse>>> GetCollaboratorLookup(
+    public async Task<ActionResult<List<EmployeeLookupResponse>>> GetEmployeeLookup(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var result = await listTeamCollaboratorOptions.ExecuteAsync(id, cancellationToken);
+        var result = await listTeamEmployeeOptions.ExecuteAsync(User, id, cancellationToken);
         return FromResultOk(result);
     }
 
     /// <summary>
     /// Lista colaboradores disponíveis para associação ao time.
     /// </summary>
-    [HttpGet("{id:guid}/collaborators/eligible-for-assignment")]
-    [ProducesResponseType(typeof(List<TeamCollaboratorEligibleResponse>), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}/employees/eligible-for-assignment")]
+    [ProducesResponseType(typeof(List<TeamEmployeeEligibleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<TeamCollaboratorEligibleResponse>>> GetEligibleCollaboratorsForAssignment(
+    public async Task<ActionResult<List<TeamEmployeeEligibleResponse>>> GetEligibleEmployeesForAssignment(
         Guid id,
         [FromQuery] string? search = null,
         CancellationToken cancellationToken = default)
@@ -239,7 +235,7 @@ public sealed class TeamsController(
             return searchValidation.Failure;
         }
 
-        var result = await listAvailableCollaboratorsForTeam.ExecuteAsync(id, searchValidation.Value, cancellationToken);
+        var result = await listAvailableEmployeesForTeam.ExecuteAsync(User, id, searchValidation.Value, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -250,16 +246,16 @@ public sealed class TeamsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Time não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar vínculos.</response>
-    [HttpPatch("{id:guid}/collaborators")]
+    [HttpPatch("{id:guid}/employees")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateCollaborators(Guid id, PatchTeamCollaboratorsRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateEmployees(Guid id, PatchTeamEmployeesRequest request, CancellationToken cancellationToken)
     {
-        var command = new PatchTeamCollaboratorsCommand(request.CollaboratorIds);
-        var result = await patchTeamCollaborators.ExecuteAsync(User, id, command, cancellationToken);
+        var command = new PatchTeamEmployeesCommand(request.EmployeeIds);
+        var result = await patchTeamEmployees.ExecuteAsync(User, id, command, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

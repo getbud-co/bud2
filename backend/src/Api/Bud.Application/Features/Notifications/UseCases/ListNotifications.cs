@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 
@@ -5,21 +6,23 @@ namespace Bud.Application.Features.Notifications.UseCases;
 
 public sealed class ListNotifications(
     INotificationRepository notificationRepository,
+    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider)
 {
     public async Task<Result<PagedResult<NotificationResponse>>> ExecuteAsync(
+        ClaimsPrincipal user,
         bool? isRead,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        if (tenantProvider.CollaboratorId is null)
+        if (!await authorizationGateway.CanReadAsync(user, NotificationInboxResource.Instance, cancellationToken))
         {
-            return Result<PagedResult<NotificationResponse>>.Forbidden(UserErrorMessages.CollaboratorNotIdentified);
+            return Result<PagedResult<NotificationResponse>>.Forbidden(UserErrorMessages.EmployeeNotIdentified);
         }
 
         var pagedSummaries = await notificationRepository.GetByRecipientAsync(
-            tenantProvider.CollaboratorId.Value,
+            tenantProvider.EmployeeId!.Value,
             isRead,
             page,
             pageSize,

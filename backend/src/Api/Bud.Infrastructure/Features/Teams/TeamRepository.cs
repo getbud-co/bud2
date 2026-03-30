@@ -10,18 +10,13 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
     public async Task<Team?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
 
-    public async Task<Team?> GetByIdWithCollaboratorTeamsAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Teams.Include(t => t.CollaboratorTeams).FirstOrDefaultAsync(t => t.Id == id, ct);
+    public async Task<Team?> GetByIdWithEmployeeTeamsAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.Teams.Include(t => t.EmployeeTeams).FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<PagedResult<Team>> GetAllAsync(
-        Guid? workspaceId, Guid? parentTeamId, string? search, int page, int pageSize, CancellationToken ct = default)
+        Guid? parentTeamId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
         IQueryable<Team> query = dbContext.Teams.AsNoTracking().Include(t => t.Leader);
-
-        if (workspaceId.HasValue)
-        {
-            query = query.Where(t => t.WorkspaceId == workspaceId.Value);
-        }
 
         if (parentTeamId.HasValue)
         {
@@ -54,9 +49,9 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
         return new PagedResult<Team> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
-    public async Task<PagedResult<Collaborator>> GetCollaboratorsAsync(Guid teamId, int page, int pageSize, CancellationToken ct = default)
+    public async Task<PagedResult<Employee>> GetEmployeesAsync(Guid teamId, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.Collaborators.AsNoTracking().Where(c => c.TeamId == teamId);
+        var query = dbContext.Employees.AsNoTracking().Where(c => c.TeamId == teamId);
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -65,36 +60,36 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<Collaborator> { Items = items, Total = total, Page = page, PageSize = pageSize };
+        return new PagedResult<Employee> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
-    public async Task<List<Collaborator>> GetCollaboratorLookupAsync(Guid teamId, CancellationToken ct = default)
+    public async Task<List<Employee>> GetEmployeeLookupAsync(Guid teamId, CancellationToken ct = default)
     {
-        return await dbContext.CollaboratorTeams
+        return await dbContext.EmployeeTeams
             .AsNoTracking()
             .Where(ct2 => ct2.TeamId == teamId)
-            .Include(ct2 => ct2.Collaborator)
-            .Select(ct2 => ct2.Collaborator)
+            .Include(ct2 => ct2.Employee)
+            .Select(ct2 => ct2.Employee)
             .OrderBy(c => c.FullName)
             .ToListAsync(ct);
     }
 
-    public async Task<List<Collaborator>> GetEligibleCollaboratorsForAssignmentAsync(
+    public async Task<List<Employee>> GetEligibleEmployeesForAssignmentAsync(
         Guid teamId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
     {
-        var currentCollaboratorIds = await dbContext.CollaboratorTeams
+        var currentEmployeeIds = await dbContext.EmployeeTeams
             .Where(ct2 => ct2.TeamId == teamId)
-            .Select(ct2 => ct2.CollaboratorId)
+            .Select(ct2 => ct2.EmployeeId)
             .ToListAsync(ct);
 
-        var query = dbContext.Collaborators
+        var query = dbContext.Employees
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId)
-            .Where(c => !currentCollaboratorIds.Contains(c.Id));
+            .Where(c => !currentEmployeeIds.Contains(c.Id));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = new CollaboratorSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
+            query = new EmployeeSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
         }
 
         return await query
@@ -109,7 +104,7 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
     public async Task<bool> HasSubTeamsAsync(Guid teamId, CancellationToken ct = default)
         => await dbContext.Teams.AnyAsync(t => t.ParentTeamId == teamId, ct);
 
-    public Task<bool> HasGoalsAsync(Guid teamId, CancellationToken ct = default)
+    public Task<bool> HasMissionsAsync(Guid teamId, CancellationToken ct = default)
         => Task.FromResult(false);
 
     public async Task AddAsync(Team entity, CancellationToken ct = default)

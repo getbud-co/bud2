@@ -22,19 +22,18 @@ public sealed class ApplicationDbContext : DbContext
     }
 
     public DbSet<Organization> Organizations => Set<Organization>();
-    public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<Team> Teams => Set<Team>();
-    public DbSet<Collaborator> Collaborators => Set<Collaborator>();
-    public DbSet<Goal> Goals => Set<Goal>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Mission> Missions => Set<Mission>();
     public DbSet<Indicator> Indicators => Set<Indicator>();
-    public DbSet<CollaboratorTeam> CollaboratorTeams => Set<CollaboratorTeam>();
+    public DbSet<EmployeeTeam> EmployeeTeams => Set<EmployeeTeam>();
     public DbSet<Checkin> Checkins => Set<Checkin>();
     public DbSet<Template> Templates => Set<Template>();
-    public DbSet<TemplateGoal> TemplateGoals => Set<TemplateGoal>();
+    public DbSet<TemplateMission> TemplateMissions => Set<TemplateMission>();
     public DbSet<TemplateIndicator> TemplateIndicators => Set<TemplateIndicator>();
-    public DbSet<CollaboratorAccessLog> CollaboratorAccessLogs => Set<CollaboratorAccessLog>();
+    public DbSet<EmployeeAccessLog> EmployeeAccessLogs => Set<EmployeeAccessLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
-    public DbSet<GoalTask> GoalTasks => Set<GoalTask>();
+    public DbSet<MissionTask> MissionTasks => Set<MissionTask>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,13 +50,6 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && o.Id == _tenantId) // Anyone with tenant selected sees only that tenant
             );
 
-        modelBuilder.Entity<Workspace>()
-            .HasQueryFilter(w =>
-                !_applyTenantFilter ||
-                (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && w.OrganizationId == _tenantId)
-            );
-
         modelBuilder.Entity<Team>()
             .HasQueryFilter(t =>
                 !_applyTenantFilter ||
@@ -65,21 +57,21 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && t.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<Collaborator>()
+        modelBuilder.Entity<Employee>()
             .HasQueryFilter(c =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && c.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<CollaboratorTeam>()
+        modelBuilder.Entity<EmployeeTeam>()
             .HasQueryFilter(ct =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && ct.Collaborator.OrganizationId == _tenantId)
+                (_tenantId != null && ct.Employee.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<Goal>()
+        modelBuilder.Entity<Mission>()
             .HasQueryFilter(g =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
@@ -107,7 +99,7 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && mt.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<TemplateGoal>()
+        modelBuilder.Entity<TemplateMission>()
             .HasQueryFilter(tg =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
@@ -121,7 +113,7 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && ti.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<CollaboratorAccessLog>()
+        modelBuilder.Entity<EmployeeAccessLog>()
             .HasQueryFilter(cal =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
@@ -135,7 +127,7 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && n.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<GoalTask>()
+        modelBuilder.Entity<MissionTask>()
             .HasQueryFilter(gt =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||

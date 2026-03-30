@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bud.Infrastructure.Persistence.Configurations;
 
-public sealed class TaskConfiguration : IEntityTypeConfiguration<GoalTask>
+public sealed class TaskConfiguration : IEntityTypeConfiguration<MissionTask>
 {
-    public void Configure(EntityTypeBuilder<GoalTask> builder)
+    public void Configure(EntityTypeBuilder<MissionTask> builder)
     {
         builder.Property(t => t.Name)
             .HasMaxLength(200);
@@ -25,12 +25,12 @@ public sealed class TaskConfiguration : IEntityTypeConfiguration<GoalTask>
 
         builder.HasIndex(t => t.OrganizationId);
 
-        builder.HasOne(t => t.Goal)
+        builder.HasOne(t => t.Mission)
             .WithMany(g => g.Tasks)
-            .HasForeignKey(t => t.GoalId)
+            .HasForeignKey(t => t.MissionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(t => t.GoalId);
-        builder.HasIndex(t => new { t.GoalId, t.State });
+        builder.HasIndex(t => t.MissionId);
+        builder.HasIndex(t => new { t.MissionId, t.State });
     }
 }

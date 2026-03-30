@@ -6,7 +6,7 @@ namespace Bud.Api.UnitTests.Validators;
 
 public class CreateMissionValidatorTests
 {
-    private readonly CreateGoalValidator _validator = new();
+    private readonly CreateMissionValidator _validator = new();
 
     #region Name Validation Tests
 
@@ -14,12 +14,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithValidName_Passes()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -37,12 +37,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithEmptyName_Fails(string? name)
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = name!,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -57,12 +57,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithNameExceeding200Chars_Fails()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = new string('A', 201), // 201 characters
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -83,12 +83,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithEndDateBeforeStartDate_Fails()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = DateTime.UtcNow.AddDays(7),
             EndDate = DateTime.UtcNow, // Before start date
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -106,12 +106,12 @@ public class CreateMissionValidatorTests
     {
         // Arrange
         var startDate = DateTime.UtcNow;
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = startDate,
             EndDate = startDate, // Same as start date
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -126,12 +126,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithEndDateAfterStartDate_Passes()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(7), // After start date
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -146,12 +146,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithEmptyStartDate_Fails()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = default(DateTime), // Empty date
             EndDate = DateTime.UtcNow.AddDays(7),
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act
@@ -166,12 +166,12 @@ public class CreateMissionValidatorTests
     public async Task Validate_WithEmptyEndDate_Fails()
     {
         // Arrange
-        var request = new CreateGoalRequest
+        var request = new CreateMissionRequest
         {
             Name = "Test Mission",
             StartDate = DateTime.UtcNow,
             EndDate = default(DateTime), // Empty date
-            Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
         };
 
         // Act

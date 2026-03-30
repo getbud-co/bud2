@@ -2,7 +2,7 @@
   "version": 1,
   "tools": [
     {
-      "name": "goal_create",
+      "name": "mission_create",
       "description": "Cria uma meta.",
       "inputSchema": {
         "type": "object",
@@ -33,7 +33,7 @@
           "status": {
             "type": "integer"
           },
-          "collaboratorId": {
+          "employeeId": {
             "type": [
               "null",
               "string"
@@ -58,7 +58,7 @@
       }
     },
     {
-      "name": "goal_get",
+      "name": "mission_get",
       "description": "Busca uma meta por ID.",
       "inputSchema": {
         "type": "object",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "name": "goal_list",
+      "name": "mission_list",
       "description": "Lista metas com filtros.",
       "inputSchema": {
         "type": "object",
@@ -109,7 +109,7 @@
       }
     },
     {
-      "name": "goal_update",
+      "name": "mission_update",
       "description": "Atualiza uma meta.",
       "inputSchema": {
         "type": "object",
@@ -132,7 +132,7 @@
               "startDate": {},
               "endDate": {},
               "status": {},
-              "collaboratorId": {}
+              "employeeId": {}
             },
             "additionalProperties": false,
             "required": [
@@ -148,7 +148,7 @@
       }
     },
     {
-      "name": "goal_delete",
+      "name": "mission_delete",
       "description": "Remove uma meta.",
       "inputSchema": {
         "type": "object",
@@ -165,12 +165,12 @@
       }
     },
     {
-      "name": "goal_indicator_create",
+      "name": "mission_indicator_create",
       "description": "Cria um indicador de meta.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "goalId": {
+          "missionId": {
             "type": "string",
             "format": "uuid"
           },
@@ -227,14 +227,14 @@
         },
         "additionalProperties": false,
         "required": [
-          "goalId",
+          "missionId",
           "name",
           "type"
         ]
       }
     },
     {
-      "name": "goal_indicator_get",
+      "name": "mission_indicator_get",
       "description": "Busca um indicador por ID.",
       "inputSchema": {
         "type": "object",
@@ -251,13 +251,13 @@
       }
     },
     {
-      "name": "goal_indicator_list",
+      "name": "mission_indicator_list",
       "description": "Lista indicadores de meta.",
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "goalId": {
+          "missionId": {
             "type": "string",
             "format": "uuid"
           },
@@ -286,7 +286,7 @@
       }
     },
     {
-      "name": "goal_indicator_update",
+      "name": "mission_indicator_update",
       "description": "Atualiza um indicador de meta.",
       "inputSchema": {
         "type": "object",
@@ -326,7 +326,7 @@
       }
     },
     {
-      "name": "goal_indicator_delete",
+      "name": "mission_indicator_delete",
       "description": "Remove um indicador de meta.",
       "inputSchema": {
         "type": "object",

@@ -7,34 +7,34 @@ namespace Bud.Application.UnitTests.Application.Tasks;
 
 public sealed class TaskWriteUseCasesTests
 {
-    private static Goal MakeGoal() => new()
+    private static Mission MakeMission() => new()
     {
         Id = Guid.NewGuid(),
         Name = "Meta de Teste",
         StartDate = DateTime.UtcNow,
         EndDate = DateTime.UtcNow.AddDays(30),
-        Status = GoalStatus.Active,
+        Status = MissionStatus.Active,
         OrganizationId = Guid.NewGuid()
     };
 
-    private static GoalTask MakeTask(Guid? orgId = null, Guid? goalId = null) => new()
+    private static MissionTask MakeTask(Guid? orgId = null, Guid? missionId = null) => new()
     {
         Id = Guid.NewGuid(),
         Name = "Tarefa de Teste",
         State = TaskState.ToDo,
         OrganizationId = orgId ?? Guid.NewGuid(),
-        GoalId = goalId ?? Guid.NewGuid()
+        MissionId = missionId ?? Guid.NewGuid()
     };
 
     // ── CreateTask ──────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateTask_WhenGoalNotFound_ReturnsNotFound()
+    public async Task CreateTask_WhenMissionNotFound_ReturnsNotFound()
     {
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
 
-        repo.Setup(r => r.GetGoalByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Goal?)null);
+        repo.Setup(r => r.GetMissionByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Mission?)null);
 
         var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
@@ -47,12 +47,12 @@ public sealed class TaskWriteUseCasesTests
     [Fact]
     public async Task CreateTask_WhenAuthorized_CreatesTaskViaRepository()
     {
-        var goal = MakeGoal();
+        var mission = MakeMission();
         var repo = new Mock<ITaskRepository>();
 
-        repo.Setup(r => r.GetGoalByIdAsync(goal.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(goal);
-        repo.Setup(r => r.AddAsync(It.IsAny<GoalTask>(), It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetMissionByIdAsync(mission.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mission);
+        repo.Setup(r => r.AddAsync(It.IsAny<MissionTask>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -60,7 +60,7 @@ public sealed class TaskWriteUseCasesTests
         var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
         var result = await useCase.ExecuteAsync(new CreateTaskCommand(
-            goal.Id,
+            mission.Id,
             "Implementar feature",
             "Detalhes da feature",
             TaskState.Doing,
@@ -68,30 +68,30 @@ public sealed class TaskWriteUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Implementar feature");
-        result.Value.GoalId.Should().Be(goal.Id);
-        result.Value.OrganizationId.Should().Be(goal.OrganizationId);
+        result.Value.MissionId.Should().Be(mission.Id);
+        result.Value.OrganizationId.Should().Be(mission.OrganizationId);
         result.Value.State.Should().Be(TaskState.Doing);
-        repo.Verify(r => r.AddAsync(It.IsAny<GoalTask>(), It.IsAny<CancellationToken>()), Times.Once);
+        repo.Verify(r => r.AddAsync(It.IsAny<MissionTask>(), It.IsAny<CancellationToken>()), Times.Once);
         repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task CreateTask_WithDueDate_ResponseContainsDueDate()
     {
-        var goal = MakeGoal();
+        var mission = MakeMission();
         var dueDate = new DateTime(2026, 12, 31);
         var repo = new Mock<ITaskRepository>();
 
-        repo.Setup(r => r.GetGoalByIdAsync(goal.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(goal);
-        repo.Setup(r => r.AddAsync(It.IsAny<GoalTask>(), It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetMissionByIdAsync(mission.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mission);
+        repo.Setup(r => r.AddAsync(It.IsAny<MissionTask>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var useCase = new CreateTask(repo.Object, NullLogger<CreateTask>.Instance);
 
-        var result = await useCase.ExecuteAsync(new CreateTaskCommand(goal.Id, "Tarefa com prazo", null, TaskState.ToDo, dueDate));
+        var result = await useCase.ExecuteAsync(new CreateTaskCommand(mission.Id, "Tarefa com prazo", null, TaskState.ToDo, dueDate));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.DueDate.Should().Be(dueDate);
@@ -105,7 +105,7 @@ public sealed class TaskWriteUseCasesTests
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
 
         repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GoalTask?)null);
+            .ReturnsAsync((MissionTask?)null);
 
         var useCase = new PatchTask(repo.Object, NullLogger<PatchTask>.Instance);
 
@@ -162,7 +162,7 @@ public sealed class TaskWriteUseCasesTests
         var repo = new Mock<ITaskRepository>(MockBehavior.Strict);
 
         repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GoalTask?)null);
+            .ReturnsAsync((MissionTask?)null);
 
         var useCase = new DeleteTask(repo.Object, NullLogger<DeleteTask>.Instance);
 

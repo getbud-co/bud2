@@ -147,6 +147,15 @@ public sealed class ArchitectureTests
         var repositoryRoot = TestRepositoryRoot.Find();
         var filePath = Path.Combine(repositoryRoot, "docs", "architecture", "value-object-mapping-guardrails.md");
 
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine(
+                Directory.GetParent(repositoryRoot)!.FullName,
+                "docs",
+                "architecture",
+                "value-object-mapping-guardrails.md");
+        }
+
         File.Exists(filePath).Should().BeTrue();
 
         var content = File.ReadAllText(filePath);

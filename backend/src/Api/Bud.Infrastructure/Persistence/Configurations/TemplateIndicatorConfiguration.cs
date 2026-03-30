@@ -18,13 +18,13 @@ public sealed class TemplateIndicatorConfiguration : IEntityTypeConfiguration<Te
             .HasForeignKey(ti => ti.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(ti => ti.TemplateGoal)
+        builder.HasOne(ti => ti.TemplateMission)
             .WithMany(tg => tg.Indicators)
-            .HasForeignKey(ti => ti.TemplateGoalId)
+            .HasForeignKey(ti => ti.TemplateMissionId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(ti => ti.OrganizationId);
         builder.HasIndex(ti => ti.TemplateId);
-        builder.HasIndex(ti => ti.TemplateGoalId);
+        builder.HasIndex(ti => ti.TemplateMissionId);
     }
 }

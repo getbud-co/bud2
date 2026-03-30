@@ -1,0 +1,55 @@
+using Bud.Shared.Kernel;
+
+namespace Bud.Shared.Contracts.Features.Employees;
+
+public sealed class EmployeeResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public EmployeeRole Role { get; set; } = EmployeeRole.IndividualContributor;
+    public Guid OrganizationId { get; set; }
+    public Guid? TeamId { get; set; }
+    public Guid? LeaderId { get; set; }
+    public bool IsGlobalAdmin { get; set; }
+    public TeamResponse? Team { get; set; }
+    public EmployeeResponse? Leader { get; set; }
+}
+
+public sealed class EmployeeLookupResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public EmployeeRole Role { get; set; }
+}
+
+public sealed class EmployeeLeaderResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? TeamName { get; set; }
+    public string OrganizationName { get; set; } = string.Empty;
+}
+
+public sealed class EmployeeSubordinateResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Initials { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public List<EmployeeSubordinateResponse> Children { get; set; } = [];
+}
+
+public sealed class EmployeeTeamResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public sealed class EmployeeTeamEligibleResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}

@@ -7,10 +7,9 @@ using Xunit;
 
 namespace Bud.Application.UnitTests.Application.Organizations;
 
-public sealed class OrganizationWriteUseCasesTests
+public sealed class OrganizationUseCasesTests
 {
     private readonly Mock<IOrganizationRepository> _orgRepo = new();
-    private readonly Mock<ICollaboratorRepository> _collabRepo = new();
 
     private static IOptions<GlobalAdminSettings> CreateSettings(string protectedOrgName = "getbud.co")
         => Options.Create(new GlobalAdminSettings
@@ -20,89 +19,36 @@ public sealed class OrganizationWriteUseCasesTests
         });
 
     private CreateOrganization CreateRegisterOrganization()
-        => new(_orgRepo.Object, _collabRepo.Object, NullLogger<CreateOrganization>.Instance);
+        => new(_orgRepo.Object, NullLogger<CreateOrganization>.Instance);
 
     private PatchOrganization CreateRenameOrganization(string protectedOrgName = "getbud.co")
-        => new(_orgRepo.Object, _collabRepo.Object, CreateSettings(protectedOrgName), NullLogger<PatchOrganization>.Instance);
+        => new(_orgRepo.Object, CreateSettings(protectedOrgName), NullLogger<PatchOrganization>.Instance);
 
     private DeleteOrganization CreateDeleteOrganization(string protectedOrgName = "getbud.co")
         => new(_orgRepo.Object, CreateSettings(protectedOrgName), NullLogger<DeleteOrganization>.Instance);
 
-    #region CreateAsync
-
     [Fact]
     public async Task CreateAsync_WithValidRequest_ReturnsSuccess()
     {
-        // Arrange
-        var ownerId = Guid.NewGuid();
-        var owner = new Collaborator { Id = ownerId, FullName = "Leader", Email = "leader@test.com", Role = CollaboratorRole.Leader };
-        _collabRepo.Setup(r => r.GetByIdAsync(ownerId, It.IsAny<CancellationToken>())).ReturnsAsync(owner);
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid id, CancellationToken _) => new Organization { Id = id, Name = "Test Org", OwnerId = ownerId, Owner = owner });
-
         var useCase = CreateRegisterOrganization();
 
-        // Act
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Test Org", ownerId));
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Test Org"));
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         _orgRepo.Verify(r => r.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()), Times.Once);
         _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithNonExistentOwner_ReturnsNotFound()
-    {
-        // Arrange
-        _collabRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Collaborator?)null);
-
-        var useCase = CreateRegisterOrganization();
-
-        // Act
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Test Org", Guid.NewGuid()));
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("O líder selecionado não foi encontrado.");
-    }
-
-    [Fact]
-    public async Task CreateAsync_WithOwnerNotLeader_ReturnsValidationError()
-    {
-        // Arrange
-        var ownerId = Guid.NewGuid();
-        var nonLeader = new Collaborator { Id = ownerId, FullName = "Non Leader", Email = "nonleader@test.com", Role = CollaboratorRole.IndividualContributor };
-        _collabRepo.Setup(r => r.GetByIdAsync(ownerId, It.IsAny<CancellationToken>())).ReturnsAsync(nonLeader);
-
-        var useCase = CreateRegisterOrganization();
-
-        // Act
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Test Org", ownerId));
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Validation);
-        result.Error.Should().Be("O proprietário da organização deve ter a função de Líder.");
-    }
-
-    #endregion
-
-    #region UpdateAsync
-
-    [Fact]
     public async Task UpdateAsync_WithNonExistentOrganization_ReturnsNotFound()
     {
-        // Arrange
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Organization?)null);
+        _orgRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Organization?)null);
 
         var useCase = CreateRenameOrganization();
 
-        // Act
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchOrganizationCommand("New Name", default));
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchOrganizationCommand("New Name"));
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.Should().Be("Organização não encontrada.");
@@ -111,80 +57,44 @@ public sealed class OrganizationWriteUseCasesTests
     [Fact]
     public async Task UpdateAsync_ProtectedOrganization_ReturnsValidationError()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "getbud.co" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
 
         var useCase = CreateRenameOrganization("getbud.co");
 
-        // Act
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name", default));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name"));
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Should().Be("Esta organização está protegida e não pode ser alterada.");
     }
 
     [Fact]
-    public async Task UpdateAsync_WithNonExistentOwner_ReturnsNotFound()
+    public async Task UpdateAsync_WithValidOrganization_RenamesSuccessfully()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "Test Org" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
-        _collabRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Collaborator?)null);
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
 
         var useCase = CreateRenameOrganization();
 
-        // Act
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name", (Guid?)Guid.NewGuid()));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name"));
 
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("O líder selecionado não foi encontrado.");
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Name.Should().Be("New Name");
     }
-
-    [Fact]
-    public async Task UpdateAsync_WithOwnerNotLeader_ReturnsValidationError()
-    {
-        // Arrange
-        var orgId = Guid.NewGuid();
-        var org = new Organization { Id = orgId, Name = "Test Org" };
-        var nonLeaderId = Guid.NewGuid();
-        var nonLeader = new Collaborator { Id = nonLeaderId, FullName = "Non Leader", Email = "nl@test.com", Role = CollaboratorRole.IndividualContributor };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
-        _collabRepo.Setup(r => r.GetByIdAsync(nonLeaderId, It.IsAny<CancellationToken>())).ReturnsAsync(nonLeader);
-
-        var useCase = CreateRenameOrganization();
-
-        // Act
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name", (Guid?)nonLeaderId));
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Validation);
-        result.Error.Should().Be("O proprietário da organização deve ter a função de Líder.");
-    }
-
-    #endregion
-
-    #region DeleteAsync
 
     [Fact]
     public async Task DeleteAsync_WithNonExistentOrganization_ReturnsNotFound()
     {
-        // Arrange
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Organization?)null);
+        _orgRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Organization?)null);
 
         var useCase = CreateDeleteOrganization();
 
-        // Act
         var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.Should().Be("Organização não encontrada.");
@@ -193,58 +103,31 @@ public sealed class OrganizationWriteUseCasesTests
     [Fact]
     public async Task DeleteAsync_ProtectedOrganization_ReturnsValidationError()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "getbud.co" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
 
         var useCase = CreateDeleteOrganization("getbud.co");
 
-        // Act
         var result = await useCase.ExecuteAsync(orgId);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Should().Be("Esta organização está protegida e não pode ser excluída.");
     }
 
     [Fact]
-    public async Task DeleteAsync_WithWorkspaces_ReturnsConflict()
+    public async Task DeleteAsync_WithEmployees_ReturnsConflict()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "Test Org" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
-        _orgRepo.Setup(r => r.HasWorkspacesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.HasEmployeesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         var useCase = CreateDeleteOrganization();
 
-        // Act
         var result = await useCase.ExecuteAsync(orgId);
 
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Conflict);
-        result.Error.Should().Be("Não é possível excluir a organização porque ela possui workspaces associados. Exclua os workspaces primeiro.");
-    }
-
-    [Fact]
-    public async Task DeleteAsync_WithCollaborators_ReturnsConflict()
-    {
-        // Arrange
-        var orgId = Guid.NewGuid();
-        var org = new Organization { Id = orgId, Name = "Test Org" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
-        _orgRepo.Setup(r => r.HasWorkspacesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _orgRepo.Setup(r => r.HasCollaboratorsAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-
-        var useCase = CreateDeleteOrganization();
-
-        // Act
-        var result = await useCase.ExecuteAsync(orgId);
-
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Conflict);
         result.Error.Should().Be("Não é possível excluir a organização porque ela possui colaboradores associados. Remova os colaboradores primeiro.");
@@ -253,23 +136,17 @@ public sealed class OrganizationWriteUseCasesTests
     [Fact]
     public async Task DeleteAsync_WithValidOrganization_Succeeds()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var org = new Organization { Id = orgId, Name = "Test Org" };
-        _orgRepo.Setup(r => r.GetByIdWithOwnerAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
-        _orgRepo.Setup(r => r.HasWorkspacesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _orgRepo.Setup(r => r.HasCollaboratorsAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _orgRepo.Setup(r => r.GetByIdAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(org);
+        _orgRepo.Setup(r => r.HasEmployeesAsync(orgId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         var useCase = CreateDeleteOrganization();
 
-        // Act
         var result = await useCase.ExecuteAsync(orgId);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         _orgRepo.Verify(r => r.RemoveAsync(org, It.IsAny<CancellationToken>()), Times.Once);
         _orgRepo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
-
-    #endregion
 }

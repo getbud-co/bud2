@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -6,11 +7,12 @@ namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed partial class DeleteCheckin(
     IIndicatorRepository indicatorRepository,
-    ITenantProvider tenantProvider,
+    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<DeleteCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid indicatorId,
         Guid checkinId,
         CancellationToken cancellationToken = default)
@@ -24,10 +26,11 @@ public sealed partial class DeleteCheckin(
             return Result.NotFound(UserErrorMessages.CheckinNotFound);
         }
 
-        if (!tenantProvider.IsGlobalAdmin && tenantProvider.CollaboratorId != checkin.CollaboratorId)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(indicatorId), cancellationToken);
+        if (!canWrite)
         {
-            LogCheckinDeletionFailed(logger, checkinId, "Not the author");
-            return Result.Forbidden(UserErrorMessages.CheckinDeleteAuthorOnly);
+            LogCheckinDeletionFailed(logger, checkinId, "Indicator write forbidden");
+            return Result.Forbidden(UserErrorMessages.CheckinDeleteForbidden);
         }
 
         await indicatorRepository.RemoveCheckinAsync(checkin, cancellationToken);

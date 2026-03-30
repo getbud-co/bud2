@@ -16,7 +16,7 @@ public sealed class TaskValidatorTests
     {
         var request = new CreateTaskRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Implementar feature",
             State = TaskState.ToDo
         };
@@ -27,11 +27,11 @@ public sealed class TaskValidatorTests
     }
 
     [Fact]
-    public async Task Create_WithEmptyGoalId_Fails()
+    public async Task Create_WithEmptyMissionId_Fails()
     {
         var request = new CreateTaskRequest
         {
-            GoalId = Guid.Empty,
+            MissionId = Guid.Empty,
             Name = "Tarefa",
             State = TaskState.ToDo
         };
@@ -39,7 +39,7 @@ public sealed class TaskValidatorTests
         var result = await _createValidator.ValidateAsync(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateTaskRequest.GoalId));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateTaskRequest.MissionId));
     }
 
     [Theory]
@@ -49,7 +49,7 @@ public sealed class TaskValidatorTests
     {
         var request = new CreateTaskRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = name,
             State = TaskState.ToDo
         };
@@ -65,7 +65,7 @@ public sealed class TaskValidatorTests
     {
         var request = new CreateTaskRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = new string('A', 201),
             State = TaskState.ToDo
         };
@@ -81,7 +81,7 @@ public sealed class TaskValidatorTests
     {
         var request = new CreateTaskRequest
         {
-            GoalId = Guid.NewGuid(),
+            MissionId = Guid.NewGuid(),
             Name = "Tarefa",
             Description = new string('A', 2001),
             State = TaskState.ToDo

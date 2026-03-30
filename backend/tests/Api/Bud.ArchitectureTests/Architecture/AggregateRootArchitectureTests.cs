@@ -11,10 +11,9 @@ public sealed class AggregateRootArchitectureTests
         var expectedAggregateRoots = new[]
         {
             typeof(Organization),
-            typeof(Workspace),
             typeof(Team),
-            typeof(Collaborator),
-            typeof(Goal),
+            typeof(Employee),
+            typeof(Mission),
             typeof(Indicator),
             typeof(Template),
             typeof(Notification)
@@ -34,10 +33,10 @@ public sealed class AggregateRootArchitectureTests
         var nonRoots = new[]
         {
             typeof(Checkin),
-            typeof(TemplateGoal),
+            typeof(TemplateMission),
             typeof(TemplateIndicator),
-            typeof(CollaboratorTeam),
-            typeof(CollaboratorAccessLog)
+            typeof(EmployeeTeam),
+            typeof(EmployeeAccessLog)
         };
 
         var invalidRoots = nonRoots

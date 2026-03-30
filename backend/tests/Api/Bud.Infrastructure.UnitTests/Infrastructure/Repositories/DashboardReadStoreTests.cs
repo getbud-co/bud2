@@ -20,7 +20,7 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_CollaboratorNotFound_ReturnsNull()
+    public async Task GetMyDashboardAsync_EmployeeNotFound_ReturnsNull()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -34,42 +34,40 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_CollaboratorWithLeader_ReturnsLeaderInfo()
+    public async Task GetMyDashboardAsync_EmployeeWithLeader_ReturnsLeaderInfo()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Diretoria de RH", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = Guid.NewGuid() };
-        var leader = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Diretoria de RH", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Maria Silva",
             Email = "maria@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Joao Santos",
             Email = "joao@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id,
             LeaderId = leader.Id
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(leader, collaborator);
+        context.Employees.AddRange(leader, employee);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -80,26 +78,24 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_CollaboratorIsLeader_ReturnsSelfAsLeader()
+    public async Task GetMyDashboardAsync_EmployeeIsLeader_ReturnsSelfAsLeader()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Maria Silva",
             Email = "maria@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = leader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, LeaderId = leader.Id };
         leader.TeamId = team.Id;
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         context.Teams.Add(team);
         await context.SaveChangesAsync();
 
@@ -121,17 +117,17 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Carlos Souza",
             Email = "carlos@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
@@ -146,28 +142,28 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_CollaboratorWithNoLeader_ReturnsNullLeader()
+    public async Task GetMyDashboardAsync_EmployeeWithNoLeader_ReturnsNullLeader()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Joao Santos",
             Email = "joao@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = org.Id
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -175,23 +171,22 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_LeaderWithTeamMembers_ReturnsTeamMembersFromCollaboratorTeams()
+    public async Task GetMyDashboardAsync_LeaderWithTeamMembers_ReturnsTeamMembersFromEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Maria Silva",
             Email = "maria@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = leader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, LeaderId = leader.Id };
         leader.TeamId = team.Id;
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Ana Lima",
@@ -199,7 +194,7 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Carlos Souza",
@@ -209,13 +204,12 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(member1, member2);
-        context.Set<CollaboratorTeam>().AddRange(
-            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Employees.AddRange(member1, member2);
+        context.Set<EmployeeTeam>().AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
@@ -233,23 +227,22 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_CollaboratorWithPrimaryTeam_ReturnsTeamMembersFromCollaboratorTeams()
+    public async Task GetMyDashboardAsync_EmployeeWithPrimaryTeam_ReturnsTeamMembersFromEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Maria Silva",
             Email = "maria@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = leader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id, LeaderId = leader.Id };
         leader.TeamId = team.Id;
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Ana Lima",
@@ -257,7 +250,7 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Carlos Souza",
@@ -267,13 +260,12 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(member1, member2);
-        context.Set<CollaboratorTeam>().AddRange(
-            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Employees.AddRange(member1, member2);
+        context.Set<EmployeeTeam>().AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
@@ -296,18 +288,17 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Leader Test",
             Email = "leader@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = leader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, LeaderId = leader.Id };
         leader.TeamId = team.Id;
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "M1 Test",
@@ -315,7 +306,7 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id,
             TeamId = team.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "M2 Test",
@@ -325,20 +316,19 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(member1, member2);
-        context.Set<CollaboratorTeam>().AddRange(
-            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Employees.AddRange(member1, member2);
+        context.Set<EmployeeTeam>().AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id }
         );
 
         // Member 1 accessed this week
-        context.CollaboratorAccessLogs.Add(new CollaboratorAccessLog
+        context.EmployeeAccessLogs.Add(new EmployeeAccessLog
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = member1.Id,
+            EmployeeId = member1.Id,
             OrganizationId = org.Id,
             AccessedAt = DateTime.UtcNow.AddDays(-1)
         });
@@ -362,18 +352,17 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Leader Test",
             Email = "leader@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = leader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, LeaderId = leader.Id };
         leader.TeamId = team.Id;
-        var member = new Collaborator
+        var member = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Member One",
@@ -383,41 +372,40 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(leader);
+        context.Employees.Add(leader);
         context.Teams.Add(team);
-        context.Collaborators.Add(member);
-        context.Set<CollaboratorTeam>().Add(
-            new CollaboratorTeam { CollaboratorId = member.Id, TeamId = team.Id }
+        context.Employees.Add(member);
+        context.Set<EmployeeTeam>().Add(
+            new EmployeeTeam { EmployeeId = member.Id, TeamId = team.Id }
         );
 
         // Access log (100% access)
-        context.CollaboratorAccessLogs.Add(new CollaboratorAccessLog
+        context.EmployeeAccessLogs.Add(new EmployeeAccessLog
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = member.Id,
+            EmployeeId = member.Id,
             OrganizationId = org.Id,
             AccessedAt = DateTime.UtcNow.AddDays(-1)
         });
 
         // Active mission with recent checkin (100% missions updated)
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "M1",
             OrganizationId = org.Id,
-            CollaboratorId = member.Id,
-            Status = GoalStatus.Active,
+            EmployeeId = member.Id,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
 
         var metric = new Indicator
         {
             Id = Guid.NewGuid(),
             Name = "KR1",
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -428,7 +416,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = metric.Id,
-            CollaboratorId = member.Id,
+            EmployeeId = member.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-1),
             ConfidenceLevel = 5,
@@ -454,7 +442,7 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Alone Person",
@@ -463,13 +451,13 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -484,7 +472,7 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Task Person",
@@ -492,13 +480,13 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id
         };
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Overdue Mission",
             OrganizationId = org.Id,
-            CollaboratorId = collaborator.Id,
-            Status = GoalStatus.Active,
+            EmployeeId = employee.Id,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -507,7 +495,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR",
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -517,7 +505,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = metric.Id,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-10),
             ConfidenceLevel = 3,
@@ -525,8 +513,8 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
-        context.Goals.Add(mission);
+        context.Employees.Add(employee);
+        context.Missions.Add(mission);
         context.Indicators.Add(metric);
         context.Checkins.Add(checkin);
         await context.SaveChangesAsync();
@@ -534,13 +522,13 @@ public class DashboardReadStoreTests
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
         result!.PendingTasks.Should().HaveCount(1);
         result.PendingTasks[0].Title.Should().Be("Overdue Mission");
-        result.PendingTasks[0].TaskType.Should().Be("goal_checkin");
+        result.PendingTasks[0].TaskType.Should().Be("mission_checkin");
     }
 
     [Fact]
@@ -549,7 +537,7 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Updated Person",
@@ -557,13 +545,13 @@ public class DashboardReadStoreTests
             OrganizationId = org.Id
         };
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Up to date Mission",
             OrganizationId = org.Id,
-            CollaboratorId = collaborator.Id,
-            Status = GoalStatus.Active,
+            EmployeeId = employee.Id,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -572,7 +560,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR",
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -582,7 +570,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = metric.Id,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-2),
             ConfidenceLevel = 4,
@@ -590,8 +578,8 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
-        context.Goals.Add(mission);
+        context.Employees.Add(employee);
+        context.Missions.Add(mission);
         context.Indicators.Add(metric);
         context.Checkins.Add(checkin);
         await context.SaveChangesAsync();
@@ -599,7 +587,7 @@ public class DashboardReadStoreTests
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -607,43 +595,42 @@ public class DashboardReadStoreTests
     }
 
     [Fact]
-    public async Task GetMyDashboardAsync_WithTeamId_ReturnsTeamMembersFromCollaboratorTeam()
+    public async Task GetMyDashboardAsync_WithTeamId_ReturnsTeamMembersFromEmployeeTeam()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var teamLeader = new Collaborator
+        var teamLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Alpha Leader",
             Email = "alpha-leader@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Alpha", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = teamLeader.Id };
-        var collaborator = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Alpha", OrganizationId = org.Id, LeaderId = teamLeader.Id };
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Viewer User",
             Email = "viewer@test.com",
             OrganizationId = org.Id
         };
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Alice Team",
             Email = "alice@test.com",
             OrganizationId = org.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Bob Team",
             Email = "bob@test.com",
             OrganizationId = org.Id
         };
-        var outsider = new Collaborator
+        var outsider = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Charlie Outside",
@@ -652,20 +639,19 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(teamLeader);
+        context.Employees.Add(teamLeader);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(collaborator, member1, member2, outsider);
-        context.Set<CollaboratorTeam>().AddRange(
-            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Employees.AddRange(employee, member1, member2, outsider);
+        context.Set<EmployeeTeam>().AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, teamId: team.Id);
+        var result = await repository.GetMyDashboardAsync(employee.Id, teamId: team.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -682,39 +668,37 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var teamLeader = new Collaborator
+        var teamLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Beta Leader",
             Email = "beta-leader@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Beta", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = teamLeader.Id };
-        var collaborator = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Beta", OrganizationId = org.Id, LeaderId = teamLeader.Id };
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Viewer User",
             Email = "viewer@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(teamLeader);
+        context.Employees.Add(teamLeader);
         context.Teams.Add(team);
-        context.Collaborators.Add(collaborator);
-        context.Set<CollaboratorTeam>().Add(
-            new CollaboratorTeam { CollaboratorId = collaborator.Id, TeamId = team.Id }
+        context.Employees.Add(employee);
+        context.Set<EmployeeTeam>().Add(
+            new EmployeeTeam { EmployeeId = employee.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, teamId: team.Id);
+        var result = await repository.GetMyDashboardAsync(employee.Id, teamId: team.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -729,37 +713,35 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "M1 Test",
             Email = "m1@test.com",
             OrganizationId = org.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "M2 Test",
             Email = "m2@test.com",
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Gamma", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = member1.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Gamma", OrganizationId = org.Id, LeaderId = member1.Id };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.AddRange(member1, member2);
+        context.Employees.AddRange(member1, member2);
         context.Teams.Add(team);
-        context.Set<CollaboratorTeam>().AddRange(
-            new CollaboratorTeam { CollaboratorId = member1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = member2.Id, TeamId = team.Id }
+        context.Set<EmployeeTeam>().AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id }
         );
 
         // Only member1 accessed this week
-        context.CollaboratorAccessLogs.Add(new CollaboratorAccessLog
+        context.EmployeeAccessLogs.Add(new EmployeeAccessLog
         {
             Id = Guid.NewGuid(),
-            CollaboratorId = member1.Id,
+            EmployeeId = member1.Id,
             OrganizationId = org.Id,
             AccessedAt = DateTime.UtcNow.AddDays(-1)
         });
@@ -783,23 +765,22 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = org.Id };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Task Person",
             Email = "task@test.com",
             OrganizationId = org.Id
         };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Delta", OrganizationId = org.Id, WorkspaceId = workspace.Id, LeaderId = collaborator.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Squad Delta", OrganizationId = org.Id, LeaderId = employee.Id };
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "My Personal Mission",
             OrganizationId = org.Id,
-            CollaboratorId = collaborator.Id,
-            Status = GoalStatus.Active,
+            EmployeeId = employee.Id,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -807,7 +788,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR",
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -815,7 +796,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = metric.Id,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-10),
             ConfidenceLevel = 3,
@@ -823,13 +804,12 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         context.Teams.Add(team);
-        context.Set<CollaboratorTeam>().Add(
-            new CollaboratorTeam { CollaboratorId = collaborator.Id, TeamId = team.Id }
+        context.Set<EmployeeTeam>().Add(
+            new EmployeeTeam { EmployeeId = employee.Id, TeamId = team.Id }
         );
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
         context.Indicators.Add(metric);
         context.Checkins.Add(checkin);
         await context.SaveChangesAsync();
@@ -837,7 +817,7 @@ public class DashboardReadStoreTests
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, teamId: team.Id);
+        var result = await repository.GetMyDashboardAsync(employee.Id, teamId: team.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -852,7 +832,7 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Alone Person",
@@ -861,13 +841,13 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, teamId: Guid.NewGuid());
+        var result = await repository.GetMyDashboardAsync(employee.Id, teamId: Guid.NewGuid());
 
         // Assert
         result.Should().NotBeNull();
@@ -882,7 +862,7 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Low Engagement",
@@ -891,13 +871,13 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -911,23 +891,23 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Admin User",
             Email = "admin@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
 
-        // Org-scoped mission (CollaboratorId = null)
-        var orgMission = new Goal
+        // Org-scoped mission (EmployeeId = null)
+        var orgMission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Org Mission",
             OrganizationId = org.Id,
-            CollaboratorId = null,
-            Status = GoalStatus.Active,
+            EmployeeId = null,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -935,7 +915,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR",
-            GoalId = orgMission.Id,
+            MissionId = orgMission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -944,7 +924,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = metric.Id,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-10),
             ConfidenceLevel = 3,
@@ -952,8 +932,8 @@ public class DashboardReadStoreTests
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
-        context.Goals.Add(orgMission);
+        context.Employees.Add(employee);
+        context.Missions.Add(orgMission);
         context.Indicators.Add(metric);
         context.Checkins.Add(checkin);
         await context.SaveChangesAsync();
@@ -961,7 +941,7 @@ public class DashboardReadStoreTests
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -975,23 +955,23 @@ public class DashboardReadStoreTests
         // Arrange
         using var context = CreateInMemoryContext();
         var org = new Organization { Id = Guid.NewGuid(), Name = "Org" };
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Admin User",
             Email = "admin@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
 
         // Personal mission with recent checkin
-        var personalMission = new Goal
+        var personalMission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Personal",
             OrganizationId = org.Id,
-            CollaboratorId = collaborator.Id,
-            Status = GoalStatus.Active,
+            EmployeeId = employee.Id,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -999,7 +979,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR1",
-            GoalId = personalMission.Id,
+            MissionId = personalMission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
@@ -1007,7 +987,7 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             IndicatorId = personalMetric.Id,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             OrganizationId = org.Id,
             CheckinDate = DateTime.UtcNow.AddDays(-1),
             ConfidenceLevel = 4,
@@ -1015,13 +995,13 @@ public class DashboardReadStoreTests
         });
 
         // Org-scoped mission without checkin
-        var orgMission = new Goal
+        var orgMission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Org Mission",
             OrganizationId = org.Id,
-            CollaboratorId = null,
-            Status = GoalStatus.Active,
+            EmployeeId = null,
+            Status = MissionStatus.Active,
             StartDate = DateTime.UtcNow.AddDays(-30),
             EndDate = DateTime.UtcNow.AddDays(30)
         };
@@ -1029,21 +1009,21 @@ public class DashboardReadStoreTests
         {
             Id = Guid.NewGuid(),
             Name = "KR2",
-            GoalId = orgMission.Id,
+            MissionId = orgMission.Id,
             OrganizationId = org.Id,
             Type = IndicatorType.Quantitative
         };
 
         context.Organizations.Add(org);
-        context.Collaborators.Add(collaborator);
-        context.Goals.AddRange(personalMission, orgMission);
+        context.Employees.Add(employee);
+        context.Missions.AddRange(personalMission, orgMission);
         context.Indicators.AddRange(personalMetric, orgMetric);
         await context.SaveChangesAsync();
 
         var repository = new DashboardReadStore(context);
 
         // Act
-        var result = await repository.GetMyDashboardAsync(collaborator.Id, null);
+        var result = await repository.GetMyDashboardAsync(employee.Id, null);
 
         // Assert
         result.Should().NotBeNull();

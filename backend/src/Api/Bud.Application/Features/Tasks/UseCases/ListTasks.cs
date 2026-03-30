@@ -1,25 +1,37 @@
+using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Features.Goals;
+using Bud.Application.Features.Missions;
+using Bud.Application.Ports;
 
 namespace Bud.Application.Features.Tasks.UseCases;
 
-public sealed class ListTasks(ITaskRepository taskRepository, IGoalRepository goalRepository)
+public sealed class ListTasks(
+    ITaskRepository taskRepository,
+    IMissionRepository missionRepository,
+    IApplicationAuthorizationGateway authorizationGateway)
 {
-    public async Task<Result<PagedResult<GoalTask>>> ExecuteAsync(
-        Guid goalId,
+    public async Task<Result<PagedResult<MissionTask>>> ExecuteAsync(
+        ClaimsPrincipal user,
+        Guid missionId,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
-        var goalExists = await goalRepository.ExistsAsync(goalId, cancellationToken);
-        if (!goalExists)
+        var missionExists = await missionRepository.ExistsAsync(missionId, cancellationToken);
+        if (!missionExists)
         {
-            return Result<PagedResult<GoalTask>>.NotFound(UserErrorMessages.GoalNotFound);
+            return Result<PagedResult<MissionTask>>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
-        var result = await taskRepository.GetByGoalIdAsync(goalId, page, pageSize, cancellationToken);
-        return Result<PagedResult<GoalTask>>.Success(result);
+        var canRead = await authorizationGateway.CanReadAsync(user, new MissionResource(missionId), cancellationToken);
+        if (!canRead)
+        {
+            return Result<PagedResult<MissionTask>>.Forbidden(UserErrorMessages.MissionNotFound);
+        }
+
+        var result = await taskRepository.GetByMissionIdAsync(missionId, page, pageSize, cancellationToken);
+        return Result<PagedResult<MissionTask>>.Success(result);
     }
 }

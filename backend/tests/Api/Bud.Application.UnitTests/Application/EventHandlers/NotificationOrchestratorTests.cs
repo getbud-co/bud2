@@ -19,31 +19,31 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyGoalCreatedAsync_WithActorAndRecipients_CreatesNotificationsWithActorName()
+    public async Task NotifyMissionCreatedAsync_WithActorAndRecipients_CreatesNotificationsWithActorName()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
         var actorId = Guid.NewGuid();
         var recipients = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(recipients);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveCollaboratorNameAsync(actorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveEmployeeNameAsync(actorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("Maria Silva");
 
         // Act
-        await _orchestrator.NotifyGoalCreatedAsync(goalId, organizationId, "Aumentar vendas Q1", actorId);
+        await _orchestrator.NotifyMissionCreatedAsync(missionId, organizationId, "Aumentar vendas Q1", actorId);
 
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
                 It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 2 &&
-                    n.All(x => x.Type == NotificationType.GoalCreated &&
+                    n.All(x => x.Type == NotificationType.MissionCreated &&
                                x.Title == "Nova meta criada" &&
                                x.Message == "Maria Silva criou a meta 'Aumentar vendas Q1'")),
                 It.IsAny<CancellationToken>()),
@@ -52,19 +52,19 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyGoalCreatedAsync_WithoutActor_CreatesNotificationsWithFallbackMessage()
+    public async Task NotifyMissionCreatedAsync_WithoutActor_CreatesNotificationsWithFallbackMessage()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
         var recipients = new List<Guid> { Guid.NewGuid() };
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(recipients);
 
         // Act
-        await _orchestrator.NotifyGoalCreatedAsync(goalId, organizationId, "Aumentar vendas Q1", null);
+        await _orchestrator.NotifyMissionCreatedAsync(missionId, organizationId, "Aumentar vendas Q1", null);
 
         // Assert
         _repoMock.Verify(
@@ -76,18 +76,18 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyGoalCreatedAsync_WithEmptyRecipients_DoesNotCreateNotifications()
+    public async Task NotifyMissionCreatedAsync_WithEmptyRecipients_DoesNotCreateNotifications()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        await _orchestrator.NotifyGoalCreatedAsync(goalId, organizationId, "Meta", null);
+        await _orchestrator.NotifyMissionCreatedAsync(missionId, organizationId, "Meta", null);
 
         // Assert
         _repoMock.Verify(
@@ -97,31 +97,31 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyGoalUpdatedAsync_WithActor_CreatesNotificationsWithActorName()
+    public async Task NotifyMissionUpdatedAsync_WithActor_CreatesNotificationsWithActorName()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
         var actorId = Guid.NewGuid();
         var recipients = new List<Guid> { Guid.NewGuid() };
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(recipients);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveCollaboratorNameAsync(actorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveEmployeeNameAsync(actorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("João Souza");
 
         // Act
-        await _orchestrator.NotifyGoalUpdatedAsync(goalId, organizationId, "Aumentar vendas Q1", actorId);
+        await _orchestrator.NotifyMissionUpdatedAsync(missionId, organizationId, "Aumentar vendas Q1", actorId);
 
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
                 It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 1 &&
-                    n.All(x => x.Type == NotificationType.GoalUpdated &&
+                    n.All(x => x.Type == NotificationType.MissionUpdated &&
                                x.Title == "Meta atualizada" &&
                                x.Message == "João Souza atualizou a meta 'Aumentar vendas Q1'")),
                 It.IsAny<CancellationToken>()),
@@ -130,31 +130,31 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyGoalDeletedAsync_WithActor_CreatesNotificationsWithActorName()
+    public async Task NotifyMissionDeletedAsync_WithActor_CreatesNotificationsWithActorName()
     {
         // Arrange
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
         var actorId = Guid.NewGuid();
         var recipients = new List<Guid> { Guid.NewGuid() };
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(recipients);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveCollaboratorNameAsync(actorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveEmployeeNameAsync(actorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("Maria Silva");
 
         // Act
-        await _orchestrator.NotifyGoalDeletedAsync(goalId, organizationId, "Aumentar vendas Q1", actorId);
+        await _orchestrator.NotifyMissionDeletedAsync(missionId, organizationId, "Aumentar vendas Q1", actorId);
 
         // Assert
         _repoMock.Verify(
             r => r.AddRangeAsync(
                 It.Is<IEnumerable<Notification>>(n =>
                     n.Count() == 1 &&
-                    n.All(x => x.Type == NotificationType.GoalDeleted &&
+                    n.All(x => x.Type == NotificationType.MissionDeleted &&
                                x.Title == "Meta removida" &&
                                x.Message == "Maria Silva removeu a meta 'Aumentar vendas Q1'")),
                 It.IsAny<CancellationToken>()),
@@ -170,19 +170,19 @@ public class NotificationOrchestratorTests
         var indicatorId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
         var actorId = Guid.NewGuid();
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
         var recipients = new List<Guid> { Guid.NewGuid() };
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(goalId);
+            .Setup(r => r.ResolveMissionIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(missionId);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, actorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, actorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(recipients);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveCollaboratorNameAsync(actorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveEmployeeNameAsync(actorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("João Souza");
 
         // Act
@@ -204,7 +204,7 @@ public class NotificationOrchestratorTests
     }
 
     [Fact]
-    public async Task NotifyCheckinCreatedAsync_WhenGoalNotFound_DoesNotCreateNotifications()
+    public async Task NotifyCheckinCreatedAsync_WhenMissionNotFound_DoesNotCreateNotifications()
     {
         // Arrange
         var checkinId = Guid.NewGuid();
@@ -212,7 +212,7 @@ public class NotificationOrchestratorTests
         var organizationId = Guid.NewGuid();
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
 
         // Act
@@ -220,7 +220,7 @@ public class NotificationOrchestratorTests
 
         // Assert
         _recipientResolverMock.Verify(
-            r => r.ResolveGoalRecipientsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()),
+            r => r.ResolveMissionRecipientsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _repoMock.Verify(
             r => r.AddRangeAsync(It.IsAny<IEnumerable<Notification>>(), It.IsAny<CancellationToken>()),
@@ -234,14 +234,14 @@ public class NotificationOrchestratorTests
         var checkinId = Guid.NewGuid();
         var indicatorId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
-        var goalId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(goalId);
+            .Setup(r => r.ResolveMissionIdFromIndicatorAsync(indicatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(missionId);
 
         _recipientResolverMock
-            .Setup(r => r.ResolveGoalRecipientsAsync(goalId, organizationId, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ResolveMissionRecipientsAsync(missionId, organizationId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid>());
 
         // Act

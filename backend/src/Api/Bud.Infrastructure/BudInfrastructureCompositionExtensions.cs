@@ -1,14 +1,21 @@
 using Bud.Application.Abstractions;
-using Bud.Application.Features.Goals;
+using Bud.Application.Features.Missions;
 using Bud.Application.Features.Indicators;
 using Bud.Application.Features.Tasks;
 using Bud.Application.Features.Me;
 using Bud.Application.Features.Notifications;
 using Bud.Application.Features.Organizations;
+using Bud.Application.Features.Templates;
 using Bud.Infrastructure.Persistence;
 using Bud.Infrastructure.Authorization;
 using Bud.Infrastructure.DomainEvents;
+using Bud.Infrastructure.Features.Missions;
+using Bud.Infrastructure.Features.Indicators;
+using Bud.Infrastructure.Features.Notifications;
 using Bud.Infrastructure.Features.Tasks;
+using Bud.Infrastructure.Features.Templates;
+using Bud.Infrastructure.Features.Employees;
+using Bud.Infrastructure.Features.Teams;
 using Bud.Application.Ports;
 using Bud.Infrastructure.Features.Me;
 using Bud.Infrastructure.Features.Sessions;
@@ -28,10 +35,9 @@ public static class BudInfrastructureCompositionExtensions
         }
 
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-        services.AddScoped<ICollaboratorRepository, CollaboratorRepository>();
-        services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
-        services.AddScoped<IGoalRepository, GoalRepository>();
+        services.AddScoped<IMissionRepository, MissionRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IIndicatorRepository, IndicatorRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
@@ -39,11 +45,28 @@ public static class BudInfrastructureCompositionExtensions
         services.AddScoped<ISessionAuthenticator, SessionAuthenticator>();
         services.AddScoped<IMyOrganizationsReadStore, MyOrganizationsReadStore>();
         services.AddScoped<IMyDashboardReadStore, DashboardReadStore>();
-        services.AddScoped<IGoalProgressReadStore, GoalProgressService>();
-        services.AddScoped<IIndicatorProgressReadStore, GoalProgressService>();
+        services.AddScoped<IMissionProgressReadStore, MissionProgressService>();
+        services.AddScoped<IIndicatorProgressReadStore, MissionProgressService>();
         services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
+        services.AddScoped<IReadAuthorizationRule<EmployeeResource>, EmployeeAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<EmployeeResource>, EmployeeAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateEmployeeContext>, EmployeeAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<TeamResource>, TeamAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<TeamResource>, TeamAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateTeamContext>, TeamAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<MissionResource>, MissionAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<MissionResource>, MissionAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateMissionContext>, MissionAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<IndicatorResource>, IndicatorAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<IndicatorResource>, IndicatorAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<TaskResource>, TaskAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<TemplateResource>, TemplateAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<TemplateResource>, TemplateAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateTemplateContext>, TemplateAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<NotificationInboxResource>, NotificationAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<NotificationResource>, NotificationAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<DashboardResource>, DashboardAuthorizationService>();
         services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
-        services.AddScoped<IOrganizationAuthorizationService, OrganizationAuthorizationService>();
         services.AddScoped<TenantSaveChangesInterceptor>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 

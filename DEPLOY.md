@@ -1,4 +1,4 @@
-# Deploy no Google Cloud (Bud.BlazorWasm + Bud.Api + Bud.Mcp)
+# Deploy no Google Cloud (Bud Frontend + Bud.Api + Bud.Mcp)
 
 ## INTRODUCAO
 
@@ -24,7 +24,7 @@ Resumo:
 Tres servicos independentes no Cloud Run:
 
 - `bud-api`: API ASP.NET Core dedicada.
-- `bud-web`: Blazor WASM em container nginx estatico. Serve os assets e faz proxy reverso para `bud-api` em `/api/*`, `/health/*`, `/swagger/*` e `/openapi/*`, preservando o modelo same-origin (sem CORS no browser).
+- `bud-web`: frontend Next.js em container Node.js. Consome o `bud-api` via `NEXT_PUBLIC_API_URL`.
 - `bud-mcp`: servidor MCP HTTP. Depende da URL do `bud-api` diretamente (nao passa pelo `bud-web`).
 
 Deploy e rollback de cada servico sao independentes. A URL publica do ambiente e a do `bud-web`.

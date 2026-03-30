@@ -1,28 +1,19 @@
 using System.Security.Claims;
-using Bud.Api.Authorization.ResourceScopes;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Bud.Api.Authorization;
 
 public sealed class ApplicationAuthorizationGateway(IAuthorizationService authorizationService) : IApplicationAuthorizationGateway
 {
-    public async Task<bool> IsOrganizationOwnerAsync(ClaimsPrincipal user, Guid organizationId, CancellationToken cancellationToken = default)
+    public async Task<bool> CanReadAsync<TResource>(ClaimsPrincipal user, TResource resource, CancellationToken cancellationToken = default)
     {
-        var result = await authorizationService.AuthorizeAsync(
-            user,
-            new OrganizationResource(organizationId),
-            AuthorizationPolicies.OrganizationOwner);
-
+        var result = await authorizationService.AuthorizeAsync(user, resource, AuthorizationPolicies.ResourceRead);
         return result.Succeeded;
     }
 
-    public async Task<bool> CanWriteOrganizationAsync(ClaimsPrincipal user, Guid organizationId, CancellationToken cancellationToken = default)
+    public async Task<bool> CanWriteAsync<TResource>(ClaimsPrincipal user, TResource resource, CancellationToken cancellationToken = default)
     {
-        var result = await authorizationService.AuthorizeAsync(
-            user,
-            new OrganizationResource(organizationId),
-            AuthorizationPolicies.OrganizationWrite);
-
+        var result = await authorizationService.AuthorizeAsync(user, resource, AuthorizationPolicies.ResourceWrite);
         return result.Succeeded;
     }
 }

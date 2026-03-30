@@ -31,7 +31,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var existingLeader = await dbContext.Collaborators
+        var existingLeader = await dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == "admin@getbud.co");
 
@@ -41,48 +41,44 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
             return existingLeader.Id;
         }
 
-        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co", OwnerId = null };
+        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co" };
         dbContext.Organizations.Add(org);
 
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
-        dbContext.Workspaces.Add(workspace);
-
-        var adminLeader = new Collaborator
+        var adminLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(adminLeader);
+        dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", WorkspaceId = workspace.Id, OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
         dbContext.Teams.Add(team);
 
         await dbContext.SaveChangesAsync();
 
         adminLeader.TeamId = team.Id;
-        org.OwnerId = adminLeader.Id;
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);
         return adminLeader.Id;
     }
 
-    private async Task<Goal> CreateTestMission()
+    private async Task<Mission> CreateTestMission()
     {
         await GetOrCreateAdminLeader();
-        var missionResponse = await _client.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        var missionResponse = await _client.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Test Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned,
             });
 
-        return (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
+        return (await missionResponse.Content.ReadFromJsonAsync<Mission>())!;
     }
 
     #region Create Tests
@@ -95,7 +91,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Quality Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Achieve high quality standards"
@@ -125,7 +121,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Story Points",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove,
@@ -157,7 +153,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Error Rate",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBelow,
@@ -189,7 +185,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Response Time",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepBetween,
@@ -220,7 +216,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         // Arrange
         var request = new CreateIndicatorRequest
         {
-            GoalId = Guid.NewGuid(), // Non-existent goal
+            MissionId = Guid.NewGuid(), // Non-existent mission
             Name = "Test Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Test"
@@ -241,7 +237,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Sales Target",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -273,7 +269,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Cost Reduction",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
             QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Reduce,
@@ -309,7 +305,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         var createRequest = new CreateIndicatorRequest
         {
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             Name = "Original Metric",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Original text"
@@ -360,7 +356,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         await _client.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission1.Id,
+                MissionId = mission1.Id,
                 Name = "Metric Mission 1",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Test"
@@ -369,21 +365,21 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         await _client.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission2.Id,
+                MissionId = mission2.Id,
                 Name = "Metric Mission 2",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Test"
             });
 
         // Act - Filter by mission1
-        var response = await _client.GetAsync($"/api/indicators?goalId={mission1.Id}");
+        var response = await _client.GetAsync($"/api/indicators?missionId={mission1.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Indicator>>();
         result.Should().NotBeNull();
         result!.Items.Should().HaveCount(1);
-        result.Items.Should().OnlyContain(m => m.GoalId == mission1.Id);
+        result.Items.Should().OnlyContain(m => m.MissionId == mission1.Id);
     }
 
     [Fact]
@@ -429,31 +425,30 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
     public async Task Create_WithTenantMismatch_ReturnsNotFound()
     {
         // Arrange
-        var leaderId = await GetOrCreateAdminLeader();
+        await GetOrCreateAdminLeader();
         var org1Response = await _client.PostAsJsonAsync("/api/organizations",
             new CreateOrganizationRequest
             {
-                Name = "metric-org-1.com",
-                OwnerId = leaderId
+                Name = "metric-org-1.com"
             });
         var org1 = await org1Response.Content.ReadFromJsonAsync<Organization>();
 
-        var missionResponse = await _client.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        var missionResponse = await _client.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Mission Org 2",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(7),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Planned,
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned,
             });
-        var mission = await missionResponse.Content.ReadFromJsonAsync<Goal>();
+        var mission = await missionResponse.Content.ReadFromJsonAsync<Mission>();
 
-        var collaborator = await CreateNonOwnerCollaborator(org1!.Id);
-        var tenantClient = _factory.CreateTenantClient(org1.Id, collaborator.Email, collaborator.Id);
+        var employee = await CreateNonOwnerEmployee(org1!.Id);
+        var tenantClient = _factory.CreateTenantClient(org1.Id, employee.Email, employee.Id);
 
         var request = new CreateIndicatorRequest
         {
-            GoalId = mission!.Id,
+            MissionId = mission!.Id,
             Name = "Metric Forbidden",
             Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
             TargetText = "Teste"
@@ -481,23 +476,23 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
     #endregion
 
-    private async Task<Collaborator> CreateNonOwnerCollaborator(Guid organizationId)
+    private async Task<Employee> CreateNonOwnerEmployee(Guid organizationId)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = CollaboratorRole.IndividualContributor,
+            Role = EmployeeRole.IndividualContributor,
             OrganizationId = organizationId
         };
 
-        dbContext.Collaborators.Add(collaborator);
+        dbContext.Employees.Add(employee);
         await dbContext.SaveChangesAsync();
 
-        return collaborator;
+        return employee;
     }
 }

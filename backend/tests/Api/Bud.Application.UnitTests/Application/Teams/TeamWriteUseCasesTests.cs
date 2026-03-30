@@ -11,51 +11,47 @@ public sealed class TeamWriteUseCasesTests
     private static readonly ClaimsPrincipal User = new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test")]));
 
     private readonly Mock<ITeamRepository> _teamRepository = new();
-    private readonly Mock<IWorkspaceRepository> _workspaceRepository = new();
-    private readonly Mock<ICollaboratorRepository> _collaboratorRepository = new();
+    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<ITenantProvider> _tenantProvider = new();
     private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
-    public async Task CreateTeam_WhenWorkspaceNotFound_ReturnsNotFound()
+    public async Task CreateTeam_WhenTenantNotSelected_ReturnsForbidden()
     {
-        _workspaceRepository
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Workspace?)null);
+        _tenantProvider.SetupGet(provider => provider.TenantId).Returns((Guid?)null);
 
         var useCase = new CreateTeam(
             _teamRepository.Object,
-            _workspaceRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
+            _tenantProvider.Object,
             _authorizationGateway.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("Workspace não encontrado.");
+        result.ErrorType.Should().Be(ErrorType.Forbidden);
+        result.Error.Should().Be("Apenas um líder da organização pode criar times.");
     }
 
     [Fact]
     public async Task CreateTeam_WhenUnauthorized_ReturnsForbidden()
     {
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "WS", OrganizationId = Guid.NewGuid() };
+        var organizationId = Guid.NewGuid();
 
-        _workspaceRepository
-            .Setup(repository => repository.GetByIdAsync(workspace.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(workspace);
+        _tenantProvider.SetupGet(provider => provider.TenantId).Returns(organizationId);
         _authorizationGateway
-            .Setup(gateway => gateway.IsOrganizationOwnerAsync(User, workspace.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<CreateTeamContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var useCase = new CreateTeam(
             _teamRepository.Object,
-            _workspaceRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
+            _tenantProvider.Object,
             _authorizationGateway.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", workspace.Id, Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -65,12 +61,12 @@ public sealed class TeamWriteUseCasesTests
     public async Task UpdateTeam_WhenTeamNotFound_ReturnsNotFound()
     {
         _teamRepository
-            .Setup(repository => repository.GetByIdWithCollaboratorTeamsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Team?)null);
 
         var useCase = new PatchTeam(
             _teamRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
             _authorizationGateway.Object,
             NullLogger<PatchTeam>.Instance);
 
@@ -87,20 +83,19 @@ public sealed class TeamWriteUseCasesTests
         {
             Id = Guid.NewGuid(),
             Name = "Team",
-            OrganizationId = Guid.NewGuid(),
-            WorkspaceId = Guid.NewGuid()
+            OrganizationId = Guid.NewGuid()
         };
 
         _teamRepository
-            .Setup(repository => repository.GetByIdWithCollaboratorTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(team);
         _authorizationGateway
-            .Setup(gateway => gateway.CanWriteOrganizationAsync(User, team.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TeamResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var useCase = new PatchTeam(
             _teamRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
             _authorizationGateway.Object,
             NullLogger<PatchTeam>.Instance);
 
@@ -117,15 +112,14 @@ public sealed class TeamWriteUseCasesTests
         {
             Id = Guid.NewGuid(),
             Name = "Team",
-            OrganizationId = Guid.NewGuid(),
-            WorkspaceId = Guid.NewGuid()
+            OrganizationId = Guid.NewGuid()
         };
 
         _teamRepository.Setup(repository => repository.GetByIdAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(team);
         _teamRepository.Setup(repository => repository.HasSubTeamsAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _teamRepository.Setup(repository => repository.HasGoalsAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _teamRepository.Setup(repository => repository.HasMissionsAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _authorizationGateway
-            .Setup(gateway => gateway.CanWriteOrganizationAsync(User, team.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TeamResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var useCase = new DeleteTeam(_teamRepository.Object, _authorizationGateway.Object, NullLogger<DeleteTeam>.Instance);
@@ -144,14 +138,13 @@ public sealed class TeamWriteUseCasesTests
         {
             Id = Guid.NewGuid(),
             Name = "Team",
-            OrganizationId = Guid.NewGuid(),
-            WorkspaceId = Guid.NewGuid()
+            OrganizationId = Guid.NewGuid()
         };
 
         _teamRepository.Setup(repository => repository.GetByIdAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(team);
         _teamRepository.Setup(repository => repository.HasSubTeamsAsync(team.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         _authorizationGateway
-            .Setup(gateway => gateway.CanWriteOrganizationAsync(User, team.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TeamResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var useCase = new DeleteTeam(_teamRepository.Object, _authorizationGateway.Object, NullLogger<DeleteTeam>.Instance);
@@ -163,7 +156,7 @@ public sealed class TeamWriteUseCasesTests
     }
 
     [Fact]
-    public async Task UpdateTeamCollaborators_WhenAuthorized_Succeeds()
+    public async Task UpdateTeamEmployees_WhenAuthorized_Succeeds()
     {
         var leaderId = Guid.NewGuid();
         var team = new Team
@@ -171,57 +164,55 @@ public sealed class TeamWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Team",
             OrganizationId = Guid.NewGuid(),
-            WorkspaceId = Guid.NewGuid(),
             LeaderId = leaderId
         };
 
         _teamRepository
-            .Setup(repository => repository.GetByIdWithCollaboratorTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(team);
         _authorizationGateway
-            .Setup(gateway => gateway.IsOrganizationOwnerAsync(User, team.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TeamResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _collaboratorRepository
+        _employeeRepository
             .Setup(repository => repository.CountByIdsAndOrganizationAsync(It.IsAny<List<Guid>>(), team.OrganizationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
-        var useCase = new PatchTeamCollaborators(
+        var useCase = new PatchTeamEmployees(
             _teamRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
             _authorizationGateway.Object,
-            NullLogger<PatchTeamCollaborators>.Instance);
+            NullLogger<PatchTeamEmployees>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, team.Id, new PatchTeamCollaboratorsCommand([leaderId]));
+        var result = await useCase.ExecuteAsync(User, team.Id, new PatchTeamEmployeesCommand([leaderId]));
 
         result.IsSuccess.Should().BeTrue();
         _teamRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateTeamCollaborators_WhenUnauthorized_ReturnsForbidden()
+    public async Task UpdateTeamEmployees_WhenUnauthorized_ReturnsForbidden()
     {
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Team",
-            OrganizationId = Guid.NewGuid(),
-            WorkspaceId = Guid.NewGuid()
+            OrganizationId = Guid.NewGuid()
         };
 
         _teamRepository
-            .Setup(repository => repository.GetByIdWithCollaboratorTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(team.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(team);
         _authorizationGateway
-            .Setup(gateway => gateway.IsOrganizationOwnerAsync(User, team.OrganizationId, It.IsAny<CancellationToken>()))
+            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TeamResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var useCase = new PatchTeamCollaborators(
+        var useCase = new PatchTeamEmployees(
             _teamRepository.Object,
-            _collaboratorRepository.Object,
+            _employeeRepository.Object,
             _authorizationGateway.Object,
-            NullLogger<PatchTeamCollaborators>.Instance);
+            NullLogger<PatchTeamEmployees>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, team.Id, new PatchTeamCollaboratorsCommand([]));
+        var result = await useCase.ExecuteAsync(User, team.Id, new PatchTeamEmployeesCommand([]));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);

@@ -24,7 +24,7 @@ public sealed class EfUnitOfWorkTests
             .Returns(Task.CompletedTask);
 
         var organizationId = Guid.NewGuid();
-        var mission = Goal.Create(
+        var mission = Mission.Create(
             Guid.NewGuid(),
             organizationId,
             "Missão com evento",
@@ -32,9 +32,9 @@ public sealed class EfUnitOfWorkTests
             null,
             DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
-            GoalStatus.Planned);
+            MissionStatus.Planned);
 
-        dbContext.Goals.Add(mission);
+        dbContext.Missions.Add(mission);
         var unitOfWork = new EfUnitOfWork(dbContext, dispatcherMock.Object);
 
         await unitOfWork.CommitAsync(CancellationToken.None);
@@ -44,8 +44,8 @@ public sealed class EfUnitOfWorkTests
             Times.Once);
         dispatchedEvents.Should().NotBeNull();
         var dispatchedEvent = dispatchedEvents!.Should().ContainSingle().Subject;
-        var created = dispatchedEvent.Should().BeOfType<GoalCreatedDomainEvent>().Subject;
-        created.GoalId.Should().Be(mission.Id);
+        var created = dispatchedEvent.Should().BeOfType<MissionCreatedDomainEvent>().Subject;
+        created.MissionId.Should().Be(mission.Id);
         created.OrganizationId.Should().Be(organizationId);
         mission.DomainEvents.Should().BeEmpty();
     }

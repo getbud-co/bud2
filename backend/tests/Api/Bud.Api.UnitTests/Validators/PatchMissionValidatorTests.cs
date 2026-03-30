@@ -6,17 +6,17 @@ namespace Bud.Api.UnitTests.Validators;
 
 public sealed class PatchMissionValidatorTests
 {
-    private readonly PatchGoalValidator _validator = new();
+    private readonly PatchMissionValidator _validator = new();
 
     [Fact]
     public async Task Validate_WithValidRequest_Passes()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             Name = "Missão Atualizada",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Active
+            Status = MissionStatus.Active
         };
 
         var result = await _validator.ValidateAsync(request);
@@ -28,9 +28,9 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithNoFieldsSet_Passes()
     {
-        // PatchGoalValidator uses .When guards on all fields,
-        // so a default PatchGoalRequest with no fields set passes validation.
-        var request = new PatchGoalRequest();
+        // PatchMissionValidator uses .When guards on all fields,
+        // so a default PatchMissionRequest with no fields set passes validation.
+        var request = new PatchMissionRequest();
 
         var result = await _validator.ValidateAsync(request);
 
@@ -45,7 +45,7 @@ public sealed class PatchMissionValidatorTests
     [InlineData(null)]
     public async Task Validate_WithEmptyName_Fails(string? name)
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             Name = name!
         };
@@ -59,7 +59,7 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithNameExceeding200Characters_Fails()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             Name = new string('A', 201)
         };
@@ -79,9 +79,9 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithInvalidStatus_Fails()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
-            Status = (GoalStatus)999
+            Status = (MissionStatus)999
         };
 
         var result = await _validator.ValidateAsync(request);
@@ -99,7 +99,7 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithEmptyEndDate_Fails()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             EndDate = default(DateTime)
         };
@@ -117,7 +117,7 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithEndDateBeforeStartDate_Fails()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             StartDate = DateTime.UtcNow.AddDays(30),
             EndDate = DateTime.UtcNow
@@ -134,7 +134,7 @@ public sealed class PatchMissionValidatorTests
     public async Task Validate_WithEndDateEqualToStartDate_Passes()
     {
         var date = DateTime.UtcNow;
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             StartDate = date,
             EndDate = date
@@ -148,7 +148,7 @@ public sealed class PatchMissionValidatorTests
     [Fact]
     public async Task Validate_WithOnlyStartDate_Passes()
     {
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             StartDate = DateTime.UtcNow
         };
@@ -162,7 +162,7 @@ public sealed class PatchMissionValidatorTests
     public async Task Validate_WithOnlyEndDate_Passes()
     {
         // All fields use .When guards, so setting only EndDate is valid.
-        var request = new PatchGoalRequest
+        var request = new PatchMissionRequest
         {
             EndDate = DateTime.UtcNow.AddDays(30)
         };

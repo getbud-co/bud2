@@ -17,12 +17,12 @@ public sealed class ToolCatalogContractValidatorTests
     public void ValidateRequiredFields_WhenRequiredFieldIsMissing_ReturnsError()
     {
         var tools = CreateValidTools().ToList();
-        var missionCreate = tools.Single(tool => tool.Name == "goal_create");
+        var missionCreate = tools.Single(tool => tool.Name == "mission_create");
         missionCreate.InputSchema["required"] = new JsonArray("name");
 
         var errors = ToolCatalogContractValidator.ValidateRequiredFields(tools);
 
-        errors.Should().Contain(error => error.Contains("goal_create", StringComparison.Ordinal));
+        errors.Should().Contain(error => error.Contains("mission_create", StringComparison.Ordinal));
         errors.Should().Contain(error => error.Contains("startDate", StringComparison.Ordinal));
     }
 
@@ -30,16 +30,16 @@ public sealed class ToolCatalogContractValidatorTests
     {
         return
         [
-            CreateTool("goal_create", ["name", "startDate", "endDate", "status"]),
-            CreateTool("goal_get", ["id"]),
-            CreateTool("goal_list", []),
-            CreateTool("goal_update", ["id", "payload"]),
-            CreateTool("goal_delete", ["id"]),
-            CreateTool("goal_indicator_create", ["goalId", "name", "type"]),
-            CreateTool("goal_indicator_get", ["id"]),
-            CreateTool("goal_indicator_list", []),
-            CreateTool("goal_indicator_update", ["id", "payload"]),
-            CreateTool("goal_indicator_delete", ["id"]),
+            CreateTool("mission_create", ["name", "startDate", "endDate", "status"]),
+            CreateTool("mission_get", ["id"]),
+            CreateTool("mission_list", []),
+            CreateTool("mission_update", ["id", "payload"]),
+            CreateTool("mission_delete", ["id"]),
+            CreateTool("mission_indicator_create", ["missionId", "name", "type"]),
+            CreateTool("mission_indicator_get", ["id"]),
+            CreateTool("mission_indicator_list", []),
+            CreateTool("mission_indicator_update", ["id", "payload"]),
+            CreateTool("mission_indicator_delete", ["id"]),
             CreateTool("indicator_checkin_create", ["checkinDate", "confidenceLevel"]),
             CreateTool("indicator_checkin_get", ["indicatorId", "checkinId"]),
             CreateTool("indicator_checkin_list", []),

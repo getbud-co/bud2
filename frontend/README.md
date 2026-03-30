@@ -6,8 +6,7 @@ Frontend Next.js da aplicação Bud.
 
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS (puro, sem componentes pré-built)
-- **Auth**: NextAuth.js + backend sessions
+- **Auth**: dependências preparadas para NextAuth.js
 - **Testing**: Vitest + Testing Library (planejado)
 
 ## Estrutura
@@ -15,24 +14,15 @@ Frontend Next.js da aplicação Bud.
 ```
 frontend/
 ├── src/
-│   ├── app/               # App Router (routes, layouts, pages)
-│   │   ├── (auth)/        # Route group: login, register
-│   │   ├── (dashboard)/   # Route group: app autenticada
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/        # React components
-│   ├── lib/
-│   │   ├── api.ts         # Client HTTP para API
-│   │   └── auth.ts        # NextAuth config
-│   ├── hooks/             # Custom React hooks
-│   ├── stores/            # Estado global (Zustand)
-│   └── types/             # TypeScript types
+│   └── app/               # App Router (layout e páginas)
+│       ├── layout.tsx
+│       └── page.tsx
 ├── public/                # Static assets
+├── AGENTS.md              # Contrato local para agentes
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
-├── tailwind.config.ts
-└── Dockerfile             # Build + nginx
+└── Dockerfile             # Build + runtime Node.js
 ```
 
 ## Setup Local
@@ -82,7 +72,7 @@ npm test
 
 ## API Client
 
-O cliente HTTP para a API está em `src/lib/api.ts`.
+O frontend usa `NEXT_PUBLIC_API_URL` para consumir a API do backend.
 
 Futuramente, pode ser gerado automaticamente a partir do OpenAPI com:
 
@@ -94,7 +84,3 @@ npx openapi-fetch -i src/types/api.ts
 ## Deploy
 
 Ver `../DEPLOY.md` para instruções de deploy no GCP Cloud Run.
-
-## Migração de Blazor WASM
-
-Este projeto substitui `Bud.BlazorWasm`. A migração de funcionalidades será feita gradualmente conforme necessário.
