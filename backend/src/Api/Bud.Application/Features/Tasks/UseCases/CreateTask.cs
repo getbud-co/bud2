@@ -15,42 +15,31 @@ public sealed record CreateTaskCommand(
 public sealed partial class CreateTask(
     ITaskRepository taskRepository,
     ILogger<CreateTask> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<MissionTask>> ExecuteAsync(
-        ClaimsPrincipal user,
-        CreateTaskCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsyncInternal(user, command, cancellationToken);
-
     public async Task<Result<MissionTask>> ExecuteAsync(
-        CreateTaskCommand command,
-        CancellationToken cancellationToken = default)
-        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), command, cancellationToken);
-
-    private async Task<Result<MissionTask>> ExecuteAsyncInternal(
         ClaimsPrincipal user,
         CreateTaskCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         LogCreatingTask(logger, command.Name, command.MissionId);
+
+        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
+            user,
+            new CreateTaskContext(command.MissionId),
+            cancellationToken);
+        if (!authorizationResult.IsSuccess)
+        {
+            LogTaskCreationFailed(logger, command.Name, authorizationResult.Error ?? "Authorization failed");
+            return authorizationResult.ToFailureResult<MissionTask>();
+        }
 
         var mission = await taskRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
         if (mission is null)
         {
-            LogTaskCreationFailed(logger, command.Name, "Mission not found");
+            LogTaskCreationFailed(logger, command.Name, "Mission not found after authorization");
             return Result<MissionTask>.NotFound(UserErrorMessages.MissionNotFound);
-        }
-
-        if (authorizationGateway is not null)
-        {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(mission.Id), cancellationToken);
-            if (!canWrite)
-            {
-                LogTaskCreationFailed(logger, command.Name, UserErrorMessages.TaskCreateForbidden);
-                return Result<MissionTask>.Forbidden(UserErrorMessages.TaskCreateForbidden);
-            }
         }
 
         try

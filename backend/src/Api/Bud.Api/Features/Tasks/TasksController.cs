@@ -11,6 +11,7 @@ namespace Bud.Api.Features.Tasks;
 [Produces("application/json")]
 public sealed class TasksController(
     CreateTask createTask,
+    GetTaskById getTaskById,
     PatchTask patchTask,
     DeleteTask deleteTask,
     IValidator<CreateTaskRequest> createValidator,
@@ -48,7 +49,21 @@ public sealed class TasksController(
 
         var result = await createTask.ExecuteAsync(User, command, cancellationToken);
         return FromResult<MissionTask, TaskResponse>(result, task =>
-            CreatedAtAction(nameof(Update), new { id = task.Id }, task.ToResponse()));
+            CreatedAtAction(nameof(GetById), new { id = task.Id }, task.ToResponse()));
+    }
+
+    /// <summary>
+    /// Busca uma tarefa pelo identificador.
+    /// </summary>
+    /// <response code="200">Tarefa encontrada.</response>
+    /// <response code="404">Tarefa não encontrada.</response>
+    [HttpGet("tasks/{id:guid}")]
+    [ProducesResponseType(typeof(TaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskResponse>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await getTaskById.ExecuteAsync(User, id, cancellationToken);
+        return FromResultOk(result, task => task.ToResponse());
     }
 
     /// <summary>

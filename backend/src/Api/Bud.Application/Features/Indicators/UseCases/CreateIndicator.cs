@@ -18,43 +18,31 @@ public sealed record CreateIndicatorCommand(
 public sealed partial class CreateIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<CreateIndicator> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Indicator>> ExecuteAsync(
-        ClaimsPrincipal user,
-        CreateIndicatorCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsyncInternal(user, command, cancellationToken);
-
     public async Task<Result<Indicator>> ExecuteAsync(
-        CreateIndicatorCommand command,
-        CancellationToken cancellationToken = default)
-        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), command, cancellationToken);
-
-    private async Task<Result<Indicator>> ExecuteAsyncInternal(
         ClaimsPrincipal user,
         CreateIndicatorCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         LogCreatingIndicator(logger, command.Name, command.MissionId);
 
-        var mission = await indicatorRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
-
-        if (mission is null)
+        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
+            user,
+            new CreateIndicatorContext(command.MissionId),
+            cancellationToken);
+        if (!authorizationResult.IsSuccess)
         {
-            LogIndicatorCreationFailed(logger, command.Name, "Mission not found");
-            return Result<Indicator>.NotFound(UserErrorMessages.MissionNotFound);
+            LogIndicatorCreationFailed(logger, command.Name, authorizationResult.Error ?? "Authorization failed");
+            return authorizationResult.ToFailureResult<Indicator>();
         }
 
-        if (authorizationGateway is not null)
+        var mission = await indicatorRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
+        if (mission is null)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(mission.Id), cancellationToken);
-            if (!canWrite)
-            {
-                LogIndicatorCreationFailed(logger, command.Name, UserErrorMessages.IndicatorCreateForbidden);
-                return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorCreateForbidden);
-            }
+            LogIndicatorCreationFailed(logger, command.Name, "Mission not found after authorization");
+            return Result<Indicator>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
         try

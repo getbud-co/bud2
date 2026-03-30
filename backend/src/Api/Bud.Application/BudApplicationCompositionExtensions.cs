@@ -47,6 +47,7 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<ListMissionProgress>();
 
         services.AddScoped<CreateTask>();
+        services.AddScoped<GetTaskById>();
         services.AddScoped<PatchTask>();
         services.AddScoped<DeleteTask>();
         services.AddScoped<ListTasks>();

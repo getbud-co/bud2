@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Bud.Shared.Contracts;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -339,6 +340,14 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         updated!.Value.Should().Be(75m);
         updated.ConfidenceLevel.Should().Be(5);
         updated.Note.Should().Be("Nota atualizada");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var persisted = await getResponse.Content.ReadFromJsonAsync<Checkin>();
+        persisted.Should().NotBeNull();
+        persisted!.Value.Should().Be(75m);
+        persisted.ConfidenceLevel.Should().Be(5);
+        persisted.Note.Should().Be("Nota atualizada");
     }
 
     [Fact]
@@ -362,7 +371,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     [Fact]
-    public async Task Update_ByDifferentEmployee_ReturnsOk()
+    public async Task Update_ByDifferentEmployee_ReturnsForbidden()
     {
         // Arrange: Create checkin as one employee, try to update as another
         var (org, quantMetric, _, _, client) = await CreateTestSetup();
@@ -392,7 +401,17 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var response = await otherClient.PatchAsJsonAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}", updateRequest);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Apenas o autor pode editar este check-in.");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var unchanged = await getResponse.Content.ReadFromJsonAsync<Checkin>();
+        unchanged.Should().NotBeNull();
+        unchanged!.Value.Should().Be(50m);
+        unchanged.ConfidenceLevel.Should().Be(3);
     }
 
     #endregion
@@ -440,7 +459,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     [Fact]
-    public async Task Delete_ByDifferentEmployee_ReturnsNoContent()
+    public async Task Delete_ByDifferentEmployee_ReturnsForbidden()
     {
         // Arrange
         var (org, quantMetric, _, _, client) = await CreateTestSetup();
@@ -462,7 +481,13 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var response = await otherClient.DeleteAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Apenas o autor pode excluir este check-in.");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     #endregion

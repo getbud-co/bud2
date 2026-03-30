@@ -17,45 +17,32 @@ public sealed partial class CreateCheckin(
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Checkin>> ExecuteAsync(
-        ClaimsPrincipal user,
-        Guid indicatorId,
-        CreateCheckinCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsyncInternal(user, indicatorId, command, cancellationToken);
-
     public async Task<Result<Checkin>> ExecuteAsync(
-        Guid indicatorId,
-        CreateCheckinCommand command,
-        CancellationToken cancellationToken = default)
-        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId, command, cancellationToken);
-
-    private async Task<Result<Checkin>> ExecuteAsyncInternal(
         ClaimsPrincipal user,
         Guid indicatorId,
         CreateCheckinCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         LogCreatingCheckin(logger, indicatorId);
+
+        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
+            user,
+            new CreateCheckinContext(indicatorId),
+            cancellationToken);
+        if (!authorizationResult.IsSuccess)
+        {
+            LogCheckinCreationFailed(logger, indicatorId, authorizationResult.Error ?? "Authorization failed");
+            return authorizationResult.ToFailureResult<Checkin>();
+        }
 
         var indicator = await indicatorRepository.GetIndicatorWithMissionAsync(indicatorId, cancellationToken);
         if (indicator is null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found");
+            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found after authorization");
             return Result<Checkin>.NotFound(UserErrorMessages.IndicatorNotFound);
-        }
-
-        if (authorizationGateway is not null)
-        {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(indicatorId), cancellationToken);
-            if (!canWrite)
-            {
-                LogCheckinCreationFailed(logger, indicatorId, UserErrorMessages.CheckinCreateForbidden);
-                return Result<Checkin>.Forbidden(UserErrorMessages.CheckinCreateForbidden);
-            }
         }
 
         var employeeId = tenantProvider.EmployeeId;
@@ -88,7 +75,7 @@ public sealed partial class CreateCheckin(
                 employeeId.Value,
                 command.Value,
                 command.Text,
-                DateTime.SpecifyKind(command.CheckinDate, DateTimeKind.Utc),
+                UtcDateTimeNormalizer.Normalize(command.CheckinDate),
                 command.Note,
                 command.ConfidenceLevel);
 

@@ -1,10 +1,13 @@
 using System.Security.Claims;
 using Bud.Api.Authorization;
+using Bud.Application.Common;
 using Bud.Application.Features.Employees;
 using Bud.Application.Features.Me;
 using Bud.Application.Features.Notifications;
+using Bud.Application.Ports;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -72,5 +75,28 @@ public sealed class ApplicationAuthorizationGatewayTests
         var result = await gateway.CanWriteAsync(User, new CreateEmployeeContext(Guid.NewGuid()));
 
         result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AuthorizeWriteAsync_WhenRuleExists_ReturnsRuleResult()
+    {
+        var authorizationService = new Mock<IAuthorizationService>(MockBehavior.Strict);
+        var services = new ServiceCollection();
+        services.AddSingleton<IWriteAuthorizationRule<CreateEmployeeContext>>(new FakeCreateEmployeeRule(Result.Forbidden("Falha específica.")));
+        var serviceProvider = services.BuildServiceProvider();
+
+        var gateway = new ApplicationAuthorizationGateway(authorizationService.Object, serviceProvider);
+
+        var result = await gateway.AuthorizeWriteAsync(User, new CreateEmployeeContext(Guid.NewGuid()));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Forbidden);
+        result.Error.Should().Be("Falha específica.");
+    }
+
+    private sealed class FakeCreateEmployeeRule(Result result) : IWriteAuthorizationRule<CreateEmployeeContext>
+    {
+        public Task<Result> EvaluateAsync(CreateEmployeeContext resource, CancellationToken cancellationToken = default)
+            => Task.FromResult(result);
     }
 }
