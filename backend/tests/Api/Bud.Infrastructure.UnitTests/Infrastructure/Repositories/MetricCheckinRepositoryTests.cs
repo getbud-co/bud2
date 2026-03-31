@@ -145,6 +145,24 @@ public sealed class MetricCheckinRepositoryTests
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetByIdForUpdateAsync_WhenExists_ReturnsTrackedCheckin()
+    {
+        using var context = CreateInMemoryContext();
+        var repo = new IndicatorRepository(context);
+        var (org, mission) = await CreateTestMission(context);
+        var metric = await CreateTestMetric(context, mission.Id, org.Id, IndicatorType.Quantitative);
+        var employee = await CreateTestEmployee(context, org.Id);
+        var checkin = CreateCheckin(metric, employee.Id, value: 42.5m, note: "Weekly check-in", confidenceLevel: 5);
+        context.Checkins.Add(checkin);
+        await context.SaveChangesAsync();
+
+        var result = await repo.GetCheckinByIdForUpdateAsync(checkin.Id);
+
+        result.Should().NotBeNull();
+        context.Entry(result!).State.Should().NotBe(EntityState.Detached);
+    }
+
     #endregion
 
     #region GetAllAsync Tests
@@ -288,6 +306,7 @@ public sealed class MetricCheckinRepositoryTests
         result!.Id.Should().Be(metric.Id);
         result.Mission.Should().NotBeNull();
         result.Mission.Id.Should().Be(mission.Id);
+        context.Entry(result).State.Should().Be(EntityState.Unchanged);
     }
 
     [Fact]

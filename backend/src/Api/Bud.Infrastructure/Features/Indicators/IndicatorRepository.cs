@@ -54,6 +54,9 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public async Task<Checkin?> GetCheckinByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.Checkins.FindAsync([id], ct);
+
     public async Task<PagedResult<Checkin>> GetCheckinsAsync(
         Guid? indicatorId, Guid? missionId, int page, int pageSize, CancellationToken ct = default)
     {
@@ -107,7 +110,6 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
 
     public async Task<Indicator?> GetIndicatorWithMissionAsync(Guid indicatorId, CancellationToken ct = default)
         => await dbContext.Indicators
-            .AsNoTracking()
             .Include(i => i.Mission)
             .FirstOrDefaultAsync(i => i.Id == indicatorId, ct);
 

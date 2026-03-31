@@ -52,4 +52,44 @@ public sealed class IndicatorAuthorizationServiceTests
 
         result.IsSuccess.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task EvaluateCreateIndicatorAsync_WhenMissionMissing_ReturnsNotFound()
+    {
+        var repository = new Mock<IIndicatorRepository>();
+        repository
+            .Setup(r => r.GetMissionByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Mission?)null);
+
+        var tenantProvider = new TestTenantProvider();
+        var service = new IndicatorAuthorizationService(repository.Object, tenantProvider);
+
+        var result = await ((IWriteAuthorizationRule<CreateIndicatorContext>)service)
+            .EvaluateAsync(new CreateIndicatorContext(Guid.NewGuid()));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.NotFound);
+        result.Error.Should().Be("Meta não encontrada.");
+    }
+
+    [Fact]
+    public async Task EvaluateCreateCheckinAsync_WhenEmployeeMissing_ReturnsForbidden()
+    {
+        var organizationId = Guid.NewGuid();
+        var indicatorId = Guid.NewGuid();
+        var repository = new Mock<IIndicatorRepository>();
+        repository
+            .Setup(r => r.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Indicator { Id = indicatorId, OrganizationId = organizationId });
+
+        var tenantProvider = new TestTenantProvider { TenantId = organizationId, EmployeeId = null };
+        var service = new IndicatorAuthorizationService(repository.Object, tenantProvider);
+
+        var result = await ((IWriteAuthorizationRule<CreateCheckinContext>)service)
+            .EvaluateAsync(new CreateCheckinContext(indicatorId));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Forbidden);
+        result.Error.Should().Be("Funcionário não identificado.");
+    }
 }

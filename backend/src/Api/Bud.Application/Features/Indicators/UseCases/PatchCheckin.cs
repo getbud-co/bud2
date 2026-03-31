@@ -15,6 +15,7 @@ public sealed record PatchCheckinCommand(
 public sealed partial class PatchCheckin(
     IIndicatorRepository indicatorRepository,
     IApplicationAuthorizationGateway authorizationGateway,
+    ITenantProvider tenantProvider,
     ILogger<PatchCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -27,7 +28,7 @@ public sealed partial class PatchCheckin(
     {
         LogPatchingCheckin(logger, checkinId, indicatorId);
 
-        var checkin = await indicatorRepository.GetCheckinByIdAsync(checkinId, cancellationToken);
+        var checkin = await indicatorRepository.GetCheckinByIdForUpdateAsync(checkinId, cancellationToken);
         if (checkin is null || checkin.IndicatorId != indicatorId)
         {
             LogCheckinPatchFailed(logger, checkinId, "Not found");
@@ -39,6 +40,19 @@ public sealed partial class PatchCheckin(
         {
             LogCheckinPatchFailed(logger, checkinId, "Indicator write forbidden");
             return Result<Checkin>.Forbidden(UserErrorMessages.CheckinUpdateForbidden);
+        }
+
+        var employeeId = tenantProvider.EmployeeId;
+        if (!employeeId.HasValue)
+        {
+            LogCheckinPatchFailed(logger, checkinId, "Employee not identified");
+            return Result<Checkin>.Forbidden(UserErrorMessages.EmployeeNotIdentified);
+        }
+
+        if (checkin.EmployeeId != employeeId.Value)
+        {
+            LogCheckinPatchFailed(logger, checkinId, "Author mismatch");
+            return Result<Checkin>.Forbidden(UserErrorMessages.CheckinEditAuthorOnly);
         }
 
         var indicator = await indicatorRepository.GetByIdAsync(indicatorId, cancellationToken);
@@ -54,7 +68,7 @@ public sealed partial class PatchCheckin(
                 checkin,
                 command.Value,
                 command.Text,
-                DateTime.SpecifyKind(command.CheckinDate, DateTimeKind.Utc),
+                UtcDateTimeNormalizer.Normalize(command.CheckinDate),
                 command.Note,
                 command.ConfidenceLevel);
 

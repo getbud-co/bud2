@@ -59,7 +59,11 @@ public static class BudInfrastructureCompositionExtensions
         services.AddScoped<IWriteAuthorizationRule<CreateMissionContext>, MissionAuthorizationService>();
         services.AddScoped<IReadAuthorizationRule<IndicatorResource>, IndicatorAuthorizationService>();
         services.AddScoped<IWriteAuthorizationRule<IndicatorResource>, IndicatorAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateIndicatorContext>, IndicatorAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateCheckinContext>, IndicatorAuthorizationService>();
+        services.AddScoped<IReadAuthorizationRule<TaskResource>, TaskAuthorizationService>();
         services.AddScoped<IWriteAuthorizationRule<TaskResource>, TaskAuthorizationService>();
+        services.AddScoped<IWriteAuthorizationRule<CreateTaskContext>, TaskAuthorizationService>();
         services.AddScoped<IReadAuthorizationRule<TemplateResource>, TemplateAuthorizationService>();
         services.AddScoped<IWriteAuthorizationRule<TemplateResource>, TemplateAuthorizationService>();
         services.AddScoped<IWriteAuthorizationRule<CreateTemplateContext>, TemplateAuthorizationService>();

@@ -52,4 +52,23 @@ public sealed class TaskAuthorizationServiceTests
 
         result.IsSuccess.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task EvaluateCreateAsync_WhenMissionMissing_ReturnsNotFound()
+    {
+        var repository = new Mock<ITaskRepository>();
+        repository
+            .Setup(r => r.GetMissionByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Mission?)null);
+
+        var tenantProvider = new TestTenantProvider();
+        var service = new TaskAuthorizationService(repository.Object, tenantProvider);
+
+        var result = await ((IWriteAuthorizationRule<CreateTaskContext>)service)
+            .EvaluateAsync(new CreateTaskContext(Guid.NewGuid()));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.NotFound);
+        result.Error.Should().Be("Meta não encontrada.");
+    }
 }
