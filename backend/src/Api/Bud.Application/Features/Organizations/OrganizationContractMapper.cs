@@ -1,5 +1,3 @@
-using Bud.Application.Features.Collaborators;
-
 namespace Bud.Application.Features.Organizations;
 
 public static class OrganizationContractMapper
@@ -10,8 +8,11 @@ public static class OrganizationContractMapper
         {
             Id = source.Id,
             Name = source.Name,
-            OwnerId = source.OwnerId,
-            Owner = source.Owner?.ToCollaboratorResponse()
+            Plan = source.Plan,
+            ContractStatus = source.ContractStatus,
+            IconUrl = source.IconUrl,
+            CreatedAt = source.CreatedAt,
+            DeletedAt = source.DeletedAt
         };
     }
 }

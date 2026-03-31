@@ -28,13 +28,11 @@ public sealed class TeamsController(
     /// </summary>
     /// <response code="201">Time criado com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Workspace não encontrado.</response>
     /// <response code="403">Sem permissão para criar time.</response>
     [HttpPost]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TeamResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TeamResponse>> Create(CreateTeamRequest request, CancellationToken cancellationToken)
     {
@@ -46,7 +44,7 @@ public sealed class TeamsController(
 
         var command = new CreateTeamCommand(
             request.Name,
-            request.WorkspaceId,
+            request.OrganizationId,
             request.LeaderId,
             request.ParentTeamId);
 
@@ -126,7 +124,6 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(PagedResult<TeamResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<TeamResponse>>> GetAll(
-        [FromQuery] Guid? workspaceId,
         [FromQuery] Guid? parentTeamId,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -146,7 +143,6 @@ public sealed class TeamsController(
         }
 
         var result = await listTeams.ExecuteAsync(
-            workspaceId,
             parentTeamId,
             searchValidation.Value,
             page,

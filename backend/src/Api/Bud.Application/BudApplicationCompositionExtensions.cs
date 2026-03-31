@@ -12,15 +12,8 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<DeleteOrganization>();
         services.AddScoped<GetOrganizationById>();
         services.AddScoped<ListOrganizations>();
-        services.AddScoped<ListOrganizationWorkspaces>();
         services.AddScoped<ListOrganizationCollaborators>();
-
-        services.AddScoped<CreateWorkspace>();
-        services.AddScoped<PatchWorkspace>();
-        services.AddScoped<DeleteWorkspace>();
-        services.AddScoped<GetWorkspaceById>();
-        services.AddScoped<ListWorkspaces>();
-        services.AddScoped<ListWorkspaceTeams>();
+        services.AddScoped<ListOrganizationCycles>();
 
         services.AddScoped<CreateTeam>();
         services.AddScoped<PatchTeam>();
@@ -44,6 +37,12 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<PatchCollaboratorTeams>();
         services.AddScoped<ListAvailableTeamsForCollaborator>();
         services.AddScoped<GetCollaboratorLookup>();
+
+        services.AddScoped<CreateCycle>();
+        services.AddScoped<PatchCycle>();
+        services.AddScoped<DeleteCycle>();
+        services.AddScoped<GetCycleById>();
+        services.AddScoped<ListCycles>();
 
         services.AddScoped<CreateGoal>();
         services.AddScoped<PatchGoal>();

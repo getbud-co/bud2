@@ -25,7 +25,8 @@ public static class CollaboratorsContractMapper
             Id = source.Id,
             FullName = source.FullName,
             Email = source.Email,
-            Role = source.Role        };
+            Role = source.Role
+        };
     }
 
     public static CollaboratorTeamResponse ToCollaboratorTeamResponse(this Team source)
@@ -33,8 +34,7 @@ public static class CollaboratorsContractMapper
         return new CollaboratorTeamResponse
         {
             Id = source.Id,
-            Name = source.Name,
-            WorkspaceName = source.Workspace?.Name ?? string.Empty
+            Name = source.Name
         };
     }
 
@@ -43,8 +43,7 @@ public static class CollaboratorsContractMapper
         return new CollaboratorTeamEligibleResponse
         {
             Id = source.Id,
-            Name = source.Name,
-            WorkspaceName = source.Workspace?.Name ?? string.Empty
+            Name = source.Name
         };
     }
 
@@ -55,7 +54,8 @@ public static class CollaboratorsContractMapper
             Id = source.Id,
             FullName = source.FullName,
             Email = source.Email,
-            Role = source.Role        };
+            Role = source.Role
+        };
     }
 
     public static CollaboratorLeaderResponse ToLeaderResponse(this Collaborator source)
@@ -66,7 +66,6 @@ public static class CollaboratorsContractMapper
             FullName = source.FullName,
             Email = source.Email,
             TeamName = source.Team?.Name,
-            WorkspaceName = source.Team?.Workspace?.Name,
             OrganizationName = source.Organization?.Name ?? string.Empty
         };
     }

@@ -15,12 +15,11 @@ public static class DbSeeder
 
         if (budOrg is null)
         {
-            budOrg = new Organization
-            {
-                Id = Guid.NewGuid(),
-                Name = DefaultOrganizationName,
-                OwnerId = null
-            };
+            budOrg = Organization.Create(
+                Guid.NewGuid(),
+                DefaultOrganizationName,
+                OrganizationPlan.Free,
+                OrganizationContractStatus.ToApproval);
             context.Organizations.Add(budOrg);
             await context.SaveChangesAsync();
         }
@@ -49,12 +48,6 @@ public static class DbSeeder
         if (!adminLeader.IsGlobalAdmin)
         {
             adminLeader.IsGlobalAdmin = true;
-            await context.SaveChangesAsync();
-        }
-
-        if (budOrg.OwnerId != adminLeader.Id)
-        {
-            budOrg.OwnerId = adminLeader.Id;
             await context.SaveChangesAsync();
         }
 

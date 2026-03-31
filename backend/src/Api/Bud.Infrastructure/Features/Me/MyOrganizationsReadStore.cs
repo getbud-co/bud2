@@ -37,7 +37,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Success(allOrgs);
         }
 
-        var orgsFromMembership = await dbContext.Collaborators
+        var organizations = await dbContext.Collaborators
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(c => c.Email == normalizedEmail)
@@ -47,25 +47,9 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
                 Id = c.Organization.Id,
                 Name = c.Organization.Name
             })
-            .ToListAsync(cancellationToken);
-
-        var orgsFromOwnership = await dbContext.Organizations
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .Where(o => o.Owner != null && o.Owner.Email == normalizedEmail)
-            .Select(o => new OrganizationSnapshot
-            {
-                Id = o.Id,
-                Name = o.Name
-            })
-            .ToListAsync(cancellationToken);
-
-        var organizations = orgsFromMembership
-            .Concat(orgsFromOwnership)
-            .GroupBy(o => o.Id)
-            .Select(g => g.First())
+            .Distinct()
             .OrderBy(o => o.Name)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         return Result<List<OrganizationSnapshot>>.Success(organizations);
     }

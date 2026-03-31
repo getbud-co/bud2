@@ -14,14 +14,9 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
         => await dbContext.Teams.Include(t => t.CollaboratorTeams).FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<PagedResult<Team>> GetAllAsync(
-        Guid? workspaceId, Guid? parentTeamId, string? search, int page, int pageSize, CancellationToken ct = default)
+        Guid? parentTeamId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
         IQueryable<Team> query = dbContext.Teams.AsNoTracking().Include(t => t.Leader);
-
-        if (workspaceId.HasValue)
-        {
-            query = query.Where(t => t.WorkspaceId == workspaceId.Value);
-        }
 
         if (parentTeamId.HasValue)
         {

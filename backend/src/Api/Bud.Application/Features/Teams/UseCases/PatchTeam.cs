@@ -60,11 +60,7 @@ public sealed partial class PatchTeam(
                 return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
             }
 
-            if (parentTeam.WorkspaceId != team.WorkspaceId)
-            {
-                LogTeamPatchFailed(logger, id, "Parent team belongs to different workspace");
-                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameWorkspace);
-            }
+
         }
 
         var leaderValidation = await CollaboratorLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(

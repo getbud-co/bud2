@@ -9,7 +9,6 @@ global using Bud.Domain.Organizations;
 global using Bud.Domain.Collaborators;
 global using Bud.Domain.Teams;
 global using Bud.Domain.Templates;
-global using Bud.Domain.Workspaces;
 global using Bud.Domain.Primitives;
 global using Bud.Domain.ValueObjects;
 global using Bud.Shared.Contracts;

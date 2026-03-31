@@ -22,6 +22,129 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsGlobalAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("LeaderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("LeaderId");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Collaborators");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorAccessLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AccessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CollaboratorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CollaboratorId");
+
+                    b.HasIndex("OrganizationId", "AccessedAt");
+
+                    b.ToTable("CollaboratorAccessLogs");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorTeam", b =>
+                {
+                    b.Property<Guid>("CollaboratorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("CollaboratorId", "TeamId");
+
+                    b.HasIndex("CollaboratorId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("CollaboratorTeams");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Cycles.Cycle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Cadence")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.ToTable("Cycles");
+                });
+
             modelBuilder.Entity("Bud.Domain.Goals.Goal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -253,110 +376,34 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ContractStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IconUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid?>("OwnerId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
 
                     b.ToTable("Organizations");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("IsGlobalAdmin")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid?>("LeaderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("LeaderId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("Collaborators");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorAccessLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AccessedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CollaboratorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CollaboratorId");
-
-                    b.HasIndex("OrganizationId", "AccessedAt");
-
-                    b.ToTable("CollaboratorAccessLogs");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorTeam", b =>
-                {
-                    b.Property<Guid>("CollaboratorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("CollaboratorId", "TeamId");
-
-                    b.HasIndex("CollaboratorId");
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("CollaboratorTeams");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
@@ -379,9 +426,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ParentTeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("WorkspaceId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("LeaderId");
@@ -389,8 +433,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.HasIndex("ParentTeamId");
-
-                    b.HasIndex("WorkspaceId");
 
                     b.ToTable("Teams");
                 });
@@ -523,25 +565,78 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.ToTable("TemplateIndicators");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Workspaces.Workspace", b =>
+            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Leader")
+                        .WithMany()
+                        .HasForeignKey("LeaderId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
+                    b.HasOne("Bud.Domain.Teams.Team", "Team")
+                        .WithMany("Collaborators")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasKey("Id");
+                    b.Navigation("Leader");
 
-                    b.HasIndex("OrganizationId");
+                    b.Navigation("Organization");
 
-                    b.ToTable("Workspaces");
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorAccessLog", b =>
+                {
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
+                        .WithMany()
+                        .HasForeignKey("CollaboratorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Collaborator");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorTeam", b =>
+                {
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
+                        .WithMany("CollaboratorTeams")
+                        .HasForeignKey("CollaboratorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Teams.Team", "Team")
+                        .WithMany("CollaboratorTeams")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collaborator");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Cycles.Cycle", b =>
+                {
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Bud.Domain.Goals.Goal", b =>
@@ -653,79 +748,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("RecipientCollaborator");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Organizations.Organization", b =>
-                {
-                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
-                {
-                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Leader")
-                        .WithMany()
-                        .HasForeignKey("LeaderId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Teams.Team", "Team")
-                        .WithMany("Collaborators")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Leader");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorAccessLog", b =>
-                {
-                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
-                        .WithMany()
-                        .HasForeignKey("CollaboratorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Collaborator");
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorTeam", b =>
-                {
-                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
-                        .WithMany("CollaboratorTeams")
-                        .HasForeignKey("CollaboratorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Teams.Team", "Team")
-                        .WithMany("CollaboratorTeams")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Collaborator");
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
                 {
                     b.HasOne("Bud.Domain.Collaborators.Collaborator", "Leader")
@@ -745,19 +767,11 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ParentTeamId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Bud.Domain.Workspaces.Workspace", "Workspace")
-                        .WithMany("Teams")
-                        .HasForeignKey("WorkspaceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Leader");
 
                     b.Navigation("Organization");
 
                     b.Navigation("ParentTeam");
-
-                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("Bud.Domain.Templates.Template", b =>
@@ -823,15 +837,9 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("TemplateGoal");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Workspaces.Workspace", b =>
+            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
                 {
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany("Workspaces")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
+                    b.Navigation("CollaboratorTeams");
                 });
 
             modelBuilder.Entity("Bud.Domain.Goals.Goal", b =>
@@ -846,16 +854,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bud.Domain.Indicators.Indicator", b =>
                 {
                     b.Navigation("Checkins");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Organizations.Organization", b =>
-                {
-                    b.Navigation("Workspaces");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
-                {
-                    b.Navigation("CollaboratorTeams");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
@@ -879,11 +877,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("Children");
 
                     b.Navigation("Indicators");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Workspaces.Workspace", b =>
-                {
-                    b.Navigation("Teams");
                 });
 #pragma warning restore 612, 618
         }

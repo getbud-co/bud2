@@ -5,11 +5,14 @@ using Microsoft.Extensions.Options;
 
 namespace Bud.Application.Features.Organizations.UseCases;
 
-public sealed record PatchOrganizationCommand(Optional<string> Name, Optional<Guid?> OwnerId);
+public sealed record PatchOrganizationCommand(
+    Optional<string> Name,
+    Optional<OrganizationPlan> Plan,
+    Optional<OrganizationContractStatus> ContractStatus,
+    Optional<string?> IconUrl);
 
 public sealed partial class PatchOrganization(
     IOrganizationRepository organizationRepository,
-    ICollaboratorRepository collaboratorRepository,
     IOptions<GlobalAdminSettings> globalAdminSettings,
     ILogger<PatchOrganization> logger,
     IUnitOfWork? unitOfWork = null)
@@ -23,7 +26,7 @@ public sealed partial class PatchOrganization(
     {
         LogPatchingOrganization(logger, id);
 
-        var organization = await organizationRepository.GetByIdWithOwnerAsync(id, cancellationToken);
+        var organization = await organizationRepository.GetByIdAsync(id, cancellationToken);
         if (organization is null)
         {
             LogOrganizationPatchFailed(logger, id, "Not found");
@@ -45,27 +48,19 @@ public sealed partial class PatchOrganization(
                 organization.Rename(command.Name.Value ?? string.Empty);
             }
 
-            if (command.OwnerId.HasValue && command.OwnerId.Value.HasValue && command.OwnerId.Value.Value != Guid.Empty)
+            if (command.Plan.HasValue)
             {
-                var ownerId = command.OwnerId.Value.Value;
-                var newOwner = await collaboratorRepository.GetByIdAsync(ownerId, cancellationToken);
-                if (newOwner is null)
-                {
-                    LogOrganizationPatchFailed(logger, id, UserErrorMessages.SelectedOwnerNotFound);
-                    return Result<Organization>.NotFound(UserErrorMessages.SelectedOwnerNotFound);
-                }
+                organization.Plan = command.Plan.Value;
+            }
 
-                try
-                {
-                    newOwner.EnsureCanOwnOrganization();
-                }
-                catch (DomainInvariantException ex)
-                {
-                    LogOrganizationPatchFailed(logger, id, ex.Message);
-                    return Result<Organization>.Failure(ex.Message, ErrorType.Validation);
-                }
+            if (command.ContractStatus.HasValue)
+            {
+                organization.ContractStatus = command.ContractStatus.Value;
+            }
 
-                organization.AssignOwner(ownerId);
+            if (command.IconUrl.HasValue)
+            {
+                organization.IconUrl = command.IconUrl.Value;
             }
 
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);

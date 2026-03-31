@@ -12,7 +12,7 @@ public sealed class OrganizationOwnerHandler(IOrganizationAuthorizationService o
         OrganizationOwnerRequirement requirement,
         OrganizationResource resource)
     {
-        var result = await orgAuth.RequireOrgOwnerAsync(resource.OrganizationId, CancellationToken.None);
+        var result = await orgAuth.RequireOrgAdminAsync(resource.OrganizationId, CancellationToken.None);
         if (result.IsSuccess)
         {
             context.Succeed(requirement);

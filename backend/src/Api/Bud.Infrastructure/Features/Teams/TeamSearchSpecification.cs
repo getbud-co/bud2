@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bud.Infrastructure.Features.Teams;
 
-public sealed class TeamSearchSpecification(string? search, bool isNpgsql, bool includeWorkspaceName = false) : IQuerySpecification<Team>
+public sealed class TeamSearchSpecification(string? search, bool isNpgsql) : IQuerySpecification<Team>
 {
     public IQueryable<Team> Apply(IQueryable<Team> query)
     {
@@ -16,18 +16,8 @@ public sealed class TeamSearchSpecification(string? search, bool isNpgsql, bool 
     }
 
     private IQueryable<Team> ApplyNpgsql(IQueryable<Team> query, string pattern)
-    {
-        return includeWorkspaceName
-            ? query.Where(t => EF.Functions.ILike(t.Name, pattern) || EF.Functions.ILike(t.Workspace.Name, pattern))
-            : query.Where(t => EF.Functions.ILike(t.Name, pattern));
-    }
+        => query.Where(t => EF.Functions.ILike(t.Name, pattern));
 
     private IQueryable<Team> ApplyInMemory(IQueryable<Team> query, string term)
-    {
-        return includeWorkspaceName
-            ? query.Where(t =>
-                t.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                t.Workspace.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-            : query.Where(t => t.Name.Contains(term, StringComparison.OrdinalIgnoreCase));
-    }
+        => query.Where(t => t.Name.Contains(term, StringComparison.OrdinalIgnoreCase));
 }

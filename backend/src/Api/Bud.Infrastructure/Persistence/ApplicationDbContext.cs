@@ -22,7 +22,6 @@ public sealed class ApplicationDbContext : DbContext
     }
 
     public DbSet<Organization> Organizations => Set<Organization>();
-    public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<Collaborator> Collaborators => Set<Collaborator>();
     public DbSet<Goal> Goals => Set<Goal>();
@@ -35,6 +34,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<CollaboratorAccessLog> CollaboratorAccessLogs => Set<CollaboratorAccessLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<GoalTask> GoalTasks => Set<GoalTask>();
+    public DbSet<Cycle> Cycles => Set<Cycle>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,13 +49,6 @@ public sealed class ApplicationDbContext : DbContext
                 !_applyTenantFilter || // No tenant provider (schema creation/tests)
                 (_isGlobalAdmin && _tenantId == null) || // Global admin with no tenant selected sees all
                 (_tenantId != null && o.Id == _tenantId) // Anyone with tenant selected sees only that tenant
-            );
-
-        modelBuilder.Entity<Workspace>()
-            .HasQueryFilter(w =>
-                !_applyTenantFilter ||
-                (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && w.OrganizationId == _tenantId)
             );
 
         modelBuilder.Entity<Team>()
@@ -140,6 +133,13 @@ public sealed class ApplicationDbContext : DbContext
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && gt.OrganizationId == _tenantId)
+            );
+
+        modelBuilder.Entity<Cycle>()
+            .HasQueryFilter(c =>
+                !_applyTenantFilter ||
+                (_isGlobalAdmin && _tenantId == null) ||
+                (_tenantId != null && c.OrganizationId == _tenantId)
             );
     }
 }

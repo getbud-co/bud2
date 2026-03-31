@@ -43,8 +43,6 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
         var query = dbContext.Collaborators
             .AsNoTracking()
             .Include(c => c.Organization)
-            .Include(c => c.Team!)
-                .ThenInclude(t => t.Workspace)
             .Where(c => c.Role == CollaboratorRole.Leader);
 
         if (organizationId.HasValue)
@@ -81,7 +79,6 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
             .AsNoTracking()
             .Where(ct2 => ct2.CollaboratorId == collaboratorId)
             .Include(ct2 => ct2.Team)
-                .ThenInclude(t => t.Workspace)
             .Select(ct2 => ct2.Team)
             .OrderBy(t => t.Name)
             .ToListAsync(ct);
@@ -97,13 +94,12 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
 
         var query = dbContext.Teams
             .AsNoTracking()
-            .Include(t => t.Workspace)
             .Where(t => t.OrganizationId == organizationId)
             .Where(t => !currentTeamIds.Contains(t.Id));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = new TeamSearchSpecification(search, dbContext.Database.IsNpgsql(), includeWorkspaceName: true).Apply(query);
+            query = new TeamSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
         }
 
         return await query
@@ -145,7 +141,7 @@ public sealed class CollaboratorRepository(ApplicationDbContext dbContext) : ICo
         => await dbContext.Collaborators.AnyAsync(c => c.LeaderId == collaboratorId, ct);
 
     public async Task<bool> IsOrganizationOwnerAsync(Guid collaboratorId, CancellationToken ct = default)
-        => await dbContext.Organizations.AnyAsync(o => o.OwnerId == collaboratorId, ct);
+        => await dbContext.Collaborators.AnyAsync(c => c.Id == collaboratorId && c.Role == CollaboratorRole.OrgAdmin, ct);
 
     public async Task<bool> HasGoalsAsync(Guid collaboratorId, CancellationToken ct = default)
         => await dbContext.Goals.AnyAsync(m => m.CollaboratorId == collaboratorId, ct);
