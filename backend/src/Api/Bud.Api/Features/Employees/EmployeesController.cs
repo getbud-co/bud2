@@ -29,7 +29,7 @@ public sealed class EmployeesController(
     /// </summary>
     /// <response code="201">Funcionário criado com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Organização ou time não encontrado.</response>
+    /// <response code="404">Time não encontrado.</response>
     /// <response code="403">Sem permissão para criar funcionário.</response>
     [HttpPost]
     [Consumes("application/json")]

@@ -38,10 +38,14 @@ public sealed class MissionsController(
     /// </remarks>
     /// <response code="201">Meta criada com sucesso.</response>
     /// <response code="400">Payload inválido ou erro de validação.</response>
+    /// <response code="403">Sem permissão para criar meta no contexto atual.</response>
+    /// <response code="404">Meta pai ou colaborador responsável não encontrado.</response>
     [HttpPost]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(MissionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MissionResponse>> Create(CreateMissionRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await createValidator.ValidateAsync(request, cancellationToken);

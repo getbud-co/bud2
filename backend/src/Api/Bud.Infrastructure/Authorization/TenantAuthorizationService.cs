@@ -10,10 +10,10 @@ public sealed class TenantAuthorizationService(
 {
     public async Task<bool> UserBelongsToTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
-        // Global admin tem acesso a tudo
         if (tenantProvider.IsGlobalAdmin)
         {
-            return true;
+            return await dbContext.Organizations
+                .AnyAsync(o => o.Id == tenantId, cancellationToken);
         }
 
         if (string.IsNullOrEmpty(tenantProvider.UserEmail))

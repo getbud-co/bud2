@@ -55,7 +55,7 @@ public sealed class TenantRequiredMiddleware(RequestDelegate next)
         }
 
         // Validate tenant access (if X-Tenant-Id header was provided)
-        if (tenantProvider.TenantId.HasValue && !tenantProvider.IsGlobalAdmin)
+        if (tenantProvider.TenantId.HasValue)
         {
             var hasAccess = await tenantAuth.UserBelongsToTenantAsync(
                 tenantProvider.TenantId.Value,
