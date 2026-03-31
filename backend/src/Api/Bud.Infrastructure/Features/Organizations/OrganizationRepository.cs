@@ -59,6 +59,20 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         };
     }
 
+    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null, CancellationToken ct = default)
+    {
+        var normalizedName = name.Trim();
+
+        var organizations = await dbContext.Organizations
+            .IgnoreQueryFilters()
+            .Select(o => new { o.Id, o.Name })
+            .ToListAsync(ct);
+
+        return organizations.Any(organization =>
+            (!excludeId.HasValue || organization.Id != excludeId.Value) &&
+            string.Equals(organization.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
+    }
+
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 

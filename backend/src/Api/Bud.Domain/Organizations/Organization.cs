@@ -18,11 +18,6 @@ public sealed class Organization : IAggregateRoot
 
     public void Rename(string name)
     {
-        if (!EntityName.TryCreate(name, out var entityName))
-        {
-            throw new DomainInvariantException("O nome da organização é obrigatório e deve ter até 200 caracteres.");
-        }
-
-        Name = entityName.Value;
+        Name = OrganizationDomainName.Create(name).Value;
     }
 }

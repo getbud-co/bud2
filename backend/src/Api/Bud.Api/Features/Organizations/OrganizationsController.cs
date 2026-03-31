@@ -24,13 +24,14 @@ public sealed class OrganizationsController(
     /// </summary>
     /// <response code="201">Organização criada com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
+    /// <response code="409">Já existe uma organização com o mesmo domínio.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
     [HttpPost]
     [Authorize(Policy = AuthorizationPolicies.GlobalAdmin)]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<OrganizationResponse>> Create(CreateOrganizationRequest request, CancellationToken cancellationToken)
     {
@@ -52,12 +53,14 @@ public sealed class OrganizationsController(
     /// </summary>
     /// <response code="200">Organização atualizada com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
+    /// <response code="409">Já existe uma organização com o mesmo domínio.</response>
     /// <response code="404">Organização não encontrada.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
     [HttpPatch("{id:guid}")]
     [Authorize(Policy = AuthorizationPolicies.GlobalAdmin)]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

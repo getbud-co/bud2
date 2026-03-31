@@ -45,6 +45,7 @@ internal static class UserErrorMessages
     public const string EmployeeEmailAlreadyInUse = "O email já está em uso.";
     public const string EmployeeTeamsInvalid = "Uma ou mais equipes são inválidas ou pertencem a outra organização.";
     public const string OrganizationNotFound = "Organização não encontrada.";
+    public const string OrganizationNameConflict = "Já existe uma organização cadastrada com este domínio.";
     public const string LeaderNotFound = "Líder não encontrado.";
     public const string LeaderMustHaveRole = "O funcionário selecionado deve ter o perfil de Líder.";
     public const string LeaderMustBelongSameOrganization = "O líder deve pertencer à mesma organização.";
