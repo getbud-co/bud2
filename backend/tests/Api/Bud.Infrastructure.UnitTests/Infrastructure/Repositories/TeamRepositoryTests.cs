@@ -296,7 +296,7 @@ public sealed class TeamRepositoryTests
     #region GetEmployeesAsync Tests
 
     [Fact]
-    public async Task GetEmployeesAsync_ReturnsEmployeesWithPrimaryTeam()
+    public async Task GetEmployeesAsync_ReturnsEmployeesViaEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
@@ -310,18 +310,19 @@ public sealed class TeamRepositoryTests
             Id = Guid.NewGuid(),
             FullName = "Member A",
             Email = "a@test.com",
-            OrganizationId = org.Id,
-            TeamId = team.Id
+            OrganizationId = org.Id
         };
         var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Member B",
             Email = "b@test.com",
-            OrganizationId = org.Id,
-            TeamId = team.Id
+            OrganizationId = org.Id
         };
         context.Employees.AddRange(member1, member2);
+        context.EmployeeTeams.AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id });
         await context.SaveChangesAsync();
 
         // Act
@@ -344,12 +345,18 @@ public sealed class TeamRepositoryTests
 
         for (int i = 0; i < 5; i++)
         {
-            context.Employees.Add(new Employee
+            var member = new Employee
             {
                 Id = Guid.NewGuid(),
                 FullName = $"Member {i:D2}",
                 Email = $"member{i}@test.com",
-                OrganizationId = org.Id,
+                OrganizationId = org.Id
+            };
+
+            context.Employees.Add(member);
+            context.EmployeeTeams.Add(new EmployeeTeam
+            {
+                EmployeeId = member.Id,
                 TeamId = team.Id
             });
         }
@@ -548,20 +555,35 @@ public sealed class TeamRepositoryTests
     #region HasMissionsAsync Tests
 
     [Fact]
-    public async Task HasMissionsAsync_AlwaysReturnsFalse_BecauseMissionsNoLongerHaveTeamId()
+    public async Task HasMissionsAsync_WhenMissionAssignedToTeamMember_ReturnsTrue()
     {
-        // Arrange — Missions no longer have TeamId, so HasMissionsAsync always returns false.
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
         var leader = await CreateTestEmployee(context, org.Id);
         var team = await CreateTestTeam(context, org.Id, leader.Id);
+        context.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = leader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow
+        });
 
-        // Act
+        context.Missions.Add(new Mission
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mission linked by primary team",
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(30),
+            Status = MissionStatus.Active,
+            OrganizationId = org.Id,
+            EmployeeId = leader.Id
+        });
+        await context.SaveChangesAsync();
+
         var result = await repository.HasMissionsAsync(team.Id);
 
-        // Assert
-        result.Should().BeFalse();
+        result.Should().BeTrue();
     }
 
     [Fact]
@@ -579,6 +601,39 @@ public sealed class TeamRepositoryTests
 
         // Assert
         result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HasMissionsAsync_WhenMissionAssignedToAdditionalTeamMember_ReturnsTrue()
+    {
+        using var context = CreateInMemoryContext();
+        var repository = new TeamRepository(context);
+        var org = await CreateTestOrganization(context);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+
+        context.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = member.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow
+        });
+        context.Missions.Add(new Mission
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mission linked by additional team",
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(30),
+            Status = MissionStatus.Active,
+            OrganizationId = org.Id,
+            EmployeeId = member.Id
+        });
+        await context.SaveChangesAsync();
+
+        var result = await repository.HasMissionsAsync(team.Id);
+
+        result.Should().BeTrue();
     }
 
     #endregion

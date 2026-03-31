@@ -9,7 +9,6 @@ public sealed class EmployeeResponse
     public string Email { get; set; } = string.Empty;
     public EmployeeRole Role { get; set; } = EmployeeRole.IndividualContributor;
     public Guid OrganizationId { get; set; }
-    public Guid? TeamId { get; set; }
     public Guid? LeaderId { get; set; }
     public bool IsGlobalAdmin { get; set; }
     public TeamResponse? Team { get; set; }

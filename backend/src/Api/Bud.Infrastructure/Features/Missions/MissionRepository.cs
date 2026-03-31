@@ -164,47 +164,24 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
     private async Task<HashSet<Guid>> GetTeamEmployeeIdsAsync(
         Guid employeeId, CancellationToken ct)
     {
-        // Get employee's primary team
-        var employee = await dbContext.Employees
-            .AsNoTracking()
-            .Where(c => c.Id == employeeId)
-            .Select(c => new { c.TeamId })
-            .FirstOrDefaultAsync(ct);
-
-        // Get all team IDs for this employee (primary + additional)
-        var additionalTeamIds = await dbContext.EmployeeTeams
+        var teamIds = await dbContext.EmployeeTeams
             .AsNoTracking()
             .Where(ct2 => ct2.EmployeeId == employeeId)
             .Select(ct2 => ct2.TeamId)
             .ToListAsync(ct);
 
-        var allTeamIds = new HashSet<Guid>(additionalTeamIds);
-        if (employee?.TeamId.HasValue == true)
-        {
-            allTeamIds.Add(employee.TeamId.Value);
-        }
-
-        if (allTeamIds.Count == 0)
+        if (teamIds.Count == 0)
         {
             return [employeeId];
         }
 
-        // Get all employees from those teams (primary team members)
-        var teamMemberIds = await dbContext.Employees
+        var memberIds = await dbContext.EmployeeTeams
             .AsNoTracking()
-            .Where(c => c.TeamId.HasValue && allTeamIds.Contains(c.TeamId.Value))
-            .Select(c => c.Id)
-            .ToListAsync(ct);
-
-        // Also get additional team members
-        var additionalMemberIds = await dbContext.EmployeeTeams
-            .AsNoTracking()
-            .Where(ct2 => allTeamIds.Contains(ct2.TeamId))
+            .Where(ct2 => teamIds.Contains(ct2.TeamId))
             .Select(ct2 => ct2.EmployeeId)
             .ToListAsync(ct);
 
-        var result = new HashSet<Guid>(teamMemberIds);
-        result.UnionWith(additionalMemberIds);
+        var result = new HashSet<Guid>(memberIds);
         result.Add(employeeId);
 
         return result;

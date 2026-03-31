@@ -57,6 +57,20 @@ public sealed partial class CreateEmployee(
 
         try
         {
+            if (command.TeamId.HasValue)
+            {
+                var validTeams = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
+                    [command.TeamId.Value],
+                    organizationId.Value,
+                    cancellationToken);
+
+                if (validTeams != 1)
+                {
+                    LogEmployeeCreationFailed(logger, command.FullName, "Team not found");
+                    return Result<Employee>.NotFound(UserErrorMessages.TeamNotFound);
+                }
+            }
+
             var employee = Employee.Create(
                 Guid.NewGuid(),
                 organizationId.Value,
@@ -64,6 +78,16 @@ public sealed partial class CreateEmployee(
                 emailAddress.Value,
                 command.Role,
                 command.LeaderId);
+
+            if (command.TeamId.HasValue)
+            {
+                employee.EmployeeTeams.Add(new EmployeeTeam
+                {
+                    EmployeeId = employee.Id,
+                    TeamId = command.TeamId.Value,
+                    AssignedAt = DateTime.UtcNow
+                });
+            }
 
             await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
