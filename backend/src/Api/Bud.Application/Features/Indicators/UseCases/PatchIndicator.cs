@@ -17,15 +17,9 @@ public sealed record PatchIndicatorCommand(
 public sealed partial class PatchIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<PatchIndicator> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Indicator>> ExecuteAsync(
-        Guid id,
-        PatchIndicatorCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, command, cancellationToken);
-
     public async Task<Result<Indicator>> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -41,14 +35,11 @@ public sealed partial class PatchIndicator(
             return Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogIndicatorPatchFailed(logger, id, UserErrorMessages.IndicatorUpdateForbidden);
-                return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorUpdateForbidden);
-            }
+            LogIndicatorPatchFailed(logger, id, UserErrorMessages.IndicatorUpdateForbidden);
+            return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorUpdateForbidden);
         }
 
         try

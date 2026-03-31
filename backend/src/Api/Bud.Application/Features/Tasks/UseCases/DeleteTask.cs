@@ -8,14 +8,9 @@ namespace Bud.Application.Features.Tasks.UseCases;
 public sealed partial class DeleteTask(
     ITaskRepository taskRepository,
     ILogger<DeleteTask> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, cancellationToken);
-
     public async Task<Result> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -30,14 +25,11 @@ public sealed partial class DeleteTask(
             return Result.NotFound(UserErrorMessages.TaskNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new TaskResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new TaskResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogTaskDeletionFailed(logger, id, UserErrorMessages.TaskDeleteForbidden);
-                return Result.Forbidden(UserErrorMessages.TaskDeleteForbidden);
-            }
+            LogTaskDeletionFailed(logger, id, UserErrorMessages.TaskDeleteForbidden);
+            return Result.Forbidden(UserErrorMessages.TaskDeleteForbidden);
         }
 
         await taskRepository.RemoveAsync(task, cancellationToken);

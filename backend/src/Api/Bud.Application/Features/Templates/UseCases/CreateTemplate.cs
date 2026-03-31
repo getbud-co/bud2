@@ -17,24 +17,13 @@ public sealed partial class CreateTemplate(
     ITemplateRepository templateRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTemplate> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Template>> ExecuteAsync(
-        ClaimsPrincipal user,
-        CreateTemplateCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsyncInternal(user, command, cancellationToken);
-
     public async Task<Result<Template>> ExecuteAsync(
-        CreateTemplateCommand command,
-        CancellationToken cancellationToken = default)
-        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), command, cancellationToken);
-
-    private async Task<Result<Template>> ExecuteAsyncInternal(
         ClaimsPrincipal user,
         CreateTemplateCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         LogCreatingTemplate(logger, command.Name);
 
@@ -44,17 +33,14 @@ public sealed partial class CreateTemplate(
             return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(
+            user,
+            new CreateTemplateContext(tenantProvider.TenantId.Value),
+            cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(
-                user,
-                new CreateTemplateContext(tenantProvider.TenantId.Value),
-                cancellationToken);
-            if (!canWrite)
-            {
-                LogTemplateCreationFailed(logger, command.Name, UserErrorMessages.TemplateCreateForbidden);
-                return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
-            }
+            LogTemplateCreationFailed(logger, command.Name, UserErrorMessages.TemplateCreateForbidden);
+            return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
         }
 
         try

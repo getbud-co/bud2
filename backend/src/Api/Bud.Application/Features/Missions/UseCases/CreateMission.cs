@@ -20,24 +20,13 @@ public sealed partial class CreateMission(
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateMission> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Mission>> ExecuteAsync(
-        ClaimsPrincipal user,
-        CreateMissionCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsyncInternal(user, command, cancellationToken);
-
     public async Task<Result<Mission>> ExecuteAsync(
-        CreateMissionCommand command,
-        CancellationToken cancellationToken = default)
-        => await ExecuteAsyncInternal(new ClaimsPrincipal(new ClaimsIdentity()), command, cancellationToken);
-
-    private async Task<Result<Mission>> ExecuteAsyncInternal(
         ClaimsPrincipal user,
         CreateMissionCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         LogCreatingMission(logger, command.Name);
 
@@ -48,17 +37,14 @@ public sealed partial class CreateMission(
             return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(
+            user,
+            new CreateMissionContext(organizationId.Value),
+            cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(
-                user,
-                new CreateMissionContext(organizationId.Value),
-                cancellationToken);
-            if (!canWrite)
-            {
-                LogMissionCreationFailed(logger, command.Name, UserErrorMessages.MissionCreateForbidden);
-                return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);
-            }
+            LogMissionCreationFailed(logger, command.Name, UserErrorMessages.MissionCreateForbidden);
+            return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);
         }
 
         Mission? parentMission = null;
@@ -74,8 +60,11 @@ public sealed partial class CreateMission(
 
         if (parentMission is not null)
         {
-            var violation = MissionDateRangePolicy.ValidateChildStartDate<Mission>(
-                UtcDateTimeNormalizer.Normalize(command.StartDate), parentMission.StartDate);
+            var violation = MissionDateRangePolicy.ValidateChildWindow<Mission>(
+                UtcDateTimeNormalizer.Normalize(command.StartDate),
+                UtcDateTimeNormalizer.Normalize(command.EndDate),
+                parentMission.StartDate,
+                parentMission.EndDate);
             if (violation is not null)
             {
                 LogMissionCreationFailed(logger, command.Name, violation.Error!);

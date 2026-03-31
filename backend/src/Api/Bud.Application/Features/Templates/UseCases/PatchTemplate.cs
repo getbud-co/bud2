@@ -16,15 +16,9 @@ public sealed record PatchTemplateCommand(
 public sealed partial class PatchTemplate(
     ITemplateRepository templateRepository,
     ILogger<PatchTemplate> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Template>> ExecuteAsync(
-        Guid id,
-        PatchTemplateCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, command, cancellationToken);
-
     public async Task<Result<Template>> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -40,14 +34,11 @@ public sealed partial class PatchTemplate(
             return Result<Template>.NotFound(UserErrorMessages.TemplateNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new TemplateResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new TemplateResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogTemplatePatchFailed(logger, id, UserErrorMessages.TemplateUpdateForbidden);
-                return Result<Template>.Forbidden(UserErrorMessages.TemplateUpdateForbidden);
-            }
+            LogTemplatePatchFailed(logger, id, UserErrorMessages.TemplateUpdateForbidden);
+            return Result<Template>.Forbidden(UserErrorMessages.TemplateUpdateForbidden);
         }
 
         try

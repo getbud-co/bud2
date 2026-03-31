@@ -19,15 +19,9 @@ public sealed partial class PatchMission(
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<PatchMission> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result<Mission>> ExecuteAsync(
-        Guid id,
-        PatchMissionCommand command,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, command, cancellationToken);
-
     public async Task<Result<Mission>> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -43,23 +37,30 @@ public sealed partial class PatchMission(
             return Result<Mission>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogMissionPatchFailed(logger, id, UserErrorMessages.MissionUpdateForbidden);
-                return Result<Mission>.Forbidden(UserErrorMessages.MissionUpdateForbidden);
-            }
+            LogMissionPatchFailed(logger, id, UserErrorMessages.MissionUpdateForbidden);
+            return Result<Mission>.Forbidden(UserErrorMessages.MissionUpdateForbidden);
         }
 
-        if (mission.ParentId.HasValue && command.StartDate.HasValue)
+        if (mission.ParentId.HasValue && (command.StartDate.HasValue || command.EndDate.HasValue))
         {
             var parentMission = await missionRepository.GetByIdReadOnlyAsync(mission.ParentId.Value, cancellationToken);
             if (parentMission is not null)
             {
-                var violation = MissionDateRangePolicy.ValidateChildStartDate<Mission>(
-                    UtcDateTimeNormalizer.Normalize(command.StartDate.Value), parentMission.StartDate);
+                var childStartDate = command.StartDate.HasValue
+                    ? UtcDateTimeNormalizer.Normalize(command.StartDate.Value)
+                    : mission.StartDate;
+                var childEndDate = command.EndDate.HasValue
+                    ? UtcDateTimeNormalizer.Normalize(command.EndDate.Value)
+                    : mission.EndDate;
+
+                var violation = MissionDateRangePolicy.ValidateChildWindow<Mission>(
+                    childStartDate,
+                    childEndDate,
+                    parentMission.StartDate,
+                    parentMission.EndDate);
                 if (violation is not null)
                 {
                     LogMissionPatchFailed(logger, id, violation.Error!);
