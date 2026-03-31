@@ -16,6 +16,13 @@ public sealed class ArchitectureTests
 {
     private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
     private static readonly Regex NamespaceRegex = new(@"^\s*namespace\s+(?<namespace>[A-Za-z0-9_.]+)\s*[;{]", RegexOptions.Multiline | RegexOptions.Compiled);
+    private static readonly string[] ForbiddenFrontendProjectReferences =
+    [
+        "Bud.BlazorWasm",
+        "Bud.Client",
+        "Bud.Frontend",
+        "Bud.Web"
+    ];
 
     [Fact]
     public void Domain_should_not_reference_other_solution_projects()
@@ -25,7 +32,7 @@ public sealed class ArchitectureTests
         references.Should().NotContain("Bud.Application");
         references.Should().NotContain("Bud.Infrastructure");
         references.Should().NotContain("Bud.Api");
-        references.Should().NotContain("Bud.BlazorWasm");
+        references.Should().NotContain(ForbiddenFrontendProjectReferences);
         references.Should().Contain("Bud.Shared.Contracts");
         references.Should().Contain("Bud.Shared.Kernel");
     }
@@ -40,7 +47,7 @@ public sealed class ArchitectureTests
         references.Should().Contain("Bud.Shared.Kernel");
         references.Should().NotContain("Bud.Infrastructure");
         references.Should().NotContain("Bud.Api");
-        references.Should().NotContain("Bud.BlazorWasm");
+        references.Should().NotContain(ForbiddenFrontendProjectReferences);
     }
 
     [Fact]
@@ -53,7 +60,7 @@ public sealed class ArchitectureTests
         references.Should().Contain("Bud.Shared.Contracts");
         references.Should().Contain("Bud.Shared.Kernel");
         references.Should().NotContain("Bud.Api");
-        references.Should().NotContain("Bud.BlazorWasm");
+        references.Should().NotContain(ForbiddenFrontendProjectReferences);
     }
 
     [Fact]
@@ -65,7 +72,7 @@ public sealed class ArchitectureTests
         references.Should().Contain("Bud.Infrastructure");
         references.Should().Contain("Bud.Shared.Contracts");
         references.Should().Contain("Bud.Shared.Kernel");
-        references.Should().NotContain("Bud.BlazorWasm");
+        references.Should().NotContain(ForbiddenFrontendProjectReferences);
         references.Should().NotContain("Bud.Domain");
     }
 

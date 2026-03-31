@@ -30,7 +30,7 @@ public sealed class SecurityHeadersEndpointsTests(CustomWebApplicationFactory fa
     }
 
     [Fact]
-    public async Task HealthEndpoint_ReturnsCspWithWasmSupport()
+    public async Task HealthEndpoint_ReturnsCspWithoutWasmSupport()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -41,7 +41,8 @@ public sealed class SecurityHeadersEndpointsTests(CustomWebApplicationFactory fa
         // Assert
         response.Headers.Should().ContainKey("Content-Security-Policy");
         var csp = response.Headers.GetValues("Content-Security-Policy").First();
-        csp.Should().Contain("'wasm-unsafe-eval'");
+        csp.Should().NotContain("'wasm-unsafe-eval'");
+        csp.Should().Contain("script-src 'self'");
         csp.Should().Contain("frame-ancestors 'none'");
     }
 }

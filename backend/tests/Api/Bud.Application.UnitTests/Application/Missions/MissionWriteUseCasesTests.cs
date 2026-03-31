@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -7,18 +8,20 @@ namespace Bud.Application.UnitTests.Application.Missions;
 
 public sealed class MissionWriteUseCasesTests
 {
+    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
     private readonly Mock<IMissionRepository> _repo = new();
     private readonly Mock<IEmployeeRepository> _employeeRepo = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
+    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     private CreateMission CreatePlanningUseCase()
-        => new(_repo.Object, _employeeRepo.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance);
+        => new(_repo.Object, _employeeRepo.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance, _authorizationGateway.Object, null);
 
     private PatchMission CreateReplanningUseCase()
-        => new(_repo.Object, _employeeRepo.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance);
+        => new(_repo.Object, _employeeRepo.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance, _authorizationGateway.Object, null);
 
     private DeleteMission CreateRemoveUseCase()
-        => new(_repo.Object, _tenantProvider.Object, NullLogger<DeleteMission>.Instance);
+        => new(_repo.Object, _tenantProvider.Object, NullLogger<DeleteMission>.Instance, _authorizationGateway.Object, null);
 
     [Fact]
     public async Task CreateAsync_WhenTenantNotSelected_ReturnsForbidden()
@@ -28,7 +31,7 @@ public sealed class MissionWriteUseCasesTests
         var useCase = CreatePlanningUseCase();
         var command = new CreateMissionCommand("Missão", null, null, DateTime.UtcNow, DateTime.UtcNow.AddDays(1), MissionStatus.Planned, null, null);
 
-        var result = await useCase.ExecuteAsync(command);
+        var result = await useCase.ExecuteAsync(User, command);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -40,11 +43,14 @@ public sealed class MissionWriteUseCasesTests
     {
         var orgId = Guid.NewGuid();
         _tenantProvider.SetupGet(t => t.TenantId).Returns(orgId);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<CreateMissionContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = CreatePlanningUseCase();
         var command = new CreateMissionCommand("Missão", null, null, DateTime.UtcNow, DateTime.UtcNow.AddDays(1), MissionStatus.Planned, null, null);
 
-        var result = await useCase.ExecuteAsync(command);
+        var result = await useCase.ExecuteAsync(User, command);
 
         result.IsSuccess.Should().BeTrue();
         _repo.Verify(r => r.AddAsync(It.IsAny<Mission>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -71,6 +77,9 @@ public sealed class MissionWriteUseCasesTests
         };
 
         _tenantProvider.SetupGet(t => t.TenantId).Returns(orgId);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<CreateMissionContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _repo.Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentMission);
 
@@ -85,7 +94,7 @@ public sealed class MissionWriteUseCasesTests
             parentId,
             null);
 
-        var result = await useCase.ExecuteAsync(command);
+        var result = await useCase.ExecuteAsync(User, command);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
@@ -110,6 +119,9 @@ public sealed class MissionWriteUseCasesTests
         };
 
         _tenantProvider.SetupGet(t => t.TenantId).Returns(orgId);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<CreateMissionContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _repo.Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentMission);
 
@@ -124,10 +136,51 @@ public sealed class MissionWriteUseCasesTests
             parentId,
             null);
 
-        var result = await useCase.ExecuteAsync(command);
+        var result = await useCase.ExecuteAsync(User, command);
 
         result.IsSuccess.Should().BeTrue();
         _repo.Verify(r => r.AddAsync(It.IsAny<Mission>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenChildEndDateAfterParent_ReturnsValidation()
+    {
+        var orgId = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        var parentMission = new Mission
+        {
+            Id = parentId,
+            Name = "Missão pai",
+            StartDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            Status = MissionStatus.Planned,
+            OrganizationId = orgId
+        };
+
+        _tenantProvider.SetupGet(t => t.TenantId).Returns(orgId);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<CreateMissionContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _repo.Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentMission);
+
+        var useCase = CreatePlanningUseCase();
+        var command = new CreateMissionCommand(
+            "Meta filha",
+            null,
+            null,
+            new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 7, 15, 0, 0, 0, DateTimeKind.Utc),
+            MissionStatus.Planned,
+            parentId,
+            null);
+
+        var result = await useCase.ExecuteAsync(User, command);
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Should().Contain("data de término");
+        _repo.Verify(r => r.AddAsync(It.IsAny<Mission>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -160,6 +213,9 @@ public sealed class MissionWriteUseCasesTests
             .ReturnsAsync(childMission);
         _repo.Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentMission);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = CreateReplanningUseCase();
         var command = new PatchMissionCommand(
@@ -171,11 +227,62 @@ public sealed class MissionWriteUseCasesTests
             default,
             default);
 
-        var result = await useCase.ExecuteAsync(missionId, command);
+        var result = await useCase.ExecuteAsync(User, missionId, command);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Should().Contain("data de início");
+    }
+
+    [Fact]
+    public async Task PatchAsync_WhenChildEndDateAfterParent_ReturnsValidation()
+    {
+        var orgId = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        var missionId = Guid.NewGuid();
+        var parentMission = new Mission
+        {
+            Id = parentId,
+            Name = "Missão pai",
+            StartDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            Status = MissionStatus.Planned,
+            OrganizationId = orgId
+        };
+        var childMission = new Mission
+        {
+            Id = missionId,
+            ParentId = parentId,
+            Name = "Meta filha",
+            StartDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            Status = MissionStatus.Planned,
+            OrganizationId = orgId
+        };
+
+        _repo.Setup(r => r.GetByIdAsync(missionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(childMission);
+        _repo.Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentMission);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var useCase = CreateReplanningUseCase();
+        var command = new PatchMissionCommand(
+            default,
+            default,
+            default,
+            default,
+            new DateTime(2026, 7, 15, 0, 0, 0, DateTimeKind.Utc),
+            default,
+            default);
+
+        var result = await useCase.ExecuteAsync(User, missionId, command);
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Should().Contain("data de término");
     }
 
     [Fact]
@@ -194,7 +301,7 @@ public sealed class MissionWriteUseCasesTests
             MissionStatus.Planned,
             default);
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), command);
+        var result = await useCase.ExecuteAsync(User, Guid.NewGuid(), command);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -217,6 +324,9 @@ public sealed class MissionWriteUseCasesTests
 
         _repo.Setup(r => r.GetByIdAsync(missionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mission);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = CreateReplanningUseCase();
         var command = new PatchMissionCommand(
@@ -228,7 +338,7 @@ public sealed class MissionWriteUseCasesTests
             MissionStatus.Active,
             default);
 
-        var result = await useCase.ExecuteAsync(missionId, command);
+        var result = await useCase.ExecuteAsync(User, missionId, command);
 
         result.IsSuccess.Should().BeTrue();
         var updatedEvent = mission.DomainEvents.Should().ContainSingle().Subject;
@@ -245,7 +355,7 @@ public sealed class MissionWriteUseCasesTests
 
         var useCase = CreateRemoveUseCase();
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(User, Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -269,10 +379,13 @@ public sealed class MissionWriteUseCasesTests
 
         _repo.Setup(r => r.GetByIdAsync(missionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mission);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var useCase = CreateRemoveUseCase();
 
-        var result = await useCase.ExecuteAsync(missionId);
+        var result = await useCase.ExecuteAsync(User, missionId);
 
         result.IsSuccess.Should().BeTrue();
         _repo.Verify(r => r.RemoveAsync(mission, It.IsAny<CancellationToken>()), Times.Once);

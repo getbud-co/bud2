@@ -76,10 +76,12 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     private async Task<(Organization org, Guid leaderId)> CreateTestHierarchy()
     {
+        var organizationDomain = $"test-org-{Guid.NewGuid():N}.com";
+
         var orgResponse = await _client.PostAsJsonAsync("/api/organizations",
             new CreateOrganizationRequest
             {
-                Name = "test-org.com"
+                Name = organizationDomain
             });
         var org = await orgResponse.Content.ReadFromJsonAsync<Organization>();
 
@@ -90,7 +92,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Líder Teste",
-            Email = $"leader-{Guid.NewGuid():N}@test-org.com",
+            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}",
             Role = EmployeeRole.Leader,
             OrganizationId = org!.Id,
             TeamId = null
@@ -371,7 +373,6 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Delete_Team_WithNoMissions_ReturnsNoContent()
     {
-        // Arrange — Missions no longer have TeamId, so HasMissionsAsync always returns false.
         var (_, leaderId) = await CreateTestHierarchy();
 
         var teamResponse = await _client.PostAsJsonAsync("/api/teams",
@@ -383,6 +384,37 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Delete_Team_WithMissionAssignedToMember_ReturnsConflict()
+    {
+        var (org, leaderId) = await CreateTestHierarchy();
+
+        var teamResponse = await _client.PostAsJsonAsync("/api/teams",
+            new CreateTeamRequest { Name = "Team blocked by mission", LeaderId = leaderId });
+        var team = (await teamResponse.Content.ReadFromJsonAsync<Team>())!;
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
+        dbContext.Missions.Add(new Mission
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mission assigned to team member",
+            OrganizationId = org.Id,
+            EmployeeId = leaderId,
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(30),
+            Status = MissionStatus.Active
+        });
+        await dbContext.SaveChangesAsync();
+
+        var response = await _client.DeleteAsync($"/api/teams/{team.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Não é possível excluir o time porque existem metas associadas a ele.");
     }
 
     [Fact]
@@ -531,7 +563,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new CreateTeamRequest { Name = "Test Team", LeaderId = leaderId });
         var team = await teamResponse.Content.ReadFromJsonAsync<Team>();
 
-        // Create employees directly in database (since API doesn't support creating with TeamId)
+        // Create employees directly in database to keep this setup focused on team listing.
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
@@ -541,8 +573,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             FullName = "Employee 1",
             Email = "collab1@example.com",
             Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team!.Id
+            OrganizationId = org.Id
         };
 
         var collab2 = new Employee
@@ -551,11 +582,13 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             FullName = "Employee 2",
             Email = "collab2@example.com",
             Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            TeamId = team.Id
+            OrganizationId = org.Id
         };
 
         dbContext.Employees.AddRange(collab1, collab2);
+        dbContext.EmployeeTeams.AddRange(
+            new EmployeeTeam { EmployeeId = collab1.Id, TeamId = team!.Id },
+            new EmployeeTeam { EmployeeId = collab2.Id, TeamId = team.Id });
         await dbContext.SaveChangesAsync();
 
         // Act
@@ -565,8 +598,10 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Employee>>();
         result.Should().NotBeNull();
-        result!.Items.Should().HaveCount(2);
-        result.Items.Should().OnlyContain(c => c.TeamId == team.Id);
+        result!.Items.Should().HaveCount(3);
+        result.Items.Should().Contain(c => c.Id == leaderId);
+        result.Items.Should().Contain(c => c.Id == collab1.Id);
+        result.Items.Should().Contain(c => c.Id == collab2.Id);
     }
 
     #endregion
@@ -624,6 +659,54 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         updateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PatchEmployees_WithEmployeeTeamsOnly_KeepsMembershipConsistentAcrossEndpoints()
+    {
+        var (org, leaderId) = await CreateTestHierarchy();
+
+        var createResponse = await _client.PostAsJsonAsync("/api/teams",
+            new CreateTeamRequest { Name = "Consistent Team", LeaderId = leaderId });
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var team = await createResponse.Content.ReadFromJsonAsync<Team>();
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
+        var otherCollab = new Employee
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Consistent Employee",
+            Email = $"consistent-{Guid.NewGuid():N}@test-org.com",
+            Role = EmployeeRole.IndividualContributor,
+            OrganizationId = org.Id,
+            TeamId = null
+        };
+        dbContext.Employees.Add(otherCollab);
+        await dbContext.SaveChangesAsync();
+
+        var updateResponse = await _client.PatchAsJsonAsync($"/api/teams/{team!.Id}/employees",
+            new PatchTeamEmployeesRequest { EmployeeIds = new List<Guid> { leaderId, otherCollab.Id } });
+
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var teamEmployeesResponse = await _client.GetAsync($"/api/teams/{team.Id}/employees");
+        teamEmployeesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var teamEmployees = await teamEmployeesResponse.Content.ReadFromJsonAsync<PagedResult<Employee>>();
+        teamEmployees.Should().NotBeNull();
+        teamEmployees!.Items.Should().Contain(c => c.Id == otherCollab.Id);
+
+        var employeesByTeamResponse = await _client.GetAsync($"/api/employees?teamId={team.Id}");
+        employeesByTeamResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var employeesByTeam = await employeesByTeamResponse.Content.ReadFromJsonAsync<PagedResult<Employee>>();
+        employeesByTeam.Should().NotBeNull();
+        employeesByTeam!.Items.Should().Contain(c => c.Id == otherCollab.Id);
+
+        var employeeTeamsResponse = await _client.GetAsync($"/api/employees/{otherCollab.Id}/teams");
+        employeeTeamsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var employeeTeams = await employeeTeamsResponse.Content.ReadFromJsonAsync<List<EmployeeTeamResponse>>();
+        employeeTeams.Should().NotBeNull();
+        employeeTeams.Should().Contain(t => t.Id == team.Id);
     }
 
     #endregion

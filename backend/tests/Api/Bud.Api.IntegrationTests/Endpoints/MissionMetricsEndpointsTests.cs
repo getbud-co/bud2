@@ -341,6 +341,36 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         updated.TargetText.Should().BeNull(); // Should be cleared
     }
 
+    [Fact]
+    public async Task Update_ChangingMetricTypeWithoutRequiredQuantitativeFields_ReturnsBadRequest()
+    {
+        var mission = await CreateTestMission();
+
+        var createRequest = new CreateIndicatorRequest
+        {
+            MissionId = mission.Id,
+            Name = "Original Metric",
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
+            TargetText = "Original text"
+        };
+
+        var createResponse = await _client.PostAsJsonAsync("/api/indicators", createRequest);
+        var created = await createResponse.Content.ReadFromJsonAsync<Indicator>();
+
+        var updateRequest = new PatchIndicatorRequest
+        {
+            Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
+            QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.KeepAbove
+        };
+
+        var response = await _client.PatchAsJsonAsync($"/api/indicators/{created!.Id}", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Unidade é obrigatória para indicadores quantitativos.");
+    }
+
     #endregion
 
     #region GetAll Tests
