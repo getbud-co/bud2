@@ -8,14 +8,9 @@ namespace Bud.Application.Features.Templates.UseCases;
 public sealed partial class DeleteTemplate(
     ITemplateRepository templateRepository,
     ILogger<DeleteTemplate> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, cancellationToken);
-
     public async Task<Result> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -30,14 +25,11 @@ public sealed partial class DeleteTemplate(
             return Result.NotFound(UserErrorMessages.TemplateNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new TemplateResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new TemplateResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogTemplateDeletionFailed(logger, id, UserErrorMessages.TemplateDeleteForbidden);
-                return Result.Forbidden(UserErrorMessages.TemplateDeleteForbidden);
-            }
+            LogTemplateDeletionFailed(logger, id, UserErrorMessages.TemplateDeleteForbidden);
+            return Result.Forbidden(UserErrorMessages.TemplateDeleteForbidden);
         }
 
         await templateRepository.RemoveAsync(template, cancellationToken);

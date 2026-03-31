@@ -8,14 +8,9 @@ namespace Bud.Application.Features.Indicators.UseCases;
 public sealed partial class DeleteIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<DeleteIndicator> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, cancellationToken);
-
     public async Task<Result> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -30,14 +25,11 @@ public sealed partial class DeleteIndicator(
             return Result.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogIndicatorDeletionFailed(logger, id, UserErrorMessages.IndicatorDeleteForbidden);
-                return Result.Forbidden(UserErrorMessages.IndicatorDeleteForbidden);
-            }
+            LogIndicatorDeletionFailed(logger, id, UserErrorMessages.IndicatorDeleteForbidden);
+            return Result.Forbidden(UserErrorMessages.IndicatorDeleteForbidden);
         }
 
         await indicatorRepository.RemoveAsync(indicator, cancellationToken);

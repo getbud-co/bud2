@@ -12,7 +12,7 @@ namespace Bud.Api.DependencyInjection;
 public static class BudApiCompositionExtensions
 {
     internal const string LocalDevelopmentCorsPolicy = "LocalDevelopmentClient";
-    private static readonly string[] CommonLocalDevelopmentOrigins =
+    private static readonly string[] _commonLocalDevelopmentOrigins =
     [
         "http://localhost:8080",
         "http://127.0.0.1:8080",
@@ -75,7 +75,7 @@ public static class BudApiCompositionExtensions
             ?? [];
 
         return configuredOrigins
-            .Concat(CommonLocalDevelopmentOrigins)
+            .Concat(_commonLocalDevelopmentOrigins)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }

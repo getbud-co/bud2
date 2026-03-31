@@ -88,8 +88,8 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Name = name,
             Description = description,
             Dimension = dimension,
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddDays(30),
+            StartDate = parent.StartDate,
+            EndDate = parent.EndDate,
             Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned,
         };
 
@@ -143,6 +143,21 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task Create_WithEndDateAfterParent_ReturnsBadRequest()
+    {
+        var mission = await CreateTestMission();
+        var request = ChildMissionRequest(mission, "Objetivo fora da janela");
+        request.EndDate = mission.EndDate.AddDays(1);
+
+        var response = await _client.PostAsJsonAsync("/api/missions", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Contain("data de término");
+    }
+
     #endregion
 
     #region Update Tests
@@ -177,6 +192,24 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             new PatchMissionRequest { Name = "X" });
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Update_WithEndDateAfterParent_ReturnsBadRequest()
+    {
+        var mission = await CreateTestMission();
+        var createResponse = await _client.PostAsJsonAsync("/api/missions", ChildMissionRequest(mission, "Original"));
+        var created = await createResponse.Content.ReadFromJsonAsync<Mission>();
+
+        var response = await _client.PatchAsJsonAsync($"/api/missions/{created!.Id}", new PatchMissionRequest
+        {
+            EndDate = mission.EndDate.AddDays(1)
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Contain("data de término");
     }
 
     #endregion

@@ -67,7 +67,7 @@ public sealed class SecurityHeadersMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_CspContainsWasmUnsafeEval()
+    public async Task InvokeAsync_CspDoesNotAllowWasmUnsafeEval()
     {
         // Arrange
         var context = new DefaultHttpContext();
@@ -78,7 +78,8 @@ public sealed class SecurityHeadersMiddlewareTests
 
         // Assert
         var csp = context.Response.Headers["Content-Security-Policy"].ToString();
-        csp.Should().Contain("'wasm-unsafe-eval'", "Blazor WASM requires wasm-unsafe-eval");
+        csp.Should().NotContain("'wasm-unsafe-eval'");
+        csp.Should().Contain("script-src 'self'");
         csp.Should().Contain("frame-ancestors 'none'");
     }
 }

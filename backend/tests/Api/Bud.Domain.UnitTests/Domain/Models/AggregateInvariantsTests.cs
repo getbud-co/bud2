@@ -8,7 +8,7 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Organization_Rename_WithEmptyName_ShouldThrow()
     {
-        var organization = Organization.Create(Guid.NewGuid(), "Org");
+        var organization = Organization.Create(Guid.NewGuid(), "org.com");
 
         var act = () => organization.Rename("  ");
 
@@ -18,12 +18,21 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Organization_Rename_WithNameLongerThan200_ShouldThrow()
     {
-        var organization = Organization.Create(Guid.NewGuid(), "Org");
+        var organization = Organization.Create(Guid.NewGuid(), "org.com");
         var longName = new string('A', 201);
 
         var act = () => organization.Rename(longName);
 
         act.Should().Throw<DomainInvariantException>();
+    }
+
+    [Fact]
+    public void Organization_Create_WithNonDomainName_ShouldThrow()
+    {
+        var act = () => Organization.Create(Guid.NewGuid(), "Organizacao Teste");
+
+        act.Should().Throw<DomainInvariantException>()
+            .WithMessage("O nome da organização deve ser um domínio válido*");
     }
 
     [Fact]
@@ -110,6 +119,57 @@ public sealed class AggregateInvariantsTests
             null);
 
         act.Should().Throw<DomainInvariantException>();
+    }
+
+    [Fact]
+    public void MissionIndicator_ApplyTarget_WithMissingUnit_ShouldThrow()
+    {
+        var indicator = Indicator.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Indicador", IndicatorType.Quantitative);
+
+        var act = () => indicator.ApplyTarget(
+            IndicatorType.Quantitative,
+            QuantitativeIndicatorType.KeepAbove,
+            100m,
+            null,
+            null,
+            null);
+
+        act.Should().Throw<DomainInvariantException>()
+            .WithMessage("Unidade é obrigatória para indicadores quantitativos.");
+    }
+
+    [Fact]
+    public void MissionIndicator_ApplyTarget_WithNegativeMinValue_ShouldThrow()
+    {
+        var indicator = Indicator.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Indicador", IndicatorType.Quantitative);
+
+        var act = () => indicator.ApplyTarget(
+            IndicatorType.Quantitative,
+            QuantitativeIndicatorType.KeepAbove,
+            -1m,
+            null,
+            IndicatorUnit.Percentage,
+            null);
+
+        act.Should().Throw<DomainInvariantException>()
+            .WithMessage("Valor mínimo deve ser maior ou igual a 0.");
+    }
+
+    [Fact]
+    public void MissionIndicator_ApplyTarget_WithKeepAbove_ClearsMaxValue()
+    {
+        var indicator = Indicator.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Indicador", IndicatorType.Quantitative);
+
+        indicator.ApplyTarget(
+            IndicatorType.Quantitative,
+            QuantitativeIndicatorType.KeepAbove,
+            10m,
+            20m,
+            IndicatorUnit.Percentage,
+            null);
+
+        indicator.MinValue.Should().Be(10m);
+        indicator.MaxValue.Should().BeNull();
     }
 
     [Fact]

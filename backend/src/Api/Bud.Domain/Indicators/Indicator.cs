@@ -71,31 +71,13 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
         IndicatorUnit? unit,
         string? targetText)
     {
-        if (type == IndicatorType.Qualitative)
-        {
-            TargetText = string.IsNullOrWhiteSpace(targetText) ? null : targetText.Trim();
-            QuantitativeType = null;
-            MinValue = null;
-            MaxValue = null;
-            Unit = null;
-            return;
-        }
+        var target = IndicatorTargetDefinition.Create(type, quantitativeType, minValue, maxValue, unit, targetText);
 
-        if (quantitativeType is null)
-        {
-            throw new DomainInvariantException("Tipo quantitativo é obrigatório para indicadores quantitativos.");
-        }
-
-        if (minValue.HasValue && maxValue.HasValue)
-        {
-            _ = IndicatorRange.Create(minValue, maxValue);
-        }
-
-        QuantitativeType = quantitativeType;
-        MinValue = minValue;
-        MaxValue = maxValue;
-        Unit = unit;
-        TargetText = null;
+        QuantitativeType = target.QuantitativeType;
+        MinValue = target.MinValue;
+        MaxValue = target.MaxValue;
+        Unit = target.Unit;
+        TargetText = target.TargetText;
     }
 
     public Checkin CreateCheckin(

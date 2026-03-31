@@ -9,14 +9,9 @@ public sealed partial class DeleteMission(
     IMissionRepository missionRepository,
     ITenantProvider tenantProvider,
     ILogger<DeleteMission> logger,
-    IUnitOfWork? unitOfWork = null,
-    IApplicationAuthorizationGateway? authorizationGateway = null)
+    IApplicationAuthorizationGateway authorizationGateway,
+    IUnitOfWork? unitOfWork = null)
 {
-    public Task<Result> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-        => ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), id, cancellationToken);
-
     public async Task<Result> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
@@ -31,14 +26,11 @@ public sealed partial class DeleteMission(
             return Result.NotFound(UserErrorMessages.MissionNotFound);
         }
 
-        if (authorizationGateway is not null)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(id), cancellationToken);
+        if (!canWrite)
         {
-            var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(id), cancellationToken);
-            if (!canWrite)
-            {
-                LogMissionDeletionFailed(logger, id, UserErrorMessages.MissionDeleteForbidden);
-                return Result.Forbidden(UserErrorMessages.MissionDeleteForbidden);
-            }
+            LogMissionDeletionFailed(logger, id, UserErrorMessages.MissionDeleteForbidden);
+            return Result.Forbidden(UserErrorMessages.MissionDeleteForbidden);
         }
 
         mission.MarkAsDeleted(tenantProvider.EmployeeId);

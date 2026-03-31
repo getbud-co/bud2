@@ -5,32 +5,56 @@ public sealed class EfUnitOfWork(
     ApplicationDbContext dbContext,
     IDomainEventDispatcher? domainEventDispatcher = null) : IUnitOfWork
 {
+    private bool _isCommitInProgress;
+
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
-        var domainEventSources = dbContext.ChangeTracker
-            .Entries()
-            .Select(e => e.Entity)
-            .OfType<IHasDomainEvents>()
-            .Where(entity => entity.DomainEvents.Count > 0)
-            .Distinct()
-            .ToList();
-
-        var domainEvents = domainEventSources
-            .SelectMany(entity => entity.DomainEvents)
-            .ToArray();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        foreach (var domainEventSource in domainEventSources)
+        if (_isCommitInProgress)
         {
-            domainEventSource.ClearDomainEvents();
-        }
-
-        if (domainEventDispatcher is null || domainEvents.Length == 0)
-        {
+            await dbContext.SaveChangesAsync(cancellationToken);
             return;
         }
 
-        await domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+        _isCommitInProgress = true;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var domainEventSources = dbContext.ChangeTracker
+                .Entries()
+                .Select(e => e.Entity)
+                .OfType<IHasDomainEvents>()
+                .Where(entity => entity.DomainEvents.Count > 0)
+                .Distinct()
+                .ToList();
+
+            var domainEvents = domainEventSources
+                .SelectMany(entity => entity.DomainEvents)
+                .ToArray();
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            foreach (var domainEventSource in domainEventSources)
+            {
+                domainEventSource.ClearDomainEvents();
+            }
+
+            if (domainEventDispatcher is not null && domainEvents.Length > 0)
+            {
+                await domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+        finally
+        {
+            _isCommitInProgress = false;
+        }
     }
 }

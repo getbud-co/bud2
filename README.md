@@ -67,7 +67,6 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 - **Next.js 15** com App Router
 - TypeScript + Tailwind CSS
 - NextAuth.js para autenticação
-- Substitui o Blazor WASM anterior
 
 ### Organização do backend (`src/Api/*`)
 
@@ -265,7 +264,7 @@ Isolamento por organização (`OrganizationId`) com:
 3. Controller chama o Use Case correspondente.
 4. Use Case aplica regras de autorização/orquestração e delega para repositórios/ports (via interfaces em `Application/Features/<Feature>/` e, quando transversal, em `Application/Ports`).
 5. Repositório persiste/consulta via `ApplicationDbContext`.
-6. Use Case orquestra notificações quando aplicável (via `NotificationOrchestrator`).
+6. `IUnitOfWork` persiste a escrita principal, despacha eventos de domínio e permite que notificações participem da mesma transação quando aplicável.
 7. Resultado (`Result`) é mapeado para resposta HTTP.
 
 ### Testes e governança arquitetural
@@ -310,15 +309,21 @@ sequenceDiagram
     participant C as Controller
     participant UC as Use Case
     participant R as Repository
+    participant UOW as UnitOfWork
+    participant DE as DomainEventDispatcher
     participant NO as NotificationOrchestrator
     participant DB as PostgreSQL
 
     U->>C: Requisição de comando (create/update/delete)
     C->>UC: Executa caso de uso
-    UC->>R: Persiste entidade
-    R->>DB: Consulta/persistência
-    UC->>NO: Orquestra notificações (quando aplicável)
+    UC->>R: Registra mudanças no agregado
+    UC->>UOW: Commit
+    UOW->>DB: SaveChanges da escrita principal
+    UOW->>DE: Despacha eventos de domínio
+    DE->>NO: Executa handlers de aplicação
     NO->>R: Persiste notificações
+    R->>DB: SaveChanges dentro da mesma transação
+    UOW->>DB: Commit/Rollback transacional
     C-->>U: Resposta HTTP (sucesso)
 ```
 

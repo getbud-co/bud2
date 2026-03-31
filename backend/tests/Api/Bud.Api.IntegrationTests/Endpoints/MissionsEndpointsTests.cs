@@ -199,6 +199,26 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Create_WithGlobalAdminAndInvalidTenantHeader_ReturnsForbidden()
+    {
+        _client.DefaultRequestHeaders.Remove("X-Tenant-Id");
+        _client.DefaultRequestHeaders.Add("X-Tenant-Id", Guid.NewGuid().ToString());
+
+        var response = await _client.PostAsJsonAsync("/api/missions", new CreateMissionRequest
+        {
+            Name = "Mission Invalid Tenant",
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(7),
+            Status = Bud.Shared.Kernel.Enums.MissionStatus.Planned
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Você não tem permissão para acessar esta organização.");
+    }
+
+    [Fact]
     public async Task Create_WithStringEnums_ReturnsCreated()
     {
         await GetOrCreateAdminLeader();
@@ -407,8 +427,9 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         // Arrange: Create full hierarchy
         await GetOrCreateAdminLeader();
+        var organizationDomain = $"test-org-{Guid.NewGuid():N}.com";
         var orgResponse = await _client.PostAsJsonAsync("/api/organizations",
-            new CreateOrganizationRequest { Name = "test-org.com" });
+            new CreateOrganizationRequest { Name = organizationDomain });
         var org = await orgResponse.Content.ReadFromJsonAsync<Organization>();
         SetTenantHeader(org!.Id);
 
@@ -420,7 +441,7 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Líder Org Teste",
-            Email = $"leader-{Guid.NewGuid():N}@test-org.com",
+            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}",
             Role = EmployeeRole.Leader,
             OrganizationId = org!.Id,
             TeamId = null

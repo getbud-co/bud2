@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -7,18 +8,20 @@ namespace Bud.Application.UnitTests.Application.Missions;
 
 public sealed class MissionObjectiveWriteUseCasesTests
 {
+    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
     private readonly Mock<IMissionRepository> _repository = new();
     private readonly Mock<IEmployeeRepository> _employeeRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
+    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task DefineMissionObjective_WhenTenantNotSelected_ReturnsForbidden()
     {
         _tenantProvider.SetupGet(t => t.TenantId).Returns((Guid?)null);
 
-        var useCase = new CreateMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance);
+        var useCase = new CreateMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance, _authorizationGateway.Object, null);
 
-        var result = await useCase.ExecuteAsync(new CreateMissionCommand(
+        var result = await useCase.ExecuteAsync(User, new CreateMissionCommand(
             "Objetivo",
             null,
             null,
@@ -40,6 +43,9 @@ public sealed class MissionObjectiveWriteUseCasesTests
         var parentId = Guid.NewGuid();
 
         _tenantProvider.SetupGet(t => t.TenantId).Returns(organizationId);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<CreateMissionContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var parentMission = new Mission
         {
@@ -55,9 +61,9 @@ public sealed class MissionObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdReadOnlyAsync(parentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentMission);
 
-        var useCase = new CreateMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance);
+        var useCase = new CreateMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<CreateMission>.Instance, _authorizationGateway.Object, null);
 
-        var result = await useCase.ExecuteAsync(new CreateMissionCommand(
+        var result = await useCase.ExecuteAsync(User, new CreateMissionCommand(
             "Objetivo",
             null,
             "Clientes",
@@ -81,9 +87,9 @@ public sealed class MissionObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mission?)null);
 
-        var useCase = new PatchMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance);
+        var useCase = new PatchMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance, _authorizationGateway.Object, null);
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchMissionCommand("X", default, default, default, default, default, default));
+        var result = await useCase.ExecuteAsync(User, Guid.NewGuid(), new PatchMissionCommand("X", default, default, default, default, default, default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -108,10 +114,13 @@ public sealed class MissionObjectiveWriteUseCasesTests
         _repository
             .Setup(r => r.GetByIdAsync(objective.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(objective);
+        _authorizationGateway
+            .Setup(g => g.CanWriteAsync(User, It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
-        var useCase = new PatchMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance);
+        var useCase = new PatchMission(_repository.Object, _employeeRepository.Object, _tenantProvider.Object, NullLogger<PatchMission>.Instance, _authorizationGateway.Object, null);
 
-        var result = await useCase.ExecuteAsync(objective.Id, new PatchMissionCommand(
+        var result = await useCase.ExecuteAsync(User, objective.Id, new PatchMissionCommand(
             "Atualizado",
             "Nova descrição",
             default,
@@ -131,9 +140,9 @@ public sealed class MissionObjectiveWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mission?)null);
 
-        var useCase = new DeleteMission(_repository.Object, _tenantProvider.Object, NullLogger<DeleteMission>.Instance);
+        var useCase = new DeleteMission(_repository.Object, _tenantProvider.Object, NullLogger<DeleteMission>.Instance, _authorizationGateway.Object, null);
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(User, Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);

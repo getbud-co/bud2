@@ -21,7 +21,7 @@ public class TenantAuthorizationServiceTests
     #region UserBelongsToTenantAsync Tests
 
     [Fact]
-    public async Task UserBelongsToTenantAsync_WhenGlobalAdmin_ReturnsTrue()
+    public async Task UserBelongsToTenantAsync_WhenGlobalAdminAndOrganizationExists_ReturnsTrue()
     {
         // Arrange
         var tenantProvider = new TestTenantProvider { IsGlobalAdmin = true };
@@ -29,12 +29,29 @@ public class TenantAuthorizationServiceTests
         var service = new TenantAuthorizationService(context, tenantProvider);
 
         var tenantId = Guid.NewGuid();
+        context.Organizations.Add(new Organization { Id = tenantId, Name = "Org Global Admin" });
+        await context.SaveChangesAsync();
 
         // Act
         var result = await service.UserBelongsToTenantAsync(tenantId);
 
         // Assert
         result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UserBelongsToTenantAsync_WhenGlobalAdminAndOrganizationDoesNotExist_ReturnsFalse()
+    {
+        // Arrange
+        var tenantProvider = new TestTenantProvider { IsGlobalAdmin = true };
+        using var context = CreateInMemoryContext(tenantProvider);
+        var service = new TenantAuthorizationService(context, tenantProvider);
+
+        // Act
+        var result = await service.UserBelongsToTenantAsync(Guid.NewGuid());
+
+        // Assert
+        result.Should().BeFalse();
     }
 
     [Fact]
