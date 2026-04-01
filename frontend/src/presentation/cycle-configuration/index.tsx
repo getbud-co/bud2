@@ -68,7 +68,7 @@ async function updateCycleApi(
     Pick<Cycle, "name" | "type" | "startDate" | "endDate" | "status">
   >,
 ): Promise<Cycle> {
-  const res = await fetch(`/api/organizations/cycles/${id}`, {
+  const res = await fetch(`/api/cycle/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...tenantHeader(orgId) },
     body: JSON.stringify(data),
@@ -78,7 +78,7 @@ async function updateCycleApi(
 }
 
 async function deleteCycleApi(orgId: string, id: string): Promise<void> {
-  const res = await fetch(`/api/organizations/cycles/${id}`, {
+  const res = await fetch(`/api/cycle/${id}`, {
     method: "DELETE",
     headers: tenantHeader(orgId),
   });

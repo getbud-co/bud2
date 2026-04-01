@@ -90,13 +90,13 @@ export async function DELETE(
   const apiUrl = process.env.BUD_API_URL;
   const token = await getBudToken();
 
-  const deleteTenantId = request.headers.get("X-Tenant-Id");
+  const tenantId = request.headers.get("X-Tenant-Id");
 
   const response = await fetch(`${apiUrl}/api/cycles/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
-      ...( deleteTenantId ? { "X-Tenant-Id": deleteTenantId } : {}),
+      ...(tenantId ? { "X-Tenant-Id": tenantId } : {}),
     },
   });
 
