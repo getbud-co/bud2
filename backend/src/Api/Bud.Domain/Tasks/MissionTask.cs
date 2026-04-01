@@ -1,7 +1,7 @@
 
-namespace Bud.Domain.Missions;
+namespace Bud.Domain.Tasks;
 
-public sealed class MissionTask : ITenantEntity
+public sealed class MissionTask : ITenantEntity, IAggregateRoot
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
