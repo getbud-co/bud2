@@ -53,7 +53,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             .GroupBy(o => o.Id)
             .Select(g => g.First())
             .OrderBy(o => o.Name)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return Result<List<OrganizationSnapshot>>.Success(organizations);
     }

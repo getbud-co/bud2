@@ -40,7 +40,7 @@ public sealed partial class CreateCycle(
                 UtcDateTimeNormalizer.Normalize(command.StartDate),
                 UtcDateTimeNormalizer.Normalize(command.EndDate),
                 command.Status,
-                tenantProvider.CollaboratorId);
+                tenantProvider.EmployeeId);
 
             await cycleRepository.AddAsync(cycle, cancellationToken);
             await unitOfWork.CommitAsync(cycleRepository.SaveChangesAsync, cancellationToken);

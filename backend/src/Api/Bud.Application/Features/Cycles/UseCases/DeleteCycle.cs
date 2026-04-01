@@ -23,7 +23,7 @@ public sealed partial class DeleteCycle(
             return Result.NotFound(UserErrorMessages.CycleNotFound);
         }
 
-        cycle.MarkAsDeleted(tenantProvider.CollaboratorId);
+        cycle.MarkAsDeleted(tenantProvider.EmployeeId);
         await cycleRepository.RemoveAsync(cycle, cancellationToken);
         await unitOfWork.CommitAsync(cycleRepository.SaveChangesAsync, cancellationToken);
 

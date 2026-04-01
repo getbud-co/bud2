@@ -46,7 +46,7 @@ public sealed partial class PatchCycle(
                 UtcDateTimeNormalizer.Normalize(endDate),
                 status);
 
-            cycle.MarkAsUpdated(tenantProvider.CollaboratorId);
+            cycle.MarkAsUpdated(tenantProvider.EmployeeId);
             await unitOfWork.CommitAsync(cycleRepository.SaveChangesAsync, cancellationToken);
 
             LogPatched(logger, id, cycle.Name);
