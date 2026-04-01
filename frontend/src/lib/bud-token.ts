@@ -5,7 +5,6 @@ const BUD_TOKEN_COOKIE = "bud_token";
 
 export async function getBudToken(): Promise<string> {
   const cookieStore = await cookies();
-  const existing = cookieStore.get(BUD_TOKEN_COOKIE);
 
   // Login direto no backend BUD — sem round-trip HTTP interno
   const apiUrl = process.env.BUD_API_URL;

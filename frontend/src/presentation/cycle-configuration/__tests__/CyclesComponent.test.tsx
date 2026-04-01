@@ -31,15 +31,29 @@ vi.mock("@/hooks/useDataTable", () => ({
 
 vi.mock("@mdonangelo/bud-ds", () => ({
   Table: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TableContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TableHead: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TableBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TableRow: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TableHeaderCell: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  TableBulkActions: () => null,
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-    <button onClick={onClick}>{children}</button>
+  TableContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
   ),
+  TableHead: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TableBody: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TableRow: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TableHeaderCell: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TableBulkActions: () => null,
+  Button: ({
+    children,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{children}</button>,
   Alert: () => null,
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -102,7 +116,9 @@ vi.mock("../../layout/page-header", () => ({
 const mockUseQuery = vi.mocked(useQuery);
 const mockUseMutation = vi.mocked(useMutation);
 
-function makeQueryResult(overrides: Partial<{ data: Cycle[]; isLoading: boolean; isError: boolean }>) {
+function makeQueryResult(
+  overrides: Partial<{ data: Cycle[]; isLoading: boolean; isError: boolean }>,
+) {
   return {
     data: [],
     isLoading: false,

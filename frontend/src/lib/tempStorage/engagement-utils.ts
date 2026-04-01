@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // ─── Engagement Utils ─────────────────────────────────────────────────────────
 // Utilitários puros para cálculo de métricas de engajamento.
 // Extraídos de useTeamHealthReadModel e useEngagementReadModel para evitar

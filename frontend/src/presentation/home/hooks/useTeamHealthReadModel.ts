@@ -86,5 +86,6 @@ export function useTeamHealthReadModel(): TeamHealthReadModel {
       members,
       teamOptions: [allTeamsOption, ...teamOptions],
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, teams, teamOptions, missions, checkInHistory]);
 }

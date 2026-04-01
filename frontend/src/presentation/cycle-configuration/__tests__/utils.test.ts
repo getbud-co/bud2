@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { isoToCalendarDate, calendarDateToIso, formatDateDisplay } from "../utils";
+import {
+  isoToCalendarDate,
+  calendarDateToIso,
+  formatDateDisplay,
+} from "../utils";
 
 vi.mock("@/lib/tempStorage/date-format", () => ({
   formatDateBR: (iso: string | null | undefined) => {
@@ -15,16 +19,32 @@ vi.mock("@/lib/tempStorage/date-format", () => ({
 
 describe("isoToCalendarDate()", () => {
   it("converts YYYY-MM-DD to CalendarDate object", () => {
-    expect(isoToCalendarDate("2025-03-31")).toEqual({ year: 2025, month: 3, day: 31 });
+    expect(isoToCalendarDate("2025-03-31")).toEqual({
+      year: 2025,
+      month: 3,
+      day: 31,
+    });
   });
 
   it("handles single-digit month and day", () => {
-    expect(isoToCalendarDate("2025-01-05")).toEqual({ year: 2025, month: 1, day: 5 });
+    expect(isoToCalendarDate("2025-01-05")).toEqual({
+      year: 2025,
+      month: 1,
+      day: 5,
+    });
   });
 
   it("handles year boundary dates", () => {
-    expect(isoToCalendarDate("2025-12-31")).toEqual({ year: 2025, month: 12, day: 31 });
-    expect(isoToCalendarDate("2025-01-01")).toEqual({ year: 2025, month: 1, day: 1 });
+    expect(isoToCalendarDate("2025-12-31")).toEqual({
+      year: 2025,
+      month: 12,
+      day: 31,
+    });
+    expect(isoToCalendarDate("2025-01-01")).toEqual({
+      year: 2025,
+      month: 1,
+      day: 1,
+    });
   });
 
   it("returns defaults for missing month/day segments", () => {
@@ -37,15 +57,21 @@ describe("isoToCalendarDate()", () => {
 
 describe("calendarDateToIso()", () => {
   it("converts CalendarDate to ISO string", () => {
-    expect(calendarDateToIso({ year: 2025, month: 3, day: 31 })).toBe("2025-03-31");
+    expect(calendarDateToIso({ year: 2025, month: 3, day: 31 })).toBe(
+      "2025-03-31",
+    );
   });
 
   it("pads single-digit month and day with leading zero", () => {
-    expect(calendarDateToIso({ year: 2025, month: 1, day: 5 })).toBe("2025-01-05");
+    expect(calendarDateToIso({ year: 2025, month: 1, day: 5 })).toBe(
+      "2025-01-05",
+    );
   });
 
   it("does not pad month or day when already two digits", () => {
-    expect(calendarDateToIso({ year: 2025, month: 12, day: 25 })).toBe("2025-12-25");
+    expect(calendarDateToIso({ year: 2025, month: 12, day: 25 })).toBe(
+      "2025-12-25",
+    );
   });
 
   it("is the inverse of isoToCalendarDate", () => {

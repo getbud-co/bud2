@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 // TODO: migrate @/types (Team, TeamMember, UserStatus) and @/lib/people-store from bud-2-saas

@@ -190,6 +190,7 @@ export function MissionsFilterBar({
     missionStatus: missionStatusChipRef,
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const ignoreChipRefs = useMemo(() => Object.values(chipRefs), []);
 
   /* ——— Helpers ——— */

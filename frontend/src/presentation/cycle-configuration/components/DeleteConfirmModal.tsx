@@ -1,6 +1,12 @@
 "use client";
 
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@mdonangelo/bud-ds";
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+} from "@mdonangelo/bud-ds";
 import { Trash } from "@phosphor-icons/react";
 import type { Cycle } from "@/types";
 
@@ -23,9 +29,9 @@ export function DeleteConfirmModal({
       <ModalBody>
         {cycle && (
           <p className="[font-family:var(--font-body)] [font-size:var(--text-sm)] text-[var(--color-neutral-700)] m-0 leading-[1.5]">
-            Tem certeza que deseja excluir o ciclo{" "}
-            <strong>{cycle.name}</strong>? Missões e indicadores vinculados a
-            este período não serão afetados.
+            Tem certeza que deseja excluir o ciclo <strong>{cycle.name}</strong>
+            ? Missões e indicadores vinculados a este período não serão
+            afetados.
           </p>
         )}
       </ModalBody>

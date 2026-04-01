@@ -56,10 +56,12 @@ export async function PATCH(
 
   const backendBody: Record<string, unknown> = {};
   if (body.name !== undefined) backendBody.name = body.name;
-  if (body.type !== undefined) backendBody.cadence = CADENCE_REVERSE[body.type] ?? 3;
+  if (body.type !== undefined)
+    backendBody.cadence = CADENCE_REVERSE[body.type] ?? 3;
   if (body.startDate !== undefined) backendBody.startDate = body.startDate;
   if (body.endDate !== undefined) backendBody.endDate = body.endDate;
-  if (body.status !== undefined) backendBody.status = STATUS_REVERSE[body.status] ?? 0;
+  if (body.status !== undefined)
+    backendBody.status = STATUS_REVERSE[body.status] ?? 0;
 
   const tenantId = request.headers.get("X-Tenant-Id");
 
@@ -74,7 +76,9 @@ export async function PATCH(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Unknown error" }));
     return NextResponse.json(error, { status: response.status });
   }
 
@@ -101,7 +105,9 @@ export async function DELETE(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Unknown error" }));
     return NextResponse.json(error, { status: response.status });
   }
 

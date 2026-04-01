@@ -3,7 +3,13 @@ import type { CycleType, CycleStatus } from "@/types";
 import { TYPE_OPTIONS, STATUS_BADGE } from "../consts";
 
 const ALL_TYPES: CycleType[] = ["quarterly", "semi_annual", "annual", "custom"];
-const ALL_STATUSES: CycleStatus[] = ["active", "planning", "ended", "review", "archived"];
+const ALL_STATUSES: CycleStatus[] = [
+  "active",
+  "planning",
+  "ended",
+  "review",
+  "archived",
+];
 const VALID_COLORS = ["success", "orange", "neutral"] as const;
 
 // ─── TYPE_OPTIONS ───

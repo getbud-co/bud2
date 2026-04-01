@@ -12,18 +12,50 @@ vi.mock("@mdonangelo/bud-ds", () => ({
       <button onClick={onClose}>Fechar</button>
     </div>
   ),
-  ModalBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ModalFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Button: ({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick?: () => void }) => (
+  ModalBody: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ModalFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Button: ({
+    children,
+    disabled,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
     <button disabled={disabled} onClick={onClick}>
       {children}
     </button>
   ),
-  Input: ({ label, value, onChange }: { label: string; value: string; onChange: React.ChangeEventHandler<HTMLInputElement> }) => (
-    <input aria-label={label} value={value} onChange={onChange} />
-  ),
-  Select: ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) => (
-    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+  Input: ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    onChange: React.ChangeEventHandler<HTMLInputElement>;
+  }) => <input aria-label={label} value={value} onChange={onChange} />,
+  Select: ({
+    label,
+    value,
+    onChange,
+    options,
+  }: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    options: { value: string; label: string }[];
+  }) => (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}
@@ -31,7 +63,12 @@ vi.mock("@mdonangelo/bud-ds", () => ({
       ))}
     </select>
   ),
-  DatePicker: ({ onChange }: { value: unknown; onChange: (v: unknown) => void }) => (
+  DatePicker: ({
+    onChange,
+  }: {
+    value: unknown;
+    onChange: (v: unknown) => void;
+  }) => (
     <div data-testid="datepicker">
       <button
         data-testid="set-dates"
@@ -49,7 +86,9 @@ vi.mock("@mdonangelo/bud-ds", () => ({
   ChoiceBox: ({ value, title }: { value: string; title: string }) => (
     <div data-value={value}>{title}</div>
   ),
-  ChoiceBoxGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ChoiceBoxGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 const baseProps = {
@@ -83,12 +122,16 @@ beforeEach(() => {
 describe("CycleFormModal — modo criação", () => {
   it("exibe título 'Novo ciclo'", () => {
     render(<CycleFormModal {...baseProps} />);
-    expect(screen.getByRole("heading", { name: "Novo ciclo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Novo ciclo" }),
+    ).toBeInTheDocument();
   });
 
   it("exibe botão 'Criar ciclo'", () => {
     render(<CycleFormModal {...baseProps} />);
-    expect(screen.getByRole("button", { name: "Criar ciclo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Criar ciclo" }),
+    ).toBeInTheDocument();
   });
 
   it("botão salvar desabilitado quando nome está vazio", () => {
@@ -110,7 +153,9 @@ describe("CycleFormModal — modo criação", () => {
       target: { value: "Novo Ciclo" },
     });
     fireEvent.click(screen.getByTestId("set-dates"));
-    expect(screen.getByRole("button", { name: "Criar ciclo" })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Criar ciclo" }),
+    ).not.toBeDisabled();
   });
 
   it("chama onSave com dados e datas convertidas para ISO", () => {
@@ -140,7 +185,9 @@ describe("CycleFormModal — modo criação", () => {
 describe("CycleFormModal — modo edição", () => {
   it("exibe título 'Editar ciclo'", () => {
     render(<CycleFormModal {...baseProps} editingCycle={mockCycle} />);
-    expect(screen.getByRole("heading", { name: "Editar ciclo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Editar ciclo" }),
+    ).toBeInTheDocument();
   });
 
   it("exibe botão 'Salvar'", () => {
@@ -159,7 +206,13 @@ describe("CycleFormModal — modo edição", () => {
   });
 
   it("botão salvar desabilitado quando isPending=true", () => {
-    render(<CycleFormModal {...baseProps} editingCycle={mockCycle} isPending={true} />);
+    render(
+      <CycleFormModal
+        {...baseProps}
+        editingCycle={mockCycle}
+        isPending={true}
+      />,
+    );
     expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled();
   });
 
