@@ -8,12 +8,14 @@ A segurança do domínio depende de autenticação confiável e autorização co
 
 ## Decisão
 - Autenticação via JWT.
-- Autorização orientada por políticas e handlers.
-- Regras de permissão centralizadas na camada de autorização.
+- Políticas de borda limitadas a autenticação/tenant (`TenantSelected`, `GlobalAdmin`).
+- Autorização contextual orientada por políticas e handlers compartilhados (`ResourceRead`, `ResourceWrite`).
+- Regras de permissão contextual implementadas como regras tipadas por recurso/contexto na Infrastructure e orquestradas pelos use cases via gateway.
 
 ## Consequências
 - Redução de condicionais de permissão espalhadas no código.
-- Facilidade de evolução de regras de acesso por política.
+- Menor duplicação estrutural de policies, handlers e gateways por feature.
+- Facilidade de evolução de regras de acesso por recurso/contexto sem expandir o catálogo de policies.
 
 ## Alternativas consideradas
 - Autorização ad-hoc por `if` em cada controller/repositório.

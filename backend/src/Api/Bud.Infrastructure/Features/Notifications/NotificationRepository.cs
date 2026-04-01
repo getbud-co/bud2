@@ -23,7 +23,7 @@ public sealed class NotificationRepository(ApplicationDbContext dbContext) : INo
 
         var query = dbContext.Notifications
             .AsNoTracking()
-            .Where(n => n.RecipientCollaboratorId == recipientId)
+            .Where(n => n.RecipientEmployeeId == recipientId)
             .OrderByDescending(n => n.CreatedAtUtc);
 
         if (isRead.HasValue)
@@ -49,7 +49,7 @@ public sealed class NotificationRepository(ApplicationDbContext dbContext) : INo
 
     public async Task MarkAllAsReadAsync(Guid recipientId, CancellationToken ct = default)
         => await dbContext.Notifications
-            .Where(n => n.RecipientCollaboratorId == recipientId && !n.IsRead)
+            .Where(n => n.RecipientEmployeeId == recipientId && !n.IsRead)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(n => n.IsRead, true)
                 .SetProperty(n => n.ReadAtUtc, DateTime.UtcNow),

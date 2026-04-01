@@ -7,7 +7,7 @@ public sealed class CreateTaskValidator : AbstractValidator<CreateTaskRequest>
 {
     public CreateTaskValidator()
     {
-        RuleFor(x => x.GoalId)
+        RuleFor(x => x.MissionId)
             .NotEmpty().WithMessage("Meta é obrigatória.");
 
         RuleFor(x => x.Name)

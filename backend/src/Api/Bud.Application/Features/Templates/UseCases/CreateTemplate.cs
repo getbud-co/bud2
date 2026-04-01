@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,21 +8,40 @@ namespace Bud.Application.Features.Templates.UseCases;
 public sealed record CreateTemplateCommand(
     string Name,
     string? Description,
-    string? GoalNamePattern,
-    string? GoalDescriptionPattern,
-    IReadOnlyList<TemplateGoalDraft> Goals,
+    string? MissionNamePattern,
+    string? MissionDescriptionPattern,
+    IReadOnlyList<TemplateMissionDraft> Missions,
     IReadOnlyList<TemplateIndicatorDraft> Indicators);
 
 public sealed partial class CreateTemplate(
     ITemplateRepository templateRepository,
+    ITenantProvider tenantProvider,
     ILogger<CreateTemplate> logger,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Template>> ExecuteAsync(
+        ClaimsPrincipal user,
         CreateTemplateCommand command,
         CancellationToken cancellationToken = default)
     {
         LogCreatingTemplate(logger, command.Name);
+
+        if (tenantProvider.TenantId is null)
+        {
+            LogTemplateCreationFailed(logger, command.Name, "Tenant not selected");
+            return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
+        }
+
+        var canWrite = await authorizationGateway.CanWriteAsync(
+            user,
+            new CreateTemplateContext(tenantProvider.TenantId.Value),
+            cancellationToken);
+        if (!canWrite)
+        {
+            LogTemplateCreationFailed(logger, command.Name, UserErrorMessages.TemplateCreateForbidden);
+            return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
+        }
 
         try
         {
@@ -30,10 +50,10 @@ public sealed partial class CreateTemplate(
                 Guid.Empty,
                 command.Name,
                 command.Description,
-                command.GoalNamePattern,
-                command.GoalDescriptionPattern);
+                command.MissionNamePattern,
+                command.MissionDescriptionPattern);
 
-            template.ReplaceGoalsAndIndicators(command.Goals, command.Indicators);
+            template.ReplaceMissionsAndIndicators(command.Missions, command.Indicators);
 
             await templateRepository.AddAsync(template, cancellationToken);
             await unitOfWork.CommitAsync(templateRepository.SaveChangesAsync, cancellationToken);

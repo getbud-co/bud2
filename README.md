@@ -12,12 +12,14 @@ bud/
 ├── docs/             # Documentação e ADRs
 ├── scripts/          # Deploy scripts (GCP)
 ├── compose.yml       # Docker Compose para dev
-├── CLAUDE.md         # Instruções para agentes
+├── AGENTS.md         # Contrato base para agentes
+├── CLAUDE.md         # Ponte para AGENTS.md
+├── GEMINI.md         # Ponte para AGENTS.md
 ├── DEPLOY.md         # Guia de deploy
 └── README.md         # Este arquivo
 ```
 
-Veja [`backend/README.md`](backend/README.md) e [`frontend/README.md`](frontend/README.md) para detalhes de cada parte.
+Veja [`backend/README.md`](backend/README.md), [`frontend/README.md`](frontend/README.md), [`backend/AGENTS.md`](backend/AGENTS.md) e [`frontend/AGENTS.md`](frontend/AGENTS.md) para detalhes por área.
 
 ## Para quem é este README
 
@@ -42,7 +44,6 @@ Este documento é voltado para devs que precisam:
 - [Observabilidade](#observabilidade)
 - [Health checks](#health-checks)
 - [Endpoints principais](#endpoints-principais)
-- [Sistema de Design e Tokens](#sistema-de-design-e-tokens)
 
 ## Arquitetura da aplicação
 
@@ -66,7 +67,6 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 - **Next.js 15** com App Router
 - TypeScript + Tailwind CSS
 - NextAuth.js para autenticação
-- Substitui o Blazor WASM anterior
 
 ### Organização do backend (`src/Api/*`)
 
@@ -75,7 +75,7 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 - **Use Cases** (`src/Api/Bud.Application/Features/<Feature>/UseCases/`) centralizam o fluxo completo da aplicação (orquestração, autorização, notificações) e retornam `Result`/`Result<T>` (`src/Api/Bud.Application/Common/`). Cada use case é uma classe com método `ExecuteAsync`, injetada diretamente nos controllers.
   Os namespaces explícitos espelham a estrutura física: `Bud.Application.Features.<Feature>.UseCases`.
 - **Infrastructure** (`src/Api/Bud.Infrastructure/`) contém implementações concretas:
-  - pastas por feature: implementações dos repositórios e adapters concretos associados à capacidade (`Goals/`, `Me/`, `Notifications/`, `Organizations/`, `Sessions/`, etc.).
+  - pastas por feature: implementações dos repositórios e adapters concretos associados à capacidade (`Missions/`, `Me/`, `Notifications/`, `Organizations/`, `Sessions/`, etc.).
   - `Authorization/`: adapters transversais de tenant/autorização que não pertencem a uma feature específica.
   - `Querying/`: specifications de consulta para filtros reutilizáveis.
   - `Persistence/`: `ApplicationDbContext`, factory de design-time, configurations, migrations e `DbSeeder`.
@@ -88,7 +88,7 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
   Implementações concretas ficam em `Infrastructure/Features/<Feature>/` e em poucos módulos transversais (`Authorization/`, `Persistence/`). `Domain` não depende de `Application` nem de `Infrastructure`.
   Referências: `docs/adr/ADR-0002-arquitetura-ddd-estrita-e-regras-de-dependencia.md`.
 - **Policy-based Authorization (Requirement/Handler)**
-  Regras de autorização centralizadas em policies e handlers, reduzindo condicionais espalhadas.
+  Policies de borda ficam no controller (`TenantSelected`, `GlobalAdmin`) e a autorização contextual usa apenas `ResourceRead`/`ResourceWrite` com recursos/contextos explícitos na Application e regras tipadas na Infrastructure, reduzindo condicionais e boilerplate por feature.
   Referências: `docs/adr/ADR-0007-autenticacao-e-autorizacao-por-politicas.md`.
 - **Specification Pattern (consultas reutilizáveis)**
   Filtros de domínio encapsulados em specifications para evitar duplicação de predicados.
@@ -103,66 +103,66 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
   Referências: `docs/adr/ADR-0003-agregados-entidades-value-objects-e-invariantes.md`.
 - **Invariantes no domínio (modelo rico)**  
   Regras centrais de negócio são aplicadas por métodos de agregado/entidade (`Create`, `Rename`, `SetScope`, etc.) com tradução para `Result` na camada de aplicação (Use Cases).
-  Inclui Value Objects formais (`PersonName`, `GoalScope`, `ConfidenceLevel`, `IndicatorRange`) para reduzir primitive obsession.
+  Inclui Value Objects formais (`PersonName`, `MissionScope`, `ConfidenceLevel`, `IndicatorRange`) para reduzir primitive obsession.
 - **Notification Orchestration (Application)**
   Orquestração de notificações centralizada em `Application/EventHandlers/` (`NotificationOrchestrator`), desacoplada dos repositórios.
 - **Domain Events + Unit of Work**
-  Eventos de domínio (`IDomainEvent`, `IHasDomainEvents`) são disparados por agregados e despachados via `IUnitOfWork`/`EfUnitOfWork` no commit. Handlers tipados (`IDomainEventNotifier<T>`) em `Application/EventHandlers/` reagem a eventos como `GoalCreatedDomainEvent`, `GoalUpdatedDomainEvent`, `GoalDeletedDomainEvent` e `CheckinCreatedDomainEvent`.
+  Eventos de domínio (`IDomainEvent`, `IHasDomainEvents`) são disparados por agregados e despachados via `IUnitOfWork`/`EfUnitOfWork` no commit. Handlers tipados (`IDomainEventNotifier<T>`) em `Application/EventHandlers/` reagem a eventos como `MissionCreatedDomainEvent`, `MissionUpdatedDomainEvent`, `MissionDeletedDomainEvent` e `CheckinCreatedDomainEvent`.
   Referências: `docs/adr/ADR-0009-eventos-de-dominio-e-notificacoes.md`.
 
 ### Convenções de nomenclatura
 
-Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a cadeia completa usando **Goal** como exemplo:
+Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a cadeia completa usando **Mission** como exemplo:
 
 | Camada | Convenção | Exemplo |
 |---|---|---|
-| Endpoint REST | `api/{recurso-plural}` | `api/goals` |
-| Controller | `{RecursoPlural}Controller` | `GoalsController` |
-| Método CRUD | `Create`, `Update`, `Delete`, `GetById`, `GetAll` | `GoalsController.Create` |
-| Método sub-recurso | `Get{SubRecurso}` | `GoalsController.GetIndicators` |
-| Use case (criação) | `Create{Recurso}` | `CreateGoal` |
-| Use case (atualização) | `Patch{Recurso}` | `PatchGoal` |
-| Use case (exclusão) | `Delete{Recurso}` | `DeleteGoal` |
-| Use case (leitura) | `Get{Recurso}ById` | `GetGoalById` |
-| Use case (listagem) | `List{RecursoPlural}` | `ListGoals` |
-| Use case (sub-recurso) | `List{Pai}{SubRecurso}` | `ListGoalIndicators` |
-| Método do use case | Sempre `ExecuteAsync` | `CreateGoal.ExecuteAsync(...)` |
-| Diretório do use case | `Application/Features/{Feature}/UseCases/` | `Application/Features/Goals/UseCases/` |
-| Namespace do use case | `Bud.Application.Features.{Feature}.UseCases` | `Bud.Application.Features.Goals.UseCases` |
-| Request DTO (criação) | `Create{Recurso}Request` | `CreateGoalRequest` |
-| Request DTO (atualização) | `Patch{Recurso}Request` | `PatchGoalRequest` |
-| Response DTO | `{Recurso}Response` | `GoalResponse` |
-| Response DTO especializado | `{Recurso}{Qualificador}Response` | `GoalProgressResponse` |
-| Interface de repositório | `I{AgregadoRaiz}Repository` | `IGoalRepository` |
-| Implementação de repositório | `{AgregadoRaiz}Repository` | `GoalRepository` |
-| Entidade de domínio | Singular, em `Domain/<Feature>/` | `Goal` |
+| Endpoint REST | `api/{recurso-plural}` | `api/missions` |
+| Controller | `{RecursoPlural}Controller` | `MissionsController` |
+| Método CRUD | `Create`, `Update`, `Delete`, `GetById`, `GetAll` | `MissionsController.Create` |
+| Método sub-recurso | `Get{SubRecurso}` | `MissionsController.GetIndicators` |
+| Use case (criação) | `Create{Recurso}` | `CreateMission` |
+| Use case (atualização) | `Patch{Recurso}` | `PatchMission` |
+| Use case (exclusão) | `Delete{Recurso}` | `DeleteMission` |
+| Use case (leitura) | `Get{Recurso}ById` | `GetMissionById` |
+| Use case (listagem) | `List{RecursoPlural}` | `ListMissions` |
+| Use case (sub-recurso) | `List{Pai}{SubRecurso}` | `ListMissionIndicators` |
+| Método do use case | Sempre `ExecuteAsync` | `CreateMission.ExecuteAsync(...)` |
+| Diretório do use case | `Application/Features/{Feature}/UseCases/` | `Application/Features/Missions/UseCases/` |
+| Namespace do use case | `Bud.Application.Features.{Feature}.UseCases` | `Bud.Application.Features.Missions.UseCases` |
+| Request DTO (criação) | `Create{Recurso}Request` | `CreateMissionRequest` |
+| Request DTO (atualização) | `Patch{Recurso}Request` | `PatchMissionRequest` |
+| Response DTO | `{Recurso}Response` | `MissionResponse` |
+| Response DTO especializado | `{Recurso}{Qualificador}Response` | `MissionProgressResponse` |
+| Interface de repositório | `I{AgregadoRaiz}Repository` | `IMissionRepository` |
+| Implementação de repositório | `{AgregadoRaiz}Repository` | `MissionRepository` |
+| Entidade de domínio | Singular, em `Domain/<Feature>/` | `Mission` |
 
 **Discrepâncias intencionais entre camadas:**
 
 - **Controller `Update` vs Use Case `Patch`**: o controller usa `Update` por legibilidade REST; o use case e o DTO usam `Patch` para refletir o verbo HTTP (PATCH = atualização parcial).
 - **Controller `GetAll` vs Use Case `List`**: o controller segue a convenção REST (`GET` = "get"); o use case descreve a operação de negócio ("list").
-- **Entidade `GoalTask` vs DTO `Task`**: a entidade de domínio é `GoalTask` para evitar conflito com `System.Threading.Tasks.Task`; no controller, DTOs e repositório usa-se `Task` (ex: `TasksController`, `TaskResponse`, `ITaskRepository`).
+- **Entidade `MissionTask` vs DTO `Task`**: a entidade de domínio é `MissionTask` para evitar conflito com `System.Threading.Tasks.Task`; no controller, DTOs e repositório usa-se `Task` (ex: `TasksController`, `TaskResponse`, `ITaskRepository`).
 - **Checkins dentro de `IndicatorsController`**: operações CRUD de checkin ficam no `IndicatorsController` (sub-recurso `/api/indicators/{id}/checkins`), com sufixo `Action` nos métodos (`CreateCheckinAction`, `PatchCheckinAction`, `DeleteCheckinAction`) para evitar colisão de nomes. Os use cases permanecem co-localizados na feature `Indicators`.
 
 #### Rastreabilidade ponta a ponta (exemplo: criar meta)
 
 ```
-POST /api/goals
-  → GoalsController.Create
-    → CreateGoal.ExecuteAsync (Application/Features/Goals/UseCases/)
-      → IGoalRepository.AddAsync (Application/Features/Goals/)
-        → GoalRepository (Infrastructure/Features/Goals/)
-    Payload: CreateGoalRequest (Bud.Shared/Contracts/Requests/)
-    Retorno: GoalResponse (Bud.Shared/Contracts/Responses/)
+POST /api/missions
+  → MissionsController.Create
+    → CreateMission.ExecuteAsync (Application/Features/Missions/UseCases/)
+      → IMissionRepository.AddAsync (Application/Features/Missions/)
+        → MissionRepository (Infrastructure/Features/Missions/)
+    Payload: CreateMissionRequest (Bud.Shared/Contracts/Requests/)
+    Retorno: MissionResponse (Bud.Shared/Contracts/Responses/)
 ```
 
 #### Rastreabilidade ponta a ponta (exemplo: listar indicadores de uma meta)
 
 ```
-GET /api/goals/{id}/indicators
-  → GoalsController.GetIndicators
-    → ListGoalIndicators.ExecuteAsync (Application/Features/Goals/UseCases/)
-      → IIndicatorRepository.GetByGoalIdAsync (Application/Features/Indicators/)
+GET /api/missions/{id}/indicators
+  → MissionsController.GetIndicators
+    → ListMissionIndicators.ExecuteAsync (Application/Features/Missions/UseCases/)
+      → IIndicatorRepository.GetByMissionIdAsync (Application/Features/Indicators/)
     Retorno: PagedResult<IndicatorResponse>
 ```
 
@@ -176,17 +176,16 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 
 | Aggregate Root | Child Entities | Repositório |
 |---|---|---|
-| `Goal` | `Indicator`, `GoalTask` (via goal) | `IGoalRepository` |
-| `Organization` | `Workspace` (via organization) | `IOrganizationRepository` |
-| `Workspace` | `Team` (via workspace) | `IWorkspaceRepository` |
-| `Team` | `CollaboratorTeam` (join entity) | `ITeamRepository` |
-| `Collaborator` | `CollaboratorTeam`, `CollaboratorAccessLog` | `ICollaboratorRepository` |
+| `Mission` | `Indicator`, `MissionTask` (via goal) | `IMissionRepository` |
+| `Organization` | — | `IOrganizationRepository` |
+| `Team` | `EmployeeTeam` (join entity) | `ITeamRepository` |
+| `Employee` | `EmployeeTeam`, `EmployeeAccessLog` | `IEmployeeRepository` |
 | `Indicator` | `Checkin` | `IIndicatorRepository` |
-| `Template` | `TemplateGoal`, `TemplateIndicator` | `ITemplateRepository` |
+| `Template` | `TemplateMission`, `TemplateIndicator` | `ITemplateRepository` |
 | `Notification` | — | `INotificationRepository` |
 
 **Exceções notáveis:**
-- `GoalTask` não é aggregate root (`ITenantEntity` apenas), mas possui repositório próprio (`ITaskRepository`) porque é gerenciado como recurso REST independente (`PATCH /api/tasks/{id}`, `DELETE /api/tasks/{id}`).
+- `MissionTask` não é aggregate root (`ITenantEntity` apenas), mas possui repositório próprio (`ITaskRepository`) porque é gerenciado como recurso REST independente (`PATCH /api/tasks/{id}`, `DELETE /api/tasks/{id}`).
 - `Checkin` não possui repositório próprio — persistência é via `IIndicatorRepository` (métodos `AddCheckinAsync`, `RemoveCheckinAsync`, etc.), respeitando o boundary do agregado `Indicator`.
 - `DashboardReadStore` implementa um Application Port da feature `Me` (`IMyDashboardReadStore`), não uma interface de Domain Repository. Trata-se de um read model, não de um repositório de agregado.
 
@@ -195,7 +194,7 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 | Value Object | Uso |
 |---|---|
 | `EntityName` | Nomes de entidades organizacionais (validação de tamanho e formato) |
-| `PersonName` | Nome de colaborador (first/last name semântico) |
+| `PersonName` | Nome de funcionário (first/last name semântico) |
 | `EmailAddress` | E-mail validado |
 | `IndicatorRange` | Faixa de valores (baseline, target) |
 | `ConfidenceLevel` | Nível de confiança em checkins (1–5) |
@@ -208,9 +207,9 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 
 ```mermaid
 flowchart TD
-    subgraph AggGoal["Goal (aggregate)"]
-        Goal["Goal"]
-        GoalTask["GoalTask"]
+    subgraph AggMission["Mission (aggregate)"]
+        Mission["Mission"]
+        MissionTask["MissionTask"]
     end
 
     subgraph AggIndicator["Indicator (aggregate)"]
@@ -222,22 +221,18 @@ flowchart TD
         Organization["Organization"]
     end
 
-    subgraph AggWorkspace["Workspace (aggregate)"]
-        Workspace["Workspace"]
-    end
-
     subgraph AggTeam["Team (aggregate)"]
         Team["Team"]
-        CollaboratorTeam["CollaboratorTeam"]
+        EmployeeTeam["EmployeeTeam"]
     end
 
-    subgraph AggCollab["Collaborator (aggregate)"]
-        Collaborator["Collaborator"]
+    subgraph AggEmployee["Employee (aggregate)"]
+        Employee["Employee"]
     end
 
     subgraph AggTemplate["Template (aggregate)"]
         Template["Template"]
-        TemplateGoal["TemplateGoal"]
+        TemplateMission["TemplateMission"]
         TemplateIndicator["TemplateIndicator"]
     end
 
@@ -245,13 +240,12 @@ flowchart TD
         Notification["Notification"]
     end
 
-    Organization --> Workspace
-    Workspace --> Team
-    Team --> CollaboratorTeam
-    Collaborator --> CollaboratorTeam
-    Goal --> Indicator
+    Organization --> Team
+    Team --> EmployeeTeam
+    Employee --> EmployeeTeam
+    Mission --> Indicator
     Indicator --> Checkin
-    Goal --> GoalTask
+    Mission --> MissionTask
 ```
 
 ### Multi-tenancy
@@ -270,7 +264,7 @@ Isolamento por organização (`OrganizationId`) com:
 3. Controller chama o Use Case correspondente.
 4. Use Case aplica regras de autorização/orquestração e delega para repositórios/ports (via interfaces em `Application/Features/<Feature>/` e, quando transversal, em `Application/Ports`).
 5. Repositório persiste/consulta via `ApplicationDbContext`.
-6. Use Case orquestra notificações quando aplicável (via `NotificationOrchestrator`).
+6. `IUnitOfWork` persiste a escrita principal, despacha eventos de domínio e permite que notificações participem da mesma transação quando aplicável.
 7. Resultado (`Result`) é mapeado para resposta HTTP.
 
 ### Testes e governança arquitetural
@@ -299,7 +293,7 @@ Para lista atualizada de ADRs e ordem recomendada de leitura, consulte:
 
 ```mermaid
 flowchart LR
-    A[Bud.BlazorWasm<br/>Blazor WASM] -->|HTTP + JWT + X-Tenant-Id| B[Bud.Api Controllers]
+    A[Bud Frontend<br/>Next.js] -->|HTTP + JWT + X-Tenant-Id| B[Bud.Api Controllers]
     B --> C[Application<br/>Use Cases]
     C --> R[Infrastructure<br/>I*Repository + Repositories]
     R --> E[(PostgreSQL<br/>ApplicationDbContext)]
@@ -315,15 +309,21 @@ sequenceDiagram
     participant C as Controller
     participant UC as Use Case
     participant R as Repository
+    participant UOW as UnitOfWork
+    participant DE as DomainEventDispatcher
     participant NO as NotificationOrchestrator
     participant DB as PostgreSQL
 
     U->>C: Requisição de comando (create/update/delete)
     C->>UC: Executa caso de uso
-    UC->>R: Persiste entidade
-    R->>DB: Consulta/persistência
-    UC->>NO: Orquestra notificações (quando aplicável)
+    UC->>R: Registra mudanças no agregado
+    UC->>UOW: Commit
+    UOW->>DB: SaveChanges da escrita principal
+    UOW->>DE: Despacha eventos de domínio
+    DE->>NO: Executa handlers de aplicação
     NO->>R: Persiste notificações
+    R->>DB: SaveChanges dentro da mesma transação
+    UOW->>DB: Commit/Rollback transacional
     C-->>U: Resposta HTTP (sucesso)
 ```
 
@@ -332,29 +332,27 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     O[Organization]
-    W[Workspace]
     T[Team]
     ST[SubTeam]
-    C[Collaborator]
-    G[Goal]
-    SG[SubGoal]
+    E[Employee]
+    G[Mission]
+    SM[SubMission]
     I[Indicator]
     CH[Checkin]
 
-    O --> W
-    W --> T
+    O --> T
     T --> ST
-    T --> C
+    T --> E
 
     O --> G
-    W -. escopo .-> G
+    O -. escopo .-> G
     T -. escopo .-> G
-    C -. escopo .-> G
+    E -. escopo .-> G
 
-    G --> SG
-    SG --> SG
+    G --> SM
+    SM --> SM
     G --> I
-    SG --> I
+    SM --> I
     I --> CH
 
     O --> N[Notification]
@@ -365,7 +363,7 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    participant UI as Bud.BlazorWasm
+    participant UI as Bud Frontend (Next.js)
     participant API as Bud.Api
     participant SESS as SessionsController/CreateSession
     participant ME as MeController/ListMyOrganizations
@@ -391,7 +389,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant UI as Bud.BlazorWasm / Caller
+    participant UI as Bud Frontend / Caller
     participant API as ASP.NET Core Pipeline
     participant AUTH as AuthN/AuthZ
     participant TENANT as TenantRequiredMiddleware
@@ -476,9 +474,9 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph Client["Bud.BlazorWasm (Blazor WASM)"]
-      UI["Pages + Layout"]
-      ApiClient["ApiClient + TenantDelegatingHandler"]
+    subgraph Client["Bud Frontend (Next.js)"]
+      UI["App Router + Pages"]
+      ApiClient["HTTP client + tenant header"]
     end
 
     subgraph Api["Bud.Api + Bud.Application"]
@@ -556,10 +554,14 @@ Pré-requisitos:
 Comandos:
 
 ```bash
+cd backend
 dotnet restore
 dotnet build
 dotnet run --project src/Api/Bud.Api
-dotnet run --project src/Web/Bud.BlazorWasm
+
+cd ../frontend
+npm install
+npm run dev
 ```
 
 ## Servidor MCP (Metas e Indicadores)
@@ -621,12 +623,13 @@ A resposta inclui o header `MCP-Session-Id`, que deve ser enviado nas chamadas s
 Fluxo obrigatório para atualizar catálogo MCP:
 
 ```bash
+cd backend
 dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- generate-tool-catalog
 dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- check-tool-catalog --fail-on-diff
 ```
 
 Regras importantes do catálogo:
-- As ferramentas de domínio (`goal_*`, `goal_indicator_*`, `indicator_checkin_*`) são carregadas exclusivamente do arquivo `src/Mcp/Bud.Mcp/Tools/Generated/mcp-tool-catalog.json`.
+- As ferramentas de domínio (`mission_*`, `mission_indicator_*`, `indicator_checkin_*`) são carregadas exclusivamente do arquivo `src/Mcp/Bud.Mcp/Tools/Generated/mcp-tool-catalog.json`.
 - O `Bud.Mcp` falha na inicialização se o catálogo estiver ausente, inválido, vazio ou sem ferramentas de domínio obrigatórias.
 - O comando `check-tool-catalog --fail-on-diff` também valida o contrato mínimo de campos `required` por ferramenta e retorna erro quando houver quebra de contrato.
 
@@ -642,8 +645,8 @@ Se estiver rodando local com `DOTNET_ENVIRONMENT=Development`, defina:
 - `session_bootstrap`
 - `help_list_actions`
 - `help_action_schema`
-- `goal_create`, `goal_get`, `goal_list`, `goal_update`, `goal_delete`
-- `goal_indicator_create`, `goal_indicator_get`, `goal_indicator_list`, `goal_indicator_update`, `goal_indicator_delete`
+- `mission_create`, `mission_get`, `mission_list`, `mission_update`, `mission_delete`
+- `mission_indicator_create`, `mission_indicator_get`, `mission_indicator_list`, `mission_indicator_update`, `mission_indicator_delete`
 - `indicator_checkin_create`, `indicator_checkin_get`, `indicator_checkin_list`, `indicator_checkin_update`, `indicator_checkin_delete`
 
 ### Descoberta de parâmetros e bootstrap de sessão no MCP
@@ -660,7 +663,7 @@ Scripts disponíveis:
 
 - `scripts/gcp-bootstrap.sh`: prepara infraestrutura base (APIs, Artifact Registry, Cloud SQL, service account, secrets, permissões do Cloud Build).
 - `scripts/gcp-deploy-api.sh`: deploy do `Bud.Api` (com migração EF Core via Cloud Run Job).
-- `scripts/gcp-deploy-web.sh`: deploy do `bud-web` (Blazor WASM).
+- `scripts/gcp-deploy-web.sh`: deploy do `bud-web` (Next.js).
 - `scripts/gcp-deploy-mcp.sh`: deploy do `Bud.Mcp` HTTP.
 - `scripts/gcp-deploy-all.sh`: executa deploy completo (`Bud.Api` + `Bud.Mcp` + `bud-web`).
 
@@ -708,10 +711,14 @@ docker compose up --build
 Opção B (sem Docker):
 
 ```bash
+cd backend
 dotnet restore
 dotnet build
 dotnet run --project src/Api/Bud.Api
-dotnet run --project src/Web/Bud.BlazorWasm
+
+cd ../frontend
+npm install
+npm run dev
 ```
 
 Defina a URL base conforme o modo de execução:
@@ -754,7 +761,7 @@ export BUD_ORG_ID="<organization-id>"
 ### 4) Smoke test de leitura tenant-scoped
 
 ```bash
-curl -s "$BUD_BASE_URL/api/goals?page=1&pageSize=10" \
+curl -s "$BUD_BASE_URL/api/missions?page=1&pageSize=10" \
   -H "Authorization: Bearer $BUD_TOKEN" \
   -H "X-Tenant-Id: $BUD_ORG_ID"
 ```
@@ -762,7 +769,7 @@ curl -s "$BUD_BASE_URL/api/goals?page=1&pageSize=10" \
 ### 5) Smoke test de criação de meta
 
 ```bash
-curl -s -X POST "$BUD_BASE_URL/api/goals" \
+curl -s -X POST "$BUD_BASE_URL/api/missions" \
   -H "Authorization: Bearer $BUD_TOKEN" \
   -H "X-Tenant-Id: $BUD_ORG_ID" \
   -H "Content-Type: application/json" \
@@ -787,9 +794,9 @@ sequenceDiagram
     Dev->>API: GET /api/me/organizations (Bearer)
     API-->>Dev: organizations[]
     Dev->>Dev: define BUD_ORG_ID
-    Dev->>API: GET /api/goals (Bearer + X-Tenant-Id)
+    Dev->>API: GET /api/missions (Bearer + X-Tenant-Id)
     API-->>Dev: lista paginada
-    Dev->>API: POST /api/goals (Bearer + X-Tenant-Id)
+    Dev->>API: POST /api/missions (Bearer + X-Tenant-Id)
     API-->>Dev: meta criada
 ```
 
@@ -870,49 +877,6 @@ Observação:
   - metadados de conteúdo (`Consumes`/`Produces`) quando aplicável
 - Para campos enum em payload JSON, a API aceita tanto `string` (case-insensitive) quanto `number` (compatibilidade retroativa).
 
-## Sistema de Design e Tokens
-
-O Bud 2.0 usa um sistema de tokens de design baseado no [Figma Style Guide](https://www.figma.com/design/j3n8YHBusCH8KEHvheGeF8/-ASSETS--Style-Guide).
-
-### Cores de marca
-
-- **Primária**: Orange (#FF6B35) - CTAs, estados ativos e ações principais
-- **Secundária**: Wine (#E838A3) - acentos, destaques e ações secundárias
-
-### Tipografia
-
-- **Crimson Pro**: fonte serifada para títulos e destaques
-- **Plus Jakarta Sans**: fonte sem serifa para texto e componentes de interface
-
-### Tokens de design
-
-Todos os valores de design (cores, tipografia, espaçamento e sombras) são definidos como propriedades CSS em [`src/Web/Bud.BlazorWasm/wwwroot/css/tokens.css`](src/Web/Bud.BlazorWasm/wwwroot/css/tokens.css).
-
-### Runtime do design system
-
-- `src/Web/Bud.BlazorWasm/wwwroot/css/fonts.css`: carrega `Crimson Pro` e `Plus Jakarta Sans` de forma local/self-hosted.
-- `src/Web/Bud.BlazorWasm/wwwroot/css/design-system.css`: aplica shell global, superfícies, tabelas, autenticação e overrides visuais do design system.
-- `src/Web/Bud.BlazorWasm/wwwroot/index.html`: carrega `fonts.css`, `tokens.css`, `app.css` e `design-system.css` nessa ordem.
-- O frontend não depende mais do CSS do Bootstrap para a camada visual principal.
-
-**Exemplo de uso:**
-```css
-.button {
-    background: var(--color-brand-primary);
-    padding: var(--spacing-3) var(--spacing-4);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-base);
-}
-```
-
-### Atualização de tokens
-
-Veja [DESIGN_TOKENS.md](DESIGN_TOKENS.md) para:
-- Referência completa de tokens
-- Processo de atualização a partir do Figma
-- Convenções de nomenclatura
-- Boas práticas
-
 ## Banco de Dados
 
 - **Development**: o schema é criado automaticamente via `EnsureCreated()` no startup. Para recriar após mudanças no modelo:
@@ -960,15 +924,15 @@ Ranges estáveis de EventId por domínio:
 | Range | Domínio |
 |-------|---------|
 | 3100–3199 | RequestTelemetryMiddleware |
-| 4000–4009 | Goal |
+| 4000–4009 | Mission |
 | 4010–4019 | Organization |
-| 4020–4029 | Workspace |
+| 4020–4029 | Reservado |
 | 4030–4039 | Team |
-| 4040–4049 | Collaborator |
+| 4040–4049 | Employee |
 | 4050–4059 | Indicator |
 | 4060–4069 | Checkin |
 | 4070–4079 | Template |
-| 4080–4089 | GoalTask |
+| 4080–4089 | MissionTask |
 | 4090–4099 | Session / Notification |
 | 5000–5009 | McpRequestLoggingMiddleware (Bud.Mcp) |
 
@@ -1000,62 +964,52 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 - `GET /api/organizations/{id}`
 - `PATCH /api/organizations/{id}`
 - `DELETE /api/organizations/{id}`
-- `GET /api/organizations/{id}/workspaces`
-- `GET /api/organizations/{id}/collaborators`
-
-### Workspaces (CRUD + relacionamentos)
-
-- `POST /api/workspaces`
-- `GET /api/workspaces` — listagem paginada (`?organizationId=&search=&page=1&pageSize=10`)
-- `GET /api/workspaces/{id}`
-- `PATCH /api/workspaces/{id}`
-- `DELETE /api/workspaces/{id}`
-- `GET /api/workspaces/{id}/teams`
+- `GET /api/organizations/{id}/employees`
 
 ### Teams (CRUD + relacionamentos)
 
 - `POST /api/teams`
-- `GET /api/teams` — listagem paginada (`?workspaceId=&parentTeamId=&search=&page=1&pageSize=10`)
+- `GET /api/teams` — listagem paginada (`?parentTeamId=&search=&page=1&pageSize=10`)
 - `GET /api/teams/{id}`
 - `PATCH /api/teams/{id}`
 - `DELETE /api/teams/{id}`
 - `GET /api/teams/{id}/subteams`
-- `GET /api/teams/{id}/collaborators`
-- `GET /api/teams/{id}/collaborators/lookup`
-- `PATCH /api/teams/{id}/collaborators`
-- `GET /api/teams/{id}/collaborators/eligible-for-assignment`
+- `GET /api/teams/{id}/employees`
+- `GET /api/teams/{id}/employees/lookup`
+- `PATCH /api/teams/{id}/employees`
+- `GET /api/teams/{id}/employees/eligible-for-assignment`
 
-### Collaborators (CRUD + relacionamentos)
+### Employees (CRUD + relacionamentos)
 
-- `POST /api/collaborators`
-- `GET /api/collaborators` — listagem paginada (`?teamId=&search=&page=1&pageSize=10`)
-- `GET /api/collaborators/{id}`
-- `PATCH /api/collaborators/{id}`
-- `DELETE /api/collaborators/{id}`
-- `GET /api/collaborators/lookup`
-- `GET /api/collaborators/leaders`
-- `GET /api/collaborators/{id}/subordinates`
-- `GET /api/collaborators/{id}/teams`
-- `PATCH /api/collaborators/{id}/teams`
-- `GET /api/collaborators/{id}/teams/eligible-for-assignment`
+- `POST /api/employees`
+- `GET /api/employees` — listagem paginada (`?teamId=&search=&page=1&pageSize=10`)
+- `GET /api/employees/{id}`
+- `PATCH /api/employees/{id}`
+- `DELETE /api/employees/{id}`
+- `GET /api/employees/lookup`
+- `GET /api/employees/leaders`
+- `GET /api/employees/{id}/subordinates`
+- `GET /api/employees/{id}/teams`
+- `PATCH /api/employees/{id}/teams`
+- `GET /api/employees/{id}/teams/eligible-for-assignment`
 
-### Goals (CRUD + consultas)
+### Missions (CRUD + consultas)
 
-- `POST /api/goals`
-- `GET /api/goals` — listagem paginada (filtro por `filter`, `parentId`)
-- `GET /api/goals/{id}`
-- `PATCH /api/goals/{id}`
-- `DELETE /api/goals/{id}`
-- `GET /api/goals/progress`
-- `GET /api/goals/{id}/children` — sub-metas (árvore recursiva via `parentId`)
-- `GET /api/goals/{id}/indicators` — indicadores da meta
-- `GET /api/goals/{id}/tasks` — tarefas da meta
+- `POST /api/missions`
+- `GET /api/missions` — listagem paginada (filtro por `filter`, `parentId`)
+- `GET /api/missions/{id}`
+- `PATCH /api/missions/{id}`
+- `DELETE /api/missions/{id}`
+- `GET /api/missions/progress`
+- `GET /api/missions/{id}/children` — sub-metas (árvore recursiva via `parentId`)
+- `GET /api/missions/{id}/indicators` — indicadores da meta
+- `GET /api/missions/{id}/tasks` — tarefas da meta
 - Campo opcional nos payloads de criação/atualização: `dimension` (texto livre) e `parentId` (para sub-metas).
 
-### GoalTasks (CRUD)
+### MissionTasks (CRUD)
 
-- `POST /api/goals/{goalId}/tasks` — cria tarefa para a meta
-- `GET /api/goals/{id}/tasks` — lista tarefas (paginada)
+- `POST /api/missions/{missionId}/tasks` — cria tarefa para a meta
+- `GET /api/missions/{id}/tasks` — lista tarefas (paginada)
 - `PATCH /api/tasks/{id}` — atualiza nome, descrição ou estado da tarefa
 - `DELETE /api/tasks/{id}` — remove tarefa
 - Estados possíveis: `ToDo`, `Doing`, `Done`, `Archived`.
@@ -1063,7 +1017,7 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 ### Indicators (CRUD + progress)
 
 - `POST /api/indicators`
-- `GET /api/indicators` — listagem paginada (filtro por `goalId`)
+- `GET /api/indicators` — listagem paginada (filtro por `missionId`)
 - `GET /api/indicators/{id}`
 - `PATCH /api/indicators/{id}`
 - `DELETE /api/indicators/{id}`
@@ -1100,24 +1054,16 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 }
 ```
 
-**Workspace:**
-```json
-{
-  "name": "Produto",
-  "organizationId": "00000000-0000-0000-0000-000000000000"
-}
-```
-
 **Team:**
 ```json
 {
   "name": "Time A",
-  "workspaceId": "00000000-0000-0000-0000-000000000000",
+  "leaderId": "00000000-0000-0000-0000-000000000000",
   "parentTeamId": null
 }
 ```
 
-**Collaborator:**
+**Employee:**
 ```json
 {
   "fullName": "Maria Silva",
@@ -1127,7 +1073,7 @@ Referência completa com exemplos interativos disponível em `/swagger` (ambient
 }
 ```
 
-**Goal (Meta):**
+**Mission (Meta):**
 ```json
 {
   "name": "Aumentar NPS",

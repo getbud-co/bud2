@@ -82,10 +82,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     /// <summary>
     /// Creates an HttpClient with tenant user JWT token and optional X-Tenant-Id header.
     /// </summary>
-    public HttpClient CreateTenantClient(Guid tenantId, string email, Guid collaboratorId)
+    public HttpClient CreateTenantClient(Guid tenantId, string email, Guid employeeId)
     {
         var client = CreateClient();
-        var token = JwtTestHelper.GenerateTenantUserToken(email, tenantId, collaboratorId);
+        var token = JwtTestHelper.GenerateTenantUserToken(email, tenantId, employeeId);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         client.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
         return client;

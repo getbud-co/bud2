@@ -1,14 +1,27 @@
+using System.Security.Claims;
 using Bud.Application.Common;
+using Bud.Application.Ports;
 
 namespace Bud.Application.Features.Indicators.UseCases;
 
-public sealed class GetIndicatorById(IIndicatorRepository indicatorRepository)
+public sealed class GetIndicatorById(
+    IIndicatorRepository indicatorRepository,
+    IApplicationAuthorizationGateway authorizationGateway)
 {
-    public async Task<Result<Indicator>> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<Indicator>> ExecuteAsync(ClaimsPrincipal user, Guid id, CancellationToken cancellationToken = default)
     {
         var indicator = await indicatorRepository.GetByIdAsync(id, cancellationToken);
-        return indicator is null
-            ? Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound)
-            : Result<Indicator>.Success(indicator);
+        if (indicator is null)
+        {
+            return Result<Indicator>.NotFound(UserErrorMessages.IndicatorNotFound);
+        }
+
+        var canRead = await authorizationGateway.CanReadAsync(user, new IndicatorResource(id), cancellationToken);
+        if (!canRead)
+        {
+            return Result<Indicator>.Forbidden(UserErrorMessages.IndicatorNotFound);
+        }
+
+        return Result<Indicator>.Success(indicator);
     }
 }

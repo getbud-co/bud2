@@ -17,11 +17,10 @@ public sealed class LoggerEventIdRangesTests
 
         var ranges = new Dictionary<string, Func<string, (int Min, int Max)?>>
         {
-            ["Goals"] = static _ => (4000, 4009),
+            ["Missions"] = static _ => (4000, 4009),
             ["Organizations"] = static _ => (4010, 4019),
-            ["Workspaces"] = static _ => (4020, 4029),
             ["Teams"] = static _ => (4030, 4039),
-            ["Collaborators"] = static _ => (4040, 4049),
+            ["Employees"] = static _ => (4040, 4049),
             ["Indicators"] = static fileName => fileName.Contains("Checkin", StringComparison.Ordinal)
                 ? (4060, 4069)
                 : (4050, 4059),

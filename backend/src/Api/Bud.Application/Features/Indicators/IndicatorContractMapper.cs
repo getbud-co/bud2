@@ -1,4 +1,4 @@
-using Bud.Application.Features.Collaborators;
+using Bud.Application.Features.Employees;
 
 namespace Bud.Application.Features.Indicators;
 
@@ -10,7 +10,7 @@ public static class IndicatorContractMapper
         {
             Id = source.Id,
             OrganizationId = source.OrganizationId,
-            GoalId = source.GoalId,
+            MissionId = source.MissionId,
             Name = source.Name,
             Type = source.Type,
             QuantitativeType = source.QuantitativeType,
@@ -29,13 +29,13 @@ public static class IndicatorContractMapper
             Id = source.Id,
             OrganizationId = source.OrganizationId,
             IndicatorId = source.IndicatorId,
-            CollaboratorId = source.CollaboratorId,
+            EmployeeId = source.EmployeeId,
             Value = source.Value,
             Text = source.Text,
             CheckinDate = source.CheckinDate,
             Note = source.Note,
             ConfidenceLevel = source.ConfidenceLevel,
-            Collaborator = source.Collaborator?.ToCollaboratorResponse()
+            Employee = source.Employee?.ToEmployeeResponse()
         };
     }
 }

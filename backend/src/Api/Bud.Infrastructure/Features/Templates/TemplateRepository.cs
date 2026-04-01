@@ -10,14 +10,14 @@ public sealed class TemplateRepository(ApplicationDbContext dbContext) : ITempla
 
     public async Task<Template?> GetByIdWithChildrenAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Templates
-            .Include(t => t.Goals)
+            .Include(t => t.Missions)
             .Include(t => t.Indicators)
             .FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<Template?> GetByIdReadOnlyAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Templates
             .AsNoTracking()
-            .Include(t => t.Goals.OrderBy(g => g.OrderIndex))
+            .Include(t => t.Missions.OrderBy(g => g.OrderIndex))
             .Include(t => t.Indicators.OrderBy(i => i.OrderIndex))
             .FirstOrDefaultAsync(t => t.Id == id, ct);
 
@@ -25,7 +25,7 @@ public sealed class TemplateRepository(ApplicationDbContext dbContext) : ITempla
     {
         var query = dbContext.Templates
             .AsNoTracking()
-            .Include(t => t.Goals.OrderBy(g => g.OrderIndex))
+            .Include(t => t.Missions.OrderBy(g => g.OrderIndex))
             .Include(t => t.Indicators.OrderBy(i => i.OrderIndex));
 
         IQueryable<Template> filteredQuery = new TemplateSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
@@ -55,16 +55,16 @@ public sealed class TemplateRepository(ApplicationDbContext dbContext) : ITempla
         return Task.CompletedTask;
     }
 
-    public Task RemoveGoalsAndIndicatorsAsync(IEnumerable<TemplateGoal> goals, IEnumerable<TemplateIndicator> indicators, CancellationToken ct = default)
+    public Task RemoveMissionsAndIndicatorsAsync(IEnumerable<TemplateMission> missions, IEnumerable<TemplateIndicator> indicators, CancellationToken ct = default)
     {
         dbContext.TemplateIndicators.RemoveRange(indicators);
-        dbContext.TemplateGoals.RemoveRange(goals);
+        dbContext.TemplateMissions.RemoveRange(missions);
         return Task.CompletedTask;
     }
 
-    public Task AddGoalsAndIndicatorsAsync(IEnumerable<TemplateGoal> goals, IEnumerable<TemplateIndicator> indicators, CancellationToken ct = default)
+    public Task AddMissionsAndIndicatorsAsync(IEnumerable<TemplateMission> missions, IEnumerable<TemplateIndicator> indicators, CancellationToken ct = default)
     {
-        dbContext.TemplateGoals.AddRange(goals);
+        dbContext.TemplateMissions.AddRange(missions);
         dbContext.TemplateIndicators.AddRange(indicators);
         return Task.CompletedTask;
     }

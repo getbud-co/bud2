@@ -21,12 +21,12 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
             .HasForeignKey(n => n.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(n => n.RecipientCollaborator)
+        builder.HasOne(n => n.RecipientEmployee)
             .WithMany()
-            .HasForeignKey(n => n.RecipientCollaboratorId)
+            .HasForeignKey(n => n.RecipientEmployeeId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(n => n.OrganizationId);
-        builder.HasIndex(n => new { n.RecipientCollaboratorId, n.IsRead, n.CreatedAtUtc });
+        builder.HasIndex(n => new { n.RecipientEmployeeId, n.IsRead, n.CreatedAtUtc });
     }
 }

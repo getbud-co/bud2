@@ -38,7 +38,7 @@ public sealed class DbSeederTests
         templateNames.Should().BeEquivalentTo(
             ["BSC", "Mapa Estratégico", "OKR", "PDI", "Planejamento Estratégico Anual"]);
 
-        var dimensions = await context.TemplateGoals
+        var dimensions = await context.TemplateMissions
             .IgnoreQueryFilters()
             .Where(o => o.OrganizationId == organization.Id)
             .Select(o => o.Dimension)
@@ -62,12 +62,12 @@ public sealed class DbSeederTests
         };
 
         context.Organizations.Add(organization);
-        context.Collaborators.Add(new Collaborator
+        context.Employees.Add(new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador Global",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = organization.Id
         });
 
@@ -107,7 +107,7 @@ public sealed class DbSeederTests
         templateNames.Should().Contain(["BSC", "Mapa Estratégico", "OKR", "PDI", "Planejamento Estratégico Anual"]);
         templateNames.Count(name => name == "OKR").Should().Be(1);
 
-        var dimensions = await context.TemplateGoals
+        var dimensions = await context.TemplateMissions
             .IgnoreQueryFilters()
             .Where(o => o.OrganizationId == organization.Id)
             .Select(o => o.Dimension)
@@ -132,13 +132,13 @@ public sealed class DbSeederTests
 
         var bscTemplate = await context.Templates
             .IgnoreQueryFilters()
-            .Include(t => t.Goals)
+            .Include(t => t.Missions)
             .Include(t => t.Indicators)
             .SingleAsync(t => t.OrganizationId == organization.Id && t.Name == "BSC");
 
-        bscTemplate.Goals.Should().NotBeEmpty();
+        bscTemplate.Missions.Should().NotBeEmpty();
         bscTemplate.Indicators.Should().NotBeEmpty();
-        bscTemplate.Indicators.Should().OnlyContain(m => m.TemplateGoalId.HasValue);
-        bscTemplate.Goals.Select(o => o.Id).Should().Contain(bscTemplate.Indicators.Select(m => m.TemplateGoalId!.Value));
+        bscTemplate.Indicators.Should().OnlyContain(m => m.TemplateMissionId.HasValue);
+        bscTemplate.Missions.Select(o => o.Id).Should().Contain(bscTemplate.Indicators.Select(m => m.TemplateMissionId!.Value));
     }
 }

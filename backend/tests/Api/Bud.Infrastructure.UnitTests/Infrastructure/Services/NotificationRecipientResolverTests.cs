@@ -19,20 +19,19 @@ public class NotificationRecipientResolverTests
         return new ApplicationDbContext(options, _tenantProvider);
     }
 
-    private static async Task<(Organization org, Workspace workspace, Team team, Collaborator c1, Collaborator c2, Collaborator leader)> CreateTestHierarchy(ApplicationDbContext context)
+    private static async Task<(Organization org, Team team, Employee c1, Employee c2, Employee leader)> CreateTestHierarchy(ApplicationDbContext context)
     {
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Test Workspace", OrganizationId = org.Id };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", WorkspaceId = workspace.Id, OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
-        var leader = new Collaborator
+        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Leader",
             Email = $"leader-{Guid.NewGuid()}@example.com",
             OrganizationId = org.Id,
-            Role = CollaboratorRole.Leader
+            Role = EmployeeRole.Leader
         };
-        var c1 = new Collaborator
+        var c1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Collab 1",
@@ -40,7 +39,7 @@ public class NotificationRecipientResolverTests
             OrganizationId = org.Id,
             LeaderId = leader.Id
         };
-        var c2 = new Collaborator
+        var c2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Collab 2",
@@ -49,40 +48,39 @@ public class NotificationRecipientResolverTests
         };
 
         context.Organizations.Add(org);
-        context.Workspaces.Add(workspace);
         context.Teams.Add(team);
-        context.Collaborators.AddRange(leader, c1, c2);
-        context.CollaboratorTeams.AddRange(
-            new CollaboratorTeam { CollaboratorId = c1.Id, TeamId = team.Id },
-            new CollaboratorTeam { CollaboratorId = c2.Id, TeamId = team.Id }
+        context.Employees.AddRange(leader, c1, c2);
+        context.EmployeeTeams.AddRange(
+            new EmployeeTeam { EmployeeId = c1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = c2.Id, TeamId = team.Id }
         );
         await context.SaveChangesAsync();
 
-        return (org, workspace, team, c1, c2, leader);
+        return (org, team, c1, c2, leader);
     }
 
     [Fact]
-    public async Task ResolveMissionRecipients_CollaboratorScope_ReturnsCollaboratorAndLeader()
+    public async Task ResolveMissionRecipients_EmployeeScope_ReturnsEmployeeAndLeader()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
-        var (org, _, _, c1, _, leader) = await CreateTestHierarchy(context);
+        var (org, _, c1, _, leader) = await CreateTestHierarchy(context);
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
-            Name = "Collaborator Mission",
+            Name = "Employee Mission",
             OrganizationId = org.Id,
-            CollaboratorId = c1.Id,
+            EmployeeId = c1.Id,
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30)
         };
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
         await context.SaveChangesAsync();
 
         // Act
-        var recipients = await resolver.ResolveGoalRecipientsAsync(mission.Id, org.Id);
+        var recipients = await resolver.ResolveMissionRecipientsAsync(mission.Id, org.Id);
 
         // Assert
         recipients.Should().Contain(c1.Id);
@@ -90,14 +88,14 @@ public class NotificationRecipientResolverTests
     }
 
     [Fact]
-    public async Task ResolveMissionRecipients_OrganizationScope_ReturnsAllOrgCollaborators()
+    public async Task ResolveMissionRecipients_OrganizationScope_ReturnsAllOrgEmployees()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
-        var (org, _, _, c1, c2, leader) = await CreateTestHierarchy(context);
+        var (org, _, c1, c2, leader) = await CreateTestHierarchy(context);
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Org Mission",
@@ -105,11 +103,11 @@ public class NotificationRecipientResolverTests
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30)
         };
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
         await context.SaveChangesAsync();
 
         // Act
-        var recipients = await resolver.ResolveGoalRecipientsAsync(mission.Id, org.Id);
+        var recipients = await resolver.ResolveMissionRecipientsAsync(mission.Id, org.Id);
 
         // Assert
         recipients.Should().Contain(c1.Id);
@@ -118,14 +116,14 @@ public class NotificationRecipientResolverTests
     }
 
     [Fact]
-    public async Task ResolveMissionRecipients_ExcludesSpecifiedCollaborator()
+    public async Task ResolveMissionRecipients_ExcludesSpecifiedEmployee()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
-        var (org, _, _, c1, c2, leader) = await CreateTestHierarchy(context);
+        var (org, _, c1, c2, leader) = await CreateTestHierarchy(context);
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Org Mission",
@@ -133,11 +131,11 @@ public class NotificationRecipientResolverTests
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30)
         };
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
         await context.SaveChangesAsync();
 
         // Act
-        var recipients = await resolver.ResolveGoalRecipientsAsync(mission.Id, org.Id, excludeCollaboratorId: c1.Id);
+        var recipients = await resolver.ResolveMissionRecipientsAsync(mission.Id, org.Id, excludeEmployeeId: c1.Id);
 
         // Assert
         recipients.Should().NotContain(c1.Id);
@@ -153,7 +151,7 @@ public class NotificationRecipientResolverTests
         var resolver = new NotificationRecipientResolver(context);
 
         // Act
-        var recipients = await resolver.ResolveGoalRecipientsAsync(Guid.NewGuid(), Guid.NewGuid());
+        var recipients = await resolver.ResolveMissionRecipientsAsync(Guid.NewGuid(), Guid.NewGuid());
 
         // Assert
         recipients.Should().BeEmpty();
@@ -165,9 +163,9 @@ public class NotificationRecipientResolverTests
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
-        var (org, _, _, _, _, _) = await CreateTestHierarchy(context);
+        var (org, _, _, _, _) = await CreateTestHierarchy(context);
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Test Mission",
@@ -175,12 +173,12 @@ public class NotificationRecipientResolverTests
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30)
         };
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
 
         var metric = new Indicator
         {
             Id = Guid.NewGuid(),
-            GoalId = mission.Id,
+            MissionId = mission.Id,
             OrganizationId = org.Id,
             Name = "Test Metric",
             Type = IndicatorType.Quantitative
@@ -189,7 +187,7 @@ public class NotificationRecipientResolverTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await resolver.ResolveGoalIdFromIndicatorAsync(metric.Id);
+        var result = await resolver.ResolveMissionIdFromIndicatorAsync(metric.Id);
 
         // Assert
         result.Should().Be(mission.Id);
@@ -203,36 +201,36 @@ public class NotificationRecipientResolverTests
         var resolver = new NotificationRecipientResolver(context);
 
         // Act
-        var result = await resolver.ResolveGoalIdFromIndicatorAsync(Guid.NewGuid());
+        var result = await resolver.ResolveMissionIdFromIndicatorAsync(Guid.NewGuid());
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task ResolveCollaboratorName_ExistingCollaborator_ReturnsFullName()
+    public async Task ResolveEmployeeName_ExistingEmployee_ReturnsFullName()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
-        var (_, _, _, c1, _, _) = await CreateTestHierarchy(context);
+        var (_, _, c1, _, _) = await CreateTestHierarchy(context);
 
         // Act
-        var name = await resolver.ResolveCollaboratorNameAsync(c1.Id);
+        var name = await resolver.ResolveEmployeeNameAsync(c1.Id);
 
         // Assert
         name.Should().Be("Collab 1");
     }
 
     [Fact]
-    public async Task ResolveCollaboratorName_NonExistentCollaborator_ReturnsNull()
+    public async Task ResolveEmployeeName_NonExistentEmployee_ReturnsNull()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var resolver = new NotificationRecipientResolver(context);
 
         // Act
-        var name = await resolver.ResolveCollaboratorNameAsync(Guid.NewGuid());
+        var name = await resolver.ResolveEmployeeNameAsync(Guid.NewGuid());
 
         // Assert
         name.Should().BeNull();

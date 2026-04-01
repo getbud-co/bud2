@@ -1,12 +1,12 @@
 global using Bud.Domain.Cycles;
 global using Bud.Domain.Cycles.Events;
-global using Bud.Domain.Goals;
-global using Bud.Domain.Goals.Events;
+global using Bud.Domain.Missions;
+global using Bud.Domain.Missions.Events;
 global using Bud.Domain.Indicators;
 global using Bud.Domain.Indicators.Events;
 global using Bud.Domain.Notifications;
 global using Bud.Domain.Organizations;
-global using Bud.Domain.Collaborators;
+global using Bud.Domain.Employees;
 global using Bud.Domain.Teams;
 global using Bud.Domain.Templates;
 global using Bud.Domain.Primitives;

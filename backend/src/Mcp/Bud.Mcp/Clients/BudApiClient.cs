@@ -20,44 +20,44 @@ public sealed class BudApiClient(HttpClient httpClient, BudApiSession session)
     private readonly HttpClient _httpClient = httpClient;
     private readonly BudApiSession _session = session;
 
-    public Task<GoalResponse> CreateGoalAsync(CreateGoalRequest request, CancellationToken cancellationToken = default)
-        => PostAsync<CreateGoalRequest, GoalResponse>("/api/goals", request, cancellationToken);
+    public Task<MissionResponse> CreateMissionAsync(CreateMissionRequest request, CancellationToken cancellationToken = default)
+        => PostAsync<CreateMissionRequest, MissionResponse>("/api/missions", request, cancellationToken);
 
-    public Task<GoalResponse> GetGoalAsync(Guid id, CancellationToken cancellationToken = default)
-        => GetAsync<GoalResponse>($"/api/goals/{id}", cancellationToken);
+    public Task<MissionResponse> GetMissionAsync(Guid id, CancellationToken cancellationToken = default)
+        => GetAsync<MissionResponse>($"/api/missions/{id}", cancellationToken);
 
-    public Task<PagedResult<GoalResponse>> ListGoalsAsync(GoalFilter? filter, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
-        => GetAsync<PagedResult<GoalResponse>>(BuildQueryPath(
-            "/api/goals",
+    public Task<PagedResult<MissionResponse>> ListMissionsAsync(MissionFilter? filter, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+        => GetAsync<PagedResult<MissionResponse>>(BuildQueryPath(
+            "/api/missions",
             ("filter", filter?.ToString()),
             ("search", search),
             ("page", page.ToString(CultureInfo.InvariantCulture)),
             ("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))), cancellationToken);
 
-    public Task<GoalResponse> UpdateGoalAsync(Guid id, PatchGoalRequest request, CancellationToken cancellationToken = default)
-        => PatchAsync<PatchGoalRequest, GoalResponse>($"/api/goals/{id}", request, cancellationToken);
+    public Task<MissionResponse> UpdateMissionAsync(Guid id, PatchMissionRequest request, CancellationToken cancellationToken = default)
+        => PatchAsync<PatchMissionRequest, MissionResponse>($"/api/missions/{id}", request, cancellationToken);
 
-    public Task DeleteGoalAsync(Guid id, CancellationToken cancellationToken = default)
-        => DeleteAsync($"/api/goals/{id}", cancellationToken);
+    public Task DeleteMissionAsync(Guid id, CancellationToken cancellationToken = default)
+        => DeleteAsync($"/api/missions/{id}", cancellationToken);
 
-    public Task<IndicatorResponse> CreateGoalIndicatorAsync(CreateIndicatorRequest request, CancellationToken cancellationToken = default)
+    public Task<IndicatorResponse> CreateMissionIndicatorAsync(CreateIndicatorRequest request, CancellationToken cancellationToken = default)
         => PostAsync<CreateIndicatorRequest, IndicatorResponse>("/api/indicators", request, cancellationToken);
 
-    public Task<IndicatorResponse> GetGoalIndicatorAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<IndicatorResponse> GetMissionIndicatorAsync(Guid id, CancellationToken cancellationToken = default)
         => GetAsync<IndicatorResponse>($"/api/indicators/{id}", cancellationToken);
 
-    public Task<PagedResult<IndicatorResponse>> ListGoalIndicatorsAsync(Guid? goalId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+    public Task<PagedResult<IndicatorResponse>> ListMissionIndicatorsAsync(Guid? missionId, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
         => GetAsync<PagedResult<IndicatorResponse>>(BuildQueryPath(
             "/api/indicators",
-            ("goalId", goalId?.ToString()),
+            ("missionId", missionId?.ToString()),
             ("search", search),
             ("page", page.ToString(CultureInfo.InvariantCulture)),
             ("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))), cancellationToken);
 
-    public Task<IndicatorResponse> UpdateGoalIndicatorAsync(Guid id, PatchIndicatorRequest request, CancellationToken cancellationToken = default)
+    public Task<IndicatorResponse> UpdateMissionIndicatorAsync(Guid id, PatchIndicatorRequest request, CancellationToken cancellationToken = default)
         => PatchAsync<PatchIndicatorRequest, IndicatorResponse>($"/api/indicators/{id}", request, cancellationToken);
 
-    public Task DeleteGoalIndicatorAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task DeleteMissionIndicatorAsync(Guid id, CancellationToken cancellationToken = default)
         => DeleteAsync($"/api/indicators/{id}", cancellationToken);
 
     public Task<CheckinResponse> CreateIndicatorCheckinAsync(Guid indicatorId, CreateCheckinRequest request, CancellationToken cancellationToken = default)

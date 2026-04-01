@@ -3,11 +3,11 @@ namespace Bud.Application.Features.Tasks;
 
 public interface ITaskRepository
 {
-    Task<GoalTask?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<Goal?> GetGoalByIdAsync(Guid goalId, CancellationToken ct = default);
-    Task<PagedResult<GoalTask>> GetByGoalIdAsync(Guid goalId, int page, int pageSize, CancellationToken ct = default);
-    Task<List<GoalTask>> GetActiveTasksForGoalsAsync(List<Guid> goalIds, CancellationToken ct = default);
-    Task AddAsync(GoalTask entity, CancellationToken ct = default);
-    Task RemoveAsync(GoalTask entity, CancellationToken ct = default);
+    Task<MissionTask?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<Mission?> GetMissionByIdAsync(Guid missionId, CancellationToken ct = default);
+    Task<PagedResult<MissionTask>> GetByMissionIdAsync(Guid missionId, int page, int pageSize, CancellationToken ct = default);
+    Task<List<MissionTask>> GetActiveTasksForMissionsAsync(List<Guid> missionIds, CancellationToken ct = default);
+    Task AddAsync(MissionTask entity, CancellationToken ct = default);
+    Task RemoveAsync(MissionTask entity, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

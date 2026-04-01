@@ -36,15 +36,15 @@ O sistema Bud roda em produção no Google Cloud Run. A observabilidade inicial 
 - `[LoggerMessage]` source-generated com EventIds estáveis por domínio.
 - Ranges de EventId alocados:
   - 3100–3199: RequestTelemetryMiddleware
-  - 4000–4009: Goal
+  - 4000–4009: Mission
   - 4010–4019: Organization
-  - 4020–4029: Workspace
+  - 4020–4029: reservado
   - 4030–4039: Team
-  - 4040–4049: Collaborator
+  - 4040–4049: Employee
   - 4050–4059: Indicator
   - 4060–4069: Checkin
   - 4070–4079: Template
-  - 4080–4089: GoalTask
+  - 4080–4089: MissionTask
   - 4090–4099: Session / Notification
   - 5000–5009: McpRequestLoggingMiddleware (Bud.Mcp)
 
@@ -58,7 +58,7 @@ O sistema Bud roda em produção no Google Cloud Run. A observabilidade inicial 
 
 ## Consequências
 - Logs em produção são indexáveis por `severity`, `traceId`, `correlationId` e `eventId` no Cloud Logging.
-- Distributed traces correlacionam requests do Bud.BlazorWasm → Bud.Api → PostgreSQL e do agente → Bud.Mcp → Bud.Api.
+- Distributed traces correlacionam requests do frontend web → Bud.Api → PostgreSQL e do agente → Bud.Mcp → Bud.Api.
 - Métricas HTTP padrão disponíveis via OTel sem manutenção de instrumentação customizada.
 - EventIds estáveis permitem alertas e dashboards baseados em IDs específicos.
 - Custo de instrumentação: ~zero em dev local (OTLP exporter falha silenciosamente sem `OTEL_EXPORTER_OTLP_ENDPOINT`).

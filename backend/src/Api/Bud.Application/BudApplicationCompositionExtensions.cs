@@ -12,8 +12,8 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<DeleteOrganization>();
         services.AddScoped<GetOrganizationById>();
         services.AddScoped<ListOrganizations>();
-        services.AddScoped<ListOrganizationCollaborators>();
         services.AddScoped<ListOrganizationCycles>();
+        services.AddScoped<ListOrganizationEmployees>();
 
         services.AddScoped<CreateTeam>();
         services.AddScoped<PatchTeam>();
@@ -21,22 +21,22 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<GetTeamById>();
         services.AddScoped<ListTeams>();
         services.AddScoped<ListSubTeams>();
-        services.AddScoped<ListTeamCollaborators>();
-        services.AddScoped<GetTeamCollaboratorLookup>();
-        services.AddScoped<PatchTeamCollaborators>();
-        services.AddScoped<ListAvailableCollaboratorsForTeam>();
+        services.AddScoped<ListTeamEmployees>();
+        services.AddScoped<GetTeamEmployeeLookup>();
+        services.AddScoped<PatchTeamEmployees>();
+        services.AddScoped<ListAvailableEmployeesForTeam>();
 
-        services.AddScoped<CreateCollaborator>();
-        services.AddScoped<PatchCollaborator>();
-        services.AddScoped<DeleteCollaborator>();
-        services.AddScoped<GetCollaboratorById>();
-        services.AddScoped<ListLeaderCollaborators>();
-        services.AddScoped<ListCollaborators>();
-        services.AddScoped<GetCollaboratorHierarchy>();
-        services.AddScoped<ListCollaboratorTeams>();
-        services.AddScoped<PatchCollaboratorTeams>();
-        services.AddScoped<ListAvailableTeamsForCollaborator>();
-        services.AddScoped<GetCollaboratorLookup>();
+        services.AddScoped<CreateEmployee>();
+        services.AddScoped<PatchEmployee>();
+        services.AddScoped<DeleteEmployee>();
+        services.AddScoped<GetEmployeeById>();
+        services.AddScoped<ListLeaderEmployees>();
+        services.AddScoped<ListEmployees>();
+        services.AddScoped<GetEmployeeHierarchy>();
+        services.AddScoped<ListEmployeeTeams>();
+        services.AddScoped<PatchEmployeeTeams>();
+        services.AddScoped<ListAvailableTeamsForEmployee>();
+        services.AddScoped<GetEmployeeLookup>();
 
         services.AddScoped<CreateCycle>();
         services.AddScoped<PatchCycle>();
@@ -44,16 +44,17 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<GetCycleById>();
         services.AddScoped<ListCycles>();
 
-        services.AddScoped<CreateGoal>();
-        services.AddScoped<PatchGoal>();
-        services.AddScoped<DeleteGoal>();
-        services.AddScoped<GetGoalById>();
-        services.AddScoped<ListGoals>();
-        services.AddScoped<ListGoalChildren>();
-        services.AddScoped<ListGoalIndicators>();
-        services.AddScoped<ListGoalProgress>();
+        services.AddScoped<CreateMission>();
+        services.AddScoped<PatchMission>();
+        services.AddScoped<DeleteMission>();
+        services.AddScoped<GetMissionById>();
+        services.AddScoped<ListMissions>();
+        services.AddScoped<ListMissionChildren>();
+        services.AddScoped<ListMissionIndicators>();
+        services.AddScoped<ListMissionProgress>();
 
         services.AddScoped<CreateTask>();
+        services.AddScoped<GetTaskById>();
         services.AddScoped<PatchTask>();
         services.AddScoped<DeleteTask>();
         services.AddScoped<ListTasks>();
@@ -84,9 +85,9 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<GetMyDashboard>();
 
         services.AddScoped<NotificationOrchestrator>();
-        services.AddScoped<IDomainEventNotifier<GoalCreatedDomainEvent>, GoalCreatedDomainEventNotifier>();
-        services.AddScoped<IDomainEventNotifier<GoalUpdatedDomainEvent>, GoalUpdatedDomainEventNotifier>();
-        services.AddScoped<IDomainEventNotifier<GoalDeletedDomainEvent>, GoalDeletedDomainEventNotifier>();
+        services.AddScoped<IDomainEventNotifier<MissionCreatedDomainEvent>, MissionCreatedDomainEventNotifier>();
+        services.AddScoped<IDomainEventNotifier<MissionUpdatedDomainEvent>, MissionUpdatedDomainEventNotifier>();
+        services.AddScoped<IDomainEventNotifier<MissionDeletedDomainEvent>, MissionDeletedDomainEventNotifier>();
         services.AddScoped<IDomainEventNotifier<CheckinCreatedDomainEvent>, CheckinCreatedDomainEventNotifier>();
         services.AddScoped<ListNotifications>();
         services.AddScoped<PatchNotification>();

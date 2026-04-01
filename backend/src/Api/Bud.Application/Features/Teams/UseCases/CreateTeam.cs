@@ -9,7 +9,8 @@ public sealed record CreateTeamCommand(string Name, Guid OrganizationId, Guid Le
 
 public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
-    ICollaboratorRepository collaboratorRepository,
+    IEmployeeRepository employeeRepository,
+    ITenantProvider tenantProvider,
     IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateTeam> logger,
     IUnitOfWork? unitOfWork = null)
@@ -19,9 +20,20 @@ public sealed partial class CreateTeam(
         CreateTeamCommand command,
         CancellationToken cancellationToken = default)
     {
-        LogCreatingTeam(logger, command.Name, command.OrganizationId);
+        LogCreatingTeam(logger, command.Name);
 
-        var canCreate = await authorizationGateway.IsOrganizationOwnerAsync(user, command.OrganizationId, cancellationToken);
+        if (tenantProvider.TenantId is null)
+        {
+            LogTeamCreationFailed(logger, command.Name, "Tenant not selected");
+            return Result<Team>.Forbidden(UserErrorMessages.TeamCreateForbidden);
+        }
+
+        var organizationId = tenantProvider.TenantId.Value;
+
+        var canCreate = await authorizationGateway.CanWriteAsync(
+            user,
+            new CreateTeamContext(organizationId),
+            cancellationToken);
         if (!canCreate)
         {
             LogTeamCreationFailed(logger, command.Name, "Forbidden");
@@ -36,12 +48,18 @@ public sealed partial class CreateTeam(
                 LogTeamCreationFailed(logger, command.Name, "Parent team not found");
                 return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
             }
+
+            if (parentTeam.OrganizationId != organizationId)
+            {
+                LogTeamCreationFailed(logger, command.Name, "Parent team belongs to different organization");
+                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameOrganization);
+            }
         }
 
-        var leaderValidation = await CollaboratorLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
-            collaboratorRepository,
+        var leaderValidation = await EmployeeLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
+            employeeRepository,
             command.LeaderId,
-            command.OrganizationId,
+            organizationId,
             cancellationToken);
         if (leaderValidation is not null)
         {
@@ -53,14 +71,14 @@ public sealed partial class CreateTeam(
         {
             var team = Team.Create(
                 Guid.NewGuid(),
-                command.OrganizationId,
+                organizationId,
                 command.Name,
                 command.LeaderId,
                 command.ParentTeamId);
 
-            team.CollaboratorTeams.Add(new CollaboratorTeam
+            team.EmployeeTeams.Add(new EmployeeTeam
             {
-                CollaboratorId = command.LeaderId,
+                EmployeeId = command.LeaderId,
                 TeamId = team.Id,
                 AssignedAt = DateTime.UtcNow
             });
@@ -78,8 +96,8 @@ public sealed partial class CreateTeam(
         }
     }
 
-    [LoggerMessage(EventId = 4030, Level = LogLevel.Information, Message = "Creating team '{Name}' in organization {OrganizationId}")]
-    private static partial void LogCreatingTeam(ILogger logger, string name, Guid organizationId);
+    [LoggerMessage(EventId = 4030, Level = LogLevel.Information, Message = "Creating team '{Name}'")]
+    private static partial void LogCreatingTeam(ILogger logger, string name);
 
     [LoggerMessage(EventId = 4031, Level = LogLevel.Information, Message = "Team created successfully: {TeamId} - '{Name}'")]
     private static partial void LogTeamCreated(ILogger logger, Guid teamId, string name);

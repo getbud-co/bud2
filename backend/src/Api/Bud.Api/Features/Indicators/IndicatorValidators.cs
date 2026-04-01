@@ -7,7 +7,7 @@ public sealed class CreateIndicatorValidator : AbstractValidator<CreateIndicator
 {
     public CreateIndicatorValidator()
     {
-        RuleFor(x => x.GoalId)
+        RuleFor(x => x.MissionId)
             .NotEmpty().WithMessage("Meta é obrigatória.");
 
         RuleFor(x => x.Name)

@@ -32,9 +32,9 @@ public sealed partial class DeleteOrganization(
                 ErrorType.Validation);
         }
 
-        if (await organizationRepository.HasCollaboratorsAsync(id, cancellationToken))
+        if (await organizationRepository.HasEmployeesAsync(id, cancellationToken))
         {
-            LogOrganizationDeletionFailed(logger, id, "Has collaborators");
+            LogOrganizationDeletionFailed(logger, id, "Has employees");
             return Result.Failure(
                 "Não é possível excluir a organização porque ela possui colaboradores associados. Remova os colaboradores primeiro.",
                 ErrorType.Conflict);

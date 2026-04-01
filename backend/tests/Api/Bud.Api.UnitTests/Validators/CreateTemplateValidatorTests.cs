@@ -17,8 +17,8 @@ public sealed class CreateTemplateValidatorTests
         {
             Name = "Template de Missão",
             Description = "Descrição do template",
-            GoalNamePattern = "Missão {0}",
-            GoalDescriptionPattern = "Descrição padrão",
+            MissionNamePattern = "Missão {0}",
+            MissionDescriptionPattern = "Descrição padrão",
             Indicators = new List<TemplateIndicatorRequest>()
         };
 
@@ -195,13 +195,13 @@ public sealed class CreateTemplateValidatorTests
     }
 
     [Fact]
-    public async Task Validate_GoalNamePatternExceeding200Chars_Fails()
+    public async Task Validate_MissionNamePatternExceeding200Chars_Fails()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalNamePattern = new string('A', 201)
+            MissionNamePattern = new string('A', 201)
         };
 
         // Act
@@ -210,18 +210,18 @@ public sealed class CreateTemplateValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e =>
-            e.PropertyName.Contains("GoalNamePattern") &&
+            e.PropertyName.Contains("MissionNamePattern") &&
             e.ErrorMessage.Contains("200"));
     }
 
     [Fact]
-    public async Task Validate_GoalNamePatternExactly200Chars_Passes()
+    public async Task Validate_MissionNamePatternExactly200Chars_Passes()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalNamePattern = new string('A', 200)
+            MissionNamePattern = new string('A', 200)
         };
 
         // Act
@@ -232,13 +232,13 @@ public sealed class CreateTemplateValidatorTests
     }
 
     [Fact]
-    public async Task Validate_NullGoalNamePattern_Passes()
+    public async Task Validate_NullMissionNamePattern_Passes()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalNamePattern = null
+            MissionNamePattern = null
         };
 
         // Act
@@ -249,13 +249,13 @@ public sealed class CreateTemplateValidatorTests
     }
 
     [Fact]
-    public async Task Validate_GoalDescriptionPatternExceeding1000Chars_Fails()
+    public async Task Validate_MissionDescriptionPatternExceeding1000Chars_Fails()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalDescriptionPattern = new string('A', 1001)
+            MissionDescriptionPattern = new string('A', 1001)
         };
 
         // Act
@@ -264,18 +264,18 @@ public sealed class CreateTemplateValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e =>
-            e.PropertyName.Contains("GoalDescriptionPattern") &&
+            e.PropertyName.Contains("MissionDescriptionPattern") &&
             e.ErrorMessage.Contains("1000"));
     }
 
     [Fact]
-    public async Task Validate_GoalDescriptionPatternExactly1000Chars_Passes()
+    public async Task Validate_MissionDescriptionPatternExactly1000Chars_Passes()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalDescriptionPattern = new string('A', 1000)
+            MissionDescriptionPattern = new string('A', 1000)
         };
 
         // Act
@@ -286,13 +286,13 @@ public sealed class CreateTemplateValidatorTests
     }
 
     [Fact]
-    public async Task Validate_NullGoalDescriptionPattern_Passes()
+    public async Task Validate_NullMissionDescriptionPattern_Passes()
     {
         // Arrange
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            GoalDescriptionPattern = null
+            MissionDescriptionPattern = null
         };
 
         // Act
@@ -338,9 +338,9 @@ public sealed class CreateTemplateValidatorTests
         var request = new CreateTemplateRequest
         {
             Name = "Template",
-            Goals =
+            Missions =
             [
-                new TemplateGoalRequest
+                new TemplateMissionRequest
                 {
                     Id = Guid.NewGuid(),
                     Name = "Objetivo 1",
@@ -354,7 +354,7 @@ public sealed class CreateTemplateValidatorTests
                     Name = "Métrica 1",
                     Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                     OrderIndex = 0,
-                    TemplateGoalId = Guid.NewGuid()
+                    TemplateMissionId = Guid.NewGuid()
                 }
             ]
         };

@@ -19,23 +19,23 @@ public sealed class NotificationRepositoryTests
         return new ApplicationDbContext(options, _tenantProvider);
     }
 
-    private static async Task<(Organization org, Collaborator collaborator)> CreateTestRecipient(
+    private static async Task<(Organization org, Employee employee)> CreateTestRecipient(
         ApplicationDbContext context)
     {
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
         context.Organizations.Add(org);
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Test Recipient",
             Email = "recipient@test.com",
             OrganizationId = org.Id
         };
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
 
-        return (org, collaborator);
+        return (org, employee);
     }
 
     private static Notification CreateTestNotification(
@@ -49,11 +49,11 @@ public sealed class NotificationRepositoryTests
         return new Notification
         {
             Id = Guid.NewGuid(),
-            RecipientCollaboratorId = recipientId,
+            RecipientEmployeeId = recipientId,
             OrganizationId = organizationId,
             Title = title,
             Message = message,
-            Type = NotificationType.GoalCreated,
+            Type = NotificationType.MissionCreated,
             IsRead = isRead,
             CreatedAtUtc = createdAtUtc ?? DateTime.UtcNow,
             ReadAtUtc = isRead ? DateTime.UtcNow : null
@@ -68,9 +68,9 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
-        var notification = CreateTestNotification(collaborator.Id, org.Id);
+        var notification = CreateTestNotification(employee.Id, org.Id);
         context.Notifications.Add(notification);
         await context.SaveChangesAsync();
 
@@ -107,25 +107,25 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator1) = await CreateTestRecipient(context);
+        var (org, employee1) = await CreateTestRecipient(context);
 
-        var collaborator2 = new Collaborator
+        var employee2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Other Recipient",
             Email = "other@test.com",
             OrganizationId = org.Id
         };
-        context.Collaborators.Add(collaborator2);
+        context.Employees.Add(employee2);
         await context.SaveChangesAsync();
 
         context.Notifications.AddRange(
-            CreateTestNotification(collaborator1.Id, org.Id, title: "For Recipient 1"),
-            CreateTestNotification(collaborator2.Id, org.Id, title: "For Recipient 2"));
+            CreateTestNotification(employee1.Id, org.Id, title: "For Recipient 1"),
+            CreateTestNotification(employee2.Id, org.Id, title: "For Recipient 2"));
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByRecipientAsync(collaborator1.Id, null, 1, 10);
+        var result = await repository.GetByRecipientAsync(employee1.Id, null, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);
@@ -138,15 +138,15 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
         context.Notifications.AddRange(
-            CreateTestNotification(collaborator.Id, org.Id, isRead: true, title: "Read"),
-            CreateTestNotification(collaborator.Id, org.Id, isRead: false, title: "Unread"));
+            CreateTestNotification(employee.Id, org.Id, isRead: true, title: "Read"),
+            CreateTestNotification(employee.Id, org.Id, isRead: false, title: "Unread"));
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByRecipientAsync(collaborator.Id, true, 1, 10);
+        var result = await repository.GetByRecipientAsync(employee.Id, true, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);
@@ -159,15 +159,15 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
         context.Notifications.AddRange(
-            CreateTestNotification(collaborator.Id, org.Id, isRead: true, title: "Read"),
-            CreateTestNotification(collaborator.Id, org.Id, isRead: false, title: "Unread"));
+            CreateTestNotification(employee.Id, org.Id, isRead: true, title: "Read"),
+            CreateTestNotification(employee.Id, org.Id, isRead: false, title: "Unread"));
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByRecipientAsync(collaborator.Id, false, 1, 10);
+        var result = await repository.GetByRecipientAsync(employee.Id, false, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);
@@ -180,20 +180,20 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
         var date1 = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var date2 = new DateTime(2024, 2, 1, 0, 0, 0, DateTimeKind.Utc);
         var date3 = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc);
 
         context.Notifications.AddRange(
-            CreateTestNotification(collaborator.Id, org.Id, createdAtUtc: date2, title: "Middle"),
-            CreateTestNotification(collaborator.Id, org.Id, createdAtUtc: date1, title: "Oldest"),
-            CreateTestNotification(collaborator.Id, org.Id, createdAtUtc: date3, title: "Newest"));
+            CreateTestNotification(employee.Id, org.Id, createdAtUtc: date2, title: "Middle"),
+            CreateTestNotification(employee.Id, org.Id, createdAtUtc: date1, title: "Oldest"),
+            CreateTestNotification(employee.Id, org.Id, createdAtUtc: date3, title: "Newest"));
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByRecipientAsync(collaborator.Id, null, 1, 10);
+        var result = await repository.GetByRecipientAsync(employee.Id, null, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(3);
@@ -208,13 +208,13 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
         for (int i = 0; i < 5; i++)
         {
             context.Notifications.Add(
                 CreateTestNotification(
-                    collaborator.Id,
+                    employee.Id,
                     org.Id,
                     createdAtUtc: DateTime.UtcNow.AddMinutes(i),
                     title: $"Notification {i:D2}"));
@@ -222,7 +222,7 @@ public sealed class NotificationRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByRecipientAsync(collaborator.Id, null, 1, 2);
+        var result = await repository.GetByRecipientAsync(employee.Id, null, 1, 2);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -241,13 +241,13 @@ public sealed class NotificationRepositoryTests
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new NotificationRepository(context);
-        var (org, collaborator) = await CreateTestRecipient(context);
+        var (org, employee) = await CreateTestRecipient(context);
 
         var notifications = new List<Notification>
         {
-            CreateTestNotification(collaborator.Id, org.Id, title: "Notification 1"),
-            CreateTestNotification(collaborator.Id, org.Id, title: "Notification 2"),
-            CreateTestNotification(collaborator.Id, org.Id, title: "Notification 3")
+            CreateTestNotification(employee.Id, org.Id, title: "Notification 1"),
+            CreateTestNotification(employee.Id, org.Id, title: "Notification 2"),
+            CreateTestNotification(employee.Id, org.Id, title: "Notification 3")
         };
 
         // Act
@@ -256,7 +256,7 @@ public sealed class NotificationRepositoryTests
 
         // Assert
         var count = await context.Notifications
-            .Where(n => n.RecipientCollaboratorId == collaborator.Id)
+            .Where(n => n.RecipientEmployeeId == employee.Id)
             .CountAsync();
         count.Should().Be(3);
     }

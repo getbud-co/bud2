@@ -5,14 +5,24 @@ using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Teams.UseCases;
 
-public sealed class GetTeamById(ITeamRepository teamRepository)
+public sealed class GetTeamById(
+    ITeamRepository teamRepository,
+    IApplicationAuthorizationGateway authorizationGateway)
 {
-    public async Task<Result<Team>> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<Team>> ExecuteAsync(ClaimsPrincipal user, Guid id, CancellationToken cancellationToken = default)
     {
         var team = await teamRepository.GetByIdAsync(id, cancellationToken);
-        return team is null
-            ? Result<Team>.NotFound(UserErrorMessages.TeamNotFound)
-            : Result<Team>.Success(team);
+        if (team is null)
+        {
+            return Result<Team>.NotFound(UserErrorMessages.TeamNotFound);
+        }
+
+        var canRead = await authorizationGateway.CanReadAsync(user, new TeamResource(id), cancellationToken);
+        if (!canRead)
+        {
+            return Result<Team>.Forbidden(UserErrorMessages.TeamNotFound);
+        }
+
+        return Result<Team>.Success(team);
     }
 }
-

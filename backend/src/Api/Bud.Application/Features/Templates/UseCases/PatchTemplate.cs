@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,17 +8,19 @@ namespace Bud.Application.Features.Templates.UseCases;
 public sealed record PatchTemplateCommand(
     Optional<string> Name,
     Optional<string?> Description,
-    Optional<string?> GoalNamePattern,
-    Optional<string?> GoalDescriptionPattern,
-    IReadOnlyList<TemplateGoalDraft> Goals,
+    Optional<string?> MissionNamePattern,
+    Optional<string?> MissionDescriptionPattern,
+    IReadOnlyList<TemplateMissionDraft> Missions,
     IReadOnlyList<TemplateIndicatorDraft> Indicators);
 
 public sealed partial class PatchTemplate(
     ITemplateRepository templateRepository,
     ILogger<PatchTemplate> logger,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Template>> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid id,
         PatchTemplateCommand command,
         CancellationToken cancellationToken = default)
@@ -31,21 +34,28 @@ public sealed partial class PatchTemplate(
             return Result<Template>.NotFound(UserErrorMessages.TemplateNotFound);
         }
 
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new TemplateResource(id), cancellationToken);
+        if (!canWrite)
+        {
+            LogTemplatePatchFailed(logger, id, UserErrorMessages.TemplateUpdateForbidden);
+            return Result<Template>.Forbidden(UserErrorMessages.TemplateUpdateForbidden);
+        }
+
         try
         {
             template.UpdateBasics(
                 command.Name.HasValue ? (command.Name.Value ?? template.Name) : template.Name,
                 command.Description.HasValue ? command.Description.Value : template.Description,
-                command.GoalNamePattern.HasValue ? command.GoalNamePattern.Value : template.GoalNamePattern,
-                command.GoalDescriptionPattern.HasValue ? command.GoalDescriptionPattern.Value : template.GoalDescriptionPattern);
+                command.MissionNamePattern.HasValue ? command.MissionNamePattern.Value : template.MissionNamePattern,
+                command.MissionDescriptionPattern.HasValue ? command.MissionDescriptionPattern.Value : template.MissionDescriptionPattern);
 
             var previousIndicators = template.Indicators.ToList();
-            var previousGoals = template.Goals.ToList();
+            var previousMissions = template.Missions.ToList();
 
-            template.ReplaceGoalsAndIndicators(command.Goals, command.Indicators);
+            template.ReplaceMissionsAndIndicators(command.Missions, command.Indicators);
 
-            await templateRepository.RemoveGoalsAndIndicatorsAsync(previousGoals, previousIndicators, cancellationToken);
-            await templateRepository.AddGoalsAndIndicatorsAsync(template.Goals, template.Indicators, cancellationToken);
+            await templateRepository.RemoveMissionsAndIndicatorsAsync(previousMissions, previousIndicators, cancellationToken);
+            await templateRepository.AddMissionsAndIndicatorsAsync(template.Missions, template.Indicators, cancellationToken);
             await unitOfWork.CommitAsync(templateRepository.SaveChangesAsync, cancellationToken);
 
             var reloadedTemplate = await templateRepository.GetByIdReadOnlyAsync(id, cancellationToken);

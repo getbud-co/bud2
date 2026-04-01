@@ -9,10 +9,10 @@ public sealed class Team : ITenantEntity, IAggregateRoot
     public Guid? ParentTeamId { get; set; }
     public Team? ParentTeam { get; set; }
     public ICollection<Team> SubTeams { get; set; } = new List<Team>();
-    public ICollection<Collaborator> Collaborators { get; set; } = new List<Collaborator>();
-    public ICollection<CollaboratorTeam> CollaboratorTeams { get; set; } = new List<CollaboratorTeam>();
+    public ICollection<Employee> Employees { get; set; } = new List<Employee>();
+    public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
     public Guid LeaderId { get; set; }
-    public Collaborator? Leader { get; set; }
+    public Employee? Leader { get; set; }
 
     public static Team Create(Guid id, Guid organizationId, string name, Guid leaderId, Guid? parentTeamId = null)
     {

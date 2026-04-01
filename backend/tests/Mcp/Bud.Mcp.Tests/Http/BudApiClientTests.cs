@@ -16,12 +16,12 @@ public sealed class BudApiClientTests
         await session.InitializeAsync();
 
         var client = new BudApiClient(httpClient, session);
-        var act = () => client.CreateGoalAsync(new CreateGoalRequest
+        var act = () => client.CreateMissionAsync(new CreateMissionRequest
         {
             Name = "Missão Teste",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Active
+            Status = MissionStatus.Active
         });
 
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -54,7 +54,7 @@ public sealed class BudApiClientTests
                 });
             }
 
-            if (request.RequestUri.AbsolutePath == "/api/goals" && request.Method == HttpMethod.Post)
+            if (request.RequestUri.AbsolutePath == "/api/missions" && request.Method == HttpMethod.Post)
             {
                 request.Headers.Authorization.Should().NotBeNull();
                 request.Headers.Authorization!.Scheme.Should().Be("Bearer");
@@ -66,15 +66,15 @@ public sealed class BudApiClientTests
                 var payload = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement;
                 payload.TryGetProperty("request", out _).Should().BeFalse();
                 payload.GetProperty("status").ValueKind.Should().Be(JsonValueKind.Number);
-                payload.GetProperty("status").GetInt32().Should().Be((int)GoalStatus.Active);
+                payload.GetProperty("status").GetInt32().Should().Be((int)MissionStatus.Active);
 
-                return JsonResponse(new GoalResponse
+                return JsonResponse(new MissionResponse
                 {
                     Id = responseMissionId,
                     Name = "Missão Teste",
                     StartDate = DateTime.UtcNow,
                     EndDate = DateTime.UtcNow.AddDays(30),
-                    Status = GoalStatus.Active,
+                    Status = MissionStatus.Active,
                     OrganizationId = tenantId
                 });
             }
@@ -89,12 +89,12 @@ public sealed class BudApiClientTests
         await session.SetCurrentTenantAsync(tenantId);
 
         var client = new BudApiClient(httpClient, session);
-        var mission = await client.CreateGoalAsync(new CreateGoalRequest
+        var mission = await client.CreateMissionAsync(new CreateMissionRequest
         {
             Name = "Missão Teste",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Active
+            Status = MissionStatus.Active
         });
 
         mission.Id.Should().Be(responseMissionId);
@@ -124,12 +124,12 @@ public sealed class BudApiClientTests
         await session.InitializeAsync();
 
         var client = new BudApiClient(httpClient, session);
-        var act = () => client.CreateGoalAsync(new CreateGoalRequest
+        var act = () => client.CreateMissionAsync(new CreateMissionRequest
         {
             Name = "Missão Teste",
             StartDate = DateTime.UtcNow,
             EndDate = DateTime.UtcNow.AddDays(30),
-            Status = GoalStatus.Active
+            Status = MissionStatus.Active
         });
 
         await act.Should().ThrowAsync<InvalidOperationException>()

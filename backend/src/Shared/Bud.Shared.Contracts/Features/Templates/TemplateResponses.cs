@@ -8,13 +8,13 @@ public sealed class TemplateResponse
     public Guid OrganizationId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string? GoalNamePattern { get; set; }
-    public string? GoalDescriptionPattern { get; set; }
-    public List<TemplateGoalResponse> Goals { get; set; } = [];
+    public string? MissionNamePattern { get; set; }
+    public string? MissionDescriptionPattern { get; set; }
+    public List<TemplateMissionResponse> Missions { get; set; } = [];
     public List<TemplateIndicatorResponse> Indicators { get; set; } = [];
 }
 
-public sealed class TemplateGoalResponse
+public sealed class TemplateMissionResponse
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
@@ -32,7 +32,7 @@ public sealed class TemplateIndicatorResponse
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Guid TemplateId { get; set; }
-    public Guid? TemplateGoalId { get; set; }
+    public Guid? TemplateMissionId { get; set; }
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
     public int OrderIndex { get; set; }
@@ -41,5 +41,5 @@ public sealed class TemplateIndicatorResponse
     public decimal? MaxValue { get; set; }
     public IndicatorUnit? Unit { get; set; }
     public string? TargetText { get; set; }
-    public TemplateGoalResponse? Goal { get; set; }
+    public TemplateMissionResponse? Mission { get; set; }
 }

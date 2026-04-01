@@ -19,7 +19,7 @@ public class MissionProgressServiceTests
         return new ApplicationDbContext(options, _tenantProvider);
     }
 
-    private static async Task<(Organization org, Goal goal)> CreateTestMission(
+    private static async Task<(Organization org, Mission mission)> CreateTestMission(
         ApplicationDbContext context,
         DateTime? startDate = null,
         DateTime? endDate = null)
@@ -27,17 +27,17 @@ public class MissionProgressServiceTests
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
         context.Organizations.Add(org);
 
-        var mission = new Goal
+        var mission = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Test Mission",
             StartDate = startDate ?? DateTime.UtcNow.AddDays(-15),
             EndDate = endDate ?? DateTime.UtcNow.AddDays(15),
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
 
-        context.Goals.Add(mission);
+        context.Missions.Add(mission);
         await context.SaveChangesAsync();
 
         return (org, mission);
@@ -45,7 +45,7 @@ public class MissionProgressServiceTests
 
     private static async Task<Indicator> CreateTestMetric(
         ApplicationDbContext context,
-        Guid goalId,
+        Guid missionId,
         Guid organizationId,
         IndicatorType type = IndicatorType.Quantitative,
         QuantitativeIndicatorType? quantitativeType = QuantitativeIndicatorType.Achieve,
@@ -56,7 +56,7 @@ public class MissionProgressServiceTests
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
-            GoalId = goalId,
+            MissionId = missionId,
             Name = "Test Metric",
             Type = type,
             QuantitativeType = type == IndicatorType.Quantitative ? quantitativeType : null,
@@ -80,24 +80,24 @@ public class MissionProgressServiceTests
         string? text = null,
         int confidenceLevel = 3,
         DateTime? checkinDate = null,
-        string? collaboratorName = null,
-        Guid? collaboratorId = null)
+        string? employeeName = null,
+        Guid? employeeId = null)
     {
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
-            Id = collaboratorId ?? Guid.NewGuid(),
-            FullName = collaboratorName ?? "Test User",
+            Id = employeeId ?? Guid.NewGuid(),
+            FullName = employeeName ?? "Test User",
             Email = $"test-{Guid.NewGuid():N}@example.com",
             OrganizationId = organizationId
         };
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
 
         var checkin = new Checkin
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
             IndicatorId = indicatorId,
-            CollaboratorId = collaborator.Id,
+            EmployeeId = employee.Id,
             Value = value,
             Text = text,
             CheckinDate = checkinDate ?? DateTime.UtcNow,
@@ -114,7 +114,7 @@ public class MissionProgressServiceTests
     public async Task GetProgressAsync_EmptyList_ReturnsEmptyResult()
     {
         await using var context = CreateInMemoryContext();
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([]);
 
@@ -127,14 +127,14 @@ public class MissionProgressServiceTests
     {
         await using var context = CreateInMemoryContext();
         var (_, mission) = await CreateTestMission(context);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(1);
         var progress = result.Value![0];
-        progress.GoalId.Should().Be(mission.Id);
+        progress.MissionId.Should().Be(mission.Id);
         progress.OverallProgress.Should().Be(0m);
         progress.TotalIndicators.Should().Be(0);
         progress.IndicatorsWithCheckins.Should().Be(0);
@@ -146,7 +146,7 @@ public class MissionProgressServiceTests
         await using var context = CreateInMemoryContext();
         var (org, mission) = await CreateTestMission(context);
         await CreateTestMetric(context, mission.Id, org.Id);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -165,7 +165,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 60m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -182,7 +182,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 50m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 75m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -204,7 +204,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 30m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // progress = (50 - 30) / (50 - 10) * 100 = 20/40 * 100 = 50%
@@ -224,7 +224,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 5m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         result.Value![0].OverallProgress.Should().Be(100m);
@@ -238,7 +238,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepAbove, minValue: 70m, maxValue: null);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 85m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -253,7 +253,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepAbove, minValue: 70m, maxValue: null);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 60m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -269,7 +269,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBelow, minValue: null, maxValue: 50m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 30m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -284,7 +284,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBelow, minValue: null, maxValue: 50m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 60m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -300,7 +300,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBetween, minValue: 80m, maxValue: 95m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 85m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -315,7 +315,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBetween, minValue: 80m, maxValue: 95m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 70m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -331,7 +331,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             type: IndicatorType.Qualitative);
         await CreateTestCheckin(context, metric.Id, org.Id, text: "Some progress", confidenceLevel: 4);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -355,7 +355,7 @@ public class MissionProgressServiceTests
             quantitativeType: QuantitativeIndicatorType.KeepAbove, minValue: 70m, maxValue: null);
         await CreateTestCheckin(context, metric2.Id, org.Id, value: 80m, confidenceLevel: 3);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         var progress = result.Value![0];
@@ -382,7 +382,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 70m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         result.Value![0].OverallProgress.Should().Be(70m);
@@ -396,7 +396,7 @@ public class MissionProgressServiceTests
 
         await using var context = CreateInMemoryContext();
         var (_, mission) = await CreateTestMission(context, startDate, endDate);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -409,16 +409,16 @@ public class MissionProgressServiceTests
     {
         await using var context = CreateInMemoryContext();
         var (org, mission1) = await CreateTestMission(context);
-        var mission2 = new Goal
+        var mission2 = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Mission 2",
             StartDate = DateTime.UtcNow.AddDays(-5),
             EndDate = DateTime.UtcNow.AddDays(25),
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.Add(mission2);
+        context.Missions.Add(mission2);
         await context.SaveChangesAsync();
 
         var metric1 = await CreateTestMetric(context, mission1.Id, org.Id,
@@ -429,19 +429,19 @@ public class MissionProgressServiceTests
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 200m);
         await CreateTestCheckin(context, metric2.Id, org.Id, value: 100m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission1.Id, mission2.Id]);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
-        result.Value!.First(p => p.GoalId == mission1.Id).OverallProgress.Should().Be(50m);
-        result.Value!.First(p => p.GoalId == mission2.Id).OverallProgress.Should().Be(50m);
+        result.Value!.First(p => p.MissionId == mission1.Id).OverallProgress.Should().Be(50m);
+        result.Value!.First(p => p.MissionId == mission2.Id).OverallProgress.Should().Be(50m);
     }
 
     [Fact]
     public void CalculateExpectedProgress_BeforeStart_Returns0()
     {
-        var result = GoalProgressService.CalculateExpectedProgress(
+        var result = MissionProgressService.CalculateExpectedProgress(
             DateTime.UtcNow.AddDays(5),
             DateTime.UtcNow.AddDays(15),
             DateTime.UtcNow);
@@ -452,7 +452,7 @@ public class MissionProgressServiceTests
     [Fact]
     public void CalculateExpectedProgress_AfterEnd_Returns100()
     {
-        var result = GoalProgressService.CalculateExpectedProgress(
+        var result = MissionProgressService.CalculateExpectedProgress(
             DateTime.UtcNow.AddDays(-20),
             DateTime.UtcNow.AddDays(-5),
             DateTime.UtcNow);
@@ -475,7 +475,7 @@ public class MissionProgressServiceTests
         await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 200m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         var progress = result.Value![0];
@@ -494,7 +494,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: -10m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -509,7 +509,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepAbove, minValue: 10m, maxValue: null);
         await CreateTestCheckin(context, metric.Id, org.Id, value: -5m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -524,7 +524,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBelow, minValue: null, maxValue: 50m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 200m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -540,7 +540,7 @@ public class MissionProgressServiceTests
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.KeepBetween, minValue: 80m, maxValue: 95m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 100m);
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetProgressAsync([mission.Id]);
 
@@ -565,7 +565,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 11m,
             checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use value=11 (latest inserted), 11 >= 10 → 100%
@@ -589,7 +589,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 80m,
             checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use value=80 (latest inserted), 80/100 = 80%
@@ -613,7 +613,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 40m,
             checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use value=40 (latest inserted), 40 <= 50 → 100%
@@ -637,7 +637,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 88m,
             checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use value=88 (latest inserted), 80 <= 88 <= 95 → 100%
@@ -664,7 +664,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 20m,
             checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // baseline=50, latest=20, target=10 → (50-20)/(50-10) = 30/40 = 75%
@@ -686,7 +686,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, text: "Good progress",
             confidenceLevel: 4, checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use confidence=4 (latest), 4/5 * 100 = 80%
@@ -711,7 +711,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, text: "Great",
             confidenceLevel: 5, checkinDate: sameDate);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use confidence=5 (latest inserted), 5/5 * 100 = 100%
@@ -734,7 +734,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 90m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use latest value=90 → 90%
@@ -763,7 +763,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric2.Id, org.Id, value: 80m,
             confidenceLevel: 3, checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         var progress = result.Value![0];
@@ -790,7 +790,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 30m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // Should use latest value=30 (even though it's lower) → 30%
@@ -815,7 +815,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 25m,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([mission.Id]);
 
         // baseline=40, latest=25, target=10 → (40-25)/(40-10) = 15/30 = 50%
@@ -828,7 +828,7 @@ public class MissionProgressServiceTests
     public async Task GetIndicatorProgress_WhenIndicatorNotFound_ReturnsNotFound()
     {
         await using var context = CreateInMemoryContext();
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
 
         var result = await service.GetIndicatorProgressAsync(Guid.NewGuid());
 
@@ -843,7 +843,7 @@ public class MissionProgressServiceTests
         var (org, mission) = await CreateTestMission(context);
         var metric = await CreateTestMetric(context, mission.Id, org.Id, maxValue: 100m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.IsSuccess.Should().BeTrue();
@@ -863,7 +863,7 @@ public class MissionProgressServiceTests
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 60m, confidenceLevel: 4);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.Value!.Progress.Should().Be(60m);
@@ -880,7 +880,7 @@ public class MissionProgressServiceTests
             type: IndicatorType.Qualitative, maxValue: null);
         await CreateTestCheckin(context, metric.Id, org.Id, text: "Going well", confidenceLevel: 4);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.Value!.Progress.Should().Be(80m); // 4/5*100
@@ -901,7 +901,7 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, metric.Id, org.Id, value: 30m, confidenceLevel: 3,
             checkinDate: DateTime.UtcNow);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         // baseline=50, current=30, target=10 → (50-30)/(50-10) = 20/40 = 50%
@@ -910,38 +910,38 @@ public class MissionProgressServiceTests
     }
 
     [Fact]
-    public async Task GetIndicatorProgress_WithCheckin_ReturnsCollaboratorName()
+    public async Task GetIndicatorProgress_WithCheckin_ReturnsEmployeeName()
     {
         await using var context = CreateInMemoryContext();
         var (org, mission) = await CreateTestMission(context);
         var metric = await CreateTestMetric(context, mission.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 50m,
-            collaboratorName: "João Silva");
+            employeeName: "João Silva");
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.LastCheckinCollaboratorName.Should().Be("João Silva");
+        result.Value!.LastCheckinEmployeeName.Should().Be("João Silva");
     }
 
     [Fact]
-    public async Task GetIndicatorProgress_NoCheckins_ReturnsNullCollaboratorName()
+    public async Task GetIndicatorProgress_NoCheckins_ReturnsNullEmployeeName()
     {
         await using var context = CreateInMemoryContext();
         var (org, mission) = await CreateTestMission(context);
         var metric = await CreateTestMetric(context, mission.Id, org.Id, maxValue: 100m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.LastCheckinCollaboratorName.Should().BeNull();
+        result.Value!.LastCheckinEmployeeName.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetIndicatorProgress_MultipleCheckins_ReturnsLatestCollaboratorName()
+    public async Task GetIndicatorProgress_MultipleCheckins_ReturnsLatestEmployeeName()
     {
         await using var context = CreateInMemoryContext();
         var (org, mission) = await CreateTestMission(context);
@@ -949,44 +949,44 @@ public class MissionProgressServiceTests
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
 
         await CreateTestCheckin(context, metric.Id, org.Id, value: 20m,
-            checkinDate: DateTime.UtcNow.AddDays(-5), collaboratorName: "Maria Santos");
+            checkinDate: DateTime.UtcNow.AddDays(-5), employeeName: "Maria Santos");
         await CreateTestCheckin(context, metric.Id, org.Id, value: 70m,
-            checkinDate: DateTime.UtcNow, collaboratorName: "Pedro Oliveira");
+            checkinDate: DateTime.UtcNow, employeeName: "Pedro Oliveira");
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetIndicatorProgressAsync(metric.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.LastCheckinCollaboratorName.Should().Be("Pedro Oliveira");
+        result.Value!.LastCheckinEmployeeName.Should().Be("Pedro Oliveira");
     }
 
     // ---- Hierarchical Progress Propagation Tests ----
 
     [Fact]
-    public async Task GetProgressAsync_ParentGoal_AggregatesChildIndicators()
+    public async Task GetProgressAsync_ParentMission_AggregatesChildIndicators()
     {
         await using var context = CreateInMemoryContext();
         var (org, parent) = await CreateTestMission(context);
 
-        // Child goal with an indicator at 60%
-        var child = new Goal
+        // Child mission with an indicator at 60%
+        var child = new Mission
         {
             Id = Guid.NewGuid(),
-            Name = "Child Goal",
+            Name = "Child Mission",
             ParentId = parent.Id,
             StartDate = parent.StartDate,
             EndDate = parent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.Add(child);
+        context.Missions.Add(child);
         await context.SaveChangesAsync();
 
         var metric = await CreateTestMetric(context, child.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 60m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([parent.Id]);
 
         var progress = result.Value![0];
@@ -996,46 +996,46 @@ public class MissionProgressServiceTests
     }
 
     [Fact]
-    public async Task GetProgressAsync_ParentGoal_AggregatesGrandchildIndicators()
+    public async Task GetProgressAsync_ParentMission_AggregatesGrandchildIndicators()
     {
         await using var context = CreateInMemoryContext();
         var (org, grandparent) = await CreateTestMission(context);
 
-        var child = new Goal
+        var child = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Child",
             ParentId = grandparent.Id,
             StartDate = grandparent.StartDate,
             EndDate = grandparent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        var grandchild = new Goal
+        var grandchild = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Grandchild",
             ParentId = child.Id,
             StartDate = grandparent.StartDate,
             EndDate = grandparent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.AddRange(child, grandchild);
+        context.Missions.AddRange(child, grandchild);
         await context.SaveChangesAsync();
 
         var metric = await CreateTestMetric(context, grandchild.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, metric.Id, org.Id, value: 80m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([grandparent.Id]);
 
         result.Value![0].OverallProgress.Should().Be(80m);
     }
 
     [Fact]
-    public async Task GetProgressAsync_ParentGoal_AveragesDirectAndDescendantIndicators()
+    public async Task GetProgressAsync_ParentMission_AveragesDirectAndDescendantIndicators()
     {
         await using var context = CreateInMemoryContext();
         var (org, parent) = await CreateTestMission(context);
@@ -1046,24 +1046,24 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, directMetric.Id, org.Id, value: 100m);
 
         // Child with indicator at 60%
-        var child = new Goal
+        var child = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Child",
             ParentId = parent.Id,
             StartDate = parent.StartDate,
             EndDate = parent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.Add(child);
+        context.Missions.Add(child);
         await context.SaveChangesAsync();
 
         var childMetric = await CreateTestMetric(context, child.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, childMetric.Id, org.Id, value: 60m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([parent.Id]);
 
         var progress = result.Value![0];
@@ -1074,7 +1074,7 @@ public class MissionProgressServiceTests
     }
 
     [Fact]
-    public async Task GetProgressAsync_ChildGoal_DoesNotIncludeParentIndicators()
+    public async Task GetProgressAsync_ChildMission_DoesNotIncludeParentIndicators()
     {
         await using var context = CreateInMemoryContext();
         var (org, parent) = await CreateTestMission(context);
@@ -1085,24 +1085,24 @@ public class MissionProgressServiceTests
         await CreateTestCheckin(context, parentMetric.Id, org.Id, value: 100m);
 
         // Child with indicator at 40%
-        var child = new Goal
+        var child = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Child",
             ParentId = parent.Id,
             StartDate = parent.StartDate,
             EndDate = parent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.Add(child);
+        context.Missions.Add(child);
         await context.SaveChangesAsync();
 
         var childMetric = await CreateTestMetric(context, child.Id, org.Id,
             quantitativeType: QuantitativeIndicatorType.Achieve, maxValue: 100m);
         await CreateTestCheckin(context, childMetric.Id, org.Id, value: 40m);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         // Ask for child progress only — should NOT include parent's 100%
         var result = await service.GetProgressAsync([child.Id]);
 
@@ -1120,23 +1120,23 @@ public class MissionProgressServiceTests
         await CreateTestMetric(context, parent.Id, org.Id);
         await CreateTestMetric(context, parent.Id, org.Id);
 
-        // 1 child goal with its own indicator
-        var child = new Goal
+        // 1 child mission with its own indicator
+        var child = new Mission
         {
             Id = Guid.NewGuid(),
             Name = "Child",
             ParentId = parent.Id,
             StartDate = parent.StartDate,
             EndDate = parent.EndDate,
-            Status = GoalStatus.Active,
+            Status = MissionStatus.Active,
             OrganizationId = org.Id
         };
-        context.Goals.Add(child);
+        context.Missions.Add(child);
         await context.SaveChangesAsync();
 
         await CreateTestMetric(context, child.Id, org.Id);
 
-        var service = new GoalProgressService(context);
+        var service = new MissionProgressService(context);
         var result = await service.GetProgressAsync([parent.Id]);
 
         result.IsSuccess.Should().BeTrue();

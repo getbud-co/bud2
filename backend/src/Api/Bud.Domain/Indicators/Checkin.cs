@@ -7,8 +7,8 @@ public sealed class Checkin : ITenantEntity
     public Organization Organization { get; set; } = null!;
     public Guid IndicatorId { get; set; }
     public Indicator Indicator { get; set; } = null!;
-    public Guid CollaboratorId { get; set; }
-    public Collaborator Collaborator { get; set; } = null!;
+    public Guid EmployeeId { get; set; }
+    public Employee Employee { get; set; } = null!;
 
     public decimal? Value { get; set; }
     public string? Text { get; set; }
@@ -21,7 +21,7 @@ public sealed class Checkin : ITenantEntity
         Guid id,
         Guid organizationId,
         Guid indicatorId,
-        Guid collaboratorId,
+        Guid employeeId,
         decimal? value,
         string? text,
         DateTime checkinDate,
@@ -38,7 +38,7 @@ public sealed class Checkin : ITenantEntity
             throw new DomainInvariantException("Check-in deve pertencer a um indicador válido.");
         }
 
-        if (collaboratorId == Guid.Empty)
+        if (employeeId == Guid.Empty)
         {
             throw new DomainInvariantException("Check-in deve ter um colaborador válido.");
         }
@@ -48,7 +48,7 @@ public sealed class Checkin : ITenantEntity
             Id = id,
             OrganizationId = organizationId,
             IndicatorId = indicatorId,
-            CollaboratorId = collaboratorId
+            EmployeeId = employeeId
         };
 
         checkin.Update(value, text, checkinDate, note, confidenceLevel);

@@ -6,7 +6,7 @@ public sealed partial class SecurityHeadersMiddleware(
 {
     private const string ContentSecurityPolicy =
         "default-src 'self'; " +
-        "script-src 'self' 'wasm-unsafe-eval'; " +
+        "script-src 'self'; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data:; " +
         "font-src 'self'; " +

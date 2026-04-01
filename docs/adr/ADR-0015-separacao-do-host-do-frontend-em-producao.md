@@ -5,7 +5,7 @@ Deprecated — conteudo movido para `DEPLOY.md` (secao "Topologia de producao").
 
 ## Contexto
 
-O Bud vinha publicando o frontend Blazor WebAssembly junto com o `Bud.Api`. Isso simplificava o bootstrap inicial, mas acoplava o deploy público da interface ao ciclo de release da API e impedia a evolução do frontend como serviço separado sem trocar a URL pública do ambiente produtivo.
+O Bud avaliou hospedar o frontend junto com o `Bud.Api`. Isso simplificava o bootstrap inicial, mas acoplava o deploy público da interface ao ciclo de release da API e impedia a evolução do frontend como serviço separado sem trocar a URL pública do ambiente produtivo.
 
 Em produção, a URL pública existente é a URL do Cloud Run do serviço `bud-web`, e o fluxo operacional já estava automatizado com `Cloud Build` + `Cloud Run` + job de migração EF Core.
 
@@ -13,13 +13,13 @@ Em produção, a URL pública existente é a URL do Cloud Run do serviço `bud-w
 
 Adotar separação de hosting em produção com três serviços:
 
-- `bud-web`: frontend público Blazor WASM em container estático.
+- `bud-web`: frontend público Next.js em container Node.js.
 - `bud-api`: API ASP.NET Core dedicada.
 - `bud-mcp`: servidor MCP HTTP.
 
 O `bud-web` passa a servir apenas os assets do frontend e a fazer proxy reverso para `bud-api` em `/api/*`, `/health/*`, `/swagger/*` e `/openapi/*`, preservando a URL pública existente e o modelo same-origin para o browser.
 
-O `Bud.Api` deixa de referenciar `Bud.BlazorWasm` e deixa de ser responsável por `UseBlazorFrameworkFiles`, `UseStaticFiles` e `MapFallbackToFile("index.html")`.
+O `Bud.Api` deixa de ser responsável por servir os arquivos públicos do frontend e por definir o fallback de navegação da interface web.
 
 ## Consequências
 

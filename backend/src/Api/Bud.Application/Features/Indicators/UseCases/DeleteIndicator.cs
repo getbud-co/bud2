@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -7,9 +8,11 @@ namespace Bud.Application.Features.Indicators.UseCases;
 public sealed partial class DeleteIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<DeleteIndicator> logger,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -20,6 +23,13 @@ public sealed partial class DeleteIndicator(
         {
             LogIndicatorDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.IndicatorNotFound);
+        }
+
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(id), cancellationToken);
+        if (!canWrite)
+        {
+            LogIndicatorDeletionFailed(logger, id, UserErrorMessages.IndicatorDeleteForbidden);
+            return Result.Forbidden(UserErrorMessages.IndicatorDeleteForbidden);
         }
 
         await indicatorRepository.RemoveAsync(indicator, cancellationToken);

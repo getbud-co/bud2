@@ -11,14 +11,14 @@ public sealed class TeamResponse
     public Guid LeaderId { get; set; }
     public TeamResponse? ParentTeam { get; set; }
     public List<TeamResponse> SubTeams { get; set; } = [];
-    public List<CollaboratorResponse> Collaborators { get; set; } = [];
-    public CollaboratorResponse? Leader { get; set; }
+    public List<EmployeeResponse> Employees { get; set; } = [];
+    public EmployeeResponse? Leader { get; set; }
 }
 
-public sealed class TeamCollaboratorEligibleResponse
+public sealed class TeamEmployeeEligibleResponse
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public CollaboratorRole Role { get; set; }
+    public EmployeeRole Role { get; set; }
 }

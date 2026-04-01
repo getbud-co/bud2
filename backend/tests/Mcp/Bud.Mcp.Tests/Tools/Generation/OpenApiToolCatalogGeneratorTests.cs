@@ -7,7 +7,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
 {
     private static readonly string[] MissionCreateRequiredFields = ["name", "startDate", "endDate", "status"];
     private static readonly string[] MissionUpdateRequiredFields = ["id", "payload"];
-    private static readonly string[] IndicatorCreateRequiredFields = ["goalId", "name", "type"];
+    private static readonly string[] IndicatorCreateRequiredFields = ["missionId", "name", "type"];
 
     [Fact]
     public void BuildCatalogJson_GeneratesMissionCreateSchemaWithRequiredFields()
@@ -15,7 +15,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
         var json = OpenApiToolCatalogGenerator.BuildCatalogJson(SampleOpenApi);
         var root = JsonNode.Parse(json)!.AsObject();
         var tools = root["tools"]!.AsArray();
-        var missionCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "goal_create")!.AsObject();
+        var missionCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "mission_create")!.AsObject();
 
         var schema = missionCreate["inputSchema"]!.AsObject();
         schema["type"]!.GetValue<string>().Should().Be("object");
@@ -29,7 +29,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
         var json = OpenApiToolCatalogGenerator.BuildCatalogJson(SampleOpenApi);
         var root = JsonNode.Parse(json)!.AsObject();
         var tools = root["tools"]!.AsArray();
-        var missionUpdate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "goal_update")!.AsObject();
+        var missionUpdate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "mission_update")!.AsObject();
 
         var schema = missionUpdate["inputSchema"]!.AsObject();
         var required = schema["required"]!.AsArray().Select(n => n!.GetValue<string>());
@@ -43,7 +43,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
         var json = OpenApiToolCatalogGenerator.BuildCatalogJson(SampleOpenApi);
         var root = JsonNode.Parse(json)!.AsObject();
         var tools = root["tools"]!.AsArray();
-        var indicatorCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "goal_indicator_create")!.AsObject();
+        var indicatorCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "mission_indicator_create")!.AsObject();
 
         var schema = indicatorCreate["inputSchema"]!.AsObject();
         schema["type"]!.GetValue<string>().Should().Be("object");
@@ -57,7 +57,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
         var json = OpenApiToolCatalogGenerator.BuildCatalogJson(SampleOpenApiWithoutRequired);
         var root = JsonNode.Parse(json)!.AsObject();
         var tools = root["tools"]!.AsArray();
-        var missionCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "goal_create")!.AsObject();
+        var missionCreate = tools.Single(tool => tool!["name"]!.GetValue<string>() == "mission_create")!.AsObject();
 
         var schema = missionCreate["inputSchema"]!.AsObject();
         var required = schema["required"]!.AsArray().Select(n => n!.GetValue<string>()).ToList();
@@ -70,13 +70,13 @@ public sealed class OpenApiToolCatalogGeneratorTests
     {
       "openapi": "3.0.1",
       "paths": {
-        "/api/goals": {
+        "/api/missions": {
           "post": {
             "requestBody": {
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/CreateGoalRequest"
+                    "$ref": "#/components/schemas/CreateMissionRequest"
                   }
                 }
               }
@@ -90,7 +90,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
             ]
           }
         },
-        "/api/goals/{id}": {
+        "/api/missions/{id}": {
           "get": {
             "parameters": [
               { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
@@ -104,7 +104,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/PatchGoalRequest"
+                    "$ref": "#/components/schemas/PatchMissionRequest"
                   }
                 }
               }
@@ -137,7 +137,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
       },
       "components": {
         "schemas": {
-          "CreateGoalRequest": {
+          "CreateMissionRequest": {
             "type": "object",
             "required": ["name", "startDate", "endDate", "status"],
             "properties": {
@@ -147,7 +147,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
               "status": { "type": "integer", "format": "int32" }
             }
           },
-          "PatchGoalRequest": {
+          "PatchMissionRequest": {
             "type": "object",
             "required": ["name", "startDate", "endDate", "status"],
             "properties": {
@@ -159,9 +159,9 @@ public sealed class OpenApiToolCatalogGeneratorTests
           },
           "CreateIndicatorRequest": {
             "type": "object",
-            "required": ["goalId", "name", "type"],
+            "required": ["missionId", "name", "type"],
             "properties": {
-              "goalId": { "type": "string", "format": "uuid" },
+              "missionId": { "type": "string", "format": "uuid" },
               "name": { "type": "string" },
               "type": { "type": "integer", "format": "int32" }
             }
@@ -199,13 +199,13 @@ public sealed class OpenApiToolCatalogGeneratorTests
     {
       "openapi": "3.0.1",
       "paths": {
-        "/api/goals": {
+        "/api/missions": {
           "post": {
             "requestBody": {
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/CreateGoalRequest"
+                    "$ref": "#/components/schemas/CreateMissionRequest"
                   }
                 }
               }
@@ -213,9 +213,9 @@ public sealed class OpenApiToolCatalogGeneratorTests
           },
           "get": { "parameters": [] }
         },
-        "/api/goals/{id}": {
+        "/api/missions/{id}": {
           "get": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] },
-          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchGoalRequest" } } } } },
+          "patch": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PatchMissionRequest" } } } } },
           "delete": { "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } } ] }
         },
         "/api/indicators": {
@@ -239,7 +239,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
       },
       "components": {
         "schemas": {
-          "CreateGoalRequest": {
+          "CreateMissionRequest": {
             "type": "object",
             "properties": {
               "name": { "type": "string" },
@@ -249,7 +249,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
               "status": { "type": "integer", "format": "int32" }
             }
           },
-          "PatchGoalRequest": {
+          "PatchMissionRequest": {
             "type": "object",
             "properties": {
               "name": { "type": "string" },
@@ -261,7 +261,7 @@ public sealed class OpenApiToolCatalogGeneratorTests
           "CreateIndicatorRequest": {
             "type": "object",
             "properties": {
-              "goalId": { "type": "string", "format": "uuid" },
+              "missionId": { "type": "string", "format": "uuid" },
               "name": { "type": "string" },
               "type": { "type": "integer", "format": "int32" }
             }

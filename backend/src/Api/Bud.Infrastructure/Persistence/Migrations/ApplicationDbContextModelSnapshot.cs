@@ -748,6 +748,69 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("RecipientCollaborator");
                 });
 
+            modelBuilder.Entity("Bud.Domain.Collaborators.Collaborator", b =>
+                {
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Leader")
+                        .WithMany()
+                        .HasForeignKey("LeaderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Teams.Team", "Team")
+                        .WithMany("Collaborators")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Leader");
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorAccessLog", b =>
+                {
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
+                        .WithMany()
+                        .HasForeignKey("CollaboratorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Collaborator");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Collaborators.CollaboratorTeam", b =>
+                {
+                    b.HasOne("Bud.Domain.Collaborators.Collaborator", "Collaborator")
+                        .WithMany("CollaboratorTeams")
+                        .HasForeignKey("CollaboratorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Teams.Team", "Team")
+                        .WithMany("CollaboratorTeams")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collaborator");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
                 {
                     b.HasOne("Bud.Domain.Collaborators.Collaborator", "Leader")

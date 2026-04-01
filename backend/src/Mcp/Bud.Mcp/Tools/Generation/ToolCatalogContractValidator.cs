@@ -6,16 +6,16 @@ public static class ToolCatalogContractValidator
 {
     private static readonly Dictionary<string, string[]> RequiredByTool = new(StringComparer.Ordinal)
     {
-        ["goal_create"] = ["name", "startDate", "endDate", "status"],
-        ["goal_indicator_create"] = ["goalId", "name", "type"],
+        ["mission_create"] = ["name", "startDate", "endDate", "status"],
+        ["mission_indicator_create"] = ["missionId", "name", "type"],
         ["indicator_checkin_create"] = ["checkinDate", "confidenceLevel"],
-        ["goal_update"] = ["id", "payload"],
-        ["goal_indicator_update"] = ["id", "payload"],
+        ["mission_update"] = ["id", "payload"],
+        ["mission_indicator_update"] = ["id", "payload"],
         ["indicator_checkin_update"] = ["indicatorId", "checkinId", "payload"],
-        ["goal_get"] = ["id"],
-        ["goal_delete"] = ["id"],
-        ["goal_indicator_get"] = ["id"],
-        ["goal_indicator_delete"] = ["id"],
+        ["mission_get"] = ["id"],
+        ["mission_delete"] = ["id"],
+        ["mission_indicator_get"] = ["id"],
+        ["mission_indicator_delete"] = ["id"],
         ["indicator_checkin_get"] = ["indicatorId", "checkinId"],
         ["indicator_checkin_delete"] = ["indicatorId", "checkinId"]
     };

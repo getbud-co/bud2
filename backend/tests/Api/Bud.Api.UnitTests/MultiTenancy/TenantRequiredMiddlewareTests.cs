@@ -202,7 +202,7 @@ public sealed class TenantRequiredMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_GlobalAdminWithTenant_CallsNextWithoutValidation()
+    public async Task InvokeAsync_GlobalAdminWithTenant_ValidatesTenantAccess()
     {
         // Arrange
         var nextCalled = false;
@@ -219,15 +219,19 @@ public sealed class TenantRequiredMiddlewareTests
         tenantProvider.SetupGet(t => t.TenantId).Returns(tenantId);
 
         var tenantAuth = new Mock<ITenantAuthorizationService>();
+        tenantAuth
+            .Setup(t => t.UserBelongsToTenantAsync(tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         // Act
         await middleware.InvokeAsync(context, tenantProvider.Object, tenantAuth.Object);
 
         // Assert
-        nextCalled.Should().BeTrue();
+        nextCalled.Should().BeFalse();
+        context.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
         tenantAuth.Verify(
-            t => t.UserBelongsToTenantAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            t => t.UserBelongsToTenantAsync(tenantId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using Bud.Shared.Contracts;
+using Bud.Domain.ValueObjects;
 using FluentValidation;
 
 namespace Bud.Api.Features.Organizations;

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -5,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed record CreateIndicatorCommand(
-    Guid GoalId,
+    Guid MissionId,
     string Name,
     IndicatorType Type,
     QuantitativeIndicatorType? QuantitativeType,
@@ -17,28 +18,39 @@ public sealed record CreateIndicatorCommand(
 public sealed partial class CreateIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<CreateIndicator> logger,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Indicator>> ExecuteAsync(
+        ClaimsPrincipal user,
         CreateIndicatorCommand command,
         CancellationToken cancellationToken = default)
     {
-        LogCreatingIndicator(logger, command.Name, command.GoalId);
+        LogCreatingIndicator(logger, command.Name, command.MissionId);
 
-        var goal = await indicatorRepository.GetGoalByIdAsync(command.GoalId, cancellationToken);
-
-        if (goal is null)
+        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
+            user,
+            new CreateIndicatorContext(command.MissionId),
+            cancellationToken);
+        if (!authorizationResult.IsSuccess)
         {
-            LogIndicatorCreationFailed(logger, command.Name, "Goal not found");
-            return Result<Indicator>.NotFound(UserErrorMessages.GoalNotFound);
+            LogIndicatorCreationFailed(logger, command.Name, authorizationResult.Error ?? "Authorization failed");
+            return authorizationResult.ToFailureResult<Indicator>();
+        }
+
+        var mission = await indicatorRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
+        if (mission is null)
+        {
+            LogIndicatorCreationFailed(logger, command.Name, "Mission not found after authorization");
+            return Result<Indicator>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
         try
         {
             var indicator = Indicator.Create(
                 Guid.NewGuid(),
-                goal.OrganizationId,
-                command.GoalId,
+                mission.OrganizationId,
+                command.MissionId,
                 command.Name,
                 command.Type);
 
@@ -57,8 +69,8 @@ public sealed partial class CreateIndicator(
         }
     }
 
-    [LoggerMessage(EventId = 4050, Level = LogLevel.Information, Message = "Creating indicator '{Name}' for goal {GoalId}")]
-    private static partial void LogCreatingIndicator(ILogger logger, string name, Guid goalId);
+    [LoggerMessage(EventId = 4050, Level = LogLevel.Information, Message = "Creating indicator '{Name}' for mission {MissionId}")]
+    private static partial void LogCreatingIndicator(ILogger logger, string name, Guid missionId);
 
     [LoggerMessage(EventId = 4051, Level = LogLevel.Information, Message = "Indicator created successfully: {IndicatorId} - '{Name}'")]
     private static partial void LogIndicatorCreated(ILogger logger, Guid indicatorId, string name);

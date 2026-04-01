@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Bud.Shared.Contracts;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -30,7 +31,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var existingLeader = await dbContext.Collaborators
+        var existingLeader = await dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == "admin@getbud.co");
 
@@ -40,29 +41,25 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             return existingLeader.Id;
         }
 
-        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co", OwnerId = null };
+        var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co" };
         dbContext.Organizations.Add(org);
 
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
-        dbContext.Workspaces.Add(workspace);
-
-        var adminLeader = new Collaborator
+        var adminLeader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(adminLeader);
+        dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", WorkspaceId = workspace.Id, OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
         dbContext.Teams.Add(team);
 
         await dbContext.SaveChangesAsync();
 
         adminLeader.TeamId = team.Id;
-        org.OwnerId = adminLeader.Id;
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);
@@ -70,36 +67,35 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     /// <summary>
-    /// Creates an org with quantitative + qualitative metrics, plus a collaborator and tenant client.
-    /// The tenant client should be used for all checkin CRUD operations (requires CollaboratorId).
+    /// Creates an org with quantitative + qualitative metrics, plus a employee and tenant client.
+    /// The tenant client should be used for all checkin CRUD operations (requires EmployeeId).
     /// The admin client is used only for setup (orgs, missions, metrics).
     /// </summary>
-    private async Task<(Organization Org, Indicator QuantMetric, Indicator QualMetric, Collaborator Collaborator, HttpClient TenantClient)> CreateTestSetup()
+    private async Task<(Organization Org, Indicator QuantMetric, Indicator QualMetric, Employee Employee, HttpClient TenantClient)> CreateTestSetup()
     {
-        var leaderId = await GetOrCreateAdminLeader();
+        await GetOrCreateAdminLeader();
         var orgResponse = await _adminClient.PostAsJsonAsync("/api/organizations",
             new CreateOrganizationRequest
             {
-                Name = $"checkin-org-{Guid.NewGuid():N}.com",
-                OwnerId = leaderId,
+                Name = $"checkin-org-{Guid.NewGuid():N}.com"
             });
         var org = (await orgResponse.Content.ReadFromJsonAsync<Organization>())!;
         SetTenantHeader(org.Id);
 
-        var missionResponse = await _adminClient.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        var missionResponse = await _adminClient.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Checkin Test Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(30),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Active,
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Active,
             });
-        var mission = (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
+        var mission = (await missionResponse.Content.ReadFromJsonAsync<Mission>())!;
 
         var quantMetricResponse = await _adminClient.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission.Id,
+                MissionId = mission.Id,
                 Name = "NPS Score",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                 QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -111,25 +107,25 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var qualMetricResponse = await _adminClient.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission.Id,
+                MissionId = mission.Id,
                 Name = "Quality Standards",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Qualitative,
                 TargetText = "Achieve high quality"
             });
         var qualMetric = (await qualMetricResponse.Content.ReadFromJsonAsync<Indicator>())!;
 
-        var collaborator = await CreateCollaboratorInOrg(org.Id);
-        var tenantClient = _factory.CreateTenantClient(org.Id, collaborator.Email, collaborator.Id);
+        var employee = await CreateEmployeeInOrg(org.Id);
+        var tenantClient = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);
 
-        return (org, quantMetric, qualMetric, collaborator, tenantClient);
+        return (org, quantMetric, qualMetric, employee, tenantClient);
     }
 
-    private async Task<Collaborator> CreateCollaboratorInOrg(Guid organizationId, CollaboratorRole role = CollaboratorRole.IndividualContributor)
+    private async Task<Employee> CreateEmployeeInOrg(Guid organizationId, EmployeeRole role = EmployeeRole.IndividualContributor)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
 
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
@@ -138,10 +134,10 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             OrganizationId = organizationId
         };
 
-        dbContext.Collaborators.Add(collaborator);
+        dbContext.Employees.Add(employee);
         await dbContext.SaveChangesAsync();
 
-        return collaborator;
+        return employee;
     }
 
     #region Create Tests
@@ -344,6 +340,14 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         updated!.Value.Should().Be(75m);
         updated.ConfidenceLevel.Should().Be(5);
         updated.Note.Should().Be("Nota atualizada");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var persisted = await getResponse.Content.ReadFromJsonAsync<Checkin>();
+        persisted.Should().NotBeNull();
+        persisted!.Value.Should().Be(75m);
+        persisted.ConfidenceLevel.Should().Be(5);
+        persisted.Note.Should().Be("Nota atualizada");
     }
 
     [Fact]
@@ -367,9 +371,9 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     [Fact]
-    public async Task Update_ByDifferentCollaborator_ReturnsForbidden()
+    public async Task Update_ByDifferentEmployee_ReturnsForbidden()
     {
-        // Arrange: Create checkin as one collaborator, try to update as another
+        // Arrange: Create checkin as one employee, try to update as another
         var (org, quantMetric, _, _, client) = await CreateTestSetup();
 
         var createResponse = await client.PostAsJsonAsync($"/api/indicators/{quantMetric.Id}/checkins",
@@ -382,9 +386,9 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = (await createResponse.Content.ReadFromJsonAsync<Checkin>())!;
 
-        // Create a different collaborator and tenant client
-        var otherCollaborator = await CreateCollaboratorInOrg(org.Id);
-        var otherClient = _factory.CreateTenantClient(org.Id, otherCollaborator.Email, otherCollaborator.Id);
+        // Create a different employee and tenant client
+        var otherEmployee = await CreateEmployeeInOrg(org.Id);
+        var otherClient = _factory.CreateTenantClient(org.Id, otherEmployee.Email, otherEmployee.Id);
 
         var updateRequest = new PatchCheckinRequest
         {
@@ -398,6 +402,16 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Apenas o autor pode editar este check-in.");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var unchanged = await getResponse.Content.ReadFromJsonAsync<Checkin>();
+        unchanged.Should().NotBeNull();
+        unchanged!.Value.Should().Be(50m);
+        unchanged.ConfidenceLevel.Should().Be(3);
     }
 
     #endregion
@@ -445,7 +459,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     [Fact]
-    public async Task Delete_ByDifferentCollaborator_ReturnsForbidden()
+    public async Task Delete_ByDifferentEmployee_ReturnsForbidden()
     {
         // Arrange
         var (org, quantMetric, _, _, client) = await CreateTestSetup();
@@ -460,14 +474,20 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = (await createResponse.Content.ReadFromJsonAsync<Checkin>())!;
 
-        var otherCollaborator = await CreateCollaboratorInOrg(org.Id);
-        var otherClient = _factory.CreateTenantClient(org.Id, otherCollaborator.Email, otherCollaborator.Id);
+        var otherEmployee = await CreateEmployeeInOrg(org.Id);
+        var otherClient = _factory.CreateTenantClient(org.Id, otherEmployee.Email, otherEmployee.Id);
 
         // Act
         var response = await otherClient.DeleteAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Apenas o autor pode excluir este check-in.");
+
+        var getResponse = await client.GetAsync($"/api/indicators/{created.IndicatorId}/checkins/{created.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     #endregion
@@ -604,35 +624,35 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task Create_WithTenantMismatch_ReturnsNotFound()
     {
-        // Arrange: Create metric in org2, try to checkin as collaborator from org1
+        // Arrange: Create metric in org2, try to checkin as employee from org1
         // Note: Global query filters return 404 (not found) instead of 403 (forbidden)
         // This is more secure as it doesn't reveal the existence of resources in other tenants
-        var leaderId = await GetOrCreateAdminLeader();
+        await GetOrCreateAdminLeader();
 
         var org1Response = await _adminClient.PostAsJsonAsync("/api/organizations",
-            new CreateOrganizationRequest { Name = $"checkin-org1-{Guid.NewGuid():N}.com", OwnerId = leaderId });
+            new CreateOrganizationRequest { Name = $"checkin-org1-{Guid.NewGuid():N}.com" });
         var org1 = (await org1Response.Content.ReadFromJsonAsync<Organization>())!;
 
         var org2Response = await _adminClient.PostAsJsonAsync("/api/organizations",
-            new CreateOrganizationRequest { Name = $"checkin-org2-{Guid.NewGuid():N}.com", OwnerId = leaderId });
+            new CreateOrganizationRequest { Name = $"checkin-org2-{Guid.NewGuid():N}.com" });
         var org2 = (await org2Response.Content.ReadFromJsonAsync<Organization>())!;
         SetTenantHeader(org2.Id);
 
         // Create mission and metric in org2
-        var missionResponse = await _adminClient.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        var missionResponse = await _adminClient.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Org2 Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(30),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Active,
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Active,
             });
-        var mission = (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
+        var mission = (await missionResponse.Content.ReadFromJsonAsync<Mission>())!;
 
         var metricResponse = await _adminClient.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission.Id,
+                MissionId = mission.Id,
                 Name = "Cross-Org Metric",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                 QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -641,9 +661,9 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             });
         var metric = (await metricResponse.Content.ReadFromJsonAsync<Indicator>())!;
 
-        // Create collaborator in org1 and try to checkin on org2's metric
-        var collaborator = await CreateCollaboratorInOrg(org1.Id);
-        var tenantClient = _factory.CreateTenantClient(org1.Id, collaborator.Email, collaborator.Id);
+        // Create employee in org1 and try to checkin on org2's metric
+        var employee = await CreateEmployeeInOrg(org1.Id);
+        var tenantClient = _factory.CreateTenantClient(org1.Id, employee.Email, employee.Id);
         var indicatorId = metric.Id;
 
         var request = new CreateCheckinRequest
@@ -661,35 +681,35 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     }
 
     [Fact]
-    public async Task Create_WithCollaboratorScopedMission_AnyOrgMemberCanCheckin()
+    public async Task Create_WithEmployeeScopedMission_AnyOrgMemberCanCheckin()
     {
-        // Arrange: Create collaborator-scoped mission
-        var leaderId = await GetOrCreateAdminLeader();
+        // Arrange: Create employee-scoped mission
+        await GetOrCreateAdminLeader();
 
         var orgResponse = await _adminClient.PostAsJsonAsync("/api/organizations",
-            new CreateOrganizationRequest { Name = $"scope-collab-{Guid.NewGuid():N}.com", OwnerId = leaderId });
+            new CreateOrganizationRequest { Name = $"scope-collab-{Guid.NewGuid():N}.com" });
         var org = (await orgResponse.Content.ReadFromJsonAsync<Organization>())!;
         SetTenantHeader(org.Id);
 
-        var owner = await CreateCollaboratorInOrg(org.Id);
-        var other = await CreateCollaboratorInOrg(org.Id);
+        var owner = await CreateEmployeeInOrg(org.Id);
+        var other = await CreateEmployeeInOrg(org.Id);
 
-        // Create collaborator-scoped mission
-        var missionResponse = await _adminClient.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        // Create employee-scoped mission
+        var missionResponse = await _adminClient.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Personal Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(30),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Active,
-                CollaboratorId = owner.Id
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Active,
+                EmployeeId = owner.Id
             });
-        var mission = (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
+        var mission = (await missionResponse.Content.ReadFromJsonAsync<Mission>())!;
 
         var metricResponse = await _adminClient.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission.Id,
+                MissionId = mission.Id,
                 Name = "Personal Metric",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                 QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,
@@ -706,12 +726,12 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             ConfidenceLevel = 3
         };
 
-        // Act: Owner should succeed
+        // Act: Leader should succeed
         var ownerClient = _factory.CreateTenantClient(org.Id, owner.Email, owner.Id);
         var ownerResponse = await ownerClient.PostAsJsonAsync($"/api/indicators/{indicatorId}/checkins", request);
         ownerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        // Act: Other collaborator from same org should also succeed (scope-based restriction removed)
+        // Act: Other employee from same org should also succeed (scope-based restriction removed)
         var otherClient = _factory.CreateTenantClient(org.Id, other.Email, other.Id);
         var otherResponse = await otherClient.PostAsJsonAsync($"/api/indicators/{indicatorId}/checkins", request);
         otherResponse.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -721,55 +741,51 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
     public async Task Create_WithTeamScopedMission_TeamMemberCanCheckin()
     {
         // Arrange: Create team-scoped mission
-        var adminLeaderId = await GetOrCreateAdminLeader();
+        await GetOrCreateAdminLeader();
 
         var orgResponse = await _adminClient.PostAsJsonAsync("/api/organizations",
-            new CreateOrganizationRequest { Name = $"scope-team-{Guid.NewGuid():N}.com", OwnerId = adminLeaderId });
+            new CreateOrganizationRequest { Name = $"scope-team-{Guid.NewGuid():N}.com" });
         var org = (await orgResponse.Content.ReadFromJsonAsync<Organization>())!;
         SetTenantHeader(org.Id);
 
-        var wsResponse = await _adminClient.PostAsJsonAsync("/api/workspaces",
-            new CreateWorkspaceRequest { Name = "Test WS", OrganizationId = org.Id });
-        var ws = (await wsResponse.Content.ReadFromJsonAsync<Workspace>())!;
-
         // Create leader in the new org for team creation
-        var orgLeader = await CreateCollaboratorInOrg(org.Id, CollaboratorRole.Leader);
+        var orgLeader = await CreateEmployeeInOrg(org.Id, EmployeeRole.Leader);
 
         var teamResponse = await _adminClient.PostAsJsonAsync("/api/teams",
-            new CreateTeamRequest { Name = "Test Team", WorkspaceId = ws.Id, LeaderId = orgLeader.Id });
+            new CreateTeamRequest { Name = "Test Team", LeaderId = orgLeader.Id });
         var team = (await teamResponse.Content.ReadFromJsonAsync<Team>())!;
 
-        // Create collaborators
-        var member = await CreateCollaboratorInOrg(org.Id);
-        var outsider = await CreateCollaboratorInOrg(org.Id);
+        // Create employees
+        var member = await CreateEmployeeInOrg(org.Id);
+        var outsider = await CreateEmployeeInOrg(org.Id);
 
         // Add member to team
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
-            dbContext.Set<CollaboratorTeam>().Add(new CollaboratorTeam
+            dbContext.Set<EmployeeTeam>().Add(new EmployeeTeam
             {
-                CollaboratorId = member.Id,
+                EmployeeId = member.Id,
                 TeamId = team.Id
             });
             await dbContext.SaveChangesAsync();
         }
 
         // Create mission with metric (team scope is no longer modeled via ScopeType)
-        var missionResponse = await _adminClient.PostAsJsonAsync("/api/goals",
-            new CreateGoalRequest
+        var missionResponse = await _adminClient.PostAsJsonAsync("/api/missions",
+            new CreateMissionRequest
             {
                 Name = "Team Mission",
                 StartDate = DateTime.UtcNow,
                 EndDate = DateTime.UtcNow.AddDays(30),
-                Status = Bud.Shared.Kernel.Enums.GoalStatus.Active,
+                Status = Bud.Shared.Kernel.Enums.MissionStatus.Active,
             });
-        var mission = (await missionResponse.Content.ReadFromJsonAsync<Goal>())!;
+        var mission = (await missionResponse.Content.ReadFromJsonAsync<Mission>())!;
 
         var metricResponse = await _adminClient.PostAsJsonAsync("/api/indicators",
             new CreateIndicatorRequest
             {
-                GoalId = mission.Id,
+                MissionId = mission.Id,
                 Name = "Team Metric",
                 Type = Bud.Shared.Kernel.Enums.IndicatorType.Quantitative,
                 QuantitativeType = Bud.Shared.Kernel.Enums.QuantitativeIndicatorType.Achieve,

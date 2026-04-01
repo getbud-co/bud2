@@ -16,12 +16,12 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
 
-        var collaborator = await dbContext.Collaborators
+        var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
 
-        if (collaborator?.IsGlobalAdmin == true)
+        if (employee?.IsGlobalAdmin == true)
         {
             var allOrgs = await dbContext.Organizations
                 .AsNoTracking()
@@ -37,7 +37,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Success(allOrgs);
         }
 
-        var organizations = await dbContext.Collaborators
+        var orgsFromMembership = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(c => c.Email == normalizedEmail)
@@ -47,7 +47,11 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
                 Id = c.Organization.Id,
                 Name = c.Organization.Name
             })
-            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var organizations = orgsFromMembership
+            .GroupBy(o => o.Id)
+            .Select(g => g.First())
             .OrderBy(o => o.Name)
             .ToListAsync(cancellationToken);
 

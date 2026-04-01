@@ -7,8 +7,8 @@ public sealed class TemplateIndicator : ITenantEntity
     public Organization Organization { get; set; } = null!;
     public Guid TemplateId { get; set; }
     public Template Template { get; set; } = null!;
-    public Guid? TemplateGoalId { get; set; }
-    public TemplateGoal? TemplateGoal { get; set; }
+    public Guid? TemplateMissionId { get; set; }
+    public TemplateMission? TemplateMission { get; set; }
 
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
@@ -30,7 +30,7 @@ public sealed class TemplateIndicator : ITenantEntity
         string name,
         IndicatorType type,
         int orderIndex,
-        Guid? templateGoalId,
+        Guid? templateMissionId,
         QuantitativeIndicatorType? quantitativeType,
         decimal? minValue,
         decimal? maxValue,
@@ -52,7 +52,7 @@ public sealed class TemplateIndicator : ITenantEntity
             Id = id,
             OrganizationId = organizationId,
             TemplateId = templateId,
-            TemplateGoalId = templateGoalId,
+            TemplateMissionId = templateMissionId,
             Name = name.Trim(),
             Type = type,
             OrderIndex = orderIndex
@@ -71,31 +71,12 @@ public sealed class TemplateIndicator : ITenantEntity
         string? targetText)
     {
         Type = type;
+        var target = IndicatorTargetDefinition.Create(type, quantitativeType, minValue, maxValue, unit, targetText);
 
-        if (type == IndicatorType.Qualitative)
-        {
-            TargetText = string.IsNullOrWhiteSpace(targetText) ? null : targetText.Trim();
-            QuantitativeType = null;
-            MinValue = null;
-            MaxValue = null;
-            Unit = null;
-            return;
-        }
-
-        if (quantitativeType is null)
-        {
-            throw new DomainInvariantException("Tipo quantitativo é obrigatório para indicadores quantitativos.");
-        }
-
-        if (minValue.HasValue && maxValue.HasValue)
-        {
-            _ = IndicatorRange.Create(minValue, maxValue);
-        }
-
-        QuantitativeType = quantitativeType;
-        MinValue = minValue;
-        MaxValue = maxValue;
-        Unit = unit;
-        TargetText = null;
+        QuantitativeType = target.QuantitativeType;
+        MinValue = target.MinValue;
+        MaxValue = target.MaxValue;
+        Unit = target.Unit;
+        TargetText = target.TargetText;
     }
 }

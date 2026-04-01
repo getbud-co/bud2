@@ -31,11 +31,11 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
     }
 
     [Fact]
-    public async Task GetMyDashboard_WithoutCollaboratorInToken_ReturnsForbidden()
+    public async Task GetMyDashboard_WithoutEmployeeInToken_ReturnsForbidden()
     {
         var tenantUser = await GetOrCreateTenantUserAsync();
         var client = _factory.CreateClient();
-        var token = JwtTestHelper.GenerateTenantUserTokenWithoutCollaborator(tenantUser.Email, tenantUser.OrganizationId);
+        var token = JwtTestHelper.GenerateTenantUserTokenWithoutEmployee(tenantUser.Email, tenantUser.OrganizationId);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         client.DefaultRequestHeaders.Add("X-Tenant-Id", tenantUser.OrganizationId.ToString());
 
@@ -44,14 +44,14 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        problem!.Detail.Should().Be("Colaborador não identificado.");
+        problem!.Detail.Should().Be("Funcionário não identificado.");
     }
 
     [Fact]
-    public async Task GetMyDashboard_WithValidAuthenticatedCollaborator_ReturnsOk()
+    public async Task GetMyDashboard_WithValidAuthenticatedEmployee_ReturnsOk()
     {
         var tenantUser = await GetOrCreateTenantUserAsync();
-        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.CollaboratorId);
+        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.EmployeeId);
 
         var response = await client.GetAsync("/api/me/dashboard");
 
@@ -59,7 +59,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
     }
 
     [Fact]
-    public async Task GetMyDashboard_WithUnknownCollaborator_ReturnsNotFound()
+    public async Task GetMyDashboard_WithUnknownEmployee_ReturnsNotFound()
     {
         var tenantUser = await GetOrCreateTenantUserAsync();
         var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, Guid.NewGuid());
@@ -69,7 +69,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        problem!.Detail.Should().Be("Colaborador não encontrado.");
+        problem!.Detail.Should().Be("Funcionário não encontrado.");
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
     {
         var tenantUser = await GetOrCreateTenantUserAsync();
         var teamId = await GetOrCreateTeamWithMemberAsync(tenantUser.OrganizationId);
-        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.CollaboratorId);
+        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.EmployeeId);
 
         var response = await client.GetAsync($"/api/me/dashboard?teamId={teamId}");
 
@@ -88,7 +88,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
     public async Task GetMyDashboard_WithNonExistentTeamId_ReturnsOkEmpty()
     {
         var tenantUser = await GetOrCreateTenantUserAsync();
-        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.CollaboratorId);
+        var client = _factory.CreateTenantClient(tenantUser.OrganizationId, tenantUser.Email, tenantUser.EmployeeId);
 
         var response = await client.GetAsync($"/api/me/dashboard?teamId={Guid.NewGuid()}");
 
@@ -100,57 +100,41 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var workspace = await dbContext.Workspaces
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(w => w.OrganizationId == organizationId);
-
-        if (workspace is null)
-        {
-            workspace = new Workspace
-            {
-                Id = Guid.NewGuid(),
-                Name = "WS Filter Test",
-                OrganizationId = organizationId
-            };
-            dbContext.Workspaces.Add(workspace);
-        }
-
         var teamId = Guid.NewGuid();
 
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Dashboard Filter Leader",
             Email = $"filter-leader-{teamId:N}@test.com",
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             TeamId = null,
             OrganizationId = organizationId
         };
-        dbContext.Collaborators.Add(leader);
+        dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
 
         var team = new Team
         {
             Id = teamId,
             Name = "Dashboard Filter Team",
-            WorkspaceId = workspace.Id,
             OrganizationId = organizationId,
             LeaderId = leader.Id
         };
         dbContext.Teams.Add(team);
 
-        var member = new Collaborator
+        var member = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Team Member",
             Email = $"team-member-{teamId:N}@test.com",
             OrganizationId = organizationId
         };
-        dbContext.Collaborators.Add(member);
+        dbContext.Employees.Add(member);
 
-        dbContext.Set<CollaboratorTeam>().Add(new CollaboratorTeam
+        dbContext.Set<EmployeeTeam>().Add(new EmployeeTeam
         {
-            CollaboratorId = member.Id,
+            EmployeeId = member.Id,
             TeamId = teamId
         });
 
@@ -158,20 +142,20 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         return teamId;
     }
 
-    private async Task<(Guid OrganizationId, Guid CollaboratorId, string Email)> GetOrCreateTenantUserAsync()
+    private async Task<(Guid OrganizationId, Guid EmployeeId, string Email)> GetOrCreateTenantUserAsync()
     {
         const string email = "admin@getbud.co";
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var collaborator = await dbContext.Collaborators
+        var employee = await dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == email);
 
-        if (collaborator is not null)
+        if (employee is not null)
         {
-            return (collaborator.OrganizationId, collaborator.Id, collaborator.Email);
+            return (employee.OrganizationId, employee.Id, employee.Email);
         }
 
         var org = new Organization
@@ -181,31 +165,22 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         };
         dbContext.Organizations.Add(org);
 
-        var workspace = new Workspace
-        {
-            Id = Guid.NewGuid(),
-            Name = "Principal",
-            OrganizationId = org.Id
-        };
-        dbContext.Workspaces.Add(workspace);
-
-        var leader = new Collaborator
+        var leader = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador Dashboard",
             Email = email,
-            Role = CollaboratorRole.Leader,
+            Role = EmployeeRole.Leader,
             TeamId = null,
             OrganizationId = org.Id
         };
-        dbContext.Collaborators.Add(leader);
+        dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Time Dashboard",
-            WorkspaceId = workspace.Id,
             OrganizationId = org.Id,
             LeaderId = leader.Id
         };
@@ -215,7 +190,6 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
 
         await dbContext.SaveChangesAsync();
 
-        org.OwnerId = leader.Id;
         await dbContext.SaveChangesAsync();
 
         return (org.Id, leader.Id, leader.Email);

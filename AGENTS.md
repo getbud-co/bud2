@@ -1,85 +1,56 @@
 # Agent Note (non-normative)
 
-Contract-Version: 2026-02-23
+Contract-Version: 2026-03-30
 
-This is the canonical agent contract for this repository.
-`CLAUDE.md` should point to this file and must not diverge.
+This is the base agent contract for the Bud monorepo.
+`CLAUDE.md` and `GEMINI.md` in the same directory should point to this file and must not diverge.
 
-## Monorepo Structure (Updated 2026-03-25)
+## Monorepo Structure
 
 The repository is organized as a monorepo with isolated backend and frontend directories:
 
 - **`backend/`**: ASP.NET Core 10 API, MCP server, and all backend tests
   - Solution file: `backend/Bud.sln`
-  - Dockerfile: `backend/Dockerfile` (dev targets) and `backend/Dockerfile.Production` (prod targets)
-  - Tests run from: `backend/` directory
-
-- **`frontend/`**: Next.js 15 frontend (replaces Blazor WASM)
+  - Dockerfiles: `backend/Dockerfile` and `backend/Dockerfile.Production`
+- **`frontend/`**: Next.js 15 frontend
   - Package file: `frontend/package.json`
   - Dockerfile: `frontend/Dockerfile`
-
-- **`docs/`**, **`scripts/`**: Shared documentation and deployment scripts
-- **`compose.yml`**: Development orchestration (at root)
-
-## Quick Reference (Top 5 Rules)
-
-1. **pt-BR**: All user-facing messages must be in Brazilian Portuguese.
-2. **Boundaries**: Controller -> Use Case -> Repository (via interfaces).
-3. **TDD**: Write/update tests BEFORE production code (`Red -> Green -> Refactor`).
-4. **Tenant isolation**: Tenant-scoped entities require `OrganizationId` + query filter + interceptor.
-5. **No warnings**: `TreatWarningsAsErrors=true` (zero warning build/test).
-
-# Repository Guidelines
+- **`docs/`**, **`scripts/`**: shared documentation and deployment scripts
+- **`compose.yml`**: local development orchestration
 
 ## Scope and Precedence
 
-- This file is the normative runtime instruction set for coding agents.
+- This file is the normative base instruction set for the whole monorepo.
+- `backend/AGENTS.md` and `frontend/AGENTS.md` supplement this file with area-specific rules.
+- Agents should read the closest `AGENTS.md` in the current working area first, then apply this root contract as the shared baseline.
 - `README.md` is human-oriented documentation.
 - `DEPLOY.md` is deployment-oriented documentation.
 - ADRs under `docs/adr/` are the architecture decision history.
 
-## Rule Priority (when in doubt)
+## Quick Reference
 
-1. Security, tenant isolation, and authorization.
-2. User-facing language rules (`pt-BR`).
-3. Architectural boundaries and design patterns.
-4. Testing and validation requirements.
-5. Style and organizational conventions.
+1. **pt-BR**: all user-facing messages must be in Brazilian Portuguese.
+2. **Closest contract wins on detail**: local `AGENTS.md` files complement the root contract.
+3. **No drift**: prefer extending existing patterns over introducing parallel conventions.
+4. **Docs move with code**: update affected documentation in the same change.
+5. **Validation required**: run the relevant checks for the area you changed.
 
-## Agent Operating Contract (Normative)
+## Shared Rules (MUST)
 
-### MUST
+- Keep all user-facing text in `pt-BR`.
+- Preserve the backend/frontend boundary of the monorepo; do not document or implement cross-layer behavior in the wrong area.
+- Prefer minimal, coherent changes that follow the repository's established structure.
+- Update tests together with production changes when behavior changes.
+- Keep documentation aligned with the current repository layout and runtime behavior.
+- Do not leave broken links, stale paths, or instructions that reference removed components.
 
-- Enforce tenant isolation, authentication, and authorization before business changes.
-- Keep all user-facing text in `pt-BR` (errors, validation, API problem responses, UI text).
-- Preserve architectural boundaries:
-  - Controllers -> Use Cases.
-  - Use Cases -> Repository interfaces (`Application/Features/<Feature>/`), feature ports (`Application/Features/<Feature>/`) e ports transversais (`Application/Ports`).
-  - Explicit namespaces MUST mirror `RootNamespace + folder path` (ex: `Bud.Application.Features.Goals.UseCases`, `Bud.Domain.Goals.Events`, `Bud.Shared.Kernel.Enums`).
-  - Domain MUST NOT reference `Bud.Infrastructure` (or sub-namespaces).
-  - Domain MUST NOT depend on `Infrastructure/`.
-  - Application MUST depend only on abstractions (repository interfaces in `Application/Features/<Feature>/`, ports feature-scoped em `Application/Features/<Feature>/` e ports transversais em `Application/Ports`).
-  - Repositories MUST NOT return HTTP DTOs from `Bud.Shared.Contracts`.
-  - Repositories MUST return domain entities/read models; mapping to `Bud.Shared.Contracts` happens in Application.
-- Respect established patterns (specification, policy-based auth, composition root modules).
-- Apply TDD workflow (`Red -> Green -> Refactor`) for features, fixes, and behavior changes.
-- Update tests together with production code changes.
-- Keep OpenAPI semantic documentation aligned with implementation.
-- Update or create ADR when architectural behavior changes.
-- Keep solution warning-free (`TreatWarningsAsErrors=true`).
-- For `Bud.Api` logging, use source-generated logging (`[LoggerMessage]`) local to each component (`partial` class); do not introduce centralized ad-hoc log catalogs.
-- For observability, register via `AddBudObservability()` in `BudObservabilityCompositionExtensions` (structured logging + OpenTelemetry). OTel config is **config-as-environment**: all export/resource/service-name settings come from standard OTel env vars, never hardcoded in code or appsettings.
-- Reserve EventId ranges per domain: 3100–3199 RequestTelemetryMiddleware; 4000–4009 Goal; 4010–4019 Organization; 4020–4029 Workspace; 4030–4039 Team; 4040–4049 Collaborator; 4050–4059 Indicator; 4060–4069 Checkin; 4070–4079 Template; 4080–4089 GoalTask; 4090–4099 Session/Notification; 5000–5009 McpRequestLoggingMiddleware.
-- For `Bud.Mcp`, keep tool schemas explicit (`required`, field types/formats/enums) and propagate API validation details (`errors` by field).
-- For `Bud.Mcp`, keep domain tools (`goal_*`, `goal_indicator_*`, `indicator_checkin_*`) sourced from `Tools/Generated/mcp-tool-catalog.json` (strict mode, no runtime ad-hoc fallback).
-- For `Bud.Mcp` HTTP transport, use `MCP-Session-Id` as the session header.
-- For `Bud.Mcp` protocol compatibility, keep `prompts/list` implemented (empty list when no prompts are published).
+## Documentation Update Rule (MUST)
 
-### Documentation Update Rule (MUST)
-
-When a feature is added, changed, or removed, review and update when applicable:
+When a feature, workflow, or architecture behavior is added, changed, or removed, review and update when applicable:
 
 - `AGENTS.md`
+- `backend/AGENTS.md`
+- `frontend/AGENTS.md`
 - `README.md`
 - `DEPLOY.md`
 - ADRs under `docs/adr/`
@@ -89,182 +60,12 @@ Minimum expected behavior:
 - Update affected docs in the same change.
 - If no documentation update is required, explicitly justify this in the final task summary.
 
-### SHOULD
-
-- Prefer composition/extensions over ad-hoc wiring in `Program.cs`.
-- Prefer reusable specifications/policies over duplicated conditionals.
-- Prefer changing existing patterns consistently instead of introducing parallel alternatives.
-
-## Agent Execution Flow (Recommended)
-
-1. Identify domain and tenant/auth implications.
-2. Confirm architectural path per boundaries above.
-3. Write/update tests first (TDD).
-4. Implement minimal coherent change following existing patterns.
-5. Validate API contract, Language Requirements, and OpenAPI metadata.
-6. Run tests and fix regressions.
-7. Apply Documentation Update Rule.
-
 ## Agent Definition of Done (MUST)
 
 Before finishing, verify:
 
-- `Code`: implementation follows Controller -> Use Case -> Repository boundaries.
-- `Security`: tenant isolation and authorization policies are enforced.
-- `Language`: all user-facing messages are in `pt-BR`.
-- `Tests`: required unit/integration tests were added/updated and executed.
-- `API Contract`: HTTP mappings, `ProblemDetails`, and OpenAPI metadata are aligned.
-- `Architecture Governance`: structural changes are reflected in docs/ADRs.
+- `Scope`: the change respects monorepo boundaries.
+- `Language`: user-facing text remains in `pt-BR`.
+- `Validation`: relevant checks for the touched area were run, or the reason they were not run is stated.
+- `Docs`: repository-level and area-level documentation reflect the current behavior.
 - `No drift`: no conflicting parallel pattern was introduced.
-
-## Language Requirements (MUST)
-
-All user-facing text MUST be in Brazilian Portuguese (`pt-BR`).
-
-This includes:
-
-- Error messages in controllers/repositories.
-- FluentValidation messages.
-- API `ProblemDetails` / `ValidationProblemDetails`.
-- Blazor UI text.
-- Log messages that may be displayed to users.
-
-Comments in code should remain in English for maintainability.
-
-## Architecture Essentials
-
-## System Overview
-
-Bud is an ASP.NET Core 10 solution with Blazor WebAssembly frontend and PostgreSQL backend.
-
-Main projects:
-
-- `src/Api/Bud.Api`: API + hosting híbrido temporário do client.
-- `src/Api/Bud.Application`: casos de uso, mapeamentos, read models e ports.
-- `src/Api/Bud.Domain`: domínio puro, value objects, eventos e interfaces de repositório.
-- `src/Api/Bud.Infrastructure`: EF Core, repositórios, serviços concretos e migrations.
-- `src/Web/Bud.BlazorWasm`: Blazor WebAssembly UI.
-- `src/Shared/Bud.Shared.Kernel`: tipos compartilhados estáveis.
-- `src/Shared/Bud.Shared.Contracts`: contratos compartilhados de borda.
-- `src/Mcp/Bud.Mcp`: MCP server over HTTP tratado como client conversacional do `Bud.Api`.
-- `tests/Api/*`: testes unitários, integração e arquitetura do backend.
-- `tests/Web/Bud.BlazorWasm.Tests` e `tests/Mcp/Bud.Mcp.Tests`: testes do client e MCP.
-
-## Layering and Dependencies (MUST)
-
-- Controllers orchestrate validators + use cases.
-- Use cases depend on abstractions only (repository interfaces in `Application/Features/<Feature>/`, ports feature-scoped em `Application/Features/<Feature>/` e ports transversais em `Application/Ports`).
-- Repository interfaces live in `Bud.Application/Features/<Feature>/`; implementations in `Bud.Infrastructure/Features/<Feature>/`.
-- Domain stays infrastructure-agnostic.
-- Mapping to shared HTTP contracts happens in Application.
-
-## Multi-Tenancy (MUST)
-
-- Row-level isolation by `OrganizationId`.
-- Tenant entities implement `ITenantEntity` with `Guid OrganizationId`.
-- Tenant entities must have query filters and tenant-aware persistence via `TenantSaveChangesInterceptor`.
-- `TenantRequiredMiddleware` enforces tenant/auth rules for API endpoints, preserving configured exclusions.
-- Frontend tenant rules:
-  - Include `X-Tenant-Id` when a specific organization is selected.
-  - Omit `X-Tenant-Id` for global-admin all-organizations context.
-  - Tenant-scoped pages must react to organization changes.
-
-## Authorization Pattern (MUST)
-
-- Prefer `[Authorize(Policy = ...)]` in controllers.
-- Reuse existing policies (`TenantSelected`, `GlobalAdmin`, `OrganizationOwner`, `OrganizationWrite`).
-- New authorization rule -> new Requirement + Handler registered in `BudSecurityCompositionExtensions`.
-
-## Controller Pattern (MUST)
-
-Controllers must:
-
-1. Validate payloads first.
-2. Call use case only after validation success.
-3. Map `Result.ErrorType` consistently:
-   - `NotFound` -> 404
-   - `Validation` -> 400
-   - `Conflict` -> 409
-   - `Forbidden` -> 403
-4. Return `ProblemDetails` / `ValidationProblemDetails` in `pt-BR`.
-
-## Validation and OpenAPI (MUST)
-
-- Use FluentValidation in `src/Api/Bud.Api/Validators/`, registered in DI.
-- Validators must not access `ApplicationDbContext` directly.
-- Keep OpenAPI available at `/swagger` and `/openapi/v1.json` in Development.
-- Keep `ProducesResponseType`, `Consumes`, and `Produces` aligned with behavior.
-- Document operation summary/description, success/error status codes, and key DTO fields.
-
-## Data Access Essentials
-
-- EF Core with Npgsql.
-- DbContext: `ApplicationDbContext`.
-- Every entity in `ApplicationDbContext` must have `IEntityTypeConfiguration<T>` in `Infrastructure/Persistence/Configurations/`.
-- Tenant query filters are configured at EF entity configuration level.
-
-## Database Setup
-
-- **Development:** schema created via `EnsureCreated()`. On model changes, recreate DB (e.g., `docker compose down -v && docker compose up --build`).
-- **Production:** EF Core migrations are used (`dotnet-ef migrations bundle`) with migrations in `Infrastructure/Persistence/Migrations/`.
-
-To add migration:
-
-```bash
-dotnet ef migrations add <Name> --project src/Api/Bud.Infrastructure --startup-project src/Api/Bud.Api
-```
-
-## Testing Guidelines (Normative)
-
-## TDD Workflow (MUST)
-
-- Follow `Red -> Green -> Refactor`.
-- New feature: write tests first.
-- Bug fix: write failing test first.
-- Behavior change: update tests first, then code.
-
-## Coverage Expectations (MUST)
-
-- Repositories: unit tests.
-- Use cases: unit tests (including authorization branches when applicable).
-- Validators: unit tests.
-- API endpoints: integration tests.
-- Business rules/invariants: automated tests.
-
-## Test Strategy Essentials
-
-- Unit tests: xUnit + Moq + FluentAssertions.
-- Repository unit tests: EF InMemory + unique DB per test + tenant-aware setup.
-- Integration tests: `WebApplicationFactory<Program>` + Testcontainers PostgreSQL.
-- Include tenant scenarios: global admin, tenant-scoped requests, and no-tenant authenticated requests when relevant.
-
-## MCP Tool Catalog Sync (MUST)
-
-When contracts used by MCP tools change (`/api/goals`, `/api/indicators`, `/api/indicators/{id}/checkins`), run:
-
-```bash
-dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- generate-tool-catalog
-dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- check-tool-catalog --fail-on-diff
-```
-
-## Operational References
-
-Operational command details are maintained in:
-
-- `README.md`
-- `DEPLOY.md`
-
-## Key Files (Essential)
-
-- `src/Api/Bud.Api/Controllers/ApiControllerBase.cs`
-- `src/Api/Bud.Api/Controllers/OrganizationsController.cs`
-- `src/Api/Bud.Application/Common/Result.cs`
-- `src/Api/Bud.Application/BudApplicationCompositionExtensions.cs`
-- `src/Api/Bud.Api/DependencyInjection/BudObservabilityCompositionExtensions.cs`
-- `src/Api/Bud.Api/DependencyInjection/BudSecurityCompositionExtensions.cs`
-- `src/Api/Bud.Infrastructure/Persistence/ApplicationDbContext.cs`
-- `src/Api/Bud.Application/Ports/ITenantProvider.cs`
-- `src/Api/Bud.Api/MultiTenancy/TenantRequiredMiddleware.cs`
-- `src/Web/Bud.BlazorWasm/State/OrganizationContext.cs`
-- `tests/Api/Bud.ArchitectureTests/Architecture/ArchitectureTests.cs`
-- `docs/adr/README.md`

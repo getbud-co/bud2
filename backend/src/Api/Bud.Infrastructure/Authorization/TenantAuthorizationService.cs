@@ -12,7 +12,8 @@ public sealed class TenantAuthorizationService(
     {
         if (tenantProvider.IsGlobalAdmin)
         {
-            return true;
+            return await dbContext.Organizations
+                .AnyAsync(o => o.Id == tenantId, cancellationToken);
         }
 
         if (string.IsNullOrEmpty(tenantProvider.UserEmail))
@@ -20,7 +21,8 @@ public sealed class TenantAuthorizationService(
             return false;
         }
 
-        return await dbContext.Collaborators
+        // Verificar se é colaborador da organização
+        return await dbContext.Employees
             .AnyAsync(c =>
                 c.OrganizationId == tenantId &&
                 c.Email == tenantProvider.UserEmail,
@@ -39,10 +41,13 @@ public sealed class TenantAuthorizationService(
             return [];
         }
 
-        return await dbContext.Collaborators
+        // Organizações onde o usuário é colaborador
+        var employeeOrgIds = await dbContext.Employees
             .Where(c => c.Email == tenantProvider.UserEmail)
             .Select(c => c.OrganizationId)
             .Distinct()
             .ToListAsync(cancellationToken);
+
+        return employeeOrgIds.Distinct().ToList();
     }
 }

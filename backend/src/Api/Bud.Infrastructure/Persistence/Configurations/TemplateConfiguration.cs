@@ -13,10 +13,10 @@ public sealed class TemplateConfiguration : IEntityTypeConfiguration<Template>
         builder.Property(mt => mt.Description)
             .HasMaxLength(1000);
 
-        builder.Property(mt => mt.GoalNamePattern)
+        builder.Property(mt => mt.MissionNamePattern)
             .HasMaxLength(200);
 
-        builder.Property(mt => mt.GoalDescriptionPattern)
+        builder.Property(mt => mt.MissionDescriptionPattern)
             .HasMaxLength(1000);
 
         builder.HasOne(mt => mt.Organization)
@@ -31,7 +31,7 @@ public sealed class TemplateConfiguration : IEntityTypeConfiguration<Template>
             .HasForeignKey(ti => ti.TemplateId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(mt => mt.Goals)
+        builder.HasMany(mt => mt.Missions)
             .WithOne(tg => tg.Template)
             .HasForeignKey(tg => tg.TemplateId)
             .OnDelete(DeleteBehavior.Cascade);

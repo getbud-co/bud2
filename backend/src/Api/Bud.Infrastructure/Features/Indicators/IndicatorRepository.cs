@@ -15,15 +15,15 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
         => await dbContext.Indicators.FindAsync([id], ct);
 
     public async Task<PagedResult<Indicator>> GetAllAsync(
-        Guid? goalId, string? search, int page, int pageSize, CancellationToken ct = default)
+        Guid? missionId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
         var query = dbContext.Indicators.AsNoTracking();
 
-        if (goalId.HasValue)
+        if (missionId.HasValue)
         {
-            query = query.Where(i => i.GoalId == goalId.Value);
+            query = query.Where(i => i.MissionId == missionId.Value);
         }
 
         query = new IndicatorSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
@@ -44,18 +44,21 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
         };
     }
 
-    public async Task<Goal?> GetGoalByIdAsync(Guid goalId, CancellationToken ct = default)
-        => await dbContext.Goals
+    public async Task<Mission?> GetMissionByIdAsync(Guid missionId, CancellationToken ct = default)
+        => await dbContext.Missions
             .AsNoTracking()
-            .FirstOrDefaultAsync(g => g.Id == goalId, ct);
+            .FirstOrDefaultAsync(g => g.Id == missionId, ct);
 
     public async Task<Checkin?> GetCheckinByIdAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Checkins
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public async Task<Checkin?> GetCheckinByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        => await dbContext.Checkins.FindAsync([id], ct);
+
     public async Task<PagedResult<Checkin>> GetCheckinsAsync(
-        Guid? indicatorId, Guid? goalId, int page, int pageSize, CancellationToken ct = default)
+        Guid? indicatorId, Guid? missionId, int page, int pageSize, CancellationToken ct = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
@@ -66,9 +69,9 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
             query = query.Where(c => c.IndicatorId == indicatorId.Value);
         }
 
-        if (goalId.HasValue)
+        if (missionId.HasValue)
         {
-            query = query.Where(c => c.Indicator.GoalId == goalId.Value);
+            query = query.Where(c => c.Indicator.MissionId == missionId.Value);
         }
 
         var total = await query.CountAsync(ct);
@@ -80,18 +83,18 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
 
         if (items.Count > 0)
         {
-            var collaboratorIds = items.Select(c => c.CollaboratorId).Distinct().ToList();
-            var collaborators = await dbContext.Collaborators
+            var employeeIds = items.Select(c => c.EmployeeId).Distinct().ToList();
+            var employees = await dbContext.Employees
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(c => collaboratorIds.Contains(c.Id))
+                .Where(c => employeeIds.Contains(c.Id))
                 .ToDictionaryAsync(c => c.Id, ct);
 
             foreach (var item in items)
             {
-                if (collaborators.TryGetValue(item.CollaboratorId, out var collaborator))
+                if (employees.TryGetValue(item.EmployeeId, out var employee))
                 {
-                    item.Collaborator = collaborator;
+                    item.Employee = employee;
                 }
             }
         }
@@ -105,10 +108,9 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
         };
     }
 
-    public async Task<Indicator?> GetIndicatorWithGoalAsync(Guid indicatorId, CancellationToken ct = default)
+    public async Task<Indicator?> GetIndicatorWithMissionAsync(Guid indicatorId, CancellationToken ct = default)
         => await dbContext.Indicators
-            .AsNoTracking()
-            .Include(i => i.Goal)
+            .Include(i => i.Mission)
             .FirstOrDefaultAsync(i => i.Id == indicatorId, ct);
 
     public async Task AddCheckinAsync(Checkin entity, CancellationToken ct = default)

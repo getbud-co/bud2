@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -6,11 +7,13 @@ namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed partial class DeleteCheckin(
     IIndicatorRepository indicatorRepository,
+    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<DeleteCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid indicatorId,
         Guid checkinId,
         CancellationToken cancellationToken = default)
@@ -24,9 +27,23 @@ public sealed partial class DeleteCheckin(
             return Result.NotFound(UserErrorMessages.CheckinNotFound);
         }
 
-        if (!tenantProvider.IsGlobalAdmin && tenantProvider.CollaboratorId != checkin.CollaboratorId)
+        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(indicatorId), cancellationToken);
+        if (!canWrite)
         {
-            LogCheckinDeletionFailed(logger, checkinId, "Not the author");
+            LogCheckinDeletionFailed(logger, checkinId, "Indicator write forbidden");
+            return Result.Forbidden(UserErrorMessages.CheckinDeleteForbidden);
+        }
+
+        var employeeId = tenantProvider.EmployeeId;
+        if (!employeeId.HasValue)
+        {
+            LogCheckinDeletionFailed(logger, checkinId, "Employee not identified");
+            return Result.Forbidden(UserErrorMessages.EmployeeNotIdentified);
+        }
+
+        if (checkin.EmployeeId != employeeId.Value)
+        {
+            LogCheckinDeletionFailed(logger, checkinId, "Author mismatch");
             return Result.Forbidden(UserErrorMessages.CheckinDeleteAuthorOnly);
         }
 

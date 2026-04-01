@@ -47,7 +47,6 @@ public sealed partial class PatchOrganization(
             {
                 organization.Rename(command.Name.Value ?? string.Empty);
             }
-
             if (command.Plan.HasValue)
             {
                 organization.Plan = command.Plan.Value;

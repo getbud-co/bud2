@@ -12,7 +12,7 @@ public sealed record PatchTeamCommand(
 
 public sealed partial class PatchTeam(
     ITeamRepository teamRepository,
-    ICollaboratorRepository collaboratorRepository,
+    IEmployeeRepository employeeRepository,
     IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchTeam> logger,
     IUnitOfWork? unitOfWork = null)
@@ -25,14 +25,14 @@ public sealed partial class PatchTeam(
     {
         LogPatchingTeam(logger, id);
 
-        var team = await teamRepository.GetByIdWithCollaboratorTeamsAsync(id, cancellationToken);
+        var team = await teamRepository.GetByIdWithEmployeeTeamsAsync(id, cancellationToken);
         if (team is null)
         {
             LogTeamPatchFailed(logger, id, "Not found");
             return Result<Team>.NotFound(UserErrorMessages.TeamNotFound);
         }
 
-        var canUpdate = await authorizationGateway.CanWriteOrganizationAsync(user, team.OrganizationId, cancellationToken);
+        var canUpdate = await authorizationGateway.CanWriteAsync(user, new TeamResource(id), cancellationToken);
         if (!canUpdate)
         {
             LogTeamPatchFailed(logger, id, "Forbidden");
@@ -60,11 +60,15 @@ public sealed partial class PatchTeam(
                 return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
             }
 
-
+            if (parentTeam.OrganizationId != team.OrganizationId)
+            {
+                LogTeamPatchFailed(logger, id, "Parent team belongs to different organization");
+                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameOrganization);
+            }
         }
 
-        var leaderValidation = await CollaboratorLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
-            collaboratorRepository,
+        var leaderValidation = await EmployeeLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
+            employeeRepository,
             requestedLeaderId,
             team.OrganizationId,
             cancellationToken);
@@ -80,11 +84,11 @@ public sealed partial class PatchTeam(
             team.AssignLeader(requestedLeaderId);
             team.Reparent(requestedParentTeamId, team.Id);
 
-            if (!team.CollaboratorTeams.Any(ct => ct.CollaboratorId == requestedLeaderId))
+            if (!team.EmployeeTeams.Any(ct => ct.EmployeeId == requestedLeaderId))
             {
-                team.CollaboratorTeams.Add(new CollaboratorTeam
+                team.EmployeeTeams.Add(new EmployeeTeam
                 {
-                    CollaboratorId = requestedLeaderId,
+                    EmployeeId = requestedLeaderId,
                     TeamId = team.Id,
                     AssignedAt = DateTime.UtcNow
                 });

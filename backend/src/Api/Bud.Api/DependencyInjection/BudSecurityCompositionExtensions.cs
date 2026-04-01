@@ -70,22 +70,22 @@ public static class BudSecurityCompositionExtensions
                 policy.RequireAuthenticatedUser();
                 policy.AddRequirements(new GlobalAdminRequirement());
             });
-            options.AddPolicy(AuthorizationPolicies.OrganizationOwner, policy =>
+            options.AddPolicy(AuthorizationPolicies.ResourceRead, policy =>
             {
                 policy.RequireAuthenticatedUser();
-                policy.AddRequirements(new OrganizationOwnerRequirement());
+                policy.AddRequirements(new ResourceReadRequirement());
             });
-            options.AddPolicy(AuthorizationPolicies.OrganizationWrite, policy =>
+            options.AddPolicy(AuthorizationPolicies.ResourceWrite, policy =>
             {
                 policy.RequireAuthenticatedUser();
-                policy.AddRequirements(new OrganizationWriteRequirement());
+                policy.AddRequirements(new ResourceWriteRequirement());
             });
         });
 
         services.AddScoped<IAuthorizationHandler, TenantSelectedHandler>();
         services.AddScoped<IAuthorizationHandler, GlobalAdminHandler>();
-        services.AddScoped<IAuthorizationHandler, OrganizationOwnerHandler>();
-        services.AddScoped<IAuthorizationHandler, OrganizationWriteHandler>();
+        services.AddScoped<IAuthorizationHandler, ResourceReadHandler>();
+        services.AddScoped<IAuthorizationHandler, ResourceWriteHandler>();
         services.AddHttpContextAccessor();
         services.AddScoped<IApplicationAuthorizationGateway, ApplicationAuthorizationGateway>();
         services.AddScoped<ITenantProvider, JwtTenantProvider>();

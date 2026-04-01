@@ -9,8 +9,8 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
-    public Guid GoalId { get; set; }
-    public Goal Goal { get; set; } = null!;
+    public Guid MissionId { get; set; }
+    public Mission Mission { get; set; } = null!;
 
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
@@ -29,14 +29,14 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    public static Indicator Create(Guid id, Guid organizationId, Guid goalId, string name, IndicatorType type)
+    public static Indicator Create(Guid id, Guid organizationId, Guid missionId, string name, IndicatorType type)
     {
         if (organizationId == Guid.Empty)
         {
             throw new DomainInvariantException("Indicador deve pertencer a uma organização válida.");
         }
 
-        if (goalId == Guid.Empty)
+        if (missionId == Guid.Empty)
         {
             throw new DomainInvariantException("Indicador deve pertencer a uma meta válida.");
         }
@@ -45,7 +45,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
         {
             Id = id,
             OrganizationId = organizationId,
-            GoalId = goalId
+            MissionId = missionId
         };
 
         indicator.UpdateDefinition(name, type);
@@ -71,36 +71,18 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
         IndicatorUnit? unit,
         string? targetText)
     {
-        if (type == IndicatorType.Qualitative)
-        {
-            TargetText = string.IsNullOrWhiteSpace(targetText) ? null : targetText.Trim();
-            QuantitativeType = null;
-            MinValue = null;
-            MaxValue = null;
-            Unit = null;
-            return;
-        }
+        var target = IndicatorTargetDefinition.Create(type, quantitativeType, minValue, maxValue, unit, targetText);
 
-        if (quantitativeType is null)
-        {
-            throw new DomainInvariantException("Tipo quantitativo é obrigatório para indicadores quantitativos.");
-        }
-
-        if (minValue.HasValue && maxValue.HasValue)
-        {
-            _ = IndicatorRange.Create(minValue, maxValue);
-        }
-
-        QuantitativeType = quantitativeType;
-        MinValue = minValue;
-        MaxValue = maxValue;
-        Unit = unit;
-        TargetText = null;
+        QuantitativeType = target.QuantitativeType;
+        MinValue = target.MinValue;
+        MaxValue = target.MaxValue;
+        Unit = target.Unit;
+        TargetText = target.TargetText;
     }
 
     public Checkin CreateCheckin(
         Guid checkinId,
-        Guid collaboratorId,
+        Guid employeeId,
         decimal? value,
         string? text,
         DateTime checkinDate,
@@ -113,7 +95,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             checkinId,
             OrganizationId,
             Id,
-            collaboratorId,
+            employeeId,
             value,
             text,
             checkinDate,
@@ -124,7 +106,7 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             checkin.Id,
             Id,
             OrganizationId,
-            collaboratorId,
+            employeeId,
             Name));
 
         return checkin;

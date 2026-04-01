@@ -27,22 +27,14 @@ public sealed class TeamRepositoryTests
         return org;
     }
 
-    private static async Task<Workspace> CreateTestWorkspace(ApplicationDbContext context, Guid organizationId, string name = "Test Workspace")
-    {
-        var workspace = new Workspace { Id = Guid.NewGuid(), Name = name, OrganizationId = organizationId };
-        context.Workspaces.Add(workspace);
-        await context.SaveChangesAsync();
-        return workspace;
-    }
-
-    private static async Task<Collaborator> CreateTestCollaborator(
+    private static async Task<Employee> CreateTestEmployee(
         ApplicationDbContext context,
         Guid organizationId,
-        string fullName = "Test Collaborator",
+        string fullName = "Test Employee",
         string email = "test@example.com",
-        CollaboratorRole role = CollaboratorRole.Leader)
+        EmployeeRole role = EmployeeRole.Leader)
     {
-        var collaborator = new Collaborator
+        var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = fullName,
@@ -50,15 +42,14 @@ public sealed class TeamRepositoryTests
             Role = role,
             OrganizationId = organizationId
         };
-        context.Collaborators.Add(collaborator);
+        context.Employees.Add(employee);
         await context.SaveChangesAsync();
-        return collaborator;
+        return employee;
     }
 
     private static async Task<Team> CreateTestTeam(
         ApplicationDbContext context,
         Guid organizationId,
-        Guid workspaceId,
         Guid leaderId,
         string name = "Test Team",
         Guid? parentTeamId = null)
@@ -68,7 +59,6 @@ public sealed class TeamRepositoryTests
             Id = Guid.NewGuid(),
             Name = name,
             OrganizationId = organizationId,
-            WorkspaceId = workspaceId,
             LeaderId = leaderId,
             ParentTeamId = parentTeamId
         };
@@ -86,9 +76,8 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         // Act
         var result = await repository.GetByIdAsync(team.Id);
@@ -115,46 +104,45 @@ public sealed class TeamRepositoryTests
 
     #endregion
 
-    #region GetByIdWithCollaboratorTeamsAsync Tests
+    #region GetByIdWithEmployeeTeamsAsync Tests
 
     [Fact]
-    public async Task GetByIdWithCollaboratorTeamsAsync_WhenExists_ReturnsTeamWithCollaboratorTeams()
+    public async Task GetByIdWithEmployeeTeamsAsync_WhenExists_ReturnsTeamWithEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var member = await CreateTestCollaborator(context, org.Id, "Member", "member@test.com", CollaboratorRole.IndividualContributor);
-        context.CollaboratorTeams.Add(new CollaboratorTeam
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+        context.EmployeeTeams.Add(new EmployeeTeam
         {
-            CollaboratorId = member.Id,
+            EmployeeId = member.Id,
             TeamId = team.Id,
             AssignedAt = DateTime.UtcNow
         });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetByIdWithCollaboratorTeamsAsync(team.Id);
+        var result = await repository.GetByIdWithEmployeeTeamsAsync(team.Id);
 
         // Assert
         result.Should().NotBeNull();
         result!.Id.Should().Be(team.Id);
-        result.CollaboratorTeams.Should().HaveCount(1);
+        result.EmployeeTeams.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetByIdWithCollaboratorTeamsAsync_WhenNotFound_ReturnsNull()
+    public async Task GetByIdWithEmployeeTeamsAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
 
         // Act
-        var result = await repository.GetByIdWithCollaboratorTeamsAsync(Guid.NewGuid());
+        var result = await repository.GetByIdWithEmployeeTeamsAsync(Guid.NewGuid());
 
         // Assert
         result.Should().BeNull();
@@ -171,16 +159,15 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
         for (int i = 0; i < 5; i++)
         {
-            await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, $"Team {i:D2}");
+            await CreateTestTeam(context, org.Id, leader.Id, $"Team {i:D2}");
         }
 
         // Act
-        var result = await repository.GetAllAsync(null, null, null, 1, 2);
+        var result = await repository.GetAllAsync(null, null, 1, 2);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -190,43 +177,20 @@ public sealed class TeamRepositoryTests
     }
 
     [Fact]
-    public async Task GetAllAsync_FiltersByWorkspaceId()
-    {
-        // Arrange
-        using var context = CreateInMemoryContext();
-        var repository = new TeamRepository(context);
-        var org = await CreateTestOrganization(context);
-        var workspace1 = await CreateTestWorkspace(context, org.Id, "WS 1");
-        var workspace2 = await CreateTestWorkspace(context, org.Id, "WS 2");
-        var leader = await CreateTestCollaborator(context, org.Id);
-
-        await CreateTestTeam(context, org.Id, workspace1.Id, leader.Id, "Team WS1");
-        await CreateTestTeam(context, org.Id, workspace2.Id, leader.Id, "Team WS2");
-
-        // Act
-        var result = await repository.GetAllAsync(workspace1.Id, null, null, 1, 10);
-
-        // Assert
-        result.Items.Should().HaveCount(1);
-        result.Items[0].Name.Should().Be("Team WS1");
-    }
-
-    [Fact]
     public async Task GetAllAsync_FiltersByParentTeamId()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        var parentTeam = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Parent Team");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Child Team", parentTeam.Id);
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Root Team");
+        var parentTeam = await CreateTestTeam(context, org.Id, leader.Id, "Parent Team");
+        await CreateTestTeam(context, org.Id, leader.Id, "Child Team", parentTeam.Id);
+        await CreateTestTeam(context, org.Id, leader.Id, "Root Team");
 
         // Act
-        var result = await repository.GetAllAsync(null, parentTeam.Id, null, 1, 10);
+        var result = await repository.GetAllAsync(parentTeam.Id, null, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);
@@ -240,14 +204,13 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "ALPHA Team");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Beta Team");
+        await CreateTestTeam(context, org.Id, leader.Id, "ALPHA Team");
+        await CreateTestTeam(context, org.Id, leader.Id, "Beta Team");
 
         // Act
-        var result = await repository.GetAllAsync(null, null, "alpha", 1, 10);
+        var result = await repository.GetAllAsync(null, "alpha", 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);
@@ -261,15 +224,14 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Zebra");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Alpha");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Mango");
+        await CreateTestTeam(context, org.Id, leader.Id, "Zebra");
+        await CreateTestTeam(context, org.Id, leader.Id, "Alpha");
+        await CreateTestTeam(context, org.Id, leader.Id, "Mango");
 
         // Act
-        var result = await repository.GetAllAsync(null, null, null, 1, 10);
+        var result = await repository.GetAllAsync(null, null, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(3);
@@ -289,13 +251,12 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        var parentTeam = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Parent");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Sub A", parentTeam.Id);
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Sub B", parentTeam.Id);
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Other Root");
+        var parentTeam = await CreateTestTeam(context, org.Id, leader.Id, "Parent");
+        await CreateTestTeam(context, org.Id, leader.Id, "Sub A", parentTeam.Id);
+        await CreateTestTeam(context, org.Id, leader.Id, "Sub B", parentTeam.Id);
+        await CreateTestTeam(context, org.Id, leader.Id, "Other Root");
 
         // Act
         var result = await repository.GetSubTeamsAsync(parentTeam.Id, 1, 10);
@@ -312,13 +273,12 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        var parentTeam = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Parent");
+        var parentTeam = await CreateTestTeam(context, org.Id, leader.Id, "Parent");
         for (int i = 0; i < 5; i++)
         {
-            await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, $"Sub {i:D2}", parentTeam.Id);
+            await CreateTestTeam(context, org.Id, leader.Id, $"Sub {i:D2}", parentTeam.Id);
         }
 
         // Act
@@ -333,40 +293,40 @@ public sealed class TeamRepositoryTests
 
     #endregion
 
-    #region GetCollaboratorsAsync Tests
+    #region GetEmployeesAsync Tests
 
     [Fact]
-    public async Task GetCollaboratorsAsync_ReturnsCollaboratorsWithPrimaryTeam()
+    public async Task GetEmployeesAsync_ReturnsEmployeesViaEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var member1 = new Collaborator
+        var member1 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Member A",
             Email = "a@test.com",
-            OrganizationId = org.Id,
-            TeamId = team.Id
+            OrganizationId = org.Id
         };
-        var member2 = new Collaborator
+        var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Member B",
             Email = "b@test.com",
-            OrganizationId = org.Id,
-            TeamId = team.Id
+            OrganizationId = org.Id
         };
-        context.Collaborators.AddRange(member1, member2);
+        context.Employees.AddRange(member1, member2);
+        context.EmployeeTeams.AddRange(
+            new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
+            new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetCollaboratorsAsync(team.Id, 1, 10);
+        var result = await repository.GetEmployeesAsync(team.Id, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -374,31 +334,36 @@ public sealed class TeamRepositoryTests
     }
 
     [Fact]
-    public async Task GetCollaboratorsAsync_ReturnsPaginatedResults()
+    public async Task GetEmployeesAsync_ReturnsPaginatedResults()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         for (int i = 0; i < 5; i++)
         {
-            context.Collaborators.Add(new Collaborator
+            var member = new Employee
             {
                 Id = Guid.NewGuid(),
                 FullName = $"Member {i:D2}",
                 Email = $"member{i}@test.com",
-                OrganizationId = org.Id,
+                OrganizationId = org.Id
+            };
+
+            context.Employees.Add(member);
+            context.EmployeeTeams.Add(new EmployeeTeam
+            {
+                EmployeeId = member.Id,
                 TeamId = team.Id
             });
         }
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetCollaboratorsAsync(team.Id, 1, 2);
+        var result = await repository.GetEmployeesAsync(team.Id, 1, 2);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -409,30 +374,29 @@ public sealed class TeamRepositoryTests
 
     #endregion
 
-    #region GetCollaboratorLookupAsync Tests
+    #region GetEmployeeLookupAsync Tests
 
     [Fact]
-    public async Task GetCollaboratorLookupAsync_ReturnsCollaboratorsViaCollaboratorTeams()
+    public async Task GetEmployeeLookupAsync_ReturnsEmployeesViaEmployeeTeams()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var member = await CreateTestCollaborator(context, org.Id, "Member", "member@test.com", CollaboratorRole.IndividualContributor);
-        context.CollaboratorTeams.Add(new CollaboratorTeam
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+        context.EmployeeTeams.Add(new EmployeeTeam
         {
-            CollaboratorId = member.Id,
+            EmployeeId = member.Id,
             TeamId = team.Id,
             AssignedAt = DateTime.UtcNow
         });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetCollaboratorLookupAsync(team.Id);
+        var result = await repository.GetEmployeeLookupAsync(team.Id);
 
         // Assert
         result.Should().HaveCount(1);
@@ -440,18 +404,17 @@ public sealed class TeamRepositoryTests
     }
 
     [Fact]
-    public async Task GetCollaboratorLookupAsync_WhenNoMembers_ReturnsEmpty()
+    public async Task GetEmployeeLookupAsync_WhenNoMembers_ReturnsEmpty()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         // Act
-        var result = await repository.GetCollaboratorLookupAsync(team.Id);
+        var result = await repository.GetEmployeeLookupAsync(team.Id);
 
         // Assert
         result.Should().BeEmpty();
@@ -459,32 +422,31 @@ public sealed class TeamRepositoryTests
 
     #endregion
 
-    #region GetEligibleCollaboratorsForAssignmentAsync Tests
+    #region GetEligibleEmployeesForAssignmentAsync Tests
 
     [Fact]
-    public async Task GetEligibleCollaboratorsForAssignmentAsync_ExcludesAlreadyAssigned()
+    public async Task GetEligibleEmployeesForAssignmentAsync_ExcludesAlreadyAssigned()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var assigned = await CreateTestCollaborator(context, org.Id, "Assigned", "assigned@test.com", CollaboratorRole.IndividualContributor);
-        var eligible = await CreateTestCollaborator(context, org.Id, "Eligible", "eligible@test.com", CollaboratorRole.IndividualContributor);
+        var assigned = await CreateTestEmployee(context, org.Id, "Assigned", "assigned@test.com", EmployeeRole.IndividualContributor);
+        var eligible = await CreateTestEmployee(context, org.Id, "Eligible", "eligible@test.com", EmployeeRole.IndividualContributor);
 
-        context.CollaboratorTeams.Add(new CollaboratorTeam
+        context.EmployeeTeams.Add(new EmployeeTeam
         {
-            CollaboratorId = assigned.Id,
+            EmployeeId = assigned.Id,
             TeamId = team.Id,
             AssignedAt = DateTime.UtcNow
         });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetEligibleCollaboratorsForAssignmentAsync(team.Id, org.Id, null, 10);
+        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, org.Id, null, 10);
 
         // Assert
         result.Should().Contain(c => c.Id == eligible.Id);
@@ -492,23 +454,22 @@ public sealed class TeamRepositoryTests
     }
 
     [Fact]
-    public async Task GetEligibleCollaboratorsForAssignmentAsync_RespectsLimit()
+    public async Task GetEligibleEmployeesForAssignmentAsync_RespectsLimit()
     {
         // Arrange
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         for (int i = 0; i < 5; i++)
         {
-            await CreateTestCollaborator(context, org.Id, $"Eligible {i}", $"e{i}@test.com", CollaboratorRole.IndividualContributor);
+            await CreateTestEmployee(context, org.Id, $"Eligible {i}", $"e{i}@test.com", EmployeeRole.IndividualContributor);
         }
 
         // Act
-        var result = await repository.GetEligibleCollaboratorsForAssignmentAsync(team.Id, org.Id, null, 3);
+        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, org.Id, null, 3);
 
         // Assert
         result.Should().HaveCountLessOrEqualTo(3);
@@ -525,9 +486,8 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         // Act
         var result = await repository.ExistsAsync(team.Id);
@@ -561,11 +521,10 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
-        var parentTeam = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Parent");
-        await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "Child", parentTeam.Id);
+        var parentTeam = await CreateTestTeam(context, org.Id, leader.Id, "Parent");
+        await CreateTestTeam(context, org.Id, leader.Id, "Child", parentTeam.Id);
 
         // Act
         var result = await repository.HasSubTeamsAsync(parentTeam.Id);
@@ -581,9 +540,8 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         // Act
         var result = await repository.HasSubTeamsAsync(team.Id);
@@ -597,21 +555,35 @@ public sealed class TeamRepositoryTests
     #region HasMissionsAsync Tests
 
     [Fact]
-    public async Task HasMissionsAsync_AlwaysReturnsFalse_BecauseGoalsNoLongerHaveTeamId()
+    public async Task HasMissionsAsync_WhenMissionAssignedToTeamMember_ReturnsTrue()
     {
-        // Arrange — Goals no longer have TeamId, so HasGoalsAsync always returns false.
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
+        context.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = leader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow
+        });
 
-        // Act
-        var result = await repository.HasGoalsAsync(team.Id);
+        context.Missions.Add(new Mission
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mission linked by primary team",
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(30),
+            Status = MissionStatus.Active,
+            OrganizationId = org.Id,
+            EmployeeId = leader.Id
+        });
+        await context.SaveChangesAsync();
 
-        // Assert
-        result.Should().BeFalse();
+        var result = await repository.HasMissionsAsync(team.Id);
+
+        result.Should().BeTrue();
     }
 
     [Fact]
@@ -621,15 +593,47 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
 
         // Act
-        var result = await repository.HasGoalsAsync(team.Id);
+        var result = await repository.HasMissionsAsync(team.Id);
 
         // Assert
         result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HasMissionsAsync_WhenMissionAssignedToAdditionalTeamMember_ReturnsTrue()
+    {
+        using var context = CreateInMemoryContext();
+        var repository = new TeamRepository(context);
+        var org = await CreateTestOrganization(context);
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id);
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+
+        context.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = member.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow
+        });
+        context.Missions.Add(new Mission
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mission linked by additional team",
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(30),
+            Status = MissionStatus.Active,
+            OrganizationId = org.Id,
+            EmployeeId = member.Id
+        });
+        await context.SaveChangesAsync();
+
+        var result = await repository.HasMissionsAsync(team.Id);
+
+        result.Should().BeTrue();
     }
 
     #endregion
@@ -643,15 +647,13 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
+        var leader = await CreateTestEmployee(context, org.Id);
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "New Team",
             OrganizationId = org.Id,
-            WorkspaceId = workspace.Id,
             LeaderId = leader.Id
         };
 
@@ -672,9 +674,8 @@ public sealed class TeamRepositoryTests
         using var context = CreateInMemoryContext();
         var repository = new TeamRepository(context);
         var org = await CreateTestOrganization(context);
-        var workspace = await CreateTestWorkspace(context, org.Id);
-        var leader = await CreateTestCollaborator(context, org.Id);
-        var team = await CreateTestTeam(context, org.Id, workspace.Id, leader.Id, "To Delete");
+        var leader = await CreateTestEmployee(context, org.Id);
+        var team = await CreateTestTeam(context, org.Id, leader.Id, "To Delete");
 
         // Re-fetch tracked entity
         var tracked = await context.Teams.FirstAsync(t => t.Id == team.Id);

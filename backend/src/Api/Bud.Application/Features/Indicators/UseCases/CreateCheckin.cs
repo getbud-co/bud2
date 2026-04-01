@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -13,43 +14,55 @@ public sealed record CreateCheckinCommand(
 
 public sealed partial class CreateCheckin(
     IIndicatorRepository indicatorRepository,
-    ICollaboratorRepository collaboratorRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
+    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Checkin>> ExecuteAsync(
+        ClaimsPrincipal user,
         Guid indicatorId,
         CreateCheckinCommand command,
         CancellationToken cancellationToken = default)
     {
         LogCreatingCheckin(logger, indicatorId);
 
-        var indicator = await indicatorRepository.GetIndicatorWithGoalAsync(indicatorId, cancellationToken);
+        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
+            user,
+            new CreateCheckinContext(indicatorId),
+            cancellationToken);
+        if (!authorizationResult.IsSuccess)
+        {
+            LogCheckinCreationFailed(logger, indicatorId, authorizationResult.Error ?? "Authorization failed");
+            return authorizationResult.ToFailureResult<Checkin>();
+        }
+
+        var indicator = await indicatorRepository.GetIndicatorWithMissionAsync(indicatorId, cancellationToken);
         if (indicator is null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found");
+            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found after authorization");
             return Result<Checkin>.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 
-        var collaboratorId = tenantProvider.CollaboratorId;
-        if (!collaboratorId.HasValue)
+        var employeeId = tenantProvider.EmployeeId;
+        if (!employeeId.HasValue)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Collaborator not identified");
-            return Result<Checkin>.Forbidden(UserErrorMessages.CollaboratorNotIdentified);
+            LogCheckinCreationFailed(logger, indicatorId, "Employee not identified");
+            return Result<Checkin>.Forbidden(UserErrorMessages.EmployeeNotIdentified);
         }
 
-        var collaborator = await collaboratorRepository.GetByIdAsync(collaboratorId.Value, cancellationToken);
-        if (collaborator is null)
+        var employee = await employeeRepository.GetByIdAsync(employeeId.Value, cancellationToken);
+        if (employee is null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Collaborator not found");
-            return Result<Checkin>.NotFound(UserErrorMessages.CollaboratorNotFound);
+            LogCheckinCreationFailed(logger, indicatorId, "Employee not found");
+            return Result<Checkin>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
-        var goal = indicator.Goal;
-        if (goal.Status != GoalStatus.Active)
+        var mission = indicator.Mission;
+        if (mission.Status != MissionStatus.Active)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Goal not active");
+            LogCheckinCreationFailed(logger, indicatorId, "Mission not active");
             return Result<Checkin>.Failure(
                 "Não é possível fazer check-in em indicadores de metas que não estão ativas.",
                 ErrorType.Validation);
@@ -59,10 +72,10 @@ public sealed partial class CreateCheckin(
         {
             var checkin = indicator.CreateCheckin(
                 Guid.NewGuid(),
-                collaboratorId.Value,
+                employeeId.Value,
                 command.Value,
                 command.Text,
-                DateTime.SpecifyKind(command.CheckinDate, DateTimeKind.Utc),
+                UtcDateTimeNormalizer.Normalize(command.CheckinDate),
                 command.Note,
                 command.ConfidenceLevel);
 

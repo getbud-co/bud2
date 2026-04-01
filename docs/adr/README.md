@@ -24,7 +24,7 @@ Cada ADR é autocontida e descreve contexto, decisão, consequências e alternat
 11. `ADR-0011` Estratégia de Validação
 12. `ADR-0012` Estratégia de Testes e Governança Arquitetural
 13. `ADR-0013` Estratégia de Observabilidade
-14. `ADR-0014` Unificação de Mission+Objective em Goal e renomeação Metric→Indicator
+14. `ADR-0014` Histórico: unificação de Mission+Objective em Goal e renomeação Metric→Indicator
 15. `ADR-0015` ~~Separação do Host do Frontend em Produção~~ (Deprecated — movido para `DEPLOY.md`)
 
 ## Status possíveis

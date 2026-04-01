@@ -26,50 +26,50 @@ public sealed class SessionAuthenticator(
 
         var normalizedEmail = email.ToLowerInvariant();
 
-        var collaborator = await dbContext.Collaborators
+        var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
 
-        if (collaborator is null)
+        if (employee is null)
         {
             return Result<LoginResult>.NotFound("Usuário não encontrado.");
         }
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, collaborator.Email),
-            new("email", collaborator.Email),
-            new("collaborator_id", collaborator.Id.ToString()),
-            new("organization_id", collaborator.OrganizationId.ToString()),
-            new(ClaimTypes.Name, collaborator.FullName)
+            new(ClaimTypes.Email, employee.Email),
+            new("email", employee.Email),
+            new("employee_id", employee.Id.ToString()),
+            new("organization_id", employee.OrganizationId.ToString()),
+            new(ClaimTypes.Name, employee.FullName)
         };
 
-        if (collaborator.IsGlobalAdmin)
+        if (employee.IsGlobalAdmin)
         {
             claims.Add(new(ClaimTypes.Role, "GlobalAdmin"));
         }
 
-        await RegisterAccessLogAsync(collaborator.Id, collaborator.OrganizationId, cancellationToken);
+        await RegisterAccessLogAsync(employee.Id, employee.OrganizationId, cancellationToken);
 
         var token = GenerateJwtToken(claims);
 
         return Result<LoginResult>.Success(new LoginResult
         {
             Token = token,
-            Email = collaborator.Email,
-            DisplayName = collaborator.FullName,
-            IsGlobalAdmin = collaborator.IsGlobalAdmin,
-            CollaboratorId = collaborator.Id,
-            Role = collaborator.Role,
-            OrganizationId = collaborator.OrganizationId
+            Email = employee.Email,
+            DisplayName = employee.FullName,
+            IsGlobalAdmin = employee.IsGlobalAdmin,
+            EmployeeId = employee.Id,
+            Role = employee.Role,
+            OrganizationId = employee.OrganizationId
         });
     }
 
-    private async Task RegisterAccessLogAsync(Guid collaboratorId, Guid organizationId, CancellationToken cancellationToken)
+    private async Task RegisterAccessLogAsync(Guid employeeId, Guid organizationId, CancellationToken cancellationToken)
     {
-        dbContext.CollaboratorAccessLogs.Add(
-            CollaboratorAccessLog.Create(Guid.NewGuid(), collaboratorId, organizationId, DateTime.UtcNow));
+        dbContext.EmployeeAccessLogs.Add(
+            EmployeeAccessLog.Create(Guid.NewGuid(), employeeId, organizationId, DateTime.UtcNow));
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

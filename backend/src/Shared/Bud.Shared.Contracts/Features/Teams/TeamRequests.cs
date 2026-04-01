@@ -21,7 +21,7 @@ public sealed class PatchTeamRequest
     public Optional<Guid?> ParentTeamId { get; set; }
 }
 
-public sealed class PatchTeamCollaboratorsRequest
+public sealed class PatchTeamEmployeesRequest
 {
-    public List<Guid> CollaboratorIds { get; set; } = [];
+    public List<Guid> EmployeeIds { get; set; } = [];
 }

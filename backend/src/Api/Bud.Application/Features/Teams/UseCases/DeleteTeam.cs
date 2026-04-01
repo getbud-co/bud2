@@ -26,7 +26,7 @@ public sealed partial class DeleteTeam(
             return Result.NotFound(UserErrorMessages.TeamNotFound);
         }
 
-        var canDelete = await authorizationGateway.CanWriteOrganizationAsync(user, team.OrganizationId, cancellationToken);
+        var canDelete = await authorizationGateway.CanWriteAsync(user, new TeamResource(id), cancellationToken);
         if (!canDelete)
         {
             LogTeamDeletionFailed(logger, id, "Forbidden");
@@ -39,9 +39,9 @@ public sealed partial class DeleteTeam(
             return Result.Failure(UserErrorMessages.TeamDeleteWithSubTeamsConflict, ErrorType.Conflict);
         }
 
-        if (await teamRepository.HasGoalsAsync(id, cancellationToken))
+        if (await teamRepository.HasMissionsAsync(id, cancellationToken))
         {
-            LogTeamDeletionFailed(logger, id, "Has goals");
+            LogTeamDeletionFailed(logger, id, "Has missions");
             return Result.Failure(
                 "Não é possível excluir o time porque existem metas associadas a ele.",
                 ErrorType.Conflict);
