@@ -66,4 +66,9 @@ internal static class UserErrorMessages
     public const string TaskCreateForbidden = "Você não tem permissão para criar tarefas nesta meta.";
     public const string TaskUpdateForbidden = "Você não tem permissão para atualizar esta tarefa.";
     public const string TaskDeleteForbidden = "Você não tem permissão para excluir esta tarefa.";
+    public const string CycleNotFound = "Ciclo não encontrado.";
+    public const string CycleCreateForbidden = "Você não tem permissão para criar ciclos nesta organização.";
+    public const string CycleUpdateForbidden = "Você não tem permissão para atualizar ciclos nesta organização.";
+    public const string CycleDeleteForbidden = "Você não tem permissão para excluir ciclos nesta organização.";
+    public const string CycleListForbidden = "Você não tem permissão para listar ciclos nesta organização.";
 }
