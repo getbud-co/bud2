@@ -154,7 +154,7 @@ Controllers must:
 
 ### Validation and OpenAPI (MUST)
 
-- Use FluentValidation in `src/Api/Bud.Api/Validators/`, registered in DI.
+- Use FluentValidation co-located with controllers in `src/Api/Bud.Api/Features/<Feature>/`, registered in DI.
 - Validators must not access `ApplicationDbContext` directly.
 - Keep OpenAPI available at `/swagger` and `/openapi/v1.json` in Development.
 - Keep `ProducesResponseType`, `Consumes`, and `Produces` aligned with behavior.
@@ -221,7 +221,8 @@ Operational command details are maintained in:
 
 ## Key Files (Essential)
 
-- `src/Api/Bud.Api/Controllers/ApiControllerBase.cs`
+- `src/Api/Bud.Api/Controllers/ApiControllerBase.cs` (base class compartilhada)
+- `src/Api/Bud.Api/Features/Missions/MissionsController.cs`
 - `src/Api/Bud.Api/Features/Organizations/OrganizationsController.cs`
 - `src/Api/Bud.Application/Common/Result.cs`
 - `src/Api/Bud.Application/BudApplicationCompositionExtensions.cs`

@@ -60,7 +60,9 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 - **Domain (`Bud.Domain`)**: entidades, aggregate roots, value objects, eventos de domínio, primitivos e interfaces de repositório.
 - **Infrastructure (`Bud.Infrastructure`)**: EF Core (`ApplicationDbContext`), repositórios, serviços de infraestrutura, migrations e specifications de consulta.
 - **MCP Server (`Bud.Mcp`)**: HTTP MCP server para integração com clientes conversacionais.
-- **Shared (`Bud.Shared`)**: contratos de borda compartilhados entre cliente, servidor e MCP.
+- **Shared**: dividido em dois projetos:
+  - `Bud.Shared.Contracts`: contratos de borda (requests, responses, enums) compartilhados entre cliente, servidor e MCP.
+  - `Bud.Shared.Kernel`: tipos estáveis e primitivos compartilhados.
 
 ### Frontend (`frontend/`)
 
@@ -70,13 +72,14 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
 
 ### Organização do backend (`src/Api/*`)
 
-- **Controllers** recebem requests, validam payloads (FluentValidation) e delegam para Use Cases.
+- **Features** (`src/Api/Bud.Api/Features/<Feature>/`): cada feature contém seu controller e seus validators (FluentValidation) co-localizados.
+  Controllers recebem requests, validam payloads e delegam para Use Cases.
   Validações dependentes de dados devem passar por abstrações/repositórios, não por acesso direto de validator ao `DbContext`.
 - **Use Cases** (`src/Api/Bud.Application/Features/<Feature>/UseCases/`) centralizam o fluxo completo da aplicação (orquestração, autorização, notificações) e retornam `Result`/`Result<T>` (`src/Api/Bud.Application/Common/`). Cada use case é uma classe com método `ExecuteAsync`, injetada diretamente nos controllers.
   Os namespaces explícitos espelham a estrutura física: `Bud.Application.Features.<Feature>.UseCases`.
 - **Infrastructure** (`src/Api/Bud.Infrastructure/`) contém implementações concretas:
-  - pastas por feature: implementações dos repositórios e adapters concretos associados à capacidade (`Missions/`, `Me/`, `Notifications/`, `Organizations/`, `Sessions/`, etc.).
-  - `Authorization/`: adapters transversais de tenant/autorização que não pertencem a uma feature específica.
+  - `Features/<Feature>/`: implementações dos repositórios e adapters concretos associados à capacidade.
+  - `DomainEvents/`: dispatcher de eventos de domínio.
   - `Querying/`: specifications de consulta para filtros reutilizáveis.
   - `Persistence/`: `ApplicationDbContext`, factory de design-time, configurations, migrations e `DbSeeder`.
 - **Authorization e DI da API** vivem em `src/Api/Bud.Api/Authorization/` e `src/Api/Bud.Api/DependencyInjection/`.
@@ -103,7 +106,7 @@ O Bud segue uma arquitetura em camadas com separação explícita de responsabil
   Referências: `docs/adr/ADR-0003-agregados-entidades-value-objects-e-invariantes.md`.
 - **Invariantes no domínio (modelo rico)**  
   Regras centrais de negócio são aplicadas por métodos de agregado/entidade (`Create`, `Rename`, `SetScope`, etc.) com tradução para `Result` na camada de aplicação (Use Cases).
-  Inclui Value Objects formais (`PersonName`, `MissionScope`, `ConfidenceLevel`, `IndicatorRange`) para reduzir primitive obsession.
+  Inclui Value Objects formais (`PersonName`, `ConfidenceLevel`, `IndicatorRange`, `IndicatorTargetDefinition`) para reduzir primitive obsession.
 - **Notification Orchestration (Application)**
   Orquestração de notificações centralizada em `Application/EventHandlers/` (`NotificationOrchestrator`), desacoplada dos repositórios.
 - **Domain Events + Unit of Work**
@@ -118,6 +121,8 @@ Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a 
 |---|---|---|
 | Endpoint REST | `api/{recurso-plural}` | `api/missions` |
 | Controller | `{RecursoPlural}Controller` | `MissionsController` |
+| Diretório do controller | `Bud.Api/Features/{Feature}/` | `Bud.Api/Features/Missions/` |
+| Validators | Co-localizados com controller | `Bud.Api/Features/Missions/MissionValidators.cs` |
 | Método CRUD | `Create`, `Update`, `Delete`, `GetById`, `GetAll` | `MissionsController.Create` |
 | Método sub-recurso | `Get{SubRecurso}` | `MissionsController.GetIndicators` |
 | Use case (criação) | `Create{Recurso}` | `CreateMission` |
@@ -141,28 +146,28 @@ Nomes são derivados sistematicamente do recurso REST. A tabela abaixo mostra a 
 
 - **Controller `Update` vs Use Case `Patch`**: o controller usa `Update` por legibilidade REST; o use case e o DTO usam `Patch` para refletir o verbo HTTP (PATCH = atualização parcial).
 - **Controller `GetAll` vs Use Case `List`**: o controller segue a convenção REST (`GET` = "get"); o use case descreve a operação de negócio ("list").
-- **Entidade `MissionTask` vs DTO `Task`**: a entidade de domínio é `MissionTask` para evitar conflito com `System.Threading.Tasks.Task`; no controller, DTOs e repositório usa-se `Task` (ex: `TasksController`, `TaskResponse`, `ITaskRepository`).
+- **Entidade `MissionTask` vs DTO `Task`**: a entidade de domínio é `MissionTask` (aggregate root independente em `Domain/Tasks/`) para evitar conflito com `System.Threading.Tasks.Task`; no controller, DTOs e repositório usa-se `Task` (ex: `TasksController`, `TaskResponse`, `ITaskRepository`).
 - **Checkins dentro de `IndicatorsController`**: operações CRUD de checkin ficam no `IndicatorsController` (sub-recurso `/api/indicators/{id}/checkins`), com sufixo `Action` nos métodos (`CreateCheckinAction`, `PatchCheckinAction`, `DeleteCheckinAction`) para evitar colisão de nomes. Os use cases permanecem co-localizados na feature `Indicators`.
 
 #### Rastreabilidade ponta a ponta (exemplo: criar meta)
 
 ```
 POST /api/missions
-  → MissionsController.Create
+  → MissionsController.Create (Bud.Api/Features/Missions/)
     → CreateMission.ExecuteAsync (Application/Features/Missions/UseCases/)
       → IMissionRepository.AddAsync (Application/Features/Missions/)
         → MissionRepository (Infrastructure/Features/Missions/)
-    Payload: CreateMissionRequest (Bud.Shared/Contracts/Requests/)
-    Retorno: MissionResponse (Bud.Shared/Contracts/Responses/)
+    Payload: CreateMissionRequest (Bud.Shared.Contracts/Requests/)
+    Retorno: MissionResponse (Bud.Shared.Contracts/Responses/)
 ```
 
 #### Rastreabilidade ponta a ponta (exemplo: listar indicadores de uma meta)
 
 ```
 GET /api/missions/{id}/indicators
-  → MissionsController.GetIndicators
+  → MissionsController.GetIndicators (Bud.Api/Features/Missions/)
     → ListMissionIndicators.ExecuteAsync (Application/Features/Missions/UseCases/)
-      → IIndicatorRepository.GetByMissionIdAsync (Application/Features/Indicators/)
+      → IMissionRepository.GetIndicatorsAsync (Application/Features/Missions/)
     Retorno: PagedResult<IndicatorResponse>
 ```
 
@@ -176,16 +181,18 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 
 | Aggregate Root | Child Entities | Repositório |
 |---|---|---|
-| `Mission` | `Indicator`, `MissionTask` (via goal) | `IMissionRepository` |
+| `Mission` | — | `IMissionRepository` |
+| `MissionTask` | — | `ITaskRepository` |
+| `Indicator` | `Checkin` | `IIndicatorRepository` |
 | `Organization` | — | `IOrganizationRepository` |
 | `Team` | `EmployeeTeam` (join entity) | `ITeamRepository` |
 | `Employee` | `EmployeeTeam`, `EmployeeAccessLog` | `IEmployeeRepository` |
-| `Indicator` | `Checkin` | `IIndicatorRepository` |
 | `Template` | `TemplateMission`, `TemplateIndicator` | `ITemplateRepository` |
 | `Notification` | — | `INotificationRepository` |
 
-**Exceções notáveis:**
-- `MissionTask` não é aggregate root (`ITenantEntity` apenas), mas possui repositório próprio (`ITaskRepository`) porque é gerenciado como recurso REST independente (`PATCH /api/tasks/{id}`, `DELETE /api/tasks/{id}`).
+**Notas:**
+- `Mission` suporta hierarquia recursiva via `ParentId` nullable (sub-metas são filhas de uma meta pai).
+- `MissionTask` é aggregate root independente (`IAggregateRoot`) com repositório próprio (`ITaskRepository`), gerenciado como recurso REST independente (`PATCH /api/tasks/{id}`, `DELETE /api/tasks/{id}`).
 - `Checkin` não possui repositório próprio — persistência é via `IIndicatorRepository` (métodos `AddCheckinAsync`, `RemoveCheckinAsync`, etc.), respeitando o boundary do agregado `Indicator`.
 - `DashboardReadStore` implementa um Application Port da feature `Me` (`IMyDashboardReadStore`), não uma interface de Domain Repository. Trata-se de um read model, não de um repositório de agregado.
 
@@ -196,7 +203,9 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 | `EntityName` | Nomes de entidades organizacionais (validação de tamanho e formato) |
 | `PersonName` | Nome de funcionário (first/last name semântico) |
 | `EmailAddress` | E-mail validado |
+| `OrganizationDomainName` | Domínio de organização (validação de formato) |
 | `IndicatorRange` | Faixa de valores (baseline, target) |
+| `IndicatorTargetDefinition` | Definição de meta do indicador (tipo + range) |
 | `ConfidenceLevel` | Nível de confiança em checkins (1–5) |
 | `EngagementScore` | Score de engajamento calculado |
 | `PerformanceIndicator` | Indicador de performance calculado |
@@ -208,7 +217,10 @@ Cada aggregate root é marcado com `IAggregateRoot` e possui um repositório ded
 ```mermaid
 flowchart TD
     subgraph AggMission["Mission (aggregate)"]
-        Mission["Mission"]
+        Mission["Mission (recursive via ParentId)"]
+    end
+
+    subgraph AggMissionTask["MissionTask (aggregate)"]
         MissionTask["MissionTask"]
     end
 
@@ -244,8 +256,9 @@ flowchart TD
     Team --> EmployeeTeam
     Employee --> EmployeeTeam
     Mission --> Indicator
-    Indicator --> Checkin
     Mission --> MissionTask
+    Mission --> Mission
+    Indicator --> Checkin
 ```
 
 ### Multi-tenancy
@@ -335,8 +348,8 @@ flowchart TD
     T[Team]
     ST[SubTeam]
     E[Employee]
-    G[Mission]
-    SM[SubMission]
+    M[Mission]
+    MT[MissionTask]
     I[Indicator]
     CH[Checkin]
 
@@ -344,19 +357,15 @@ flowchart TD
     T --> ST
     T --> E
 
-    O --> G
-    O -. escopo .-> G
-    T -. escopo .-> G
-    E -. escopo .-> G
+    O --> M
+    E -. responsável .-> M
 
-    G --> SM
-    SM --> SM
-    G --> I
-    SM --> I
+    M -->|ParentId| M
+    M --> I
+    M --> MT
     I --> CH
 
     O --> N[Notification]
-    C --> N
 ```
 
 #### Fluxo de autenticação, tenant e autorização

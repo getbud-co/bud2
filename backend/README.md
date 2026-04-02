@@ -46,7 +46,7 @@ dotnet test
 Ou com Docker Compose (na raiz do repo):
 
 ```bash
-docker-compose up api db
+docker compose up api db
 ```
 
 ### Variáveis de Ambiente
@@ -63,9 +63,9 @@ ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=bud;Usern
 ### Estrutura DDD
 
 - **Domain**: Entidades, Value Objects, Eventos, Interfaces de Repositório
-- **Application**: Use Cases, Mappers, Abstrações
-- **Infrastructure**: EF Core, Repositórios Concretos, Serviços
-- **Api**: Controllers, Validadores, Middleware
+- **Application**: Use Cases, Mappers, Ports, Read Models
+- **Infrastructure**: EF Core, Repositórios Concretos, Serviços, Domain Event Dispatcher
+- **Api**: Controllers + Validators co-localizados em `Features/<Feature>/`, Middleware, Authorization
 
 ### Testes
 
