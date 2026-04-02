@@ -47,7 +47,7 @@ public sealed class TasksController(
             request.State,
             request.DueDate);
 
-        var result = await createTask.ExecuteAsync(User, command, cancellationToken);
+        var result = await createTask.ExecuteAsync(command, cancellationToken);
         return FromResult<MissionTask, TaskResponse>(result, task =>
             CreatedAtAction(nameof(GetById), new { id = task.Id }, task.ToResponse()));
     }
@@ -62,7 +62,7 @@ public sealed class TasksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TaskResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getTaskById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getTaskById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, task => task.ToResponse());
     }
 
@@ -93,7 +93,7 @@ public sealed class TasksController(
             request.State,
             request.DueDate);
 
-        var result = await patchTask.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchTask.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, task => task.ToResponse());
     }
 
@@ -109,7 +109,7 @@ public sealed class TasksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTask.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteTask.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

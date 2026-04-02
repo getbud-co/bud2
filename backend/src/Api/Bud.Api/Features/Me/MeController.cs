@@ -43,7 +43,7 @@ public sealed class MeController(
         [FromQuery] Guid? teamId,
         CancellationToken cancellationToken)
     {
-        var result = await getMyDashboard.ExecuteAsync(User, teamId, cancellationToken);
+        var result = await getMyDashboard.ExecuteAsync(teamId, cancellationToken);
         return FromResultOk(result);
     }
 }

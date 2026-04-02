@@ -39,7 +39,7 @@ public sealed class NotificationsController(
             return paginationValidation;
         }
 
-        var result = await listNotifications.ExecuteAsync(User, isRead, page, pageSize, cancellationToken);
+        var result = await listNotifications.ExecuteAsync(isRead, page, pageSize, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -55,7 +55,7 @@ public sealed class NotificationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, CancellationToken cancellationToken)
     {
-        var result = await patchNotification.ExecuteAsync(User, id, cancellationToken);
+        var result = await patchNotification.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -69,7 +69,7 @@ public sealed class NotificationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateAll(CancellationToken cancellationToken)
     {
-        var result = await patchNotifications.ExecuteAsync(User, cancellationToken);
+        var result = await patchNotifications.ExecuteAsync(cancellationToken);
         return FromResult(result, NoContent);
     }
 }

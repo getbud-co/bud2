@@ -50,7 +50,7 @@ public sealed class TemplatesController(
             missions,
             indicators);
 
-        var result = await createTemplate.ExecuteAsync(User, command, cancellationToken);
+        var result = await createTemplate.ExecuteAsync(command, cancellationToken);
         return FromResult<Template, TemplateResponse>(result, template =>
             CreatedAtAction(nameof(GetById), new { id = template.Id }, template.ToResponse()));
     }
@@ -89,7 +89,7 @@ public sealed class TemplatesController(
             missions,
             indicators);
 
-        var result = await patchTemplate.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchTemplate.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, template => template.ToResponse());
     }
 
@@ -103,7 +103,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTemplate.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteTemplate.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -117,7 +117,7 @@ public sealed class TemplatesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TemplateResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getTemplateById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getTemplateById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, template => template.ToResponse());
     }
 

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -11,12 +10,10 @@ public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<CreateTeam> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Team>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateTeamCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -29,16 +26,6 @@ public sealed partial class CreateTeam(
         }
 
         var organizationId = tenantProvider.TenantId.Value;
-
-        var canCreate = await authorizationGateway.CanWriteAsync(
-            user,
-            new CreateTeamContext(organizationId),
-            cancellationToken);
-        if (!canCreate)
-        {
-            LogTeamCreationFailed(logger, command.Name, "Forbidden");
-            return Result<Team>.Forbidden(UserErrorMessages.TeamCreateForbidden);
-        }
 
         if (command.ParentTeamId.HasValue)
         {

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -12,7 +11,6 @@ public sealed class MissionObjectiveReadUseCasesTests
 {
     private readonly Mock<IMissionRepository> _repository = new();
     private readonly Mock<IMissionProgressReadStore> _progressService = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task ViewMissionObjectiveDetails_WhenFound_ReturnsObjective()
@@ -23,13 +21,10 @@ public sealed class MissionObjectiveReadUseCasesTests
         _repository
             .Setup(repository => repository.GetByIdReadOnlyAsync(missionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(objective);
-        _authorizationGateway
-            .Setup(g => g.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        var useCase = new GetMissionById(_repository.Object, _authorizationGateway.Object);
+        var useCase = new GetMissionById(_repository.Object);
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), missionId);
+        var result = await useCase.ExecuteAsync(missionId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(missionId);
@@ -42,9 +37,9 @@ public sealed class MissionObjectiveReadUseCasesTests
             .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mission?)null);
 
-        var useCase = new GetMissionById(_repository.Object, _authorizationGateway.Object);
+        var useCase = new GetMissionById(_repository.Object);
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -71,13 +66,9 @@ public sealed class MissionObjectiveReadUseCasesTests
             .Setup(repository => repository.GetChildrenAsync(parentId, 1, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
-        _authorizationGateway
-            .Setup(g => g.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new ListMissionChildren(_repository.Object);
 
-        var useCase = new ListMissionChildren(_repository.Object, _authorizationGateway.Object);
-
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), parentId, 1, 10);
+        var result = await useCase.ExecuteAsync(parentId, 1, 10);
 
         result.IsSuccess.Should().BeTrue();
         _repository.Verify(repository => repository.GetChildrenAsync(parentId, 1, 10, It.IsAny<CancellationToken>()), Times.Once);

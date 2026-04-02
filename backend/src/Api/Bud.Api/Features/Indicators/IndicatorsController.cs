@@ -64,7 +64,7 @@ public sealed class IndicatorsController(
             request.Unit,
             request.TargetText);
 
-        var result = await createIndicator.ExecuteAsync(User, command, cancellationToken);
+        var result = await createIndicator.ExecuteAsync(command, cancellationToken);
         return FromResult<Indicator, IndicatorResponse>(result, indicator =>
             CreatedAtAction(nameof(GetById), new { id = indicator.Id }, indicator.ToResponse()));
     }
@@ -99,7 +99,7 @@ public sealed class IndicatorsController(
             request.Unit,
             request.TargetText);
 
-        var result = await patchIndicator.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchIndicator.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, indicator => indicator.ToResponse());
     }
 
@@ -115,7 +115,7 @@ public sealed class IndicatorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteIndicator.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteIndicator.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -129,7 +129,7 @@ public sealed class IndicatorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IndicatorResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getIndicatorById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getIndicatorById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, indicator => indicator.ToResponse());
     }
 
@@ -205,7 +205,7 @@ public sealed class IndicatorsController(
             request.Note,
             request.ConfidenceLevel);
 
-        var result = await createCheckin.ExecuteAsync(User, indicatorId, command, cancellationToken);
+        var result = await createCheckin.ExecuteAsync(indicatorId, command, cancellationToken);
         return FromResult<Checkin, CheckinResponse>(result, checkin =>
             CreatedAtAction(nameof(GetCheckinById), new { indicatorId, checkinId = checkin.Id }, checkin.ToResponse()));
     }
@@ -228,7 +228,7 @@ public sealed class IndicatorsController(
             return paginationValidation;
         }
 
-        var result = await listCheckins.ExecuteAsync(User, indicatorId, page, pageSize, cancellationToken);
+        var result = await listCheckins.ExecuteAsync(indicatorId, page, pageSize, cancellationToken);
         return FromResultOk(result, paged => paged.MapPaged(c => c.ToResponse()));
     }
 
@@ -243,7 +243,7 @@ public sealed class IndicatorsController(
         Guid checkinId,
         CancellationToken cancellationToken)
     {
-        var result = await getCheckinById.ExecuteAsync(User, indicatorId, checkinId, cancellationToken);
+        var result = await getCheckinById.ExecuteAsync(indicatorId, checkinId, cancellationToken);
         return FromResultOk(result, checkin => checkin.ToResponse());
     }
 
@@ -275,7 +275,7 @@ public sealed class IndicatorsController(
             request.Note,
             request.ConfidenceLevel);
 
-        var result = await patchCheckin.ExecuteAsync(User, indicatorId, checkinId, command, cancellationToken);
+        var result = await patchCheckin.ExecuteAsync(indicatorId, checkinId, command, cancellationToken);
         return FromResultOk(result, checkin => checkin.ToResponse());
     }
 
@@ -291,7 +291,7 @@ public sealed class IndicatorsController(
         Guid checkinId,
         CancellationToken cancellationToken)
     {
-        var result = await deleteCheckin.ExecuteAsync(User, indicatorId, checkinId, cancellationToken);
+        var result = await deleteCheckin.ExecuteAsync(indicatorId, checkinId, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

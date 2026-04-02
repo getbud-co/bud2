@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -17,31 +16,19 @@ public sealed partial class CreateCheckin(
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Checkin>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid indicatorId,
         CreateCheckinCommand command,
         CancellationToken cancellationToken = default)
     {
         LogCreatingCheckin(logger, indicatorId);
 
-        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
-            user,
-            new CreateCheckinContext(indicatorId),
-            cancellationToken);
-        if (!authorizationResult.IsSuccess)
-        {
-            LogCheckinCreationFailed(logger, indicatorId, authorizationResult.Error ?? "Authorization failed");
-            return authorizationResult.ToFailureResult<Checkin>();
-        }
-
         var indicator = await indicatorRepository.GetIndicatorWithMissionAsync(indicatorId, cancellationToken);
         if (indicator is null)
         {
-            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found after authorization");
+            LogCheckinCreationFailed(logger, indicatorId, "Indicator not found");
             return Result<Checkin>.NotFound(UserErrorMessages.IndicatorNotFound);
         }
 

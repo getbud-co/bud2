@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -9,11 +8,9 @@ public sealed partial class DeleteMission(
     IMissionRepository missionRepository,
     ITenantProvider tenantProvider,
     ILogger<DeleteMission> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -24,13 +21,6 @@ public sealed partial class DeleteMission(
         {
             LogMissionDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.MissionNotFound);
-        }
-
-        var canWrite = await authorizationGateway.CanWriteAsync(user, new MissionResource(id), cancellationToken);
-        if (!canWrite)
-        {
-            LogMissionDeletionFailed(logger, id, UserErrorMessages.MissionDeleteForbidden);
-            return Result.Forbidden(UserErrorMessages.MissionDeleteForbidden);
         }
 
         mission.MarkAsDeleted(tenantProvider.EmployeeId);

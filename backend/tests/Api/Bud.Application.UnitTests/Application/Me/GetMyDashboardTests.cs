@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Moq;
-using System.Security.Claims;
 using Xunit;
 using Bud.Application.Common;
 
@@ -13,16 +12,11 @@ public sealed class GetMyDashboardTests
     {
         var repository = new Mock<IMyDashboardReadStore>();
         var tenantProvider = new Mock<ITenantProvider>();
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
         tenantProvider.SetupGet(x => x.EmployeeId).Returns((Guid?)null);
-        authorizationGateway
-            .Setup(g => g.CanReadAsync(user, It.IsAny<DashboardResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
 
-        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object, authorizationGateway.Object);
+        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(user);
+        var result = await useCase.ExecuteAsync(null);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -36,19 +30,14 @@ public sealed class GetMyDashboardTests
         var employeeId = Guid.NewGuid();
         var repository = new Mock<IMyDashboardReadStore>();
         var tenantProvider = new Mock<ITenantProvider>();
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
         tenantProvider.SetupGet(x => x.EmployeeId).Returns(employeeId);
-        authorizationGateway
-            .Setup(g => g.CanReadAsync(user, It.IsAny<DashboardResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         repository
             .Setup(r => r.GetMyDashboardAsync(employeeId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DashboardSnapshot());
 
-        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object, authorizationGateway.Object);
+        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(user);
+        var result = await useCase.ExecuteAsync(null);
 
         result.IsSuccess.Should().BeTrue();
         repository.Verify(r => r.GetMyDashboardAsync(employeeId, null, It.IsAny<CancellationToken>()), Times.Once);
@@ -60,19 +49,14 @@ public sealed class GetMyDashboardTests
         var employeeId = Guid.NewGuid();
         var repository = new Mock<IMyDashboardReadStore>();
         var tenantProvider = new Mock<ITenantProvider>();
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
         tenantProvider.SetupGet(x => x.EmployeeId).Returns(employeeId);
-        authorizationGateway
-            .Setup(g => g.CanReadAsync(user, It.IsAny<DashboardResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         repository
             .Setup(r => r.GetMyDashboardAsync(employeeId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync((DashboardSnapshot?)null);
 
-        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object, authorizationGateway.Object);
+        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(user);
+        var result = await useCase.ExecuteAsync(null);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -86,19 +70,14 @@ public sealed class GetMyDashboardTests
         var teamId = Guid.NewGuid();
         var repository = new Mock<IMyDashboardReadStore>();
         var tenantProvider = new Mock<ITenantProvider>();
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
         tenantProvider.SetupGet(x => x.EmployeeId).Returns(employeeId);
-        authorizationGateway
-            .Setup(g => g.CanReadAsync(user, It.IsAny<DashboardResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         repository
             .Setup(r => r.GetMyDashboardAsync(employeeId, teamId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DashboardSnapshot());
 
-        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object, authorizationGateway.Object);
+        var useCase = new GetMyDashboard(repository.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(user, teamId);
+        var result = await useCase.ExecuteAsync(teamId);
 
         result.IsSuccess.Should().BeTrue();
         repository.Verify(r => r.GetMyDashboardAsync(employeeId, teamId, It.IsAny<CancellationToken>()), Times.Once);

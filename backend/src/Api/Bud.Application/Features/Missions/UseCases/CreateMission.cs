@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -20,11 +19,9 @@ public sealed partial class CreateMission(
     IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateMission> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Mission>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateMissionCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -34,16 +31,6 @@ public sealed partial class CreateMission(
         if (!organizationId.HasValue)
         {
             LogMissionCreationFailed(logger, command.Name, "Tenant not selected");
-            return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);
-        }
-
-        var canWrite = await authorizationGateway.CanWriteAsync(
-            user,
-            new CreateMissionContext(organizationId.Value),
-            cancellationToken);
-        if (!canWrite)
-        {
-            LogMissionCreationFailed(logger, command.Name, UserErrorMessages.MissionCreateForbidden);
             return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);
         }
 

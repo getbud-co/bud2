@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 
@@ -6,16 +5,10 @@ namespace Bud.Application.Features.Notifications.UseCases;
 
 public sealed class PatchNotifications(
     INotificationRepository notificationRepository,
-    ITenantProvider tenantProvider,
-    IApplicationAuthorizationGateway authorizationGateway)
+    ITenantProvider tenantProvider)
 {
-    public async Task<Result> ExecuteAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default)
+    public async Task<Result> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        if (!await authorizationGateway.CanReadAsync(user, NotificationInboxResource.Instance, cancellationToken))
-        {
-            return Result.Forbidden(UserErrorMessages.EmployeeNotIdentified);
-        }
-
         if (tenantProvider.EmployeeId is null)
         {
             return Result.Forbidden(UserErrorMessages.EmployeeNotIdentified);

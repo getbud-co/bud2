@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -8,8 +7,6 @@ namespace Bud.Application.UnitTests.Application.Checkins;
 
 public sealed class CheckinWriteUseCasesTests
 {
-    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
-
     [Fact]
     public async Task CreateAsync_WhenEmployeeNotIdentified_ReturnsForbidden()
     {
@@ -34,14 +31,12 @@ public sealed class CheckinWriteUseCasesTests
         };
 
         var checkinRepository = new Mock<IIndicatorRepository>(MockBehavior.Strict);
+        checkinRepository
+            .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metric);
         var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Forbidden("Funcionário não identificado."));
 
         var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
         tenantProvider.SetupGet(t => t.EmployeeId).Returns((Guid?)null);
 
         var useCase = new CreateCheckin(
@@ -49,16 +44,14 @@ public sealed class CheckinWriteUseCasesTests
             employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance,
-            authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, metric.Id, new CreateCheckinCommand(null, "ok", DateTime.UtcNow, null, 3));
+        var result = await useCase.ExecuteAsync(metric.Id, new CreateCheckinCommand(null, "ok", DateTime.UtcNow, null, 3));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
         result.Error.Should().Be("Funcionário não identificado.");
         employeeRepository.VerifyNoOtherCalls();
-        checkinRepository.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -94,10 +87,6 @@ public sealed class CheckinWriteUseCasesTests
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Employee?)null);
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
 
         var tenantProvider = new Mock<ITenantProvider>(MockBehavior.Strict);
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
@@ -107,10 +96,9 @@ public sealed class CheckinWriteUseCasesTests
             employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance,
-            authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, indicator.Id, new CreateCheckinCommand(null, "ok", DateTime.UtcNow, null, 3));
+        var result = await useCase.ExecuteAsync(indicator.Id, new CreateCheckinCommand(null, "ok", DateTime.UtcNow, null, 3));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -159,10 +147,6 @@ public sealed class CheckinWriteUseCasesTests
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -173,10 +157,9 @@ public sealed class CheckinWriteUseCasesTests
             employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance,
-            authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, metric.Id, new CreateCheckinCommand(10m, null, DateTime.UtcNow, null, 3));
+        var result = await useCase.ExecuteAsync(metric.Id, new CreateCheckinCommand(10m, null, DateTime.UtcNow, null, 3));
 
         result.IsSuccess.Should().BeTrue();
         checkinRepository.Verify(r => r.AddCheckinAsync(It.IsAny<Checkin>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -222,10 +205,6 @@ public sealed class CheckinWriteUseCasesTests
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -236,10 +215,9 @@ public sealed class CheckinWriteUseCasesTests
             employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance,
-            authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, metric.Id, new CreateCheckinCommand(10m, null, DateTime.UtcNow, null, 3));
+        var result = await useCase.ExecuteAsync(metric.Id, new CreateCheckinCommand(10m, null, DateTime.UtcNow, null, 3));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
@@ -263,21 +241,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetCheckinByIdForUpdateAsync(checkin.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checkin);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns((Guid?)null);
 
         var useCase = new PatchCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<PatchCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -304,21 +276,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetCheckinByIdForUpdateAsync(checkin.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checkin);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(currentEmployeeId);
 
         var useCase = new PatchCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<PatchCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(10m, null, DateTime.UtcNow, null, 2));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -364,21 +330,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
         var useCase = new PatchCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<PatchCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(25m, null, DateTime.UtcNow, null, 4));
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id, new PatchCheckinCommand(25m, null, DateTime.UtcNow, null, 4));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Value.Should().Be(25m);
@@ -432,11 +392,6 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
@@ -445,10 +400,9 @@ public sealed class CheckinWriteUseCasesTests
             employeeRepository.Object,
             tenantProvider.Object,
             NullLogger<CreateCheckin>.Instance,
-            authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, indicator.Id, new CreateCheckinCommand(10m, null, localDate, null, 3));
+        var result = await useCase.ExecuteAsync(indicator.Id, new CreateCheckinCommand(10m, null, localDate, null, 3));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.CheckinDate.Should().Be(expectedUtc);
@@ -477,21 +431,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns((Guid?)null);
 
         var useCase = new DeleteCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<DeleteCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id);
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -517,21 +465,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetCheckinByIdAsync(checkin.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checkin);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(currentEmployeeId);
 
         var useCase = new DeleteCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<DeleteCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id);
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -563,21 +505,15 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
-        authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
 
         var useCase = new DeleteCheckin(
             checkinRepository.Object,
-            authorizationGateway.Object,
             tenantProvider.Object,
             NullLogger<DeleteCheckin>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, checkin.IndicatorId, checkin.Id);
+        var result = await useCase.ExecuteAsync(checkin.IndicatorId, checkin.Id);
 
         result.IsSuccess.Should().BeTrue();
         checkinRepository.Verify(r => r.RemoveCheckinAsync(checkin, It.IsAny<CancellationToken>()), Times.Once);

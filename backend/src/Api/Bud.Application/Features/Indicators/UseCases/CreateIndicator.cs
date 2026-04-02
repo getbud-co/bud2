@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -18,30 +17,18 @@ public sealed record CreateIndicatorCommand(
 public sealed partial class CreateIndicator(
     IIndicatorRepository indicatorRepository,
     ILogger<CreateIndicator> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Indicator>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateIndicatorCommand command,
         CancellationToken cancellationToken = default)
     {
         LogCreatingIndicator(logger, command.Name, command.MissionId);
 
-        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
-            user,
-            new CreateIndicatorContext(command.MissionId),
-            cancellationToken);
-        if (!authorizationResult.IsSuccess)
-        {
-            LogIndicatorCreationFailed(logger, command.Name, authorizationResult.Error ?? "Authorization failed");
-            return authorizationResult.ToFailureResult<Indicator>();
-        }
-
         var mission = await indicatorRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
         if (mission is null)
         {
-            LogIndicatorCreationFailed(logger, command.Name, "Mission not found after authorization");
+            LogIndicatorCreationFailed(logger, command.Name, UserErrorMessages.MissionNotFound);
             return Result<Indicator>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
