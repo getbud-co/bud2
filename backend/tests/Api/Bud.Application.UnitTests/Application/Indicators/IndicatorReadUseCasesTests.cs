@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -10,8 +9,6 @@ namespace Bud.Application.UnitTests.Application.Indicators;
 
 public sealed class IndicatorReadUseCasesTests
 {
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
-
     [Fact]
     public async Task ViewMissionMetricDetails_WhenMetricExists_ReturnsSuccess()
     {
@@ -22,13 +19,9 @@ public sealed class IndicatorReadUseCasesTests
             .Setup(repository => repository.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Indicator { Id = indicatorId, Name = "X", OrganizationId = Guid.NewGuid() });
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new GetIndicatorById(metricRepository.Object);
 
-        var useCase = new GetIndicatorById(metricRepository.Object, _authorizationGateway.Object);
-
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId);
+        var result = await useCase.ExecuteAsync(indicatorId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(indicatorId);
@@ -44,9 +37,9 @@ public sealed class IndicatorReadUseCasesTests
             .Setup(repository => repository.GetByIdAsync(indicatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Indicator?)null);
 
-        var useCase = new GetIndicatorById(metricRepository.Object, _authorizationGateway.Object);
+        var useCase = new GetIndicatorById(metricRepository.Object);
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId);
+        var result = await useCase.ExecuteAsync(indicatorId);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);

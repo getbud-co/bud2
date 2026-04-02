@@ -117,14 +117,27 @@ Bud backend is an ASP.NET Core 10 solution with PostgreSQL persistence and an MC
 
 ### Authorization Pattern (MUST)
 
-- Prefer `[Authorize(Policy = ...)]` in controllers.
-- Keep controller policies limited to boundary concerns, reusing `TenantSelected` and `GlobalAdmin`.
-- Contextual authorization must use the shared policies `ResourceRead` and `ResourceWrite`.
-- New contextual authorization rule -> define a resource/context type in Application and implement `IReadAuthorizationRule<TResource>` and/or `IWriteAuthorizationRule<TResource>` in Infrastructure.
-- `BudSecurityCompositionExtensions` should register only the shared contextual handlers (`ResourceReadHandler`, `ResourceWriteHandler`) plus boundary handlers.
-- Contextual authorization based on a loaded resource must be orchestrated in the use case through `IApplicationAuthorizationGateway`; controllers stay limited to broad boundary policies.
-- Treat `OrganizationId` as tenant scope only; do not use tenant discriminator naming as the public authorization contract for business aggregates.
-- For tenant-scoped aggregates, model authorization semantics as `Read` and `Write`; creation should be expressed as `Write` with an explicit creation context type (for example `CreateTeamContext`).
+Authorization is **declarative** — expressed as `[Authorize(Policy = ...)]` attributes on controllers. Use cases are pure business logic and contain no authorization code.
+
+**Available policies:**
+
+| Policy | Where applied | Meaning |
+|---|---|---|
+| `TenantSelected` | Controller class level | Authenticated user with a tenant selected (JWT `X-Tenant-Id`) |
+| `GlobalAdmin` | Specific endpoints (Organizations) | Global administrator only |
+| `LeaderRequired` | Teams/Employees write methods | Authenticated user with `EmployeeRole.Leader` in the current tenant |
+
+**Tenant data isolation** is enforced by EF Core query filters (`OrganizationId == TenantId`) — no per-use-case ownership checks are needed for standard CRUD.
+
+**Exceptions (business rules in use cases, not auth):**
+- `PatchCheckin` / `DeleteCheckin`: author-only check (`checkin.EmployeeId == tenantProvider.EmployeeId`)
+- `PatchNotification`: recipient-only check (`notification.RecipientEmployeeId == tenantProvider.EmployeeId`), returns 404 to avoid leaking existence
+- `CreateMission` / `PatchMission` / `CreateTeam` / `CreateTemplate`: tenant presence check before creating entities
+
+**Adding a new authorization rule:**
+- If it is role-based (Leader, GlobalAdmin) → create a new `IAuthorizationRequirement` + `AuthorizationHandler<T>` in `Bud.Api/Authorization/`, register in `BudSecurityCompositionExtensions`, annotate the controller method.
+- If it is record-ownership (only the author can edit) → check in the use case after loading the record, return `NotFound` to avoid leaking existence.
+- Never add `IApplicationAuthorizationGateway` or resource/context records — that pattern has been removed.
 
 ### Controller Pattern (MUST)
 

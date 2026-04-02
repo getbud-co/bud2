@@ -31,6 +31,7 @@ public sealed class EmployeesController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Time não encontrado.</response>
     /// <response code="403">Sem permissão para criar funcionário.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status201Created)]
@@ -52,7 +53,7 @@ public sealed class EmployeesController(
             request.TeamId,
             request.LeaderId);
 
-        var result = await createEmployee.ExecuteAsync(User, command, cancellationToken);
+        var result = await createEmployee.ExecuteAsync(command, cancellationToken);
         return FromResult<Employee, EmployeeResponse>(result, employee =>
             CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee.ToEmployeeResponse()));
     }
@@ -64,6 +65,7 @@ public sealed class EmployeesController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Funcionário não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar funcionário.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
@@ -84,7 +86,7 @@ public sealed class EmployeesController(
             request.Role,
             request.LeaderId);
 
-        var result = await patchEmployee.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchEmployee.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, employee => employee.ToEmployeeResponse());
     }
 
@@ -95,6 +97,7 @@ public sealed class EmployeesController(
     /// <response code="404">Funcionário não encontrado.</response>
     /// <response code="409">Conflito de integridade ao remover funcionário.</response>
     /// <response code="403">Sem permissão para excluir funcionário.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -102,7 +105,7 @@ public sealed class EmployeesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteEmployee.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteEmployee.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -116,7 +119,7 @@ public sealed class EmployeesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EmployeeResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getEmployeeById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getEmployeeById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, employee => employee.ToEmployeeResponse());
     }
 
@@ -194,7 +197,7 @@ public sealed class EmployeesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<EmployeeSubordinateResponse>>> GetSubordinates(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getEmployeeHierarchy.ExecuteAsync(User, id, cancellationToken);
+        var result = await getEmployeeHierarchy.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -210,7 +213,7 @@ public sealed class EmployeesController(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var associatedTeams = await listEmployeeTeams.ExecuteAsync(User, id, cancellationToken);
+        var associatedTeams = await listEmployeeTeams.ExecuteAsync(id, cancellationToken);
         return FromResultOk(associatedTeams);
     }
 
@@ -232,7 +235,7 @@ public sealed class EmployeesController(
             return searchValidation.Failure;
         }
 
-        var availableTeams = await listAvailableTeamsForEmployee.ExecuteAsync(User, id, searchValidation.Value, cancellationToken);
+        var availableTeams = await listAvailableTeamsForEmployee.ExecuteAsync(id, searchValidation.Value, cancellationToken);
         return FromResultOk(availableTeams);
     }
 
@@ -243,6 +246,7 @@ public sealed class EmployeesController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Funcionário não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar vínculos.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}/teams")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -252,7 +256,7 @@ public sealed class EmployeesController(
     public async Task<IActionResult> UpdateTeams(Guid id, PatchEmployeeTeamsRequest request, CancellationToken cancellationToken)
     {
         var command = new PatchEmployeeTeamsCommand(request.TeamIds);
-        var result = await patchEmployeeTeams.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchEmployeeTeams.ExecuteAsync(id, command, cancellationToken);
         return FromResult(result, NoContent);
     }
 }

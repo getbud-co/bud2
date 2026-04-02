@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -11,7 +10,6 @@ namespace Bud.Application.UnitTests.Application.Employees;
 public sealed class EmployeeReadUseCasesTests
 {
     private readonly Mock<IEmployeeRepository> _employeeRepository = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task GetEmployeeById_WithExistingEmployee_ReturnsSuccess()
@@ -28,13 +26,9 @@ public sealed class EmployeeReadUseCasesTests
                 OrganizationId = Guid.NewGuid()
             });
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new GetEmployeeById(_employeeRepository.Object);
 
-        var useCase = new GetEmployeeById(_employeeRepository.Object, _authorizationGateway.Object);
-
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), employeeId);
+        var result = await useCase.ExecuteAsync(employeeId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(employeeId);
@@ -47,9 +41,9 @@ public sealed class EmployeeReadUseCasesTests
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Employee?)null);
 
-        var useCase = new GetEmployeeById(_employeeRepository.Object, _authorizationGateway.Object);
+        var useCase = new GetEmployeeById(_employeeRepository.Object);
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -91,13 +85,9 @@ public sealed class EmployeeReadUseCasesTests
             .Setup(repository => repository.GetEligibleTeamsForAssignmentAsync(employeeId, organizationId, "produto", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new ListAvailableTeamsForEmployee(_employeeRepository.Object);
 
-        var useCase = new ListAvailableTeamsForEmployee(_employeeRepository.Object, _authorizationGateway.Object);
-
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), employeeId, "produto");
+        var result = await useCase.ExecuteAsync(employeeId, "produto");
 
         result.IsSuccess.Should().BeTrue();
         _employeeRepository.Verify(
@@ -112,9 +102,9 @@ public sealed class EmployeeReadUseCasesTests
             .Setup(repository => repository.ExistsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var useCase = new GetEmployeeHierarchy(_employeeRepository.Object, _authorizationGateway.Object);
+        var useCase = new GetEmployeeHierarchy(_employeeRepository.Object);
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);

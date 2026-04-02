@@ -29,6 +29,7 @@ public sealed class TeamsController(
     /// <response code="201">Time criado com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
     /// <response code="403">Sem permissão para criar time.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TeamResponse), StatusCodes.Status201Created)]
@@ -48,7 +49,7 @@ public sealed class TeamsController(
             request.LeaderId,
             request.ParentTeamId);
 
-        var result = await createTeam.ExecuteAsync(User, command, cancellationToken);
+        var result = await createTeam.ExecuteAsync(command, cancellationToken);
         return FromResult<Team, TeamResponse>(result, team =>
             CreatedAtAction(nameof(GetById), new { id = team.Id }, team.ToResponse()));
     }
@@ -60,6 +61,7 @@ public sealed class TeamsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Time não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar time.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TeamResponse), StatusCodes.Status200OK)]
@@ -79,7 +81,7 @@ public sealed class TeamsController(
             request.LeaderId,
             request.ParentTeamId);
 
-        var result = await patchTeam.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchTeam.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, team => team.ToResponse());
     }
 
@@ -90,6 +92,7 @@ public sealed class TeamsController(
     /// <response code="404">Time não encontrado.</response>
     /// <response code="409">Conflito de integridade ao remover time.</response>
     /// <response code="403">Sem permissão para excluir time.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -97,7 +100,7 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteTeam.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteTeam.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -111,7 +114,7 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TeamResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getTeamById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getTeamById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, team => team.ToResponse());
     }
 
@@ -213,7 +216,7 @@ public sealed class TeamsController(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var result = await listTeamEmployeeOptions.ExecuteAsync(User, id, cancellationToken);
+        var result = await listTeamEmployeeOptions.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -235,7 +238,7 @@ public sealed class TeamsController(
             return searchValidation.Failure;
         }
 
-        var result = await listAvailableEmployeesForTeam.ExecuteAsync(User, id, searchValidation.Value, cancellationToken);
+        var result = await listAvailableEmployeesForTeam.ExecuteAsync(id, searchValidation.Value, cancellationToken);
         return FromResultOk(result);
     }
 
@@ -246,6 +249,7 @@ public sealed class TeamsController(
     /// <response code="400">Payload inválido.</response>
     /// <response code="404">Time não encontrado.</response>
     /// <response code="403">Sem permissão para atualizar vínculos.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}/employees")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -255,7 +259,7 @@ public sealed class TeamsController(
     public async Task<IActionResult> UpdateEmployees(Guid id, PatchTeamEmployeesRequest request, CancellationToken cancellationToken)
     {
         var command = new PatchTeamEmployeesCommand(request.EmployeeIds);
-        var result = await patchTeamEmployees.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchTeamEmployees.ExecuteAsync(id, command, cancellationToken);
         return FromResult(result, NoContent);
     }
 }
