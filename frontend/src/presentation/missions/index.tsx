@@ -34,7 +34,6 @@ import { useSavedViews } from "@/contexts/SavedViewsContext";
 import { useMissionsData } from "@/contexts/MissionsDataContext";
 import { usePeopleData } from "@/contexts/PeopleDataContext";
 import { useConfigData } from "@/contexts/ConfigDataContext";
-import { useSurveysData } from "@/contexts/SurveysDataContext";
 import type { SavedView } from "@/contexts/SavedViewsContext";
 import type {
   Mission,
@@ -66,10 +65,10 @@ import type { MissionItemData } from "./types";
 import { MissionItemInlineForm } from "./components/MissionItemInlineForm";
 
 export function MyMissionsPage() {
-  return <MissionsPage mine />;
+  return <MissionsComponent mine />;
 }
 
-export function MissionsPage({ mine = false }: { mine?: boolean }) {
+export function MissionsComponent({ mine = false }: { mine?: boolean }) {
   const {
     missions,
     setMissions,
@@ -88,7 +87,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
     resolveUserId,
     resolveTeamId,
   } = usePeopleData();
-  const { surveys } = useSurveysData();
   const {
     activeOrgId,
     tagOptions,
@@ -125,10 +123,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
     [currentUser, ownerOptions],
   );
   const currentUserDefaultId = currentUserOption?.id ?? "all";
-  const surveyOptions = useMemo(
-    () => surveys.map((survey) => ({ id: survey.id, label: survey.name })),
-    [surveys],
-  );
   const missionTagOptions = useMemo(
     () => tagOptions.map((tag) => ({ id: tag.id, label: tag.label })),
     [tagOptions],
@@ -227,7 +221,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
                 : missionType === "between"
                   ? "between"
                   : null,
-        surveyId: null,
         period: [null, null],
         missionValue:
           missionType === "reach"
@@ -251,7 +244,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
         description: drawerTask.description ?? "",
         measurementMode: "task",
         manualType: null,
-        surveyId: null,
         period: [null, null],
         missionValue: "",
         missionValueMin: "",
@@ -1592,7 +1584,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
         onSave={saveDrawerEdit}
         onCancel={cancelDrawerEdit}
         drawerEditing
-        surveyOptions={surveyOptions}
         missionOwnerOptions={missionOwnerOptions}
         missionTagOptions={missionTagOptions}
         visibilityOptions={visibilityOptions}
@@ -1865,7 +1856,6 @@ export function MissionsPage({ mine = false }: { mine?: boolean }) {
         missionsCount={missions.length}
         resolveTagId={resolveTagId}
         getTagById={getTagById}
-        surveyOptions={surveyOptions}
         missionOwnerOptions={missionOwnerOptions}
         missionTagOptions={missionTagOptions}
         visibilityOptions={visibilityOptions}

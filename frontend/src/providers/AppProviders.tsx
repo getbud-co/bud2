@@ -6,7 +6,6 @@ import { ConfigDataProvider } from "@/contexts/ConfigDataContext";
 import { ActivityDataProvider } from "@/contexts/ActivityDataContext";
 import { PeopleDataProvider } from "@/contexts/PeopleDataContext";
 import { MissionsDataProvider } from "@/contexts/MissionsDataContext";
-import { SurveysDataProvider } from "@/contexts/SurveysDataContext";
 import { SettingsDataProvider } from "@/contexts/SettingsDataContext";
 import { IntegrationsDataProvider } from "@/contexts/IntegrationsDataContext";
 import type { ReactNode } from "react";
@@ -24,13 +23,11 @@ export function AppProviders({ children, initialOrgId }: AppProvidersProps) {
           <ActivityDataProvider>
             <PeopleDataProvider>
               <MissionsDataProvider>
-                <SurveysDataProvider>
-                  <SettingsDataProvider>
-                    <IntegrationsDataProvider>
-                      {children}
-                    </IntegrationsDataProvider>
-                  </SettingsDataProvider>
-                </SurveysDataProvider>
+                <SettingsDataProvider>
+                  <IntegrationsDataProvider>
+                    {children}
+                  </IntegrationsDataProvider>
+                </SettingsDataProvider>
               </MissionsDataProvider>
             </PeopleDataProvider>
           </ActivityDataProvider>

@@ -85,8 +85,6 @@ interface CreateMissionModalProps {
     updatedAt: string;
     deletedAt: string | null;
   } | null;
-  // Dropdown data:
-  surveyOptions: { id: string; label: string }[];
   missionOwnerOptions: OwnerOption[];
   missionTagOptions: TagOption[];
   visibilityOptions: TagOption[];
@@ -183,7 +181,6 @@ export function CreateMissionModal({
   missionsCount,
   resolveTagId,
   getTagById,
-  surveyOptions,
   missionOwnerOptions,
   missionTagOptions,
   visibilityOptions,
@@ -271,7 +268,6 @@ export function CreateMissionModal({
         description: "",
         measurementMode: "mission",
         manualType: null,
-        surveyId: null,
         period: [null, null],
         missionValue: "",
         missionValueMin: "",
@@ -443,8 +439,7 @@ export function CreateMissionModal({
           (item.measurementMode as Indicator["measurementMode"] | null) ??
           "manual",
         linkedMissionId: null,
-        linkedSurveyId:
-          item.measurementMode === "survey" ? item.surveyId : null,
+        linkedSurveyId: null,
         externalSource: null,
         externalConfig: null,
         missionType,
@@ -636,7 +631,6 @@ export function CreateMissionModal({
         }}
         selectedTemplate={selectedTemplate}
         drawerEditing={false}
-        surveyOptions={surveyOptions}
         missionOwnerOptions={missionOwnerOptions}
         missionTagOptions={missionTagOptions}
         visibilityOptions={visibilityOptions}

@@ -1,4 +1,4 @@
-import { Card, CardBody, MissionProgressBar } from "@mdonangelo/bud-ds";
+import { Card, CardBody, GoalProgressBar } from "@mdonangelo/bud-ds";
 
 interface ProgressCardProps {
   value: number;
@@ -13,7 +13,7 @@ export function ProgressCard({ value, expected }: ProgressCardProps) {
           <span className="font-[var(--font-label)] text-[var(--text-xs)] text-[var(--color-neutral-500)]">
             Progresso geral
           </span>
-          <MissionProgressBar
+          <GoalProgressBar
             label=""
             value={value}
             target={100}

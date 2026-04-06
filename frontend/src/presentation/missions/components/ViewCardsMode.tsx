@@ -3,7 +3,7 @@ import {
   CardBody,
   Chart,
   Badge,
-  MissionProgressBar,
+  GoalProgressBar,
   AvatarGroup,
   Button,
 } from "@mdonangelo/bud-ds";
@@ -67,7 +67,7 @@ export function ViewCardsMode({
                 </div>
                 {mIndicators.length > 0 && (
                   <div className="mt-3">
-                    <MissionProgressBar
+                    <GoalProgressBar
                       label=""
                       value={mission.progress}
                       target={100}

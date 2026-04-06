@@ -6,7 +6,6 @@ export interface MissionItemData {
   description: string;
   measurementMode: string | null;
   manualType: string | null;
-  surveyId: string | null;
   period: [CalendarDate | null, CalendarDate | null];
   missionValue: string;
   missionValueMin: string;

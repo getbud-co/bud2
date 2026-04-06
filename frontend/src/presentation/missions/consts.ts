@@ -3,7 +3,6 @@ import { BreadcrumbItem, FilterOption, MissionItem } from "@mdonangelo/bud-ds";
 import {
   ArrowsInLineHorizontal,
   CalendarBlank,
-  ChartBar,
   ChartLineUp,
   Crosshair,
   Eye,
@@ -56,7 +55,6 @@ export const INDICATOR_TYPE_OPTIONS = [
   { id: "below", label: "Manter abaixo" },
   { id: "between", label: "Manter entre" },
   { id: "reduce", label: "Reduzir" },
-  { id: "survey", label: "Pesquisa" },
   { id: "external", label: "Fonte externa" },
   { id: "linked_mission", label: "Missão vinculada" },
 ];
@@ -238,7 +236,6 @@ export const MANUAL_INDICATOR_TYPES = [
   { id: "below", label: "Manter abaixo", icon: TrendDown },
   { id: "between", label: "Manter entre", icon: ArrowsInLineHorizontal },
   { id: "reduce", label: "Reduzir", icon: TrendDown },
-  { id: "survey", label: "De uma pesquisa", icon: ChartBar },
 ];
 
 export const UNIT_OPTIONS = [

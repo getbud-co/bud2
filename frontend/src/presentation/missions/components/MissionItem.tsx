@@ -21,8 +21,8 @@ import {
   Chart,
   Checkbox,
   FilterDropdown,
-  MissionGaugeBar,
-  MissionProgressBar,
+  GoalGaugeBar,
+  GoalProgressBar,
 } from "@mdonangelo/bud-ds";
 import {
   ArrowsOutSimple,
@@ -369,7 +369,7 @@ export function MissionItem({
                               {(() => {
                                 const val = getIndicatorValue(indicator);
                                 return indicator.missionType === "reach" ? (
-                                  <MissionProgressBar
+                                  <GoalProgressBar
                                     label={getMissionLabel(indicator)}
                                     value={val}
                                     target={numVal(indicator.targetValue)}
@@ -380,10 +380,10 @@ export function MissionItem({
                                     }
                                   />
                                 ) : (
-                                  <MissionGaugeBar
+                                  <GoalGaugeBar
                                     label={getMissionLabel(indicator)}
                                     value={val}
-                                    missionType={
+                                    goalType={
                                       indicator.missionType as
                                         | "above"
                                         | "below"
@@ -586,7 +586,7 @@ export function MissionItem({
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       {sub.missionType === "reach" ? (
-                                        <MissionProgressBar
+                                        <GoalProgressBar
                                           label={getMissionLabel(sub)}
                                           value={subVal}
                                           target={numVal(sub.targetValue)}
@@ -597,10 +597,10 @@ export function MissionItem({
                                           }
                                         />
                                       ) : (
-                                        <MissionGaugeBar
+                                        <GoalGaugeBar
                                           label={getMissionLabel(sub)}
                                           value={subVal}
-                                          missionType={
+                                          goalType={
                                             sub.missionType as
                                               | "above"
                                               | "below"

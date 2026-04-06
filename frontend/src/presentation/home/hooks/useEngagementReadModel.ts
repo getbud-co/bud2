@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 import { usePeopleData } from "@/contexts/PeopleDataContext";
 import { useMissionsData } from "@/contexts/MissionsDataContext";
-import { useSurveysData } from "@/contexts/SurveysDataContext";
 import {
   getKrOwnerIds,
   calculateMissionsEngagement,
-  calculateSurveyEngagement,
   calculateTrend,
   calculatePersonEngagement,
   generateWeeklyEngagementData,
@@ -44,17 +42,14 @@ export interface EngagementReadModel {
 export function useEngagementReadModel(): EngagementReadModel {
   const { users, teamOptions } = usePeopleData();
   const { missions, checkInHistory } = useMissionsData();
-  const { surveys } = useSurveysData();
 
   return useMemo(() => {
     const missionsUpdated = calculateMissionsEngagement(
       missions,
       checkInHistory,
     );
-    const surveyParticipation = calculateSurveyEngagement(surveys);
-    const overall = Math.round(
-      missionsUpdated * 0.6 + surveyParticipation * 0.4,
-    );
+
+    const overall = Math.round(missionsUpdated);
 
     const { value: trend, direction: trendDirection } =
       calculateTrend(checkInHistory);
@@ -62,7 +57,7 @@ export function useEngagementReadModel(): EngagementReadModel {
     const metrics: EngagementMetrics = {
       overall,
       missionsUpdated,
-      surveyParticipation,
+      surveyParticipation: 20,
       trend,
       trendDirection,
     };
@@ -105,5 +100,5 @@ export function useEngagementReadModel(): EngagementReadModel {
       teamOptions: [allTeamsOption, ...teamOptions],
       weeklyData,
     };
-  }, [users, teamOptions, missions, checkInHistory, surveys]);
+  }, [users, teamOptions, missions, checkInHistory]);
 }

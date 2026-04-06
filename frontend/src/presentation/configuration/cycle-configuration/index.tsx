@@ -26,7 +26,7 @@ import { CycleTableRow } from "./components/CycleTableRow";
 import { CycleFormModal } from "./components/CycleFormModal";
 import type { CycleFormData } from "./components/CycleFormModal";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
-import { PageHeader } from "../layout/page-header";
+import { PageHeader } from "../../layout/page-header";
 
 const CYCLES_QUERY_KEY = "cycles";
 

@@ -40,7 +40,6 @@ interface MissionItemInlineFormProps {
   onCancel: () => void;
   selectedTemplate?: string;
   drawerEditing?: boolean;
-  surveyOptions: { id: string; label: string }[];
   missionOwnerOptions: { id: string; label: string; initials?: string }[];
   missionTagOptions: { id: string; label: string }[];
   visibilityOptions: { id: string; label: string }[];
@@ -61,7 +60,6 @@ export function MissionItemInlineForm({
   onCancel,
   selectedTemplate,
   drawerEditing,
-  surveyOptions,
   missionOwnerOptions,
   missionTagOptions,
   visibilityOptions,
@@ -70,7 +68,6 @@ export function MissionItemInlineForm({
 }: MissionItemInlineFormProps) {
   const [itemMeasureOpen, setItemMeasureOpen] = useState(false);
   const [itemManualOpen, setItemManualOpen] = useState(false);
-  const [itemSurveyOpen, setItemSurveyOpen] = useState(false);
   const [itemMoreOpen, setItemMoreOpen] = useState(false);
   const [itemMoreSubPanel, setItemMoreSubPanel] = useState<string | null>(null);
   const [itemSupportTeam, setItemSupportTeam] = useState<string[]>([]);
@@ -91,7 +88,6 @@ export function MissionItemInlineForm({
   const itemPeriodCustomBtnRef = useRef<HTMLButtonElement>(null);
   const itemMoreBtnRef = useRef<HTMLButtonElement>(null);
   const itemManualBtnRef = useRef<HTMLButtonElement>(null);
-  const itemSurveyBtnRef = useRef<HTMLButtonElement>(null);
   const itemMoreItemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const tplCfg = getTemplateConfig(selectedTemplate);
@@ -313,30 +309,6 @@ export function MissionItemInlineForm({
               </div>
             )}
 
-            {editingItem.manualType === "survey" && editingItem.surveyId && (
-              <div className="flex gap-2 items-end [&>*]:flex-1 [&>*]:min-w-0">
-                <div className="flex items-center gap-1 px-3 py-2 bg-[var(--color-caramel-200)] rounded-[var(--radius-2xs)] font-[var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-700)] whitespace-nowrap self-end h-9">
-                  <ChartBar size={14} />
-                  <span>
-                    {
-                      surveyOptions.find(
-                        (survey) => survey.id === editingItem.surveyId,
-                      )?.label
-                    }
-                  </span>
-                </div>
-                <Input
-                  label="Valor alvo"
-                  placeholder="Ex: 80"
-                  value={editingItem.missionValue}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setEditingItem((prev) =>
-                      prev ? { ...prev, missionValue: e.target.value } : prev,
-                    )
-                  }
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -377,7 +349,6 @@ export function MissionItemInlineForm({
                             ...prev,
                             measurementMode: mode.id,
                             manualType: null,
-                            surveyId: null,
                             missionValue: "",
                             missionValueMin: "",
                             missionValueMax: "",
@@ -429,66 +400,6 @@ export function MissionItemInlineForm({
             return (
               <button
                 key={t.id}
-                ref={
-                  t.id === "survey"
-                    ? (el) => {
-                        itemSurveyBtnRef.current = el;
-                      }
-                    : undefined
-                }
-                type="button"
-                className={`flex items-center gap-2 w-full px-2 py-2 border-none bg-transparent rounded-[var(--radius-2xs)] font-[var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-950)] cursor-pointer whitespace-nowrap transition-colors duration-[120ms] text-left hover:bg-[var(--color-caramel-100)] ${isActive ? "bg-[var(--color-caramel-50)]" : ""}`}
-                onClick={() => {
-                  if (t.id === "survey") {
-                    setItemSurveyOpen(true);
-                  } else {
-                    setEditingItem((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            measurementMode: "manual",
-                            manualType: t.id,
-                            surveyId: null,
-                            missionValue: "",
-                            missionValueMin: "",
-                            missionValueMax: "",
-                            missionUnit: "",
-                          }
-                        : prev,
-                    );
-                    setItemManualOpen(false);
-                    setItemMeasureOpen(false);
-                  }
-                }}
-              >
-                <Icon size={14} />
-                <span>{t.label}</span>
-                {t.id === "survey" && (
-                  <CaretRight
-                    size={12}
-                    className="ml-auto text-[var(--color-neutral-400)] flex-shrink-0"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </FilterDropdown>
-
-      {/* Sub-panel: Selecionar pesquisa */}
-      <FilterDropdown
-        open={itemMeasureOpen && itemManualOpen && itemSurveyOpen}
-        onClose={() => setItemSurveyOpen(false)}
-        anchorRef={itemSurveyBtnRef}
-        placement="right-start"
-        noOverlay
-      >
-        <div className="flex flex-col p-1 max-h-80 overflow-y-auto">
-          {surveyOptions.map((s) => {
-            const isActive = editingItem?.surveyId === s.id;
-            return (
-              <button
-                key={s.id}
                 type="button"
                 className={`flex items-center gap-2 w-full px-2 py-2 border-none bg-transparent rounded-[var(--radius-2xs)] font-[var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-950)] cursor-pointer whitespace-nowrap transition-colors duration-[120ms] text-left hover:bg-[var(--color-caramel-100)] ${isActive ? "bg-[var(--color-caramel-50)]" : ""}`}
                 onClick={() => {
@@ -497,23 +408,26 @@ export function MissionItemInlineForm({
                       ? {
                           ...prev,
                           measurementMode: "manual",
-                          manualType: "survey",
-                          surveyId: s.id,
+                          manualType: t.id,
+                          missionValue: "",
+                          missionValueMin: "",
+                          missionValueMax: "",
+                          missionUnit: "",
                         }
                       : prev,
                   );
-                  setItemSurveyOpen(false);
                   setItemManualOpen(false);
                   setItemMeasureOpen(false);
                 }}
               >
-                <Radio checked={isActive} readOnly />
-                <span>{s.label}</span>
+                <Icon size={14} />
+                <span>{t.label}</span>
               </button>
             );
           })}
         </div>
       </FilterDropdown>
+
 
       {/* Período dropdown — presets */}
       <FilterDropdown
