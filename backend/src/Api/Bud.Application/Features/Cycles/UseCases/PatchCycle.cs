@@ -31,6 +31,12 @@ public sealed partial class PatchCycle(
             return Result<Cycle>.NotFound(UserErrorMessages.CycleNotFound);
         }
 
+        if (cycle.OrganizationId != tenantProvider.TenantId)
+        {
+            LogPatchFailed(logger, id, "Forbidden");
+            return Result<Cycle>.Forbidden(UserErrorMessages.CycleUpdateForbidden);
+        }
+
         try
         {
             var name = command.Name.HasValue ? (command.Name.Value ?? cycle.Name) : cycle.Name;

@@ -27,7 +27,7 @@ public sealed class TeamWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -51,7 +51,7 @@ public sealed class TeamWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(User, new CreateTeamCommand("Team", Guid.NewGuid(), Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);

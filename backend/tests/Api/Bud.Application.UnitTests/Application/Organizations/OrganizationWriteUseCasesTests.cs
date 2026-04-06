@@ -35,7 +35,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRegisterOrganization();
 
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com"));
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com", OrganizationPlan.Free, OrganizationContractStatus.ToApproval, null));
 
         result.IsSuccess.Should().BeTrue();
         _orgRepo.Verify(r => r.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -50,7 +50,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRegisterOrganization();
 
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com"));
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("test-org.com", OrganizationPlan.Free, OrganizationContractStatus.ToApproval, null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Conflict);
@@ -63,7 +63,7 @@ public sealed class OrganizationUseCasesTests
     {
         var useCase = CreateRegisterOrganization();
 
-        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Organizacao Teste"));
+        var result = await useCase.ExecuteAsync(new CreateOrganizationCommand("Organizacao Teste", OrganizationPlan.Free, OrganizationContractStatus.ToApproval, null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
@@ -80,7 +80,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRenameOrganization();
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchOrganizationCommand("New Name"));
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchOrganizationCommand("New Name", default, default, default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -96,7 +96,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRenameOrganization("getbud.co");
 
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name"));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("New Name", default, default, default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
@@ -114,7 +114,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRenameOrganization();
 
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com"));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com", default, default, default));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("updated.com");
@@ -131,7 +131,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRenameOrganization();
 
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com"));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("updated.com", default, default, default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Conflict);
@@ -148,7 +148,7 @@ public sealed class OrganizationUseCasesTests
 
         var useCase = CreateRenameOrganization();
 
-        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("Nome Invalido"));
+        var result = await useCase.ExecuteAsync(orgId, new PatchOrganizationCommand("Nome Invalido", default, default, default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Validation);
