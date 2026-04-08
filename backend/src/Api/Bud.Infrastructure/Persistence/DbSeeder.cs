@@ -24,30 +24,38 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        var adminLeader = await context.Employees
+        var adminMember = await context.OrganizationEmployeeMembers
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c =>
-                c.OrganizationId == budOrg.Id &&
-                c.Email == DefaultAdminEmail);
+            .Include(m => m.Employee)
+            .FirstOrDefaultAsync(m =>
+                m.OrganizationId == budOrg.Id &&
+                m.Employee.Email == DefaultAdminEmail);
 
-        if (adminLeader is null)
+        if (adminMember is null)
         {
-            adminLeader = new Employee
+            var adminId = Guid.NewGuid();
+            var adminEmployee = new Employee
             {
-                Id = Guid.NewGuid(),
+                Id = adminId,
                 FullName = "Administrador Global",
                 Email = DefaultAdminEmail,
-                Role = EmployeeRole.Leader,
-                OrganizationId = budOrg.Id,
-                IsGlobalAdmin = true
             };
-            context.Employees.Add(adminLeader);
+            adminMember = new OrganizationEmployeeMember
+            {
+                EmployeeId = adminId,
+                OrganizationId = budOrg.Id,
+                Role = EmployeeRole.Leader,
+                IsGlobalAdmin = true,
+                Employee = adminEmployee,
+            };
+            context.Employees.Add(adminEmployee);
+            context.OrganizationEmployeeMembers.Add(adminMember);
             await context.SaveChangesAsync();
         }
 
-        if (!adminLeader.IsGlobalAdmin)
+        if (!adminMember.IsGlobalAdmin)
         {
-            adminLeader.IsGlobalAdmin = true;
+            adminMember.IsGlobalAdmin = true;
             await context.SaveChangesAsync();
         }
 

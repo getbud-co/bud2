@@ -98,17 +98,11 @@ public class TenantAuthorizationServiceTests
 
         // Create org with employee
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var employee = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Employee",
-            Email = userEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id
-        };
+        var employee = new Employee { Id = Guid.NewGuid(), FullName = "Employee", Email = userEmail };
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employee.Id, OrganizationId = org.Id, Role = EmployeeRole.IndividualContributor });
         await context.SaveChangesAsync();
 
         // Now create service with non-admin tenant provider
@@ -229,29 +223,12 @@ public class TenantAuthorizationServiceTests
         var memberTeam = new Team { Id = Guid.NewGuid(), Name = "Member Team", OrganizationId = memberOrg.Id, LeaderId = Guid.NewGuid() };
         context.Teams.AddRange(ownedTeam, memberTeam);
 
-        // Create employee in ownedOrg
-        var owner = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = userEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = ownedOrg.Id,
-            TeamId = ownedTeam.Id
-        };
+        // Single employee belonging to two orgs via two OEM records
+        var owner = new Employee { Id = Guid.NewGuid(), FullName = "User", Email = userEmail };
         context.Employees.Add(owner);
-
-        // Create member employee in memberOrg
-        var member = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "User Member",
-            Email = userEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = memberOrg.Id,
-            TeamId = memberTeam.Id
-        };
-        context.Employees.Add(member);
+        context.OrganizationEmployeeMembers.AddRange(
+            new OrganizationEmployeeMember { EmployeeId = owner.Id, OrganizationId = ownedOrg.Id, Role = EmployeeRole.IndividualContributor },
+            new OrganizationEmployeeMember { EmployeeId = owner.Id, OrganizationId = memberOrg.Id, Role = EmployeeRole.IndividualContributor });
 
         await context.SaveChangesAsync();
 
@@ -283,16 +260,9 @@ public class TenantAuthorizationServiceTests
         context.Teams.Add(team);
 
         // User belongs to the same org only once
-        var ownerEmployee = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = userEmail,
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            TeamId = team.Id
-        };
+        var ownerEmployee = new Employee { Id = Guid.NewGuid(), FullName = "User", Email = userEmail };
         context.Employees.Add(ownerEmployee);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = ownerEmployee.Id, OrganizationId = org.Id, Role = EmployeeRole.Leader });
 
         await context.SaveChangesAsync();
 

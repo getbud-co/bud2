@@ -36,21 +36,32 @@ public sealed class SessionAuthenticator(
             return Result<LoginResult>.NotFound("Usuário não encontrado.");
         }
 
+        // Load the membership for the organization context
+        var member = await dbContext.OrganizationEmployeeMembers
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(m => m.EmployeeId == employee.Id, cancellationToken);
+
+        if (member is null)
+        {
+            return Result<LoginResult>.NotFound("Usuário não encontrado.");
+        }
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.Email, employee.Email),
             new("email", employee.Email),
             new("employee_id", employee.Id.ToString()),
-            new("organization_id", employee.OrganizationId.ToString()),
-            new(ClaimTypes.Name, employee.FullName)
+            new("organization_id", member.OrganizationId.ToString()),
+            new(ClaimTypes.Name, employee.FullName),
         };
 
-        if (employee.IsGlobalAdmin)
+        if (member.IsGlobalAdmin)
         {
             claims.Add(new(ClaimTypes.Role, "GlobalAdmin"));
         }
 
-        await RegisterAccessLogAsync(employee.Id, employee.OrganizationId, cancellationToken);
+        await RegisterAccessLogAsync(employee.Id, member.OrganizationId, cancellationToken);
 
         var token = GenerateJwtToken(claims);
 
@@ -59,10 +70,10 @@ public sealed class SessionAuthenticator(
             Token = token,
             Email = employee.Email,
             DisplayName = employee.FullName,
-            IsGlobalAdmin = employee.IsGlobalAdmin,
+            IsGlobalAdmin = member.IsGlobalAdmin,
             EmployeeId = employee.Id,
-            Role = employee.Role,
-            OrganizationId = employee.OrganizationId
+            Role = member.Role,
+            OrganizationId = member.OrganizationId,
         });
     }
 

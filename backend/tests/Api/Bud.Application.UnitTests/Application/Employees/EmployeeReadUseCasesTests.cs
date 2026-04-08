@@ -17,16 +17,16 @@ public sealed class EmployeeReadUseCasesTests
     public async Task GetEmployeeById_WithExistingEmployee_ReturnsSuccess()
     {
         var employeeId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
+        {
+            EmployeeId = employeeId,
+            OrganizationId = Guid.NewGuid(),
+            Employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" },
+        };
 
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee
-            {
-                Id = employeeId,
-                FullName = "Ana",
-                Email = "ana@getbud.co",
-                OrganizationId = Guid.NewGuid()
-            });
+            .ReturnsAsync(member);
 
         _authorizationGateway
             .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
@@ -37,7 +37,7 @@ public sealed class EmployeeReadUseCasesTests
         var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), employeeId);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Id.Should().Be(employeeId);
+        result.Value!.EmployeeId.Should().Be(employeeId);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public sealed class EmployeeReadUseCasesTests
     {
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Employee?)null);
+            .ReturnsAsync((OrganizationEmployeeMember?)null);
 
         var useCase = new GetEmployeeById(_employeeRepository.Object, _authorizationGateway.Object);
 
@@ -77,16 +77,16 @@ public sealed class EmployeeReadUseCasesTests
     {
         var employeeId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
+        {
+            EmployeeId = employeeId,
+            OrganizationId = organizationId,
+            Employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" },
+        };
 
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee
-            {
-                Id = employeeId,
-                FullName = "Ana",
-                Email = "ana@getbud.co",
-                OrganizationId = organizationId
-            });
+            .ReturnsAsync(member);
         _employeeRepository
             .Setup(repository => repository.GetEligibleTeamsForAssignmentAsync(employeeId, organizationId, "produto", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);

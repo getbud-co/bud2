@@ -17,14 +17,8 @@ public sealed class LeaderScopedAuthorizationTests
         var organizationId = Guid.NewGuid();
         var tenantProvider = new TestTenantProvider { EmployeeId = employeeId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
-        dbContext.Employees.Add(new Employee
-        {
-            Id = employeeId,
-            FullName = "Leader",
-            Email = "leader@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
-        });
+        dbContext.Employees.Add(new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" });
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Role = EmployeeRole.Leader });
         await dbContext.SaveChangesAsync();
 
         var result = await LeaderScopedAuthorization.RequireLeaderInOrganizationAsync(
@@ -44,14 +38,8 @@ public sealed class LeaderScopedAuthorizationTests
         var organizationId = Guid.NewGuid();
         var tenantProvider = new TestTenantProvider { EmployeeId = employeeId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
-        dbContext.Employees.Add(new Employee
-        {
-            Id = employeeId,
-            FullName = "Contributor",
-            Email = "contributor@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
-        });
+        dbContext.Employees.Add(new Employee { Id = employeeId, FullName = "Contributor", Email = "contributor@test.com" });
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Role = EmployeeRole.IndividualContributor });
         await dbContext.SaveChangesAsync();
 
         var result = await LeaderScopedAuthorization.RequireLeaderInOrganizationAsync(

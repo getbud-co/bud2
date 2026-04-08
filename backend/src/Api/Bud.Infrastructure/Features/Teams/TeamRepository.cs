@@ -8,15 +8,21 @@ namespace Bud.Infrastructure.Features.Teams;
 public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamRepository
 {
     public async Task<Team?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
+        => await dbContext.Teams
+            .AsNoTracking()
+            .Include(t => t.EmployeeTeams).ThenInclude(et => et.Employee)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<Team?> GetByIdWithEmployeeTeamsAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Teams.Include(t => t.EmployeeTeams).FirstOrDefaultAsync(t => t.Id == id, ct);
+        => await dbContext.Teams
+            .Include(t => t.EmployeeTeams).ThenInclude(et => et.Employee)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
 
     public async Task<PagedResult<Team>> GetAllAsync(
         Guid? parentTeamId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
-        IQueryable<Team> query = dbContext.Teams.AsNoTracking().Include(t => t.Leader);
+        IQueryable<Team> query = dbContext.Teams.AsNoTracking()
+            .Include(t => t.EmployeeTeams).ThenInclude(et => et.Employee);
 
         if (parentTeamId.HasValue)
         {
@@ -80,18 +86,19 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
             .ToListAsync(ct);
     }
 
-    public async Task<List<Employee>> GetEligibleEmployeesForAssignmentAsync(
+    public async Task<List<OrganizationEmployeeMember>> GetEligibleEmployeesForAssignmentAsync(
         Guid teamId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
     {
         var currentEmployeeIds = await dbContext.EmployeeTeams
-            .Where(ct2 => ct2.TeamId == teamId)
-            .Select(ct2 => ct2.EmployeeId)
+            .Where(et => et.TeamId == teamId)
+            .Select(et => et.EmployeeId)
             .ToListAsync(ct);
 
-        var query = dbContext.Employees
+        var query = dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
-            .Where(c => c.OrganizationId == organizationId)
-            .Where(c => !currentEmployeeIds.Contains(c.Id));
+            .Include(m => m.Employee)
+            .Where(m => m.OrganizationId == organizationId)
+            .Where(m => !currentEmployeeIds.Contains(m.EmployeeId));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -99,7 +106,7 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
         }
 
         return await query
-            .OrderBy(c => c.FullName)
+            .OrderBy(m => m.Employee.FullName)
             .Take(limit)
             .ToListAsync(ct);
     }

@@ -9,20 +9,20 @@ public sealed class GetEmployeeById(
     IEmployeeRepository employeeRepository,
     IApplicationAuthorizationGateway authorizationGateway)
 {
-    public async Task<Result<Employee>> ExecuteAsync(ClaimsPrincipal user, Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(ClaimsPrincipal user, Guid id, CancellationToken cancellationToken = default)
     {
-        var employee = await employeeRepository.GetByIdAsync(id, cancellationToken);
-        if (employee is null)
+        var member = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (member is null)
         {
-            return Result<Employee>.NotFound(UserErrorMessages.EmployeeNotFound);
+            return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
         var canRead = await authorizationGateway.CanReadAsync(user, new EmployeeResource(id), cancellationToken);
         if (!canRead)
         {
-            return Result<Employee>.Forbidden(UserErrorMessages.EmployeeNotFound);
+            return Result<OrganizationEmployeeMember>.Forbidden(UserErrorMessages.EmployeeNotFound);
         }
 
-        return Result<Employee>.Success(employee);
+        return Result<OrganizationEmployeeMember>.Success(member);
     }
 }

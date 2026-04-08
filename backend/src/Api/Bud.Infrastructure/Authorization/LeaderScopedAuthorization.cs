@@ -25,18 +25,18 @@ public static class LeaderScopedAuthorization
             return Result.Forbidden(employeeNotIdentifiedMessage);
         }
 
-        var employee = await dbContext.Employees
+        var member = await dbContext.OrganizationEmployeeMembers
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                currentEmployee => currentEmployee.Id == tenantProvider.EmployeeId.Value,
+                m => m.EmployeeId == tenantProvider.EmployeeId.Value,
                 cancellationToken);
 
-        if (employee is null)
+        if (member is null)
         {
             return Result.Forbidden(employeeNotIdentifiedMessage);
         }
 
-        return employee.Role == EmployeeRole.Leader && employee.OrganizationId == organizationId
+        return member.Role == EmployeeRole.Leader && member.OrganizationId == organizationId
             ? Result.Success()
             : Result.Forbidden(forbiddenMessage);
     }

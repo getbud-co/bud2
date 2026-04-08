@@ -38,7 +38,8 @@ public sealed partial class PatchTeamEmployees(
 
         var distinctEmployeeIds = command.EmployeeIds.Distinct().ToList();
 
-        if (!distinctEmployeeIds.Contains(team.LeaderId))
+        var currentLeaderId = team.LeaderId;
+        if (currentLeaderId.HasValue && !distinctEmployeeIds.Contains(currentLeaderId.Value))
         {
             LogTeamEmployeesPatchFailed(logger, id, "Leader not in members list");
             return Result.Failure(UserErrorMessages.TeamLeaderMustBeMember, ErrorType.Validation);
@@ -62,10 +63,12 @@ public sealed partial class PatchTeamEmployees(
 
         foreach (var employeeId in distinctEmployeeIds)
         {
+            var role = employeeId == currentLeaderId ? TeamRole.Leader : TeamRole.Member;
             team.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = employeeId,
                 TeamId = id,
+                Role = role,
                 AssignedAt = DateTime.UtcNow
             });
         }
@@ -78,9 +81,9 @@ public sealed partial class PatchTeamEmployees(
     [LoggerMessage(EventId = 4039, Level = LogLevel.Information, Message = "Patching employees for team {TeamId}")]
     private static partial void LogPatchingTeamEmployees(ILogger logger, Guid teamId);
 
-    [LoggerMessage(EventId = 4039, Level = LogLevel.Information, Message = "Team employees patched successfully: {TeamId} with {Count} members")]
+    [LoggerMessage(EventId = 4040, Level = LogLevel.Information, Message = "Team employees patched successfully: {TeamId} with {Count} members")]
     private static partial void LogTeamEmployeesPatched(ILogger logger, Guid teamId, int count);
 
-    [LoggerMessage(EventId = 4039, Level = LogLevel.Warning, Message = "Team employees patch failed for {TeamId}: {Reason}")]
+    [LoggerMessage(EventId = 4041, Level = LogLevel.Warning, Message = "Team employees patch failed for {TeamId}: {Reason}")]
     private static partial void LogTeamEmployeesPatchFailed(ILogger logger, Guid teamId, string reason);
 }

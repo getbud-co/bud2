@@ -3,6 +3,7 @@ using System;
 using Bud.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bud.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407133029_UpdateEmployeeSchema")]
+    partial class UpdateEmployeeSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,11 +120,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("AssignedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.HasKey("EmployeeId", "TeamId");
 
@@ -432,20 +430,8 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                    b.Property<Guid>("LeaderId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -458,15 +444,9 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ParentTeamId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("LeaderId");
 
                     b.HasIndex("OrganizationId");
 
@@ -803,6 +783,12 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
                 {
+                    b.HasOne("Bud.Domain.Employees.Employee", "Leader")
+                        .WithMany()
+                        .HasForeignKey("LeaderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
                         .WithMany()
                         .HasForeignKey("OrganizationId")
@@ -810,9 +796,11 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.HasOne("Bud.Domain.Teams.Team", "ParentTeam")
-                        .WithMany()
+                        .WithMany("SubTeams")
                         .HasForeignKey("ParentTeamId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Leader");
 
                     b.Navigation("Organization");
 
@@ -908,6 +896,8 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("EmployeeTeams");
 
                     b.Navigation("Employees");
+
+                    b.Navigation("SubTeams");
                 });
 
             modelBuilder.Entity("Bud.Domain.Templates.Template", b =>

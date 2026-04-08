@@ -19,7 +19,7 @@ public sealed partial class CreateEmployee(
     ILogger<CreateEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result<Employee>> ExecuteAsync(
+    public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(
         ClaimsPrincipal user,
         CreateEmployeeCommand command,
         CancellationToken cancellationToken = default)
@@ -30,7 +30,7 @@ public sealed partial class CreateEmployee(
         if (!organizationId.HasValue)
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Organization context not found");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
         }
 
         var canCreate = await authorizationGateway.CanWriteAsync(
@@ -40,19 +40,19 @@ public sealed partial class CreateEmployee(
         if (!canCreate)
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Forbidden");
-            return Result<Employee>.Forbidden(UserErrorMessages.EmployeeCreateForbidden);
+            return Result<OrganizationEmployeeMember>.Forbidden(UserErrorMessages.EmployeeCreateForbidden);
         }
 
         if (!EmailAddress.TryCreate(command.Email, out var emailAddress))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid email");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
         }
 
         if (!PersonName.TryCreate(command.FullName, out var personName))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid name");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
         }
 
         try
@@ -67,38 +67,35 @@ public sealed partial class CreateEmployee(
                 if (validTeams != 1)
                 {
                     LogEmployeeCreationFailed(logger, command.FullName, "Team not found");
-                    return Result<Employee>.NotFound(UserErrorMessages.TeamNotFound);
+                    return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.TeamNotFound);
                 }
             }
 
-            var employee = Employee.Create(
-                Guid.NewGuid(),
-                organizationId.Value,
-                personName.Value,
-                emailAddress.Value,
-                command.Role,
-                command.LeaderId);
+            var newId = Guid.NewGuid();
+            var employee = Employee.Create(newId, personName.Value, emailAddress.Value);
+            var member = OrganizationEmployeeMember.Create(newId, organizationId.Value, command.Role, command.LeaderId);
+            member.Employee = employee;
 
             if (command.TeamId.HasValue)
             {
                 employee.EmployeeTeams.Add(new EmployeeTeam
                 {
-                    EmployeeId = employee.Id,
+                    EmployeeId = newId,
                     TeamId = command.TeamId.Value,
-                    AssignedAt = DateTime.UtcNow
+                    AssignedAt = DateTime.UtcNow,
                 });
             }
 
-            await employeeRepository.AddAsync(employee, cancellationToken);
+            await employeeRepository.AddAsync(employee, member, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeeCreated(logger, employee.Id, employee.FullName);
-            return Result<Employee>.Success(employee);
+            LogEmployeeCreated(logger, newId, employee.FullName);
+            return Result<OrganizationEmployeeMember>.Success(member);
         }
         catch (DomainInvariantException ex)
         {
             LogEmployeeCreationFailed(logger, command.FullName, ex.Message);
-            return Result<Employee>.Failure(ex.Message, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 

@@ -17,7 +17,7 @@ public sealed partial class PatchEmployee(
     ILogger<PatchEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result<Employee>> ExecuteAsync(
+    public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(
         ClaimsPrincipal user,
         Guid id,
         PatchEmployeeCommand command,
@@ -25,73 +25,73 @@ public sealed partial class PatchEmployee(
     {
         LogPatchingEmployee(logger, id);
 
-        var employee = await employeeRepository.GetByIdAsync(id, cancellationToken);
-        if (employee is null)
+        var member = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (member is null)
         {
             LogEmployeePatchFailed(logger, id, "Not found");
-            return Result<Employee>.NotFound(UserErrorMessages.EmployeeNotFound);
+            return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
         var canUpdate = await authorizationGateway.CanWriteAsync(user, new EmployeeResource(id), cancellationToken);
         if (!canUpdate)
         {
             LogEmployeePatchFailed(logger, id, "Forbidden");
-            return Result<Employee>.Forbidden(UserErrorMessages.EmployeeUpdateForbidden);
+            return Result<OrganizationEmployeeMember>.Forbidden(UserErrorMessages.EmployeeUpdateForbidden);
         }
 
-        var requestedEmail = command.Email.HasValue ? command.Email.Value : employee.Email;
-        var requestedFullName = command.FullName.HasValue ? command.FullName.Value : employee.FullName;
-        var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : employee.LeaderId;
-        var requestedRole = command.Role.HasValue ? command.Role.Value : employee.Role;
+        var requestedEmail = command.Email.HasValue ? command.Email.Value : member.Employee.Email;
+        var requestedFullName = command.FullName.HasValue ? command.FullName.Value : member.Employee.FullName;
+        var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : member.LeaderId;
+        var requestedRole = command.Role.HasValue ? command.Role.Value : member.Role;
 
         if (!EmailAddress.TryCreate(requestedEmail, out var emailAddress))
         {
             LogEmployeePatchFailed(logger, id, "Invalid email");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
         }
 
         if (!PersonName.TryCreate(requestedFullName, out var personName))
         {
             LogEmployeePatchFailed(logger, id, "Invalid name");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
         }
 
-        if (employee.Email != emailAddress.Value)
+        if (member.Employee.Email != emailAddress.Value)
         {
             if (!await employeeRepository.IsEmailUniqueAsync(emailAddress.Value, id, cancellationToken))
             {
                 LogEmployeePatchFailed(logger, id, "Email already in use");
-                return Result<Employee>.Failure(UserErrorMessages.EmployeeEmailAlreadyInUse, ErrorType.Validation);
+                return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeEmailAlreadyInUse, ErrorType.Validation);
             }
         }
 
         if (command.LeaderId.HasValue && requestedLeaderId.HasValue)
         {
-            var leader = await employeeRepository.GetByIdAsync(requestedLeaderId.Value, cancellationToken);
-            if (leader is null)
+            var leaderMember = await employeeRepository.GetByIdAsync(requestedLeaderId.Value, cancellationToken);
+            if (leaderMember is null)
             {
                 LogEmployeePatchFailed(logger, id, "Leader not found");
-                return Result<Employee>.NotFound(UserErrorMessages.LeaderNotFound);
+                return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.LeaderNotFound);
             }
 
             try
             {
-                leader.EnsureCanLeadOrganization(employee.OrganizationId);
+                leaderMember.EnsureCanLeadOrganization(member.OrganizationId);
             }
             catch (DomainInvariantException ex)
             {
                 LogEmployeePatchFailed(logger, id, ex.Message);
-                return Result<Employee>.Failure(ex.Message, ErrorType.Validation);
+                return Result<OrganizationEmployeeMember>.Failure(ex.Message, ErrorType.Validation);
             }
         }
 
-        if (employee.Role == EmployeeRole.Leader &&
+        if (member.Role == EmployeeRole.Leader &&
             requestedRole == EmployeeRole.IndividualContributor)
         {
             if (await employeeRepository.HasSubordinatesAsync(id, cancellationToken))
             {
                 LogEmployeePatchFailed(logger, id, "Leader has subordinates");
-                return Result<Employee>.Failure(
+                return Result<OrganizationEmployeeMember>.Failure(
                     "Não é possível alterar o perfil. Este líder possui membros de equipe.",
                     ErrorType.Validation);
             }
@@ -99,21 +99,17 @@ public sealed partial class PatchEmployee(
 
         try
         {
-            employee.UpdateProfile(
-                personName.Value,
-                emailAddress.Value,
-                requestedRole,
-                requestedLeaderId,
-                employee.Id);
+            member.Employee.UpdateIdentity(personName.Value, emailAddress.Value);
+            member.UpdateProfile(requestedRole, requestedLeaderId, member.EmployeeId);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeePatched(logger, id, employee.FullName);
-            return Result<Employee>.Success(employee);
+            LogEmployeePatched(logger, id, member.Employee.FullName);
+            return Result<OrganizationEmployeeMember>.Success(member);
         }
         catch (DomainInvariantException ex)
         {
             LogEmployeePatchFailed(logger, id, ex.Message);
-            return Result<Employee>.Failure(ex.Message, ErrorType.Validation);
+            return Result<OrganizationEmployeeMember>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 

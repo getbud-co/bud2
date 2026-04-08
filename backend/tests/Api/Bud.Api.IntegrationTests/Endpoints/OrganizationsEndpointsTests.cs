@@ -65,9 +65,6 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(adminLeader);
         await dbContext.SaveChangesAsync();
@@ -82,8 +79,13 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         dbContext.Teams.Add(team);
         await dbContext.SaveChangesAsync();
 
-        // Update employee's team
-        adminLeader.TeamId = team.Id;
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Leader,
+            TeamId = team.Id
+        });
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -342,11 +344,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-create-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.IndividualContributor,
+            TeamId = team.Id
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
@@ -384,11 +392,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-update-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.IndividualContributor,
+            TeamId = team.Id
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
@@ -423,11 +437,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-delete-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.IndividualContributor,
+            TeamId = team.Id
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(

@@ -93,7 +93,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Employee?)null);
+            .ReturnsAsync((OrganizationEmployeeMember?)null);
         var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
         authorizationGateway
             .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
@@ -158,7 +158,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
         var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
         authorizationGateway
             .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
@@ -221,7 +221,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
         var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
         authorizationGateway
             .Setup(g => g.AuthorizeWriteAsync(User, It.IsAny<CreateCheckinContext>(), It.IsAny<CancellationToken>()))
@@ -430,7 +430,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
 
         var authorizationGateway = new Mock<IApplicationAuthorizationGateway>();
         authorizationGateway

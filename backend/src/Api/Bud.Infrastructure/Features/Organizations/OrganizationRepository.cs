@@ -38,14 +38,17 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
     public async Task<PagedResult<Employee>> GetEmployeesAsync(
         Guid organizationId, int page, int pageSize, CancellationToken ct = default)
     {
+        var memberEmployeeIds = dbContext.OrganizationEmployeeMembers
+            .Where(m => m.OrganizationId == organizationId)
+            .Select(m => m.EmployeeId);
+
         var query = dbContext.Employees
             .AsNoTracking()
-            .Where(c => c.OrganizationId == organizationId);
+            .Where(e => memberEmployeeIds.Contains(e.Id));
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .Include(c => c.Team)
-            .OrderBy(c => c.FullName)
+            .OrderBy(e => e.FullName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -55,7 +58,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
             Items = items,
             Total = total,
             Page = page,
-            PageSize = pageSize
+            PageSize = pageSize,
         };
     }
 
@@ -100,7 +103,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 
     public async Task<bool> HasEmployeesAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Employees.AnyAsync(c => c.OrganizationId == organizationId, ct);
+        => await dbContext.OrganizationEmployeeMembers.AnyAsync(m => m.OrganizationId == organizationId, ct);
 
     public async Task AddAsync(Organization entity, CancellationToken ct = default)
         => await dbContext.Organizations.AddAsync(entity, ct);

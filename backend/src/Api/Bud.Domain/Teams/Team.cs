@@ -4,17 +4,22 @@ public sealed class Team : ITenantEntity, IAggregateRoot
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public TeamColor Color { get; set; } = TeamColor.Neutral;
+    public TeamStatus Status { get; set; } = TeamStatus.Active;
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
     public Guid? ParentTeamId { get; set; }
     public Team? ParentTeam { get; set; }
-    public ICollection<Team> SubTeams { get; set; } = new List<Team>();
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
     public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
-    public Guid LeaderId { get; set; }
-    public Employee? Leader { get; set; }
 
-    public static Team Create(Guid id, Guid organizationId, string name, Guid leaderId, Guid? parentTeamId = null)
+    public Guid? LeaderId => EmployeeTeams.FirstOrDefault(et => et.Role == TeamRole.Leader)?.EmployeeId;
+
+    public static Team Create(Guid id, Guid organizationId, string name, Guid leaderId, Guid? parentTeamId = null, string? description = null, TeamColor color = TeamColor.Neutral)
     {
         if (organizationId == Guid.Empty)
         {
@@ -26,11 +31,16 @@ public sealed class Team : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("O líder do time é obrigatório.");
         }
 
+        var now = DateTime.UtcNow;
         var team = new Team
         {
             Id = id,
             OrganizationId = organizationId,
-            LeaderId = leaderId
+            Description = description,
+            Color = color,
+            Status = TeamStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         team.Rename(name);
@@ -39,14 +49,35 @@ public sealed class Team : ITenantEntity, IAggregateRoot
         return team;
     }
 
-    public void AssignLeader(Guid leaderId)
+    public void AssignLeader(Guid newLeaderId)
     {
-        if (leaderId == Guid.Empty)
+        if (newLeaderId == Guid.Empty)
         {
             throw new DomainInvariantException("O líder do time é obrigatório.");
         }
 
-        LeaderId = leaderId;
+        foreach (var et in EmployeeTeams.Where(et => et.Role == TeamRole.Leader))
+        {
+            et.Role = TeamRole.Member;
+        }
+
+        var entry = EmployeeTeams.FirstOrDefault(et => et.EmployeeId == newLeaderId);
+        if (entry is not null)
+        {
+            entry.Role = TeamRole.Leader;
+        }
+        else
+        {
+            EmployeeTeams.Add(new EmployeeTeam
+            {
+                EmployeeId = newLeaderId,
+                TeamId = Id,
+                Role = TeamRole.Leader,
+                AssignedAt = DateTime.UtcNow
+            });
+        }
+
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Rename(string name)
@@ -57,6 +88,25 @@ public sealed class Team : ITenantEntity, IAggregateRoot
         }
 
         Name = entityName.Value;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Describe(string? description)
+    {
+        Description = description;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetColor(TeamColor color)
+    {
+        Color = color;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetStatus(TeamStatus status)
+    {
+        Status = status;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Reparent(Guid? parentTeamId, Guid selfId)
@@ -67,5 +117,6 @@ public sealed class Team : ITenantEntity, IAggregateRoot
         }
 
         ParentTeamId = parentTeamId;
+        UpdatedAt = DateTime.UtcNow;
     }
 }

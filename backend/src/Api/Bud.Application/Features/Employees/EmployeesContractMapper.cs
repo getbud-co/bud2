@@ -3,28 +3,58 @@ namespace Bud.Application.Features.Employees;
 
 public static class EmployeesContractMapper
 {
-    public static EmployeeResponse ToEmployeeResponse(this Employee source)
+    /// <summary>
+    /// Maps the identity-only Employee entity (e.g. from nav props on Team/Mission/Checkin).
+    /// Org-scoped fields are omitted since they live in OrganizationEmployeeMember.
+    /// </summary>
+    public static EmployeeResponse ToEmployeeResponse(this Employee employee)
     {
         return new EmployeeResponse
         {
-            Id = source.Id,
-            FullName = source.FullName,
-            Email = source.Email,
-            Role = source.Role,
-            OrganizationId = source.OrganizationId,
-            LeaderId = source.LeaderId,
-            IsGlobalAdmin = source.IsGlobalAdmin
+            Id = employee.Id,
+            FullName = employee.FullName,
+            Email = employee.Email,
+            Role = EmployeeRole.IndividualContributor,
+            OrganizationId = Guid.Empty,
+            LeaderId = null,
+            IsGlobalAdmin = false,
         };
     }
 
-    public static EmployeeLookupResponse ToResponse(this Employee source)
+    public static EmployeeLookupResponse ToResponse(this Employee employee)
     {
         return new EmployeeLookupResponse
         {
-            Id = source.Id,
-            FullName = source.FullName,
-            Email = source.Email,
-            Role = source.Role        };
+            Id = employee.Id,
+            FullName = employee.FullName,
+            Email = employee.Email,
+            Role = EmployeeRole.IndividualContributor,
+        };
+    }
+
+    public static EmployeeResponse ToEmployeeResponse(this OrganizationEmployeeMember member)
+    {
+        return new EmployeeResponse
+        {
+            Id = member.EmployeeId,
+            FullName = member.Employee.FullName,
+            Email = member.Employee.Email,
+            Role = member.Role,
+            OrganizationId = member.OrganizationId,
+            LeaderId = member.LeaderId,
+            IsGlobalAdmin = member.IsGlobalAdmin,
+        };
+    }
+
+    public static EmployeeLookupResponse ToResponse(this OrganizationEmployeeMember member)
+    {
+        return new EmployeeLookupResponse
+        {
+            Id = member.EmployeeId,
+            FullName = member.Employee.FullName,
+            Email = member.Employee.Email,
+            Role = member.Role,
+        };
     }
 
     public static EmployeeTeamResponse ToEmployeeTeamResponse(this Team source)
@@ -32,7 +62,7 @@ public static class EmployeesContractMapper
         return new EmployeeTeamResponse
         {
             Id = source.Id,
-            Name = source.Name
+            Name = source.Name,
         };
     }
 
@@ -41,29 +71,30 @@ public static class EmployeesContractMapper
         return new EmployeeTeamEligibleResponse
         {
             Id = source.Id,
-            Name = source.Name
+            Name = source.Name,
         };
     }
 
-    public static TeamEmployeeEligibleResponse ToTeamEmployeeEligibleResponse(this Employee source)
+    public static TeamEmployeeEligibleResponse ToTeamEmployeeEligibleResponse(this OrganizationEmployeeMember member)
     {
         return new TeamEmployeeEligibleResponse
         {
-            Id = source.Id,
-            FullName = source.FullName,
-            Email = source.Email,
-            Role = source.Role        };
+            Id = member.EmployeeId,
+            FullName = member.Employee.FullName,
+            Email = member.Employee.Email,
+            Role = member.Role,
+        };
     }
 
-    public static EmployeeLeaderResponse ToLeaderResponse(this Employee source)
+    public static EmployeeLeaderResponse ToLeaderResponse(this OrganizationEmployeeMember member)
     {
         return new EmployeeLeaderResponse
         {
-            Id = source.Id,
-            FullName = source.FullName,
-            Email = source.Email,
-            TeamName = source.Team?.Name,
-            OrganizationName = source.Organization?.Name ?? string.Empty
+            Id = member.EmployeeId,
+            FullName = member.Employee.FullName,
+            Email = member.Employee.Email,
+            TeamName = member.Team?.Name,
+            OrganizationName = member.Organization?.Name ?? string.Empty,
         };
     }
 }

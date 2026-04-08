@@ -18,20 +18,20 @@ public sealed class EmployeeAuthorizationService(
         => await TenantScopedAuthorization.AuthorizeReadAsync(
             tenantProvider,
             ct => employeeRepository.GetByIdAsync(resource.EmployeeId, ct),
-            employee => employee.OrganizationId,
+            member => member.OrganizationId,
             "Colaborador não encontrado.",
             "Você não tem permissão para acessar este colaborador.",
             cancellationToken);
 
     async Task<Result> IWriteAuthorizationRule<EmployeeResource>.EvaluateAsync(EmployeeResource resource, CancellationToken cancellationToken)
     {
-        var employee = await employeeRepository.GetByIdAsync(resource.EmployeeId, cancellationToken);
-        if (employee is null)
+        var member = await employeeRepository.GetByIdAsync(resource.EmployeeId, cancellationToken);
+        if (member is null)
         {
             return Result.NotFound("Colaborador não encontrado.");
         }
 
-        return await RequireLeaderAccessAsync(employee.OrganizationId, cancellationToken);
+        return await RequireLeaderAccessAsync(member.OrganizationId, cancellationToken);
     }
 
     Task<Result> IWriteAuthorizationRule<CreateEmployeeContext>.EvaluateAsync(CreateEmployeeContext context, CancellationToken cancellationToken)

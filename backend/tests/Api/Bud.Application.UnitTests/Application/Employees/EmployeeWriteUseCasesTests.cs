@@ -73,7 +73,7 @@ public sealed class EmployeeWriteUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.TeamId.Should().BeNull();
-        result.Value.EmployeeTeams.Should().ContainSingle(team => team.TeamId == teamId && team.EmployeeId == result.Value.Id);
+        result.Value.Employee.EmployeeTeams.Should().ContainSingle(team => team.TeamId == teamId && team.EmployeeId == result.Value.EmployeeId);
         _employeeRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -110,7 +110,9 @@ public sealed class EmployeeWriteUseCasesTests
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.Should().Be("Time não encontrado.");
-        _employeeRepository.Verify(repository => repository.AddAsync(It.IsAny<Employee>(), It.IsAny<CancellationToken>()), Times.Never);
+        _employeeRepository.Verify(
+            repository => repository.AddAsync(It.IsAny<Employee>(), It.IsAny<OrganizationEmployeeMember>(), It.IsAny<CancellationToken>()),
+            Times.Never);
         _employeeRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -119,7 +121,7 @@ public sealed class EmployeeWriteUseCasesTests
     {
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Employee?)null);
+            .ReturnsAsync((OrganizationEmployeeMember?)null);
 
         var useCase = new PatchEmployee(
             _employeeRepository.Object,
@@ -139,22 +141,22 @@ public sealed class EmployeeWriteUseCasesTests
     [Fact]
     public async Task DeleteEmployee_WhenAuthorized_Succeeds()
     {
-        var employee = new Employee
+        var employeeId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
         {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = "user@test.com",
-            OrganizationId = Guid.NewGuid()
+            EmployeeId = employeeId,
+            OrganizationId = Guid.NewGuid(),
+            Employee = new Employee { Id = employeeId, FullName = "User", Email = "user@test.com" },
         };
 
         _employeeRepository
-            .Setup(repository => repository.GetByIdAsync(employee.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(employee);
+            .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(member);
         _employeeRepository
-            .Setup(repository => repository.HasSubordinatesAsync(employee.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.HasSubordinatesAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         _employeeRepository
-            .Setup(repository => repository.HasMissionsAsync(employee.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.HasMissionsAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         _authorizationGateway
             .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
@@ -165,29 +167,29 @@ public sealed class EmployeeWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<DeleteEmployee>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, employee.Id);
+        var result = await useCase.ExecuteAsync(User, employeeId);
 
         result.IsSuccess.Should().BeTrue();
-        _employeeRepository.Verify(repository => repository.RemoveAsync(employee, It.IsAny<CancellationToken>()), Times.Once);
+        _employeeRepository.Verify(repository => repository.RemoveAsync(member, It.IsAny<CancellationToken>()), Times.Once);
         _employeeRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteEmployee_WhenHasSubordinates_ReturnsConflict()
     {
-        var employee = new Employee
+        var employeeId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
         {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = "user@test.com",
-            OrganizationId = Guid.NewGuid()
+            EmployeeId = employeeId,
+            OrganizationId = Guid.NewGuid(),
+            Employee = new Employee { Id = employeeId, FullName = "User", Email = "user@test.com" },
         };
 
         _employeeRepository
-            .Setup(repository => repository.GetByIdAsync(employee.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(employee);
+            .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(member);
         _employeeRepository
-            .Setup(repository => repository.HasSubordinatesAsync(employee.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.HasSubordinatesAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _authorizationGateway
             .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
@@ -198,7 +200,7 @@ public sealed class EmployeeWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<DeleteEmployee>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, employee.Id);
+        var result = await useCase.ExecuteAsync(User, employeeId);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Conflict);
@@ -207,17 +209,17 @@ public sealed class EmployeeWriteUseCasesTests
     [Fact]
     public async Task UpdateEmployeeTeams_WhenAuthorized_Succeeds()
     {
-        var employee = new Employee
+        var employeeId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
         {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = "user@test.com",
-            OrganizationId = Guid.NewGuid()
+            EmployeeId = employeeId,
+            OrganizationId = Guid.NewGuid(),
+            Employee = new Employee { Id = employeeId, FullName = "User", Email = "user@test.com" },
         };
 
         _employeeRepository
-            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(employee.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(employee);
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(member);
         _authorizationGateway
             .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -227,7 +229,7 @@ public sealed class EmployeeWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<PatchEmployeeTeams>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, employee.Id, new PatchEmployeeTeamsCommand([]));
+        var result = await useCase.ExecuteAsync(User, employeeId, new PatchEmployeeTeamsCommand([]));
 
         result.IsSuccess.Should().BeTrue();
         _employeeRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -236,17 +238,17 @@ public sealed class EmployeeWriteUseCasesTests
     [Fact]
     public async Task UpdateEmployeeTeams_WhenUnauthorized_ReturnsForbidden()
     {
-        var employee = new Employee
+        var employeeId = Guid.NewGuid();
+        var member = new OrganizationEmployeeMember
         {
-            Id = Guid.NewGuid(),
-            FullName = "User",
-            Email = "user@test.com",
-            OrganizationId = Guid.NewGuid()
+            EmployeeId = employeeId,
+            OrganizationId = Guid.NewGuid(),
+            Employee = new Employee { Id = employeeId, FullName = "User", Email = "user@test.com" },
         };
 
         _employeeRepository
-            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(employee.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(employee);
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(member);
         _authorizationGateway
             .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<EmployeeResource>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -256,7 +258,7 @@ public sealed class EmployeeWriteUseCasesTests
             _authorizationGateway.Object,
             NullLogger<PatchEmployeeTeams>.Instance);
 
-        var result = await useCase.ExecuteAsync(User, employee.Id, new PatchEmployeeTeamsCommand([]));
+        var result = await useCase.ExecuteAsync(User, employeeId, new PatchEmployeeTeamsCommand([]));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);

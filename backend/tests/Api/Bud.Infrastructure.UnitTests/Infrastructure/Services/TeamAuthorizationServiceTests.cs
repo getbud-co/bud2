@@ -34,14 +34,9 @@ public sealed class TeamAuthorizationServiceTests
 
         var tenantProvider = new TestTenantProvider { EmployeeId = employeeId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
-        dbContext.Employees.Add(new Employee
-        {
-            Id = employeeId,
-            FullName = "Leader",
-            Email = "leader@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
-        });
+        var emp = new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" };
+        dbContext.Employees.Add(emp);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Role = EmployeeRole.Leader });
         await dbContext.SaveChangesAsync();
 
         var service = new TeamAuthorizationService(teamRepository.Object, dbContext, tenantProvider);
@@ -60,14 +55,9 @@ public sealed class TeamAuthorizationServiceTests
         var teamRepository = new Mock<ITeamRepository>(MockBehavior.Strict);
         var tenantProvider = new TestTenantProvider { EmployeeId = employeeId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
-        dbContext.Employees.Add(new Employee
-        {
-            Id = employeeId,
-            FullName = "Leader",
-            Email = "leader@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
-        });
+        var emp = new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" };
+        dbContext.Employees.Add(emp);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Role = EmployeeRole.Leader });
         await dbContext.SaveChangesAsync();
 
         var service = new TeamAuthorizationService(teamRepository.Object, dbContext, tenantProvider);

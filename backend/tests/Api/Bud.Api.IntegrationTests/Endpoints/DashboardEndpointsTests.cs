@@ -107,11 +107,16 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = Guid.NewGuid(),
             FullName = "Dashboard Filter Leader",
             Email = $"filter-leader-{teamId:N}@test.com",
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = organizationId
         };
         dbContext.Employees.Add(leader);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = leader.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Leader,
+        });
         await dbContext.SaveChangesAsync();
 
         var team = new Team
@@ -128,9 +133,15 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = Guid.NewGuid(),
             FullName = "Team Member",
             Email = $"team-member-{teamId:N}@test.com",
-            OrganizationId = organizationId
         };
         dbContext.Employees.Add(member);
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = member.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor,
+        });
 
         dbContext.Set<EmployeeTeam>().Add(new EmployeeTeam
         {
@@ -149,13 +160,14 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var employee = await dbContext.Employees
+        var membership = await dbContext.OrganizationEmployeeMembers
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == email);
+            .Include(m => m.Employee)
+            .FirstOrDefaultAsync(m => m.Employee.Email == email);
 
-        if (employee is not null)
+        if (membership is not null)
         {
-            return (employee.OrganizationId, employee.Id, employee.Email);
+            return (membership.OrganizationId, membership.EmployeeId, membership.Employee.Email);
         }
 
         var org = new Organization
@@ -170,12 +182,16 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = Guid.NewGuid(),
             FullName = "Administrador Dashboard",
             Email = email,
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = leader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Leader,
+        });
 
         var team = new Team
         {
@@ -185,10 +201,6 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             LeaderId = leader.Id
         };
         dbContext.Teams.Add(team);
-
-        leader.TeamId = team.Id;
-
-        await dbContext.SaveChangesAsync();
 
         await dbContext.SaveChangesAsync();
 

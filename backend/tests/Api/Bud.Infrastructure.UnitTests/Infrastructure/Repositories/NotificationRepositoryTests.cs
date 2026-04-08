@@ -25,14 +25,9 @@ public sealed class NotificationRepositoryTests
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
         context.Organizations.Add(org);
 
-        var employee = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Test Recipient",
-            Email = "recipient@test.com",
-            OrganizationId = org.Id
-        };
+        var employee = new Employee { Id = Guid.NewGuid(), FullName = "Test Recipient", Email = "recipient@test.com" };
         context.Employees.Add(employee);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employee.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         return (org, employee);
@@ -109,14 +104,9 @@ public sealed class NotificationRepositoryTests
         var repository = new NotificationRepository(context);
         var (org, employee1) = await CreateTestRecipient(context);
 
-        var employee2 = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Other Recipient",
-            Email = "other@test.com",
-            OrganizationId = org.Id
-        };
+        var employee2 = new Employee { Id = Guid.NewGuid(), FullName = "Other Recipient", Email = "other@test.com" };
         context.Employees.Add(employee2);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employee2.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         context.Notifications.AddRange(

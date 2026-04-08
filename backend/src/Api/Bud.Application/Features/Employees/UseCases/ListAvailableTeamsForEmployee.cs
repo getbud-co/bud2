@@ -14,8 +14,8 @@ public sealed class ListAvailableTeamsForEmployee(
         string? search,
         CancellationToken cancellationToken = default)
     {
-        var employee = await employeeRepository.GetByIdAsync(employeeId, cancellationToken);
-        if (employee is null)
+        var member = await employeeRepository.GetByIdAsync(employeeId, cancellationToken);
+        if (member is null)
         {
             return Result<List<EmployeeTeamEligibleResponse>>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
@@ -28,7 +28,7 @@ public sealed class ListAvailableTeamsForEmployee(
 
         var teams = await employeeRepository.GetEligibleTeamsForAssignmentAsync(
             employeeId,
-            employee.OrganizationId,
+            member.OrganizationId,
             search,
             50,
             cancellationToken);

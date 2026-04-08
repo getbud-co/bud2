@@ -29,7 +29,7 @@ public sealed class EmployeeAuthorizationServiceTests
         var repository = new Mock<IEmployeeRepository>();
         repository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, OrganizationId = organizationId });
+            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Employee = new Employee { Id = employeeId } });
 
         var tenantProvider = new TestTenantProvider { TenantId = organizationId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
@@ -48,14 +48,8 @@ public sealed class EmployeeAuthorizationServiceTests
         var repository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
         var tenantProvider = new TestTenantProvider { EmployeeId = employeeId };
         await using var dbContext = CreateInMemoryContext(tenantProvider);
-        dbContext.Employees.Add(new Employee
-        {
-            Id = employeeId,
-            FullName = "Leader",
-            Email = "leader@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
-        });
+        dbContext.Employees.Add(new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" });
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = organizationId, Role = EmployeeRole.Leader });
         await dbContext.SaveChangesAsync();
 
         var service = new EmployeeAuthorizationService(repository.Object, dbContext, tenantProvider);

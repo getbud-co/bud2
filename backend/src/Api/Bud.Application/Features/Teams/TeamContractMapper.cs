@@ -6,17 +6,24 @@ public static class TeamContractMapper
 {
     public static TeamResponse ToResponse(this Team source)
     {
+        var leaderEntry = source.EmployeeTeams.FirstOrDefault(et => et.Role == TeamRole.Leader);
+
         return new TeamResponse
         {
             Id = source.Id,
             Name = source.Name,
+            Description = source.Description,
+            Color = source.Color,
+            Status = source.Status,
             OrganizationId = source.OrganizationId,
             ParentTeamId = source.ParentTeamId,
             LeaderId = source.LeaderId,
+            CreatedAt = source.CreatedAt,
+            UpdatedAt = source.UpdatedAt,
+            DeletedAt = source.DeletedAt,
             ParentTeam = source.ParentTeam?.ToResponse(),
-            SubTeams = source.SubTeams.Select(t => t.ToResponse()).ToList(),
             Employees = source.Employees.Select(c => c.ToEmployeeResponse()).ToList(),
-            Leader = source.Leader?.ToEmployeeResponse()
+            Leader = leaderEntry?.Employee?.ToEmployeeResponse()
         };
     }
 }

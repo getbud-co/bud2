@@ -22,10 +22,10 @@ public sealed class TenantAuthorizationService(
         }
 
         // Verificar se é colaborador da organização
-        return await dbContext.Employees
-            .AnyAsync(c =>
-                c.OrganizationId == tenantId &&
-                c.Email == tenantProvider.UserEmail,
+        return await dbContext.OrganizationEmployeeMembers
+            .AnyAsync(m =>
+                m.OrganizationId == tenantId &&
+                m.Employee.Email == tenantProvider.UserEmail,
                 cancellationToken);
     }
 
@@ -42,9 +42,9 @@ public sealed class TenantAuthorizationService(
         }
 
         // Organizações onde o usuário é colaborador
-        var employeeOrgIds = await dbContext.Employees
-            .Where(c => c.Email == tenantProvider.UserEmail)
-            .Select(c => c.OrganizationId)
+        var employeeOrgIds = await dbContext.OrganizationEmployeeMembers
+            .Where(m => m.Employee.Email == tenantProvider.UserEmail)
+            .Select(m => m.OrganizationId)
             .Distinct()
             .ToListAsync(cancellationToken);
 

@@ -21,8 +21,8 @@ public sealed partial class PatchEmployeeTeams(
     {
         LogPatchingEmployeeTeams(logger, id);
 
-        var employee = await employeeRepository.GetByIdWithEmployeeTeamsAsync(id, cancellationToken);
-        if (employee is null)
+        var member = await employeeRepository.GetByIdWithEmployeeTeamsAsync(id, cancellationToken);
+        if (member is null)
         {
             LogEmployeeTeamsPatchFailed(logger, id, "Employee not found");
             return Result.NotFound(UserErrorMessages.EmployeeNotFound);
@@ -41,7 +41,7 @@ public sealed partial class PatchEmployeeTeams(
         {
             var validCount = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
                 distinctTeamIds,
-                employee.OrganizationId,
+                member.OrganizationId,
                 cancellationToken);
 
             if (validCount != distinctTeamIds.Count)
@@ -51,15 +51,15 @@ public sealed partial class PatchEmployeeTeams(
             }
         }
 
-        employee.EmployeeTeams.Clear();
+        member.Employee.EmployeeTeams.Clear();
 
         foreach (var teamId in distinctTeamIds)
         {
-            employee.EmployeeTeams.Add(new EmployeeTeam
+            member.Employee.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = id,
                 TeamId = teamId,
-                AssignedAt = DateTime.UtcNow
+                AssignedAt = DateTime.UtcNow,
             });
         }
 
@@ -71,9 +71,9 @@ public sealed partial class PatchEmployeeTeams(
     [LoggerMessage(EventId = 4049, Level = LogLevel.Information, Message = "Patching teams for employee {EmployeeId}")]
     private static partial void LogPatchingEmployeeTeams(ILogger logger, Guid employeeId);
 
-    [LoggerMessage(EventId = 4049, Level = LogLevel.Information, Message = "Employee teams patched successfully: {EmployeeId} with {Count} teams")]
+    [LoggerMessage(EventId = 4050, Level = LogLevel.Information, Message = "Employee teams patched successfully: {EmployeeId} with {Count} teams")]
     private static partial void LogEmployeeTeamsPatched(ILogger logger, Guid employeeId, int count);
 
-    [LoggerMessage(EventId = 4049, Level = LogLevel.Warning, Message = "Employee teams patch failed for {EmployeeId}: {Reason}")]
+    [LoggerMessage(EventId = 4051, Level = LogLevel.Warning, Message = "Employee teams patch failed for {EmployeeId}: {Reason}")]
     private static partial void LogEmployeeTeamsPatchFailed(ILogger logger, Guid employeeId, string reason);
 }

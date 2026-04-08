@@ -305,12 +305,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Líder {Guid.NewGuid():N}",
-            Email = $"leader-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
+            Email = $"leader-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Leader
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -325,13 +329,17 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Sub-líder {Guid.NewGuid():N}",
-            Email = $"subleader-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId,
-            LeaderId = leaderId
+            Email = $"subleader-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Leader,
+            LeaderId = leaderId
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -346,13 +354,17 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Liderado {Guid.NewGuid():N}",
-            Email = $"sub-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId,
-            LeaderId = leaderId
+            Email = $"sub-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor,
+            LeaderId = leaderId
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -379,18 +391,21 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
-            Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
+            Email = "admin@getbud.co"
         };
         dbContext.Employees.Add(adminLeader);
 
         var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Leader,
+            TeamId = team.Id
+        });
 
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -405,12 +420,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
-            Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            Email = $"colaborador-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -425,12 +444,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Alvo",
-            Email = $"alvo-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            Email = $"alvo-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;

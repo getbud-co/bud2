@@ -62,13 +62,14 @@ public sealed class DbSeederTests
         };
 
         context.Organizations.Add(organization);
-        context.Employees.Add(new Employee
+        var adminEmp = new Employee { Id = Guid.NewGuid(), FullName = "Administrador Global", Email = "admin@getbud.co" };
+        context.Employees.Add(adminEmp);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
-            Id = Guid.NewGuid(),
-            FullName = "Administrador Global",
-            Email = "admin@getbud.co",
+            EmployeeId = adminEmp.Id,
+            OrganizationId = organization.Id,
             Role = EmployeeRole.Leader,
-            OrganizationId = organization.Id
+            IsGlobalAdmin = true
         });
 
         context.Templates.Add(new Template

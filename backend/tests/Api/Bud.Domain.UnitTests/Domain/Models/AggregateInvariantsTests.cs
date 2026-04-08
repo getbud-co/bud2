@@ -49,9 +49,10 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Employee_UpdateProfile_WithSelfLeader_ShouldThrow()
     {
-        var employee = Employee.Create(Guid.NewGuid(), Guid.NewGuid(), "Ana", "ana@getbud.co", EmployeeRole.Leader);
+        var employeeId = Guid.NewGuid();
+        var member = OrganizationEmployeeMember.Create(employeeId, Guid.NewGuid(), EmployeeRole.Leader);
 
-        var act = () => employee.UpdateProfile("Ana", "ana@getbud.co", EmployeeRole.Leader, employee.Id, employee.Id);
+        var act = () => member.UpdateProfile(EmployeeRole.Leader, employeeId, employeeId);
 
         act.Should().Throw<DomainInvariantException>();
     }

@@ -28,26 +28,26 @@ public sealed class NotificationRecipientResolver(ApplicationDbContext dbContext
             // Responsible employee + their leader
             recipientIds = [mission.EmployeeId.Value];
 
-            var leader = await dbContext.Employees
+            var leaderId = await dbContext.OrganizationEmployeeMembers
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(c => c.Id == mission.EmployeeId.Value && c.OrganizationId == organizationId)
-                .Select(c => c.LeaderId)
+                .Where(m => m.EmployeeId == mission.EmployeeId.Value && m.OrganizationId == organizationId)
+                .Select(m => m.LeaderId)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (leader.HasValue)
+            if (leaderId.HasValue)
             {
-                recipientIds.Add(leader.Value);
+                recipientIds.Add(leaderId.Value);
             }
         }
         else
         {
             // No responsible: notify all employees in the org
-            recipientIds = await dbContext.Employees
+            recipientIds = await dbContext.OrganizationEmployeeMembers
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(c => c.OrganizationId == organizationId)
-                .Select(c => c.Id)
+                .Where(m => m.OrganizationId == organizationId)
+                .Select(m => m.EmployeeId)
                 .ToListAsync(cancellationToken);
         }
 
@@ -80,8 +80,8 @@ public sealed class NotificationRecipientResolver(ApplicationDbContext dbContext
         return await dbContext.Employees
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(c => c.Id == employeeId)
-            .Select(c => c.FullName)
+            .Where(e => e.Id == employeeId)
+            .Select(e => e.FullName)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

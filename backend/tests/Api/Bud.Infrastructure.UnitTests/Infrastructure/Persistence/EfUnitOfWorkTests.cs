@@ -114,13 +114,12 @@ public sealed class EfUnitOfWorkTests
             Id = organizationId,
             Name = "org-transacao.com"
         });
-        dbContext.Employees.Add(new Employee
+        dbContext.Employees.Add(new Employee { Id = employeeId, FullName = "Colaborador", Email = "colaborador@org-transacao.com" });
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
-            Id = employeeId,
-            FullName = "Colaborador",
-            Email = "colaborador@org-transacao.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            EmployeeId = employeeId,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor
         });
         await dbContext.SaveChangesAsync();
 

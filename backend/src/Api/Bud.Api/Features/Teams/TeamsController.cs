@@ -44,6 +44,8 @@ public sealed class TeamsController(
 
         var command = new CreateTeamCommand(
             request.Name,
+            request.Description,
+            request.Color,
             request.OrganizationId,
             request.LeaderId,
             request.ParentTeamId);
@@ -76,6 +78,9 @@ public sealed class TeamsController(
 
         var command = new PatchTeamCommand(
             request.Name,
+            request.Description,
+            request.Color,
+            request.Status,
             request.LeaderId,
             request.ParentTeamId);
 

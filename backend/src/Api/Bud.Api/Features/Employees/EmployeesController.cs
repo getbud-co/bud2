@@ -53,8 +53,8 @@ public sealed class EmployeesController(
             request.LeaderId);
 
         var result = await createEmployee.ExecuteAsync(User, command, cancellationToken);
-        return FromResult<Employee, EmployeeResponse>(result, employee =>
-            CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee.ToEmployeeResponse()));
+        return FromResult<OrganizationEmployeeMember, EmployeeResponse>(result, member =>
+            CreatedAtAction(nameof(GetById), new { id = member.EmployeeId }, member.ToEmployeeResponse()));
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public sealed class EmployeesController(
             request.LeaderId);
 
         var result = await patchEmployee.ExecuteAsync(User, id, command, cancellationToken);
-        return FromResultOk(result, employee => employee.ToEmployeeResponse());
+        return FromResultOk(result, member => member.ToEmployeeResponse());
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public sealed class EmployeesController(
     public async Task<ActionResult<EmployeeResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await getEmployeeById.ExecuteAsync(User, id, cancellationToken);
-        return FromResultOk(result, employee => employee.ToEmployeeResponse());
+        return FromResultOk(result, member => member.ToEmployeeResponse());
     }
 
     /// <summary>
@@ -148,7 +148,7 @@ public sealed class EmployeesController(
         }
 
         var result = await listEmployees.ExecuteAsync(teamId, searchValidation.Value, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
+        return FromResultOk(result, paged => paged.MapPaged(m => m.ToEmployeeResponse()));
     }
 
     /// <summary>

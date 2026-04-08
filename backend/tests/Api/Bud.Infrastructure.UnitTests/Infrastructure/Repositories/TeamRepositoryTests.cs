@@ -38,11 +38,15 @@ public sealed class TeamRepositoryTests
         {
             Id = Guid.NewGuid(),
             FullName = fullName,
-            Email = email,
-            Role = role,
-            OrganizationId = organizationId
+            Email = email
         };
         context.Employees.Add(employee);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = role
+        });
         await context.SaveChangesAsync();
         return employee;
     }
@@ -309,17 +313,18 @@ public sealed class TeamRepositoryTests
         {
             Id = Guid.NewGuid(),
             FullName = "Member A",
-            Email = "a@test.com",
-            OrganizationId = org.Id
+            Email = "a@test.com"
         };
         var member2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Member B",
-            Email = "b@test.com",
-            OrganizationId = org.Id
+            Email = "b@test.com"
         };
         context.Employees.AddRange(member1, member2);
+        context.OrganizationEmployeeMembers.AddRange(
+            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id },
+            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id });
         context.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
             new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id });
@@ -350,10 +355,10 @@ public sealed class TeamRepositoryTests
                 Id = Guid.NewGuid(),
                 FullName = $"Member {i:D2}",
                 Email = $"member{i}@test.com",
-                OrganizationId = org.Id
             };
 
             context.Employees.Add(member);
+            context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = member.Id, OrganizationId = org.Id });
             context.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = member.Id,
@@ -449,8 +454,8 @@ public sealed class TeamRepositoryTests
         var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, org.Id, null, 10);
 
         // Assert
-        result.Should().Contain(c => c.Id == eligible.Id);
-        result.Should().NotContain(c => c.Id == assigned.Id);
+        result.Should().Contain(c => c.EmployeeId == eligible.Id);
+        result.Should().NotContain(c => c.EmployeeId == assigned.Id);
     }
 
     [Fact]

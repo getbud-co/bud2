@@ -16,12 +16,13 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
 
-        var employee = await dbContext.Employees
+        var member = await dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
+            .Include(m => m.Employee)
+            .FirstOrDefaultAsync(m => m.Employee.Email == normalizedEmail, cancellationToken);
 
-        if (employee?.IsGlobalAdmin == true)
+        if (member?.IsGlobalAdmin == true)
         {
             var allOrgs = await dbContext.Organizations
                 .AsNoTracking()
@@ -30,22 +31,22 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
                 .Select(o => new OrganizationSnapshot
                 {
                     Id = o.Id,
-                    Name = o.Name
+                    Name = o.Name,
                 })
                 .ToListAsync(cancellationToken);
 
             return Result<List<OrganizationSnapshot>>.Success(allOrgs);
         }
 
-        var orgsFromMembership = await dbContext.Employees
+        var orgsFromMembership = await dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(c => c.Email == normalizedEmail)
-            .Include(c => c.Organization)
-            .Select(c => new OrganizationSnapshot
+            .Where(m => m.Employee.Email == normalizedEmail)
+            .Include(m => m.Organization)
+            .Select(m => new OrganizationSnapshot
             {
-                Id = c.Organization.Id,
-                Name = c.Organization.Name
+                Id = m.Organization.Id,
+                Name = m.Organization.Name,
             })
             .ToListAsync(cancellationToken);
 

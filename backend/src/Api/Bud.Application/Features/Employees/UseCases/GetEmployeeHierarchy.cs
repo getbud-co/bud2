@@ -27,9 +27,9 @@ public sealed class GetEmployeeHierarchy(
 
         var subordinates = await employeeRepository.GetSubordinatesAsync(employeeId, 5, cancellationToken);
         var childrenByLeader = subordinates
-            .Where(c => c.LeaderId.HasValue)
-            .GroupBy(c => c.LeaderId!.Value)
-            .ToDictionary(group => group.Key, group => group.OrderBy(c => c.FullName).ToList());
+            .Where(m => m.LeaderId.HasValue)
+            .GroupBy(m => m.LeaderId!.Value)
+            .ToDictionary(group => group.Key, group => group.OrderBy(m => m.Employee.FullName).ToList());
 
         var tree = BuildTree(employeeId, childrenByLeader, 0, 5);
         return Result<List<EmployeeSubordinateResponse>>.Success(tree);
@@ -37,7 +37,7 @@ public sealed class GetEmployeeHierarchy(
 
     private static List<EmployeeSubordinateResponse> BuildTree(
         Guid leaderId,
-        Dictionary<Guid, List<Employee>> childrenByLeader,
+        Dictionary<Guid, List<OrganizationEmployeeMember>> childrenByLeader,
         int depth,
         int maxDepth)
     {
@@ -47,13 +47,13 @@ public sealed class GetEmployeeHierarchy(
         }
 
         return children
-            .Select(employee => new EmployeeSubordinateResponse
+            .Select(member => new EmployeeSubordinateResponse
             {
-                Id = employee.Id,
-                FullName = employee.FullName,
-                Initials = GetInitials(employee.FullName),
-                Role = employee.Role == EmployeeRole.Leader ? "Líder" : "Contribuidor individual",
-                Children = BuildTree(employee.Id, childrenByLeader, depth + 1, maxDepth)
+                Id = member.EmployeeId,
+                FullName = member.Employee.FullName,
+                Initials = GetInitials(member.Employee.FullName),
+                Role = member.Role == EmployeeRole.Leader ? "Líder" : "Contribuidor individual",
+                Children = BuildTree(member.EmployeeId, childrenByLeader, depth + 1, maxDepth),
             })
             .ToList();
     }

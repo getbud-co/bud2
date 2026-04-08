@@ -74,8 +74,7 @@ public sealed class MetricCheckinRepositoryTests
         {
             Id = Guid.NewGuid(),
             FullName = "Test Employee",
-            Email = "test@example.com",
-            OrganizationId = organizationId
+            Email = "test@example.com"
         };
 
         context.Employees.Add(employee);

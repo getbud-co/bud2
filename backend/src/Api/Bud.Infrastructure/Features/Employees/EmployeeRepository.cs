@@ -7,68 +7,79 @@ namespace Bud.Infrastructure.Features.Employees;
 
 public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmployeeRepository
 {
-    public async Task<Employee?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Employees.FirstOrDefaultAsync(c => c.Id == id, ct);
+    public async Task<OrganizationEmployeeMember?> GetByIdAsync(Guid employeeId, CancellationToken ct = default)
+        => await dbContext.OrganizationEmployeeMembers
+            .Include(m => m.Employee)
+            .Include(m => m.Team)
+            .Include(m => m.Organization)
+            .FirstOrDefaultAsync(m => m.EmployeeId == employeeId, ct);
 
-    public async Task<Employee?> GetByIdWithEmployeeTeamsAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Employees.Include(c => c.EmployeeTeams).FirstOrDefaultAsync(c => c.Id == id, ct);
+    public async Task<OrganizationEmployeeMember?> GetByIdWithEmployeeTeamsAsync(Guid employeeId, CancellationToken ct = default)
+        => await dbContext.OrganizationEmployeeMembers
+            .Include(m => m.Employee)
+                .ThenInclude(e => e.EmployeeTeams)
+            .FirstOrDefaultAsync(m => m.EmployeeId == employeeId, ct);
 
-    public async Task<PagedResult<Employee>> GetAllAsync(
+    public async Task<PagedResult<OrganizationEmployeeMember>> GetAllAsync(
         Guid? teamId, string? search, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = dbContext.Employees.AsNoTracking();
+        var query = dbContext.OrganizationEmployeeMembers
+            .Include(m => m.Employee)
+            .AsNoTracking();
 
         if (teamId.HasValue)
         {
             var teamEmployeeIds = dbContext.EmployeeTeams
-                .Where(ct2 => ct2.TeamId == teamId.Value)
-                .Select(ct2 => ct2.EmployeeId);
-            query = query.Where(c => teamEmployeeIds.Contains(c.Id));
+                .Where(et => et.TeamId == teamId.Value)
+                .Select(et => et.EmployeeId);
+            query = query.Where(m => teamEmployeeIds.Contains(m.EmployeeId));
         }
 
         query = new EmployeeSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(c => c.FullName)
+            .OrderBy(m => m.Employee.FullName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<Employee> { Items = items, Total = total, Page = page, PageSize = pageSize };
+        return new PagedResult<OrganizationEmployeeMember> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
-    public async Task<List<Employee>> GetLeadersAsync(Guid? organizationId, CancellationToken ct = default)
+    public async Task<List<OrganizationEmployeeMember>> GetLeadersAsync(Guid? organizationId, CancellationToken ct = default)
     {
-        var query = dbContext.Employees
+        var query = dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
-            .Include(c => c.Organization)
-            .Where(c => c.Role == EmployeeRole.Leader);
+            .Include(m => m.Employee)
+            .Include(m => m.Team)
+            .Include(m => m.Organization)
+            .Where(m => m.Role == EmployeeRole.Leader);
 
         if (organizationId.HasValue)
         {
-            query = query.Where(c => c.OrganizationId == organizationId.Value);
+            query = query.Where(m => m.OrganizationId == organizationId.Value);
         }
 
         return await query
-            .OrderBy(c => c.FullName)
+            .OrderBy(m => m.Employee.FullName)
             .ToListAsync(ct);
     }
 
-    public async Task<List<Employee>> GetSubordinatesAsync(
+    public async Task<List<OrganizationEmployeeMember>> GetSubordinatesAsync(
         Guid employeeId, int maxDepth, CancellationToken ct = default)
     {
-        var allSubordinates = await dbContext.Employees
+        var allMembers = await dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
-            .Where(c => c.LeaderId != null)
-            .Include(c => c.Leader)
+            .Include(m => m.Employee)
+            .Where(m => m.LeaderId != null)
             .ToListAsync(ct);
 
-        var childrenByLeader = allSubordinates
-            .GroupBy(c => c.LeaderId!.Value)
-            .ToDictionary(group => group.Key, group => group.OrderBy(c => c.FullName).ToList());
+        var childrenByLeader = allMembers
+            .GroupBy(m => m.LeaderId!.Value)
+            .ToDictionary(group => group.Key, group => group.OrderBy(m => m.Employee.FullName).ToList());
 
-        var result = new List<Employee>();
+        var result = new List<OrganizationEmployeeMember>();
         CollectSubordinates(employeeId, 0, maxDepth, childrenByLeader, result);
         return result;
     }
@@ -77,9 +88,9 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
     {
         return await dbContext.EmployeeTeams
             .AsNoTracking()
-            .Where(ct2 => ct2.EmployeeId == employeeId)
-            .Include(ct2 => ct2.Team)
-            .Select(ct2 => ct2.Team)
+            .Where(et => et.EmployeeId == employeeId)
+            .Include(et => et.Team)
+            .Select(et => et.Team)
             .OrderBy(t => t.Name)
             .ToListAsync(ct);
     }
@@ -88,8 +99,8 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         Guid employeeId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
     {
         var currentTeamIds = await dbContext.EmployeeTeams
-            .Where(ct2 => ct2.EmployeeId == employeeId)
-            .Select(ct2 => ct2.TeamId)
+            .Where(et => et.EmployeeId == employeeId)
+            .Select(et => et.TeamId)
             .ToListAsync(ct);
 
         var query = dbContext.Teams
@@ -108,37 +119,43 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
             .ToListAsync(ct);
     }
 
-    public async Task<List<Employee>> GetLookupAsync(string? search, int limit, CancellationToken ct = default)
+    public async Task<List<OrganizationEmployeeMember>> GetLookupAsync(string? search, int limit, CancellationToken ct = default)
     {
-        var query = dbContext.Employees.AsNoTracking();
+        var query = dbContext.OrganizationEmployeeMembers
+            .AsNoTracking()
+            .Include(m => m.Employee);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = new EmployeeSearchSpecification(search, dbContext.Database.IsNpgsql()).Apply(query);
+            return await new EmployeeSearchSpecification(search, dbContext.Database.IsNpgsql())
+                .Apply(query)
+                .OrderBy(m => m.Employee.FullName)
+                .Take(limit)
+                .ToListAsync(ct);
         }
 
         return await query
-            .OrderBy(c => c.FullName)
+            .OrderBy(m => m.Employee.FullName)
             .Take(limit)
             .ToListAsync(ct);
     }
 
-    public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Employees.AnyAsync(c => c.Id == id, ct);
+    public async Task<bool> ExistsAsync(Guid employeeId, CancellationToken ct = default)
+        => await dbContext.OrganizationEmployeeMembers.AnyAsync(m => m.EmployeeId == employeeId, ct);
 
     public async Task<bool> IsEmailUniqueAsync(string email, Guid? excludeId, CancellationToken ct = default)
     {
         var query = dbContext.Employees.AsQueryable();
         if (excludeId.HasValue)
         {
-            query = query.Where(c => c.Id != excludeId.Value);
+            query = query.Where(e => e.Id != excludeId.Value);
         }
 
-        return !await query.AnyAsync(c => c.Email == email, ct);
+        return !await query.AnyAsync(e => e.Email == email, ct);
     }
 
     public async Task<bool> HasSubordinatesAsync(Guid employeeId, CancellationToken ct = default)
-        => await dbContext.Employees.AnyAsync(c => c.LeaderId == employeeId, ct);
+        => await dbContext.OrganizationEmployeeMembers.AnyAsync(m => m.LeaderId == employeeId, ct);
 
     public async Task<bool> HasMissionsAsync(Guid employeeId, CancellationToken ct = default)
         => await dbContext.Missions.AnyAsync(m => m.EmployeeId == employeeId, ct);
@@ -147,28 +164,31 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         => await dbContext.Teams.CountAsync(t => teamIds.Contains(t.Id) && t.OrganizationId == organizationId, ct);
 
     public async Task<int> CountByIdsAndOrganizationAsync(List<Guid> ids, Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Employees.CountAsync(c => ids.Contains(c.Id) && c.OrganizationId == organizationId, ct);
+        => await dbContext.OrganizationEmployeeMembers.CountAsync(m => ids.Contains(m.EmployeeId) && m.OrganizationId == organizationId, ct);
 
     public async Task<bool> IsValidLeaderAsync(Guid leaderId, Guid? requiredOrganizationId, CancellationToken ct = default)
     {
-        var leader = await dbContext.Employees
+        var member = await dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == leaderId, ct);
+            .FirstOrDefaultAsync(m => m.EmployeeId == leaderId, ct);
 
-        if (leader is null || leader.Role != EmployeeRole.Leader)
+        if (member is null || member.Role != EmployeeRole.Leader)
         {
             return false;
         }
 
-        return !requiredOrganizationId.HasValue || leader.OrganizationId == requiredOrganizationId.Value;
+        return !requiredOrganizationId.HasValue || member.OrganizationId == requiredOrganizationId.Value;
     }
 
-    public async Task AddAsync(Employee entity, CancellationToken ct = default)
-        => await dbContext.Employees.AddAsync(entity, ct);
+    public async Task AddAsync(Employee employee, OrganizationEmployeeMember member, CancellationToken ct = default)
+    {
+        await dbContext.Employees.AddAsync(employee, ct);
+        await dbContext.OrganizationEmployeeMembers.AddAsync(member, ct);
+    }
 
-    public async Task RemoveAsync(Employee entity, CancellationToken ct = default)
-        => await Task.FromResult(dbContext.Employees.Remove(entity));
+    public async Task RemoveAsync(OrganizationEmployeeMember member, CancellationToken ct = default)
+        => await Task.FromResult(dbContext.OrganizationEmployeeMembers.Remove(member));
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
         => await dbContext.SaveChangesAsync(ct);
@@ -177,8 +197,8 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         Guid leaderId,
         int depth,
         int maxDepth,
-        IReadOnlyDictionary<Guid, List<Employee>> childrenByLeader,
-        List<Employee> acc)
+        IReadOnlyDictionary<Guid, List<OrganizationEmployeeMember>> childrenByLeader,
+        List<OrganizationEmployeeMember> acc)
     {
         if (depth >= maxDepth || !childrenByLeader.TryGetValue(leaderId, out var children))
         {
@@ -188,7 +208,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         foreach (var child in children)
         {
             acc.Add(child);
-            CollectSubordinates(child.Id, depth + 1, maxDepth, childrenByLeader, acc);
+            CollectSubordinates(child.EmployeeId, depth + 1, maxDepth, childrenByLeader, acc);
         }
     }
 }

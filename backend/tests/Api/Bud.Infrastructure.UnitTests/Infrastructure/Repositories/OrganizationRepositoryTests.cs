@@ -145,9 +145,12 @@ public sealed class OrganizationRepositoryTests
         context.Organizations.Add(org);
         await context.SaveChangesAsync();
 
-        context.Employees.AddRange(
-            new Employee { Id = Guid.NewGuid(), FullName = "Alice", Email = "alice@test.com", OrganizationId = org.Id },
-            new Employee { Id = Guid.NewGuid(), FullName = "Bob", Email = "bob@test.com", OrganizationId = org.Id });
+        var alice = new Employee { Id = Guid.NewGuid(), FullName = "Alice", Email = "alice@test.com" };
+        var bob = new Employee { Id = Guid.NewGuid(), FullName = "Bob", Email = "bob@test.com" };
+        context.Employees.AddRange(alice, bob);
+        context.OrganizationEmployeeMembers.AddRange(
+            new OrganizationEmployeeMember { EmployeeId = alice.Id, OrganizationId = org.Id },
+            new OrganizationEmployeeMember { EmployeeId = bob.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         // Act
@@ -171,13 +174,9 @@ public sealed class OrganizationRepositoryTests
 
         for (int i = 0; i < 5; i++)
         {
-            context.Employees.Add(new Employee
-            {
-                Id = Guid.NewGuid(),
-                FullName = $"Employee {i:D2}",
-                Email = $"collab{i}@test.com",
-                OrganizationId = org.Id
-            });
+            var emp = new Employee { Id = Guid.NewGuid(), FullName = $"Employee {i:D2}", Email = $"collab{i}@test.com" };
+            context.Employees.Add(emp);
+            context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = emp.Id, OrganizationId = org.Id });
         }
         await context.SaveChangesAsync();
 
@@ -242,13 +241,9 @@ public sealed class OrganizationRepositoryTests
         context.Organizations.Add(org);
         await context.SaveChangesAsync();
 
-        context.Employees.Add(new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Test",
-            Email = "test@test.com",
-            OrganizationId = org.Id
-        });
+        var emp = new Employee { Id = Guid.NewGuid(), FullName = "Test", Email = "test@test.com" };
+        context.Employees.Add(emp);
+        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = emp.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         // Act

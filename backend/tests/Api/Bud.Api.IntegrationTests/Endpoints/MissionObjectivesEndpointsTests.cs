@@ -37,7 +37,10 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
 
         if (existingLeader != null)
         {
-            SetTenantHeader(existingLeader.OrganizationId);
+            var existingMember = await dbContext.OrganizationEmployeeMembers
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
+            SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
         }
 
@@ -49,17 +52,21 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(adminLeader);
 
         var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Leader,
+            TeamId = team.Id,
+            IsGlobalAdmin = true
+        });
 
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);
@@ -462,11 +469,17 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
         };
 
         dbContext.Employees.Add(employee);
+
+        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.IndividualContributor,
+        });
+
         await dbContext.SaveChangesAsync();
 
         return employee;

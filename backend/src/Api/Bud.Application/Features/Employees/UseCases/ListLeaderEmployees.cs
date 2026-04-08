@@ -10,6 +10,6 @@ public sealed class ListLeaderEmployees(IEmployeeRepository employeeRepository)
         CancellationToken cancellationToken = default)
     {
         var leaders = await employeeRepository.GetLeadersAsync(organizationId, cancellationToken);
-        return Result<List<EmployeeLeaderResponse>>.Success(leaders.Select(c => c.ToLeaderResponse()).ToList());
+        return Result<List<EmployeeLeaderResponse>>.Success(leaders.Select(m => m.ToLeaderResponse()).ToList());
     }
 }

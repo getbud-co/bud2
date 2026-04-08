@@ -6,11 +6,16 @@ public sealed class TeamResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public TeamColor Color { get; set; }
+    public TeamStatus Status { get; set; }
     public Guid OrganizationId { get; set; }
     public Guid? ParentTeamId { get; set; }
-    public Guid LeaderId { get; set; }
+    public Guid? LeaderId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
     public TeamResponse? ParentTeam { get; set; }
-    public List<TeamResponse> SubTeams { get; set; } = [];
     public List<EmployeeResponse> Employees { get; set; } = [];
     public EmployeeResponse? Leader { get; set; }
 }
