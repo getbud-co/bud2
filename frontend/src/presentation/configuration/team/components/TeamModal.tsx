@@ -24,14 +24,23 @@ import {
   CaretDown,
 } from "@phosphor-icons/react";
 import type { Team, TeamMember, TeamColor } from "@/types";
-import styles from "./TeamModal.module.css";
+import {
+  COLOR_OPTIONS,
+  ROLE_OPTIONS,
+  ROLE_BADGE_COLOR,
+  ROLE_LABEL,
+  SEARCH_FILTERS,
+  MEMBERS_FILTERS,
+  MEMBERSHIP_OPTIONS,
+  filterDropdownBodyCls,
+  filterActionItemCls,
+} from "../consts";
 
 /* ——— Types ——— */
 
 export interface PersonView {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   jobTitle: string;
   initials: string;
   teamIds: string[];
@@ -54,54 +63,6 @@ export interface TeamModalProps {
   }) => void;
 }
 
-/* ——— Constants ——— */
-
-const COLOR_OPTIONS: { value: TeamColor; label: string }[] = [
-  { value: "neutral", label: "Cinza" },
-  { value: "orange", label: "Laranja" },
-  { value: "wine", label: "Vinho" },
-  { value: "caramel", label: "Caramelo" },
-  { value: "success", label: "Verde" },
-  { value: "warning", label: "Amarelo" },
-  { value: "error", label: "Vermelho" },
-];
-
-const ROLE_OPTIONS: { id: TeamMember["roleInTeam"]; label: string }[] = [
-  { id: "leader", label: "Líder" },
-  { id: "member", label: "Membro" },
-  { id: "observer", label: "Observador" },
-];
-
-const ROLE_BADGE_COLOR: Record<
-  TeamMember["roleInTeam"],
-  "wine" | "caramel" | "neutral"
-> = {
-  leader: "wine",
-  member: "caramel",
-  observer: "neutral",
-};
-
-const ROLE_LABEL: Record<TeamMember["roleInTeam"], string> = {
-  leader: "Líder",
-  member: "Membro",
-  observer: "Observador",
-};
-
-const SEARCH_FILTERS = [
-  { id: "membership", label: "Situação" },
-  { id: "role", label: "Papel" },
-  { id: "cargo", label: "Cargo" },
-  { id: "time", label: "Time" },
-];
-
-const MEMBERS_FILTERS = [{ id: "role", label: "Papel" }];
-
-const MEMBERSHIP_OPTIONS = [
-  { id: "all", label: "Todos" },
-  { id: "out", label: "Fora deste time" },
-  { id: "in", label: "Neste time" },
-] as const;
-
 /* ——— Helper ——— */
 
 function memberFromPerson(
@@ -116,8 +77,7 @@ function memberFromPerson(
     joinedAt: new Date().toISOString(),
     user: {
       id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
+      fullName: person.fullName,
       initials: person.initials,
       jobTitle: person.jobTitle,
       avatarUrl: null,
@@ -288,20 +248,17 @@ export function TeamModal({
     [allTeams, team],
   );
 
-  // Lista de busca: ordem alfabética FIXA
   const searchResults = useMemo(() => {
     const q = search.toLowerCase().trim();
 
     let list = [...peoplePool].sort((a, b) =>
-      `${a.firstName} ${a.lastName}`.localeCompare(
-        `${b.firstName} ${b.lastName}`,
-      ),
+      a.fullName.localeCompare(b.fullName),
     );
 
     if (q) {
       list = list.filter(
         (p) =>
-          `${p.firstName} ${p.lastName}`.toLowerCase().includes(q) ||
+          p.fullName.toLowerCase().includes(q) ||
           p.jobTitle.toLowerCase().includes(q),
       );
     }
@@ -543,7 +500,7 @@ export function TeamModal({
   /* ——— Details panel ——— */
 
   const detailsPanel = (
-    <div className={styles.formStack}>
+    <div className="flex flex-col gap-[var(--sp-md)]">
       <Input
         label="Nome do time"
         placeholder="Ex: Engenharia, Produto..."
@@ -561,14 +518,16 @@ export function TeamModal({
         }
         rows={3}
       />
-      <div className={styles.formField}>
-        <span className={styles.formLabel}>Cor do badge</span>
-        <div className={styles.colorGrid}>
+      <div className="flex flex-col gap-[var(--sp-2xs)]">
+        <span className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-700)]">
+          Cor do badge
+        </span>
+        <div className="flex flex-wrap gap-[var(--sp-2xs)]">
           {COLOR_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
-              className={`${styles.colorOption} ${formColor === opt.value ? styles.colorOptionActive : ""}`}
+              className={`flex p-[var(--sp-3xs)] border-2 rounded-[var(--radius-sm)] bg-transparent cursor-pointer transition-[border-color,background-color] duration-[120ms] ease hover:bg-[var(--color-caramel-50)] hover:border-[var(--color-caramel-200)] ${formColor === opt.value ? "border-[var(--color-orange-400)] bg-[var(--color-orange-50)]" : "border-transparent"}`}
               onClick={() => setFormColor(opt.value)}
             >
               <Badge color={opt.value} size="sm">
@@ -581,10 +540,10 @@ export function TeamModal({
     </div>
   );
 
-  /* ——— Search panel (main body in members tab) ——— */
+  /* ——— Search panel ——— */
 
   const searchPanel = (
-    <div className={styles.searchPanel}>
+    <div className="flex flex-col h-full gap-[var(--sp-xs)]">
       <Input
         ref={searchInputRef}
         placeholder="Buscar por nome ou cargo..."
@@ -595,7 +554,7 @@ export function TeamModal({
         leftIcon={MagnifyingGlass}
       />
 
-      <div className={styles.filterBarWrapper}>
+      <div className="shrink-0">
         <FilterBar
           filters={SEARCH_FILTERS.filter(
             (f) => !searchActiveFilters.includes(f.id),
@@ -639,20 +598,18 @@ export function TeamModal({
         </FilterBar>
       </div>
 
-      {/* FilterDropdowns */}
-
       {/* Situação */}
       <FilterDropdown
         open={searchOpenFilter === "membership"}
         onClose={() => setSearchOpenFilter(null)}
         anchorRef={membershipChipRef}
       >
-        <div className={styles.filterDropdownBody}>
+        <div className={filterDropdownBodyCls}>
           {MEMBERSHIP_OPTIONS.map((opt) => (
             <button
               key={opt.id}
               type="button"
-              className={`${styles.filterActionItem} ${filterMembership === opt.id ? styles.filterActionItemActive : ""}`}
+              className={filterActionItemCls(filterMembership === opt.id)}
               onClick={() => {
                 setFilterMembership(opt.id);
                 setSearchOpenFilter(null);
@@ -671,10 +628,10 @@ export function TeamModal({
         onClose={() => setSearchOpenFilter(null)}
         anchorRef={roleChipRef}
       >
-        <div className={styles.filterDropdownBody}>
+        <div className={filterDropdownBodyCls}>
           <button
             type="button"
-            className={`${styles.filterActionItem} ${filterRole === "all" ? styles.filterActionItemActive : ""}`}
+            className={filterActionItemCls(filterRole === "all")}
             onClick={() => {
               setFilterRole("all");
               setSearchOpenFilter(null);
@@ -687,7 +644,7 @@ export function TeamModal({
             <button
               key={opt.id}
               type="button"
-              className={`${styles.filterActionItem} ${filterRole === opt.id ? styles.filterActionItemActive : ""}`}
+              className={filterActionItemCls(filterRole === opt.id)}
               onClick={() => {
                 setFilterRole(opt.id);
                 setSearchOpenFilter(null);
@@ -700,18 +657,18 @@ export function TeamModal({
         </div>
       </FilterDropdown>
 
-      {/* Cargo (multi-select com Checkbox) */}
+      {/* Cargo */}
       <FilterDropdown
         open={searchOpenFilter === "cargo"}
         onClose={() => setSearchOpenFilter(null)}
         anchorRef={cargoChipRef}
       >
-        <div className={styles.filterDropdownBody}>
+        <div className={filterDropdownBodyCls}>
           {cargoOptions.map((cargo) => (
             <button
               key={cargo}
               type="button"
-              className={`${styles.filterActionItem} ${filterCargos.includes(cargo) ? styles.filterActionItemActive : ""}`}
+              className={filterActionItemCls(filterCargos.includes(cargo))}
               onClick={() => handleToggleCargoFilter(cargo)}
             >
               <Checkbox
@@ -727,15 +684,15 @@ export function TeamModal({
         </div>
       </FilterDropdown>
 
-      {/* Time (multi-select com Checkbox) */}
+      {/* Time */}
       <FilterDropdown
         open={searchOpenFilter === "time"}
         onClose={() => setSearchOpenFilter(null)}
         anchorRef={timeChipRef}
       >
-        <div className={styles.filterDropdownBody}>
+        <div className={filterDropdownBodyCls}>
           {teamOptions.length === 0 ? (
-            <div className={styles.filterDropdownEmpty}>
+            <div className="px-[var(--sp-sm)] py-[var(--sp-2xs)] font-[var(--font-body)] text-[var(--text-sm)] text-[var(--color-neutral-400)]">
               Nenhum outro time disponível
             </div>
           ) : (
@@ -743,7 +700,7 @@ export function TeamModal({
               <button
                 key={t.id}
                 type="button"
-                className={`${styles.filterActionItem} ${filterTeamIds.includes(t.id) ? styles.filterActionItemActive : ""}`}
+                className={filterActionItemCls(filterTeamIds.includes(t.id))}
                 onClick={() => handleToggleTeamFilter(t.id)}
               >
                 <Checkbox
@@ -762,14 +719,14 @@ export function TeamModal({
 
       {/* Lista de pessoas */}
       <div
-        className={styles.personList}
+        className="flex-1 overflow-y-auto border border-[var(--color-caramel-200)] rounded-[var(--radius-sm)] min-h-0"
         role="listbox"
         aria-label="Pessoas disponíveis"
       >
         {searchResults.length === 0 ? (
-          <div className={styles.emptySearch}>
+          <div className="flex flex-col items-center gap-[var(--sp-2xs)] py-[var(--sp-2xl)] px-[var(--sp-lg)] text-[var(--color-neutral-400)] text-center">
             <MagnifyingGlass size={20} />
-            <span>
+            <span className="font-[var(--font-body)] text-[var(--text-sm)]">
               {search
                 ? `Nenhuma pessoa encontrada para "${search}"`
                 : "Nenhuma pessoa corresponde aos filtros"}
@@ -784,7 +741,7 @@ export function TeamModal({
                 type="button"
                 role="option"
                 aria-selected={isSelected}
-                className={`${styles.personRow} ${isSelected ? styles.personRowSelected : ""}`}
+                className={`flex items-center gap-[var(--sp-xs)] border-b border-[var(--color-caramel-100)] border-l-0 border-r-0 border-t-0 bg-transparent cursor-pointer text-left w-full transition-[background-color] duration-100 outline-none last:border-b-0 focus-visible:shadow-[inset_0_0_0_2px_var(--color-orange-300)] ${isSelected ? "bg-[var(--color-orange-50)] border-l-2 border-l-[var(--color-orange-400)] pl-[calc(var(--sp-sm)-2px)] pr-[var(--sp-sm)] py-[var(--sp-2xs)] hover:bg-[var(--color-orange-100)]" : "px-[var(--sp-sm)] py-[var(--sp-2xs)] hover:bg-[var(--color-caramel-50)]"}`}
                 onClick={() => handleTogglePerson(person)}
               >
                 <Checkbox
@@ -797,7 +754,7 @@ export function TeamModal({
                 <AvatarLabelGroup
                   size="sm"
                   initials={person.initials}
-                  name={`${person.firstName} ${person.lastName}`}
+                  name={person.fullName}
                   supportingText={person.jobTitle}
                 />
               </button>
@@ -806,25 +763,27 @@ export function TeamModal({
         )}
       </div>
 
-      <div className={styles.listCount}>
+      <div className="font-[var(--font-body)] text-[var(--text-xs)] text-[var(--color-neutral-400)] shrink-0">
         {searchResults.length} de {peoplePool.length} pessoas
         {pendingMembers.length > 0 && ` · ${pendingMembers.length} no time`}
       </div>
     </div>
   );
 
-  /* ——— Members panel (sidePanel do Modal) ——— */
+  /* ——— Members panel (sidePanel) ——— */
 
   const membersPanel = (
-    <div className={styles.membersPanel}>
-      <div className={styles.membersPanelHeader}>
-        <span className={styles.membersPanelTitle}>Membros atuais</span>
+    <div className="flex flex-col h-full bg-[var(--color-neutral-0)] border border-[var(--color-caramel-200)] rounded-[var(--radius-sm)] overflow-hidden max-md:border-0 max-md:rounded-none">
+      <div className="flex items-center justify-between px-[var(--sp-md)] py-[var(--sp-sm)] border-b border-[var(--color-caramel-200)] bg-[var(--color-neutral-50)] shrink-0">
+        <span className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-700)]">
+          Membros atuais
+        </span>
         <Badge color="neutral" size="sm">
           {pendingMembers.length}
         </Badge>
       </div>
 
-      <div className={styles.membersPanelFilter}>
+      <div className="px-[var(--sp-sm)] py-[var(--sp-2xs)] border-b border-[var(--color-caramel-100)] shrink-0">
         <FilterBar
           filters={MEMBERS_FILTERS.filter(
             (f) => !membersActiveFilters.includes(f.id),
@@ -873,10 +832,10 @@ export function TeamModal({
         onClose={() => setMembersOpenFilter(null)}
         anchorRef={membersRoleChipRef}
       >
-        <div className={styles.filterDropdownBody}>
+        <div className={filterDropdownBodyCls}>
           <button
             type="button"
-            className={`${styles.filterActionItem} ${filterMembersRole === "all" ? styles.filterActionItemActive : ""}`}
+            className={filterActionItemCls(filterMembersRole === "all")}
             onClick={() => {
               setFilterMembersRole("all");
               setMembersOpenFilter(null);
@@ -889,7 +848,7 @@ export function TeamModal({
             <button
               key={opt.id}
               type="button"
-              className={`${styles.filterActionItem} ${filterMembersRole === opt.id ? styles.filterActionItemActive : ""}`}
+              className={filterActionItemCls(filterMembersRole === opt.id)}
               onClick={() => {
                 setFilterMembersRole(opt.id);
                 setMembersOpenFilter(null);
@@ -902,32 +861,39 @@ export function TeamModal({
         </div>
       </FilterDropdown>
 
-      <div className={styles.membersList}>
+      <div className="flex-1 overflow-y-auto min-h-0">
         {pendingMembers.length === 0 ? (
-          <div className={styles.emptyMembers}>
+          <div className="flex flex-col items-center gap-[var(--sp-2xs)] py-[var(--sp-2xl)] px-[var(--sp-lg)] text-center text-[var(--color-neutral-400)]">
             <UsersThree size={28} />
-            <span>Nenhum membro ainda</span>
-            <span className={styles.emptyHint}>
+            <span className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-600)]">
+              Nenhum membro ainda
+            </span>
+            <span className="font-[var(--font-body)] text-[var(--text-xs)] text-[var(--color-neutral-400)]">
               Selecione pessoas na busca ao lado
             </span>
           </div>
         ) : filteredMembers.length === 0 ? (
-          <div className={styles.emptyMembers}>
+          <div className="flex flex-col items-center gap-[var(--sp-2xs)] py-[var(--sp-2xl)] px-[var(--sp-lg)] text-center text-[var(--color-neutral-400)]">
             <UsersThree size={28} />
-            <span>Nenhum membro com esse papel</span>
+            <span className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-600)]">
+              Nenhum membro com esse papel
+            </span>
           </div>
         ) : (
           filteredMembers.map((member) => {
             const isNew = addedIds.has(member.userId);
             return (
-              <div key={member.userId} className={styles.memberRow}>
+              <div
+                key={member.userId}
+                className="flex items-center justify-between px-[var(--sp-sm)] py-[var(--sp-2xs)] border-b border-[var(--color-caramel-100)] gap-[var(--sp-2xs)] transition-[background-color] duration-100 last:border-b-0 hover:bg-[var(--color-caramel-50)]"
+              >
                 <AvatarLabelGroup
                   size="sm"
                   initials={member.user?.initials ?? ""}
-                  name={`${member.user?.firstName ?? ""} ${member.user?.lastName ?? ""}`}
+                  name={member.user?.fullName ?? ""}
                   supportingText={member.user?.jobTitle ?? ""}
                 />
-                <div className={styles.memberRowRight}>
+                <div className="flex items-center gap-[var(--sp-2xs)] shrink-0">
                   {isNew && (
                     <Badge color="success" size="sm">
                       Novo
@@ -939,7 +905,7 @@ export function TeamModal({
                       roleButtonRefs.current[member.userId] = el;
                     }}
                     type="button"
-                    className={`${styles.roleBadgeBtn} ${openRoleFor === member.userId ? styles.roleBadgeBtnOpen : ""}`}
+                    className={`inline-flex items-center border-0 bg-transparent cursor-pointer p-0 rounded-[var(--radius-xs)] outline-none transition-opacity duration-100 hover:opacity-80 focus-visible:shadow-[0_0_0_2px_var(--color-orange-400)] ${openRoleFor === member.userId ? "opacity-70" : ""}`}
                     onClick={() =>
                       setOpenRoleFor(
                         openRoleFor === member.userId ? null : member.userId,
@@ -966,12 +932,14 @@ export function TeamModal({
                     }}
                     noOverlay
                   >
-                    <div className={styles.filterDropdownBody}>
+                    <div className={filterDropdownBodyCls}>
                       {ROLE_OPTIONS.map((opt) => (
                         <button
                           key={opt.id}
                           type="button"
-                          className={`${styles.filterActionItem} ${member.roleInTeam === opt.id ? styles.filterActionItemActive : ""}`}
+                          className={filterActionItemCls(
+                            member.roleInTeam === opt.id,
+                          )}
                           onClick={() =>
                             handleChangeRole(member.userId, opt.id)
                           }
@@ -988,9 +956,9 @@ export function TeamModal({
 
                   <button
                     type="button"
-                    className={styles.removeBtn}
+                    className="flex items-center justify-center w-6 h-6 border-0 bg-transparent text-[var(--color-neutral-400)] cursor-pointer rounded-[var(--radius-xs)] shrink-0 transition-[background-color,color] duration-100 outline-none hover:bg-[var(--color-red-50)] hover:text-[var(--color-red-600)] focus-visible:shadow-[0_0_0_2px_var(--color-red-400)]"
                     onClick={() => handleRemoveMember(member.userId)}
-                    aria-label={`Remover ${member.user?.firstName ?? "membro"} do time`}
+                    aria-label={`Remover ${member.user?.fullName ?? "membro"} do time`}
                   >
                     <X size={14} />
                   </button>
@@ -1003,7 +971,7 @@ export function TeamModal({
     </div>
   );
 
-  /* ——— Mobile sub-tabs for members ——— */
+  /* ——— Mobile sub-tabs ——— */
 
   const mobileMembersTabs = [
     { value: "add", label: "Adicionar" },
@@ -1019,12 +987,7 @@ export function TeamModal({
     },
   ];
 
-  /* ——— Title ——— */
-
   const title = isCreating ? "Novo time" : team.name;
-
-  /* ——— sidePanel only visible on members tab ——— */
-
   const showSidePanel = activeTab === "members";
 
   return (
@@ -1042,8 +1005,7 @@ export function TeamModal({
         )}
       </ModalHeader>
 
-      {/* Main tabs */}
-      <div className={styles.tabBarWrapper}>
+      <div className="px-[var(--sp-lg)] border-b border-[var(--color-caramel-200)] shrink-0 max-md:px-[var(--sp-sm)]">
         <TabBar
           tabs={mainTabs}
           activeTab={activeTab}
@@ -1052,9 +1014,8 @@ export function TeamModal({
         />
       </div>
 
-      {/* Mobile sub-tabs (only within members tab, only on mobile) */}
       {activeTab === "members" && (
-        <div className={styles.mobileMembersTabs}>
+        <div className="hidden px-[var(--sp-lg)] border-b border-[var(--color-caramel-200)] shrink-0 max-md:block max-md:px-[var(--sp-sm)]">
           <TabBar
             tabs={mobileMembersTabs}
             activeTab={mobileMembersTab}
@@ -1070,10 +1031,10 @@ export function TeamModal({
         {activeTab === "details" && detailsPanel}
         {activeTab === "members" && (
           <>
-            {/* Desktop: search panel (sidePanel handles members) */}
-            <div className={styles.desktopPanel}>{searchPanel}</div>
-            {/* Mobile: toggle between search and members */}
-            <div className={styles.mobilePanel}>
+            <div className="flex flex-col h-full max-md:hidden">
+              {searchPanel}
+            </div>
+            <div className="hidden flex-col h-full max-md:flex">
               {mobileMembersTab === "add" ? searchPanel : membersPanel}
             </div>
           </>
@@ -1081,11 +1042,11 @@ export function TeamModal({
       </ModalBody>
 
       <ModalFooter align="between">
-        <span className={styles.footerInfo}>
+        <span className="font-[var(--font-body)] text-[var(--text-sm)] text-[var(--color-neutral-500)]">
           {pendingMembers.length} membro{pendingMembers.length !== 1 ? "s" : ""}
           {hasChanges ? " · alterações pendentes" : ""}
         </span>
-        <div className={styles.footerActions}>
+        <div className="flex items-center gap-[var(--sp-2xs)]">
           <Button variant="secondary" size="md" onClick={handleClose}>
             Cancelar
           </Button>
