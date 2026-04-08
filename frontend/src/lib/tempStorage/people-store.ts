@@ -123,8 +123,7 @@ function teamColorByName(name: string): TeamColor {
 
 function createUser(input: {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   jobTitle: string;
   managerId: string | null;
   roleType: string;
@@ -136,21 +135,26 @@ function createUser(input: {
   orgId?: string;
 }): PeopleUserRecord {
   const now = new Date().toISOString();
-  const emailPrefix = `${slugify(input.firstName)}.${slugify(input.lastName)}`;
+  const parts = input.fullName.trim().split(" ");
+  const emailPrefix = parts.map(slugify).join(".");
   const orgId = input.orgId ?? DEFAULT_ORG_ID;
+  const initials = parts
+    .filter(Boolean)
+    .map((p) => p[0] ?? "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return {
     id: input.id,
     orgId,
     email: `${emailPrefix}@acme.com`,
-    firstName: input.firstName,
-    lastName: input.lastName,
+    fullName: input.fullName,
     nickname: input.nickname ?? null,
     jobTitle: input.jobTitle,
     managerId: input.managerId,
     avatarUrl: null,
-    initials:
-      `${input.firstName[0] ?? ""}${input.lastName[0] ?? ""}`.toUpperCase(),
+    initials,
     birthDate: input.birthDate ?? null,
     gender: input.gender ?? null,
     language: input.language ?? "pt-br",
@@ -209,16 +213,14 @@ function getSeedSnapshot(orgId = DEFAULT_ORG_ID): PeopleStoreSnapshot {
   const users: PeopleUserRecord[] = [
     createUser({
       id: "ceo",
-      firstName: "Roberto",
-      lastName: "Nascimento",
+      fullName: "Roberto Nascimento",
       jobTitle: "CEO",
       managerId: null,
       roleType: "super-admin",
     }),
     createUser({
       id: "pa",
-      firstName: "Pedro",
-      lastName: "Almeida",
+      fullName: "Pedro Almeida",
       jobTitle: "CTO",
       managerId: "ceo",
       roleType: "super-admin",
@@ -226,144 +228,126 @@ function getSeedSnapshot(orgId = DEFAULT_ORG_ID): PeopleStoreSnapshot {
     }),
     createUser({
       id: "bs",
-      firstName: "Beatriz",
-      lastName: "Santos",
+      fullName: "Beatriz Santos",
       jobTitle: "CPO",
       managerId: "ceo",
       roleType: "super-admin",
     }),
     createUser({
       id: "ms",
-      firstName: "Maria",
-      lastName: "Soares",
+      fullName: "Maria Soares",
       jobTitle: "CHRO",
       managerId: "ceo",
       roleType: "admin-rh",
     }),
     createUser({
       id: "fr",
-      firstName: "Fernando",
-      lastName: "Rodrigues",
+      fullName: "Fernando Rodrigues",
       jobTitle: "CMO",
       managerId: "ceo",
       roleType: "gestor",
     }),
     createUser({
       id: "cm",
-      firstName: "Carlos",
-      lastName: "Mendes",
+      fullName: "Carlos Mendes",
       jobTitle: "Tech Lead",
       managerId: "pa",
       roleType: "gestor",
     }),
     createUser({
       id: "lo",
-      firstName: "Lucas",
-      lastName: "Oliveira",
+      fullName: "Lucas Oliveira",
       jobTitle: "Eng. Software Sr",
       managerId: "cm",
       roleType: "colaborador",
     }),
     createUser({
       id: "md",
-      firstName: "Mariana",
-      lastName: "Duarte",
+      fullName: "Mariana Duarte",
       jobTitle: "Eng. Software",
       managerId: "cm",
       roleType: "colaborador",
     }),
     createUser({
       id: "tb",
-      firstName: "Thiago",
-      lastName: "Barbosa",
+      fullName: "Thiago Barbosa",
       jobTitle: "Eng. Software Jr",
       managerId: "cm",
       roleType: "colaborador",
     }),
     createUser({
       id: "im",
-      firstName: "Isabela",
-      lastName: "Moreira",
+      fullName: "Isabela Moreira",
       jobTitle: "QA Engineer",
       managerId: "cm",
       roleType: "colaborador",
     }),
     createUser({
       id: "dm",
-      firstName: "Diego",
-      lastName: "Martins",
+      fullName: "Diego Martins",
       jobTitle: "Infra Lead",
       managerId: "pa",
       roleType: "gestor",
     }),
     createUser({
       id: "rv",
-      firstName: "Renata",
-      lastName: "Vieira",
+      fullName: "Renata Vieira",
       jobTitle: "DevOps",
       managerId: "dm",
       roleType: "colaborador",
     }),
     createUser({
       id: "cr",
-      firstName: "Camila",
-      lastName: "Rocha",
+      fullName: "Camila Rocha",
       jobTitle: "Product Manager",
       managerId: "bs",
       roleType: "gestor",
     }),
     createUser({
       id: "gf",
-      firstName: "Gustavo",
-      lastName: "Fonseca",
+      fullName: "Gustavo Fonseca",
       jobTitle: "Product Designer",
       managerId: "bs",
       roleType: "colaborador",
     }),
     createUser({
       id: "af",
-      firstName: "Ana",
-      lastName: "Ferreira",
+      fullName: "Ana Ferreira",
       jobTitle: "Design Lead",
       managerId: "bs",
       roleType: "gestor",
     }),
     createUser({
       id: "pr",
-      firstName: "Paula",
-      lastName: "Ribeiro",
+      fullName: "Paula Ribeiro",
       jobTitle: "UI Designer",
       managerId: "af",
       roleType: "colaborador",
     }),
     createUser({
       id: "vt",
-      firstName: "Vinicius",
-      lastName: "Teixeira",
+      fullName: "Vinicius Teixeira",
       jobTitle: "UX Researcher",
       managerId: "af",
       roleType: "colaborador",
     }),
     createUser({
       id: "rl",
-      firstName: "Rafael",
-      lastName: "Lima",
+      fullName: "Rafael Lima",
       jobTitle: "Analista RH Sr",
       managerId: "ms",
       roleType: "admin-rh",
     }),
     createUser({
       id: "ln",
-      firstName: "Larissa",
-      lastName: "Nunes",
+      fullName: "Larissa Nunes",
       jobTitle: "Analista RH",
       managerId: "ms",
       roleType: "colaborador",
     }),
     createUser({
       id: "bc",
-      firstName: "Bruno",
-      lastName: "Cardoso",
+      fullName: "Bruno Cardoso",
       jobTitle: "Recrutador",
       managerId: "ms",
       roleType: "colaborador",
@@ -371,72 +355,63 @@ function getSeedSnapshot(orgId = DEFAULT_ORG_ID): PeopleStoreSnapshot {
     }),
     createUser({
       id: "jc",
-      firstName: "Juliana",
-      lastName: "Costa",
+      fullName: "Juliana Costa",
       jobTitle: "Growth Analyst",
       managerId: "fr",
       roleType: "colaborador",
     }),
     createUser({
       id: "ap",
-      firstName: "Andre",
-      lastName: "Peixoto",
+      fullName: "Andre Peixoto",
       jobTitle: "Content Manager",
       managerId: "fr",
       roleType: "colaborador",
     }),
     createUser({
       id: "jm",
-      firstName: "Joao",
-      lastName: "Martins",
+      fullName: "Joao Martins",
       jobTitle: "People Ops",
       managerId: "ms",
       roleType: "gestor",
     }),
     createUser({
       id: "br",
-      firstName: "Beatriz",
-      lastName: "Ramos",
+      fullName: "Beatriz Ramos",
       jobTitle: "Product Manager",
       managerId: "bs",
       roleType: "gestor",
     }),
     createUser({
       id: "cs",
-      firstName: "Carla",
-      lastName: "Santos",
+      fullName: "Carla Santos",
       jobTitle: "People Business Partner",
       managerId: "ms",
       roleType: "admin-rh",
     }),
     createUser({
       id: "rm",
-      firstName: "Rafael",
-      lastName: "Mendes",
+      fullName: "Rafael Mendes",
       jobTitle: "Engineering Manager",
       managerId: "pa",
       roleType: "gestor",
     }),
     createUser({
       id: "gn",
-      firstName: "Gabriel",
-      lastName: "Nunes",
+      fullName: "Gabriel Nunes",
       jobTitle: "Sales Rep",
       managerId: "fr",
       roleType: "colaborador",
     }),
     createUser({
       id: "fd",
-      firstName: "Fernanda",
-      lastName: "Dias",
+      fullName: "Fernanda Dias",
       jobTitle: "CS Manager",
       managerId: "cs",
       roleType: "gestor",
     }),
     createUser({
       id: "if",
-      firstName: "Isabela",
-      lastName: "Freitas",
+      fullName: "Isabela Freitas",
       jobTitle: "Finance Analyst",
       managerId: "ceo",
       roleType: "colaborador",
@@ -615,7 +590,7 @@ function sanitizeUsers(
     .filter(([, value]) => !!value && typeof value === "object")
     .map(([id, value]) => {
       const item = value as Partial<PeopleUserRecord>;
-      if (!item.firstName || !item.lastName || !item.email) return null;
+      if (!item.fullName || !item.email) return null;
 
       const roleType = String(item.roleType ?? "colaborador");
       // Migrate legacy data: if roleId is missing, create it from roleType

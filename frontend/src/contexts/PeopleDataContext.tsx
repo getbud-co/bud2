@@ -31,8 +31,7 @@ export interface PeopleUserView extends PeopleUserRecord {
 
 export interface OrgPersonView {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   jobTitle: string | null;
   initials: string | null;
   managerId: string | null;
@@ -136,12 +135,7 @@ function buildUsersView(snapshot: PeopleStoreSnapshot): PeopleUserView[] {
       ...cloneDeep(user),
       teams: cloneDeep(teamsByUser.get(user.id) ?? []),
     }))
-    .sort((a, b) =>
-      `${a.firstName} ${a.lastName}`.localeCompare(
-        `${b.firstName} ${b.lastName}`,
-        "pt-BR",
-      ),
-    );
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, "pt-BR"));
 }
 
 function buildTeamsView(snapshot: PeopleStoreSnapshot): Team[] {
@@ -158,8 +152,7 @@ function buildTeamsView(snapshot: PeopleStoreSnapshot): Team[] {
             ...cloneDeep(member),
             user: {
               id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
+              fullName: user.fullName,
               initials: user.initials,
               jobTitle: user.jobTitle,
               avatarUrl: user.avatarUrl,
@@ -239,10 +232,17 @@ function buildTeamMembersFromUsers(
 function createOwnerOption(user: PeopleUserView): OwnerOption {
   return {
     id: user.id,
-    label: `${user.firstName} ${user.lastName}`,
+    label: user.fullName,
     initials:
       user.initials ??
-      `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase(),
+      user.fullName
+        .trim()
+        .split(" ")
+        .filter(Boolean)
+        .map((p) => p[0] ?? "")
+        .slice(0, 2)
+        .join("")
+        .toUpperCase(),
   };
 }
 
@@ -376,8 +376,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
     () =>
       users.map((user) => ({
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        fullName: user.fullName,
         jobTitle: user.jobTitle,
         initials: user.initials,
         managerId: user.managerId,
@@ -392,8 +391,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
       setSnapshot((prev) => {
         const prevPeople = buildUsersView(prev).map((user) => ({
           id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          fullName: user.fullName,
           jobTitle: user.jobTitle,
           initials: user.initials,
           managerId: user.managerId,
@@ -418,8 +416,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
           return {
             ...(previous ?? (prev.usersById[person.id] as PeopleUserView)),
             id: person.id,
-            firstName: person.firstName,
-            lastName: person.lastName,
+            fullName: person.fullName,
             jobTitle: person.jobTitle,
             initials: person.initials,
             managerId: person.managerId,
@@ -436,7 +433,14 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
             email:
               previous?.email ??
               prev.usersById[person.id]?.email ??
-              `${normalizeKey(person.firstName)}.${normalizeKey(person.lastName)}@acme.com`,
+              person.fullName
+                .trim()
+                .split(" ")
+                .filter(Boolean)
+                .map((p) =>
+                  p.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(),
+                )
+                .join(".") + "@acme.com",
             nickname:
               previous?.nickname ?? prev.usersById[person.id]?.nickname ?? null,
             avatarUrl:
@@ -586,7 +590,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
       const resolved = resolveUserId(userId);
       const user = snapshot.usersById[resolved];
       if (!user) return userId;
-      return `${user.firstName} ${user.lastName}`;
+      return user.fullName;
     },
     [resolveUserId, snapshot.usersById],
   );

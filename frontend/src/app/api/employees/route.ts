@@ -8,20 +8,21 @@ const ROLE_MAP: Record<number, string> = {
 };
 
 function mapEmployee(raw: Record<string, unknown>) {
-  const fullName = (raw.fullName as string) ?? "";
-  const parts = fullName.trim().split(" ");
-  const firstName = parts[0] ?? "";
-  const lastName = parts.slice(1).join(" ");
+  const fullName = ((raw.fullName as string) ?? "").trim();
+  const parts = fullName.split(" ").filter(Boolean);
   const initials =
-    `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase() || null;
+    parts
+      .map((p) => p[0] ?? "")
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || null;
   const team = raw.team as { id: string; name: string } | null;
 
   return {
     id: raw.id,
     orgId: raw.organizationId,
     email: raw.email,
-    firstName,
-    lastName,
+    fullName,
     initials,
     jobTitle: null,
     managerId: raw.leaderId ?? null,

@@ -136,22 +136,23 @@ export function formatPeriodRange(
 
 /* ——— Owner helpers ——— */
 
-export function getOwnerName(owner?: {
-  firstName: string;
-  lastName: string;
-}): string {
+export function getOwnerName(owner?: { fullName: string }): string {
   if (!owner) return "";
-  return `${owner.firstName} ${owner.lastName}`;
+  return owner.fullName;
 }
 
 export function getOwnerInitials(owner?: {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   initials: string | null;
 }): string {
   if (!owner) return "??";
   if (owner.initials) return owner.initials;
-  return `${owner.firstName[0] ?? ""}${owner.lastName[0] ?? ""}`.toUpperCase();
+  const parts = owner.fullName.trim().split(" ").filter(Boolean);
+  return parts
+    .map((p) => p[0] ?? "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 /* ——— Indicator icon helper (by content/type) ——— */
@@ -183,70 +184,59 @@ export interface ChartPoint {
 // User IDs must match people-store.ts exactly
 const MS_OWNER = {
   id: "ms",
-  firstName: "Maria",
-  lastName: "Soares",
+  fullName: "Maria Soares",
   initials: "MS",
 };
 const BR_OWNER = {
   id: "br",
-  firstName: "Beatriz",
-  lastName: "Ramos",
+  fullName: "Beatriz Ramos",
   initials: "BR",
 };
 const LO_OWNER = {
   id: "lo",
-  firstName: "Lucas",
-  lastName: "Oliveira",
+  fullName: "Lucas Oliveira",
   initials: "LO",
 };
 const JM_OWNER = {
   id: "jm",
-  firstName: "Joao",
-  lastName: "Martins",
+  fullName: "Joao Martins",
   initials: "JM",
 };
 const AF_OWNER = {
   id: "af",
-  firstName: "Ana",
-  lastName: "Ferreira",
+  fullName: "Ana Ferreira",
   initials: "AF",
 };
 const CS_OWNER = {
   id: "cs",
-  firstName: "Carla",
-  lastName: "Santos",
+  fullName: "Carla Santos",
   initials: "CS",
 };
 const RM_OWNER = {
   id: "rm",
-  firstName: "Rafael",
-  lastName: "Mendes",
+  fullName: "Rafael Mendes",
   initials: "RM",
 };
 const CM_OWNER = {
   id: "cm",
-  firstName: "Carlos",
-  lastName: "Mendes",
+  fullName: "Carlos Mendes",
   initials: "CM",
 };
 
 // Time Produto — IDs must match people-store.ts exactly
 const BS_OWNER = {
   id: "bs",
-  firstName: "Beatriz",
-  lastName: "Santos",
+  fullName: "Beatriz Santos",
   initials: "BS",
 };
 const CR_OWNER = {
   id: "cr",
-  firstName: "Camila",
-  lastName: "Rocha",
+  fullName: "Camila Rocha",
   initials: "CR",
 };
 const GF_OWNER = {
   id: "gf",
-  firstName: "Gustavo",
-  lastName: "Fonseca",
+  fullName: "Gustavo Fonseca",
   initials: "GF",
 };
 
@@ -267,8 +257,7 @@ function mkSupporter(
     addedBy,
     user: {
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      fullName: user.fullName,
       initials: user.initials,
       jobTitle: null,
       avatarUrl: null,

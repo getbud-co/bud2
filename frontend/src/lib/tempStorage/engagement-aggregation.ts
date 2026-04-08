@@ -407,7 +407,7 @@ export function buildMemberEngagementSummary(
   const userId = teamMember.userId;
   const user = teamMember.user;
 
-  const name = user ? `${user.firstName} ${user.lastName}` : userId;
+  const name = user ? user.fullName : userId;
   const initials = user?.initials ?? name.slice(0, 2).toUpperCase();
   const jobTitle = user?.jobTitle ?? null;
   const avatarUrl = user?.avatarUrl ?? null;
