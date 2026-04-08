@@ -19,8 +19,7 @@ export interface TeamMember {
   /** Preenchido em queries com join */
   user?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
     jobTitle: string | null;
     avatarUrl: string | null;
