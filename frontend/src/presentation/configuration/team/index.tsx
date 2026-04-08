@@ -20,7 +20,16 @@ import {
 } from "@phosphor-icons/react";
 import type { Team, TeamMember, TeamColor } from "@/types";
 import { usePeopleData } from "@/contexts/PeopleDataContext";
-import { useConfigData } from "@/contexts/ConfigDataContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTeams } from "./hooks/useTeams";
+import {
+  useCreateTeam,
+  useUpdateTeam,
+  useDeleteTeam,
+  useBulkArchiveTeams,
+  useBulkDeleteTeams,
+  extractLeaderId,
+} from "./hooks/useTeamMutations";
 import { useDataTable } from "@/hooks/useDataTable";
 import { TeamsTableHeader } from "./components/TeamsTableHeader";
 import { TeamsFilterBar } from "./components/TeamsFilterBar";
@@ -45,8 +54,15 @@ function personFromMember(m: TeamMember): PersonView | null {
 /* ——— Component ——— */
 
 export function TeamsModule() {
-  const { teams, setTeams, orgPeople } = usePeopleData();
-  const { activeOrgId } = useConfigData();
+  const { orgPeople } = usePeopleData();
+  const { activeOrgId } = useOrganization();
+
+  const { data: teams = [] } = useTeams(activeOrgId);
+  const createTeam = useCreateTeam(activeOrgId);
+  const updateTeam = useUpdateTeam(activeOrgId);
+  const deleteTeamMutation = useDeleteTeam(activeOrgId);
+  const bulkArchive = useBulkArchiveTeams(activeOrgId);
+  const bulkDelete = useBulkDeleteTeams(activeOrgId);
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -157,45 +173,38 @@ export function TeamsModule() {
     color: TeamColor;
     members: TeamMember[];
   }) {
-    const leaderId =
-      data.members.find((m) => m.roleInTeam === "leader")?.userId ?? null;
+    const leaderId = extractLeaderId(data.members);
     const editingTeam = teamModalState?.team;
 
     if (editingTeam) {
-      setTeams((prev) =>
-        prev.map((t) =>
-          t.id === editingTeam.id
-            ? {
-                ...t,
-                name: data.name,
-                description: data.description,
-                color: data.color,
-                leaderId,
-                members: data.members,
-              }
-            : t,
-        ),
+      updateTeam.mutate(
+        {
+          id: editingTeam.id,
+          name: data.name,
+          description: data.description || null,
+          color: data.color,
+          leaderId,
+        },
+        {
+          onSuccess: () => toast.success(`Time "${data.name}" atualizado`),
+          onError: () => toast.error(`Erro ao atualizar "${data.name}"`),
+        },
       );
-      toast.success(`Time "${data.name}" atualizado`);
     } else {
-      const newId = String(Date.now());
-      const now = new Date().toISOString();
-      const newTeam: Team = {
-        id: newId,
-        orgId: activeOrgId,
-        name: data.name,
-        description: data.description || null,
-        color: data.color,
-        leaderId,
-        parentTeamId: null,
-        status: "active",
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-        members: data.members.map((m) => ({ ...m, teamId: newId })),
-      };
-      setTeams((prev) => [...prev, newTeam]);
-      toast.success(`Time "${data.name}" criado`);
+      if (!activeOrgId || !leaderId) return;
+      createTeam.mutate(
+        {
+          name: data.name,
+          description: data.description || null,
+          color: data.color,
+          organizationId: activeOrgId,
+          leaderId,
+        },
+        {
+          onSuccess: () => toast.success(`Time "${data.name}" criado`),
+          onError: () => toast.error(`Erro ao criar "${data.name}"`),
+        },
+      );
     }
     setTeamModalState(null);
   }
@@ -203,37 +212,46 @@ export function TeamsModule() {
   function handleToggleStatus(team: Team) {
     const newStatus =
       team.status === "active" ? ("archived" as const) : ("active" as const);
-    setTeams((prev) =>
-      prev.map((t) => (t.id === team.id ? { ...t, status: newStatus } : t)),
-    );
     setActionsPopoverTeam(null);
-    toast.success(
-      newStatus === "active"
-        ? `"${team.name}" ativado`
-        : `"${team.name}" arquivado`,
+    updateTeam.mutate(
+      { id: team.id, status: newStatus },
+      {
+        onSuccess: () =>
+          toast.success(
+            newStatus === "active"
+              ? `"${team.name}" ativado`
+              : `"${team.name}" arquivado`,
+          ),
+        onError: () => toast.error(`Erro ao alterar status de "${team.name}"`),
+      },
     );
   }
 
   function handleDelete() {
     if (!deleteTeam) return;
-    setTeams((prev) => prev.filter((t) => t.id !== deleteTeam.id));
-    toast.success(`Time "${deleteTeam.name}" excluído`);
+    const name = deleteTeam.name;
+    deleteTeamMutation.mutate(deleteTeam.id, {
+      onSuccess: () => toast.success(`Time "${name}" excluído`),
+      onError: () => toast.error(`Erro ao excluir "${name}"`),
+    });
     setDeleteTeam(null);
   }
 
   function handleBulkArchive() {
-    setTeams((prev) =>
-      prev.map((t) =>
-        selectedRows.has(t.id) ? { ...t, status: "archived" } : t,
-      ),
-    );
-    toast.success(`${selectedRows.size} time(s) arquivado(s)`);
+    const ids = [...selectedRows];
+    bulkArchive.mutate(ids, {
+      onSuccess: () => toast.success(`${ids.length} time(s) arquivado(s)`),
+      onError: () => toast.error("Erro ao arquivar times"),
+    });
     clearSelection();
   }
 
   function handleBulkDelete() {
-    setTeams((prev) => prev.filter((t) => !selectedRows.has(t.id)));
-    toast.success(`${selectedRows.size} time(s) excluído(s)`);
+    const ids = [...selectedRows];
+    bulkDelete.mutate(ids, {
+      onSuccess: () => toast.success(`${ids.length} time(s) excluído(s)`),
+      onError: () => toast.error("Erro ao excluir times"),
+    });
     clearSelection();
   }
 

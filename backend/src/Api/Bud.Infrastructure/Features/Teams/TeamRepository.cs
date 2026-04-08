@@ -135,6 +135,25 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
             .AnyAsync(mission => mission.EmployeeId.HasValue && employeeIds.Contains(mission.EmployeeId.Value), ct);
     }
 
+    public async Task BulkUpdateStatusAsync(IEnumerable<Guid> ids, TeamStatus status, CancellationToken ct = default)
+    {
+        var idList = ids.ToList();
+        await dbContext.Teams
+            .Where(t => idList.Contains(t.Id))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.Status, status)
+                .SetProperty(t => t.UpdatedAt, DateTime.UtcNow),
+            ct);
+    }
+
+    public async Task BulkDeleteAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    {
+        var idList = ids.ToList();
+        await dbContext.Teams
+            .Where(t => idList.Contains(t.Id))
+            .ExecuteDeleteAsync(ct);
+    }
+
     public async Task AddAsync(Team entity, CancellationToken ct = default)
         => await dbContext.Teams.AddAsync(entity, ct);
 

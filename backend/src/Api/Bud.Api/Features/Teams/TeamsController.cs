@@ -20,6 +20,8 @@ public sealed class TeamsController(
     GetTeamEmployeeLookup listTeamEmployeeOptions,
     PatchTeamEmployees patchTeamEmployees,
     ListAvailableEmployeesForTeam listAvailableEmployeesForTeam,
+    BulkArchiveTeams bulkArchiveTeams,
+    BulkDeleteTeams bulkDeleteTeams,
     IValidator<CreateTeamRequest> createValidator,
     IValidator<PatchTeamRequest> updateValidator) : ApiControllerBase
 {
@@ -261,6 +263,38 @@ public sealed class TeamsController(
     {
         var command = new PatchTeamEmployeesCommand(request.EmployeeIds);
         var result = await patchTeamEmployees.ExecuteAsync(User, id, command, cancellationToken);
+        return FromResult(result, NoContent);
+    }
+
+    /// <summary>
+    /// Arquiva múltiplos times.
+    /// </summary>
+    /// <response code="204">Times arquivados com sucesso.</response>
+    /// <response code="400">Payload inválido.</response>
+    /// <response code="403">Sem permissão para arquivar times.</response>
+    [HttpPost("bulk-archive")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> BulkArchive([FromBody] List<Guid> ids, CancellationToken cancellationToken)
+    {
+        var result = await bulkArchiveTeams.ExecuteAsync(User, new BulkArchiveTeamsCommand(ids), cancellationToken);
+        return FromResult(result, NoContent);
+    }
+
+    /// <summary>
+    /// Exclui múltiplos times.
+    /// </summary>
+    /// <response code="204">Times excluídos com sucesso.</response>
+    /// <response code="403">Sem permissão para excluir times.</response>
+    [HttpPost("bulk-delete")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids, CancellationToken cancellationToken)
+    {
+        var result = await bulkDeleteTeams.ExecuteAsync(User, new BulkDeleteTeamsCommand(ids), cancellationToken);
         return FromResult(result, NoContent);
     }
 }

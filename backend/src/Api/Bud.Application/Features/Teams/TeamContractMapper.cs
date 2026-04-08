@@ -22,7 +22,10 @@ public static class TeamContractMapper
             UpdatedAt = source.UpdatedAt,
             DeletedAt = source.DeletedAt,
             ParentTeam = source.ParentTeam?.ToResponse(),
-            Employees = source.Employees.Select(c => c.ToEmployeeResponse()).ToList(),
+            Employees = source.EmployeeTeams
+            .Where(et => et.Employee is not null)
+            .Select(et => et.Employee!.ToEmployeeResponse())
+            .ToList(),
             Leader = leaderEntry?.Employee?.ToEmployeeResponse()
         };
     }

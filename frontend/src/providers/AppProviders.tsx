@@ -1,6 +1,7 @@
 "use client";
 
 import QueryProvider from "@/contexts/QueryContext";
+import { LoggedUserProvider } from "@/contexts/LoggedUserContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ConfigDataProvider } from "@/contexts/ConfigDataContext";
 import { ActivityDataProvider } from "@/contexts/ActivityDataContext";
@@ -18,6 +19,7 @@ interface AppProvidersProps {
 export function AppProviders({ children, initialOrgId }: AppProvidersProps) {
   return (
     <QueryProvider>
+      <LoggedUserProvider>
       <OrganizationProvider initialOrgId={initialOrgId}>
         <ConfigDataProvider>
           <ActivityDataProvider>
@@ -33,6 +35,7 @@ export function AppProviders({ children, initialOrgId }: AppProvidersProps) {
           </ActivityDataProvider>
         </ConfigDataProvider>
       </OrganizationProvider>
+      </LoggedUserProvider>
     </QueryProvider>
   );
 }
