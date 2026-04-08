@@ -12,17 +12,6 @@ export function getTemplateConfig(
   );
 }
 
-export function splitFullName(label: string): {
-  firstName: string;
-  lastName: string;
-} {
-  const [firstName = "", ...rest] = label.trim().split(" ");
-  return {
-    firstName,
-    lastName: rest.join(" "),
-  };
-}
-
 export function isoToCalendarDate(iso: string): CalendarDate {
   const [year = 0, month = 1, day = 1] = iso.split("-").map(Number);
   return { year, month, day };

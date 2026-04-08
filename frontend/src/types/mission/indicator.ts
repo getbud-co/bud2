@@ -54,8 +54,7 @@ export interface Indicator {
   /** Preenchido em queries com join */
   owner?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
   };
   checkIns?: CheckIn[];

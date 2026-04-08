@@ -21,8 +21,7 @@ export interface MissionTask {
   updatedAt: string;
   owner?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
   };
   subtasks?: SubTask[];

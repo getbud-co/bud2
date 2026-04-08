@@ -31,8 +31,7 @@ export interface MissionMember {
   /** Preenchido em queries com join */
   user?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
     jobTitle: string | null;
     avatarUrl: string | null;
@@ -68,7 +67,7 @@ export interface ExternalContribution {
   progress?: number;
   isDone?: boolean;
   status?: IndicatorStatus;
-  owner?: { firstName: string; lastName: string; initials: string | null };
+  owner?: { fullName: string; initials: string | null };
   sourceMission: { id: string; title: string };
 }
 
@@ -98,8 +97,7 @@ export interface Mission {
   /** Preenchido em queries com join */
   owner?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
   };
   team?: { id: string; name: string; color: string };

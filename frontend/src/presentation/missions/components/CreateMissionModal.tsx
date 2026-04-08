@@ -44,7 +44,7 @@ import {
   MANUAL_INDICATOR_TYPES,
   UNIT_OPTIONS,
 } from "../consts";
-import { getTemplateConfig, splitFullName } from "../utils/utils";
+import { getTemplateConfig } from "../utils/utils";
 import type { MissionItemData } from "../types";
 import { numVal, getMissionLabel } from "@/lib/tempStorage/missions";
 
@@ -351,12 +351,9 @@ export function CreateMissionModal({
       initials: "UL",
     };
     const owner = selected ?? fallback;
-    const name = splitFullName(owner.label);
-
     return {
       id: owner.id,
-      firstName: name.firstName,
-      lastName: name.lastName,
+      fullName: owner.label,
       initials: owner.initials ?? null,
     };
   }
@@ -531,9 +528,6 @@ export function CreateMissionModal({
       tags: selectedMissionTags,
       members: selectedSupportTeam.map((userId): MissionMember => {
         const opt = missionOwnerOptions.find((o) => o.id === userId);
-        const nameParts = opt
-          ? splitFullName(opt.label)
-          : { firstName: userId, lastName: "" };
         return {
           missionId,
           userId,
@@ -542,8 +536,7 @@ export function CreateMissionModal({
           addedBy: owner.id,
           user: {
             id: userId,
-            firstName: nameParts.firstName,
-            lastName: nameParts.lastName,
+            fullName: opt?.label ?? userId,
             initials: opt?.initials ?? null,
             jobTitle: null,
             avatarUrl: null,

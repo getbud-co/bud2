@@ -360,7 +360,7 @@ export function WidgetBuilder({ open, onClose, onAdd }: WidgetBuilderProps) {
         .filter((u) => u.status === "active")
         .map((u) => ({
           id: u.id,
-          name: `${u.firstName} ${u.lastName}`.trim(),
+          name: u.fullName,
           role: u.jobTitle ?? "",
         })),
     [users],

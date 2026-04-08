@@ -79,9 +79,16 @@ export function useEngagementReadModel(): EngagementReadModel {
 
         return {
           id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
+          name: user.fullName,
           initials:
-            user.initials ?? user.firstName.charAt(0) + user.lastName.charAt(0),
+            user.initials ??
+            user.fullName
+              .trim()
+              .split(" ")
+              .filter(Boolean)
+              .map((p) => p.charAt(0))
+              .slice(0, 2)
+              .join(""),
           role: user.jobTitle ?? "Colaborador",
           value,
           trend: personTrend,

@@ -55,7 +55,7 @@ function flattenKrs(missions: Mission[]): Indicator[] {
 
 function ownerName(indicator: Indicator): string {
   if (indicator.owner) {
-    return `${indicator.owner.firstName} ${indicator.owner.lastName}`.trim();
+    return indicator.owner.fullName;
   }
   return "Responsável não definido";
 }

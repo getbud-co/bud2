@@ -18,8 +18,7 @@ export interface CheckIn {
   /** Preenchido em queries com join */
   author?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     initials: string | null;
   };
 }

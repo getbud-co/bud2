@@ -50,7 +50,7 @@ import {
   getOwnerInitials,
   getIndicatorIcon,
 } from "@/lib/tempStorage/missions";
-import { isoToCalendarDate, splitFullName } from "./utils/utils";
+import { isoToCalendarDate } from "./utils/utils";
 import {
   CONFIDENCE_OPTIONS,
   CONTRIBUTION_OPTIONS,
@@ -624,7 +624,7 @@ export function MissionsComponent({ mine = false }: { mine?: boolean }) {
       label: "Usuário local",
       initials: "UL",
     };
-    const checkInAuthorName = splitFullName(checkInAuthor.label);
+    const checkInAuthorFullName = checkInAuthor.label;
     const numValue = Number(drawerValue) || 0;
     const previousValue = String(currentIndicator.currentValue);
     const nowIso = new Date().toISOString();
@@ -697,8 +697,7 @@ export function MissionsComponent({ mine = false }: { mine?: boolean }) {
       createdAt: nowIso,
       author: {
         id: checkInAuthor.id,
-        firstName: checkInAuthorName.firstName,
-        lastName: checkInAuthorName.lastName,
+        fullName: checkInAuthorFullName,
         initials: checkInAuthor.initials,
       },
     });
@@ -1002,8 +1001,7 @@ export function MissionsComponent({ mine = false }: { mine?: boolean }) {
 
     function ownerMatches(owner?: {
       id: string;
-      firstName: string;
-      lastName: string;
+      fullName: string;
       initials: string | null;
     }): boolean {
       if (!ownerFilterActive) return true;

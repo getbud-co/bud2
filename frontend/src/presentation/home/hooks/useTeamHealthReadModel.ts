@@ -58,9 +58,16 @@ export function useTeamHealthReadModel(): TeamHealthReadModel {
 
         return {
           id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
+          name: user.fullName,
           initials:
-            user.initials ?? user.firstName.charAt(0) + user.lastName.charAt(0),
+            user.initials ??
+            user.fullName
+              .trim()
+              .split(" ")
+              .filter(Boolean)
+              .map((p) => p.charAt(0))
+              .slice(0, 2)
+              .join(""),
           missions: avgProgress,
           missionsExpected: expectedProgress,
           status,

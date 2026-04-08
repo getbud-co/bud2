@@ -12,8 +12,7 @@ export interface User {
   id: string;
   orgId: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   initials: string | null;
   jobTitle: string | null;
   managerId: string | null;
