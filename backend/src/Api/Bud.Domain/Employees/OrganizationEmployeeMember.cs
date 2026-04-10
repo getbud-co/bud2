@@ -6,7 +6,7 @@ public sealed class OrganizationEmployeeMember : ITenantEntity
     public Employee Employee { get; set; } = null!;
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
-    public EmployeeRole Role { get; set; } = EmployeeRole.IndividualContributor;
+    public EmployeeRole Role { get; set; } = EmployeeRole.Contributor;
     public Guid? TeamId { get; set; }
     public Team? Team { get; set; }
     public Guid? LeaderId { get; set; }
@@ -46,7 +46,7 @@ public sealed class OrganizationEmployeeMember : ITenantEntity
 
     public void EnsureCanLeadOrganization(Guid organizationId)
     {
-        if (Role != EmployeeRole.Leader)
+        if (Role != EmployeeRole.TeamLeader)
         {
             throw new DomainInvariantException("O colaborador selecionado deve ter o perfil de Líder.");
         }

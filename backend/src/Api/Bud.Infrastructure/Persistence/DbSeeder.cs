@@ -18,6 +18,7 @@ public static class DbSeeder
             budOrg = Organization.Create(
                 Guid.NewGuid(),
                 DefaultOrganizationName,
+                cnpj: "00.000.000/0001-00",
                 OrganizationPlan.Free,
                 OrganizationContractStatus.ToApproval);
             context.Organizations.Add(budOrg);
@@ -44,7 +45,7 @@ public static class DbSeeder
             {
                 EmployeeId = adminId,
                 OrganizationId = budOrg.Id,
-                Role = EmployeeRole.Leader,
+                Role = EmployeeRole.TeamLeader,
                 IsGlobalAdmin = true,
                 Employee = adminEmployee,
             };

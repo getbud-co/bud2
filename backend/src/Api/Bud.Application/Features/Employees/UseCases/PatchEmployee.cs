@@ -8,8 +8,11 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record PatchEmployeeCommand(
     Optional<string> FullName,
     Optional<string> Email,
+    Optional<string?> Nickname,
+    Optional<EmployeeLanguage> Language,
     Optional<EmployeeRole> Role,
-    Optional<Guid?> LeaderId);
+    Optional<Guid?> LeaderId,
+    Optional<EmployeeStatus> Status);
 
 public sealed partial class PatchEmployee(
     IEmployeeRepository employeeRepository,
@@ -41,8 +44,11 @@ public sealed partial class PatchEmployee(
 
         var requestedEmail = command.Email.HasValue ? command.Email.Value : member.Employee.Email;
         var requestedFullName = command.FullName.HasValue ? command.FullName.Value : member.Employee.FullName;
+        var requestedNickname = command.Nickname.HasValue ? command.Nickname.Value : member.Employee.Nickname;
+        var requestedLanguage = command.Language.HasValue ? command.Language.Value : member.Employee.Language;
         var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : member.LeaderId;
         var requestedRole = command.Role.HasValue ? command.Role.Value : member.Role;
+        var requestedStatus = command.Status.HasValue ? command.Status.Value : member.Employee.Status;
 
         if (!EmailAddress.TryCreate(requestedEmail, out var emailAddress))
         {
@@ -85,8 +91,8 @@ public sealed partial class PatchEmployee(
             }
         }
 
-        if (member.Role == EmployeeRole.Leader &&
-            requestedRole == EmployeeRole.IndividualContributor)
+        if (member.Role == EmployeeRole.TeamLeader &&
+            requestedRole == EmployeeRole.Contributor)
         {
             if (await employeeRepository.HasSubordinatesAsync(id, cancellationToken))
             {
@@ -100,6 +106,9 @@ public sealed partial class PatchEmployee(
         try
         {
             member.Employee.UpdateIdentity(personName.Value, emailAddress.Value);
+            member.Employee.Nickname = requestedNickname;
+            member.Employee.Language = requestedLanguage;
+            member.Employee.Status = requestedStatus;
             member.UpdateProfile(requestedRole, requestedLeaderId, member.EmployeeId);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 

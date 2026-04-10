@@ -113,13 +113,13 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                 else
                 {
                     leaderSource = leaderMember
-                        ?? (member.Role == EmployeeRole.Leader ? member : null);
+                        ?? (member.Role == EmployeeRole.TeamLeader ? member : null);
                 }
             }
             else
             {
                 leaderSource = leaderMember
-                    ?? (member.Role == EmployeeRole.Leader ? member : null);
+                    ?? (member.Role == EmployeeRole.TeamLeader ? member : null);
 
                 if (leaderSource is not null)
                 {
@@ -204,7 +204,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             Id = leaderSource.EmployeeId,
             FullName = leaderSource.Employee.FullName,
             Initials = GetInitials(leaderSource.Employee.FullName),
-            Role = leaderSource.Role == EmployeeRole.Leader ? "Líder" : "Colaborador",
+            Role = leaderSource.Role == EmployeeRole.TeamLeader ? "Líder" : "Colaborador",
             TeamName = teamNameOverride ?? leaderSource.Team?.Name ?? string.Empty,
         };
     }

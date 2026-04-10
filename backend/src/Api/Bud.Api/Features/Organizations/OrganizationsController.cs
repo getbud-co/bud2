@@ -42,7 +42,7 @@ public sealed class OrganizationsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var command = new CreateOrganizationCommand(request.Name, request.Plan, request.ContractStatus, request.IconUrl);
+        var command = new CreateOrganizationCommand(request.Name, request.Cnpj, request.Plan, request.ContractStatus, request.IconUrl);
 
         var result = await createOrganization.ExecuteAsync(command, cancellationToken);
         return FromResult<Organization, OrganizationResponse>(result, organization =>
@@ -73,7 +73,7 @@ public sealed class OrganizationsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var command = new PatchOrganizationCommand(request.Name, request.Plan, request.ContractStatus, request.IconUrl);
+        var command = new PatchOrganizationCommand(request.Name, request.Cnpj, request.Plan, request.ContractStatus, request.IconUrl);
 
         var result = await patchOrganization.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, organization => organization.ToResponse());

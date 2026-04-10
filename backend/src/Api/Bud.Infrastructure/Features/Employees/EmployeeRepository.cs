@@ -30,6 +30,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         if (teamId.HasValue)
         {
             var teamEmployeeIds = dbContext.EmployeeTeams
+                .IgnoreQueryFilters()
                 .Where(et => et.TeamId == teamId.Value)
                 .Select(et => et.EmployeeId);
             query = query.Where(m => teamEmployeeIds.Contains(m.EmployeeId));
@@ -44,6 +45,27 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
             .Take(pageSize)
             .ToListAsync(ct);
 
+        // Load teams separately to avoid translation issues with EmployeeTeam's global query filter.
+        var employeeIds = items.Select(m => m.EmployeeId).ToList();
+        var teamByEmployee = await dbContext.EmployeeTeams
+            .IgnoreQueryFilters()
+            .Where(et => employeeIds.Contains(et.EmployeeId))
+            .Include(et => et.Team)
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        var teamsByEmployeeId = teamByEmployee
+            .GroupBy(et => et.EmployeeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var member in items)
+        {
+            if (teamsByEmployeeId.TryGetValue(member.EmployeeId, out var employeeTeams))
+            {
+                member.Employee.EmployeeTeams = employeeTeams;
+            }
+        }
+
         return new PagedResult<OrganizationEmployeeMember> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
@@ -54,7 +76,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
             .Include(m => m.Employee)
             .Include(m => m.Team)
             .Include(m => m.Organization)
-            .Where(m => m.Role == EmployeeRole.Leader);
+            .Where(m => m.Role == EmployeeRole.TeamLeader);
 
         if (organizationId.HasValue)
         {
@@ -173,7 +195,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.EmployeeId == leaderId, ct);
 
-        if (member is null || member.Role != EmployeeRole.Leader)
+        if (member is null || member.Role != EmployeeRole.TeamLeader)
         {
             return false;
         }

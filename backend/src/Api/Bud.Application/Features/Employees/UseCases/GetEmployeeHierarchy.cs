@@ -52,7 +52,7 @@ public sealed class GetEmployeeHierarchy(
                 Id = member.EmployeeId,
                 FullName = member.Employee.FullName,
                 Initials = GetInitials(member.Employee.FullName),
-                Role = member.Role == EmployeeRole.Leader ? "Líder" : "Contribuidor individual",
+                Role = member.Role == EmployeeRole.TeamLeader ? "Líder" : "Contribuidor individual",
                 Children = BuildTree(member.EmployeeId, childrenByLeader, depth + 1, maxDepth),
             })
             .ToList();

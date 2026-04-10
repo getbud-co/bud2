@@ -81,8 +81,11 @@ public sealed class EmployeesController(
         var command = new PatchEmployeeCommand(
             request.FullName,
             request.Email,
+            request.Nickname,
+            request.Language,
             request.Role,
-            request.LeaderId);
+            request.LeaderId,
+            request.Status);
 
         var result = await patchEmployee.ExecuteAsync(User, id, command, cancellationToken);
         return FromResultOk(result, member => member.ToEmployeeResponse());

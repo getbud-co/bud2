@@ -5,6 +5,9 @@ public sealed class Employee : IAggregateRoot
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
+    public EmployeeLanguage Language { get; set; } = EmployeeLanguage.Pt;
+    public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
 
     public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
     public ICollection<OrganizationEmployeeMember> Memberships { get; set; } = new List<OrganizationEmployeeMember>();

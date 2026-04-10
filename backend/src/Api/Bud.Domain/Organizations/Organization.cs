@@ -4,6 +4,7 @@ public sealed class Organization : IAggregateRoot
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Cnpj { get; set; } = string.Empty;
     public OrganizationPlan Plan { get; set; } = OrganizationPlan.Free;
     public OrganizationContractStatus ContractStatus { get; set; } = OrganizationContractStatus.ToApproval;
     public string? IconUrl { get; set; }
@@ -13,6 +14,7 @@ public sealed class Organization : IAggregateRoot
     public static Organization Create(
         Guid id,
         string name,
+        string cnpj,
         OrganizationPlan plan = OrganizationPlan.Free,
         OrganizationContractStatus contractStatus = OrganizationContractStatus.ToApproval,
         string? iconUrl = null)
@@ -20,6 +22,7 @@ public sealed class Organization : IAggregateRoot
         var organization = new Organization
         {
             Id = id,
+            Cnpj = cnpj,
             Plan = plan,
             ContractStatus = contractStatus,
             IconUrl = iconUrl,

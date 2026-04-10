@@ -25,6 +25,8 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<GetTeamEmployeeLookup>();
         services.AddScoped<PatchTeamEmployees>();
         services.AddScoped<ListAvailableEmployeesForTeam>();
+        services.AddScoped<BulkArchiveTeams>();
+        services.AddScoped<BulkDeleteTeams>();
 
         services.AddScoped<CreateEmployee>();
         services.AddScoped<PatchEmployee>();

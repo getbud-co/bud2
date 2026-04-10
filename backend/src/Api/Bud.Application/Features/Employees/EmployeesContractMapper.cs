@@ -14,7 +14,9 @@ public static class EmployeesContractMapper
             Id = employee.Id,
             FullName = employee.FullName,
             Email = employee.Email,
-            Role = EmployeeRole.IndividualContributor,
+            Nickname = employee.Nickname,
+            Language = employee.Language,
+            Role = EmployeeRole.Contributor,
             OrganizationId = Guid.Empty,
             LeaderId = null,
             IsGlobalAdmin = false,
@@ -28,7 +30,7 @@ public static class EmployeesContractMapper
             Id = employee.Id,
             FullName = employee.FullName,
             Email = employee.Email,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
         };
     }
 
@@ -39,10 +41,16 @@ public static class EmployeesContractMapper
             Id = member.EmployeeId,
             FullName = member.Employee.FullName,
             Email = member.Employee.Email,
+            Nickname = member.Employee.Nickname,
+            Language = member.Employee.Language,
+            Status = member.Employee.Status,
             Role = member.Role,
             OrganizationId = member.OrganizationId,
             LeaderId = member.LeaderId,
             IsGlobalAdmin = member.IsGlobalAdmin,
+            Teams = member.Employee.EmployeeTeams
+                .Select(et => new TeamResponse { Id = et.Team.Id, Name = et.Team.Name })
+                .ToList(),
         };
     }
 

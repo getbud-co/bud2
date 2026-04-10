@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,7 +31,7 @@ public sealed class LenientEnumJsonConverterFactory : JsonConverterFactory
 
         public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
         {
-            writer.WriteNumberValue(Convert.ToInt64(value, CultureInfo.InvariantCulture));
+            writer.WriteStringValue(value.ToString());
         }
     }
 
@@ -57,7 +56,7 @@ public sealed class LenientEnumJsonConverterFactory : JsonConverterFactory
                 return;
             }
 
-            writer.WriteNumberValue(Convert.ToInt64(value.Value, CultureInfo.InvariantCulture));
+            writer.WriteStringValue(value.Value.ToString());
         }
     }
 

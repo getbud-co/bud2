@@ -10,6 +10,10 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
         builder.Property(o => o.Name)
             .HasMaxLength(200);
 
+        builder.Property(o => o.Cnpj)
+            .IsRequired()
+            .HasMaxLength(18);
+
         builder.Property(o => o.Plan)
             .HasConversion<string>()
             .HasMaxLength(50);

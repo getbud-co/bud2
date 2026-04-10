@@ -7,6 +7,7 @@ namespace Bud.Application.Features.Organizations.UseCases;
 
 public sealed record PatchOrganizationCommand(
     Optional<string> Name,
+    Optional<string> Cnpj,
     Optional<OrganizationPlan> Plan,
     Optional<OrganizationContractStatus> ContractStatus,
     Optional<string?> IconUrl);
@@ -47,6 +48,11 @@ public sealed partial class PatchOrganization(
             {
                 organization.Rename(command.Name.Value ?? string.Empty);
             }
+            if (command.Cnpj.HasValue)
+            {
+                organization.Cnpj = command.Cnpj.Value ?? string.Empty;
+            }
+
             if (command.Plan.HasValue)
             {
                 organization.Plan = command.Plan.Value;

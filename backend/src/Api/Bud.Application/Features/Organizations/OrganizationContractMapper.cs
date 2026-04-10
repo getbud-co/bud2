@@ -8,6 +8,7 @@ public static class OrganizationContractMapper
         {
             Id = source.Id,
             Name = source.Name,
+            Cnpj = source.Cnpj,
             Plan = source.Plan,
             ContractStatus = source.ContractStatus,
             IconUrl = source.IconUrl,

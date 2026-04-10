@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace Bud.Shared.Kernel.Enums;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TeamColor
 {
     Neutral = 0,

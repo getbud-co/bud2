@@ -36,7 +36,7 @@ public static class LeaderScopedAuthorization
             return Result.Forbidden(employeeNotIdentifiedMessage);
         }
 
-        return member.Role == EmployeeRole.Leader && member.OrganizationId == organizationId
+        return member.Role == EmployeeRole.TeamLeader && member.OrganizationId == organizationId
             ? Result.Success()
             : Result.Forbidden(forbiddenMessage);
     }

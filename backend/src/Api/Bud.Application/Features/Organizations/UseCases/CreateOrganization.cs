@@ -5,6 +5,7 @@ namespace Bud.Application.Features.Organizations.UseCases;
 
 public sealed record CreateOrganizationCommand(
     string Name,
+    string Cnpj,
     OrganizationPlan Plan,
     OrganizationContractStatus ContractStatus,
     string? IconUrl);
@@ -25,6 +26,7 @@ public sealed partial class CreateOrganization(
             var organization = Organization.Create(
                 Guid.NewGuid(),
                 command.Name,
+                command.Cnpj,
                 command.Plan,
                 command.ContractStatus,
                 command.IconUrl);

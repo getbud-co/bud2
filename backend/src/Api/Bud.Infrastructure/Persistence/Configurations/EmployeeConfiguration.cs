@@ -13,6 +13,19 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(c => c.Email)
             .HasMaxLength(320);
 
+        builder.Property(c => c.Nickname)
+            .HasMaxLength(100);
+
+        builder.Property(c => c.Language)
+            .HasConversion<string>()
+            .HasMaxLength(10)
+            .IsRequired();
+
+        builder.Property(c => c.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.HasIndex(c => c.Email)
             .IsUnique();
     }
