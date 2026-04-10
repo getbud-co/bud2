@@ -254,24 +254,6 @@ export function AppSidebar({
                 Ciclos
               </SidebarSubItem>
               <SidebarSubItem
-                active={isActive("/settings/survey-templates")}
-                onClick={() => router.push("/settings/survey-templates")}
-              >
-                Templates de pesquisa
-              </SidebarSubItem>
-              <SidebarSubItem
-                active={isActive("/settings/ai")}
-                onClick={() => router.push("/settings/ai")}
-              >
-                Inteligência artificial
-              </SidebarSubItem>
-              <SidebarSubItem
-                active={isActive("/settings/integrations")}
-                onClick={() => router.push("/settings/integrations")}
-              >
-                Integrações
-              </SidebarSubItem>
-              <SidebarSubItem
                 active={isActive("/settings/roles")}
                 onClick={() => router.push("/settings/roles")}
               >
