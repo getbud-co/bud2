@@ -1,7 +1,6 @@
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using FluentAssertions;
-using System.Security.Claims;
 using Moq;
 using Xunit;
 
@@ -11,14 +10,12 @@ public sealed class NotificationWriteUseCasesTests
 {
     private readonly Mock<INotificationRepository> _repo = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
-    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
 
     private PatchNotification CreateMarkAsReadUseCase()
-        => new(_repo.Object, _tenantProvider.Object, _authorizationGateway.Object);
+        => new(_repo.Object, _tenantProvider.Object);
 
     private PatchNotifications CreateMarkAllAsReadUseCase()
-        => new(_repo.Object, _tenantProvider.Object, _authorizationGateway.Object);
+        => new(_repo.Object, _tenantProvider.Object);
 
     #region MarkAsReadAsync
 
@@ -26,11 +23,8 @@ public sealed class NotificationWriteUseCasesTests
     public async Task MarkAsReadAsync_WithoutEmployee_ReturnsForbidden()
     {
         _tenantProvider.SetupGet(x => x.EmployeeId).Returns((Guid?)null);
-        _authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<NotificationResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
 
-        var result = await CreateMarkAsReadUseCase().ExecuteAsync(User, Guid.NewGuid());
+        var result = await CreateMarkAsReadUseCase().ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -43,11 +37,8 @@ public sealed class NotificationWriteUseCasesTests
         _tenantProvider.SetupGet(x => x.EmployeeId).Returns(Guid.NewGuid());
         _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Notification?)null);
-        _authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<NotificationResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        var result = await CreateMarkAsReadUseCase().ExecuteAsync(User, Guid.NewGuid());
+        var result = await CreateMarkAsReadUseCase().ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -55,7 +46,7 @@ public sealed class NotificationWriteUseCasesTests
     }
 
     [Fact]
-    public async Task MarkAsReadAsync_WithDifferentRecipient_ReturnsForbidden()
+    public async Task MarkAsReadAsync_WithDifferentRecipient_ReturnsNotFound()
     {
         _tenantProvider.SetupGet(x => x.EmployeeId).Returns(Guid.NewGuid());
         var notificationId = Guid.NewGuid();
@@ -71,26 +62,23 @@ public sealed class NotificationWriteUseCasesTests
         };
         _repo.Setup(r => r.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(notification);
-        _authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<NotificationResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
 
-        var result = await CreateMarkAsReadUseCase().ExecuteAsync(User, notificationId);
+        var result = await CreateMarkAsReadUseCase().ExecuteAsync(notificationId);
 
         result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.Forbidden);
-        result.Error.Should().Be("Você não tem permissão para marcar esta notificação como lida.");
+        result.ErrorType.Should().Be(ErrorType.NotFound);
     }
 
     [Fact]
     public async Task MarkAsReadAsync_AlreadyRead_ReturnsSuccessWithoutSaving()
     {
-        _tenantProvider.SetupGet(x => x.EmployeeId).Returns(Guid.NewGuid());
+        var employeeId = Guid.NewGuid();
+        _tenantProvider.SetupGet(x => x.EmployeeId).Returns(employeeId);
         var notificationId = Guid.NewGuid();
         var notification = new Notification
         {
             Id = notificationId,
-            RecipientEmployeeId = Guid.NewGuid(),
+            RecipientEmployeeId = employeeId,
             OrganizationId = Guid.NewGuid(),
             Title = "Test",
             Message = "Test",
@@ -101,11 +89,8 @@ public sealed class NotificationWriteUseCasesTests
         };
         _repo.Setup(r => r.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(notification);
-        _authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<NotificationResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        var result = await CreateMarkAsReadUseCase().ExecuteAsync(User, notificationId);
+        var result = await CreateMarkAsReadUseCase().ExecuteAsync(notificationId);
 
         result.IsSuccess.Should().BeTrue();
         _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -130,11 +115,8 @@ public sealed class NotificationWriteUseCasesTests
         };
         _repo.Setup(r => r.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(notification);
-        _authorizationGateway
-            .Setup(g => g.CanWriteAsync(User, It.IsAny<NotificationResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        var result = await CreateMarkAsReadUseCase().ExecuteAsync(User, notificationId);
+        var result = await CreateMarkAsReadUseCase().ExecuteAsync(notificationId);
 
         result.IsSuccess.Should().BeTrue();
         notification.IsRead.Should().BeTrue();
@@ -151,12 +133,9 @@ public sealed class NotificationWriteUseCasesTests
     {
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(x => x.EmployeeId).Returns((Guid?)null);
-        _authorizationGateway
-            .Setup(g => g.CanReadAsync(User, It.IsAny<NotificationInboxResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-        var useCase = new PatchNotifications(_repo.Object, tenantProvider.Object, _authorizationGateway.Object);
+        var useCase = new PatchNotifications(_repo.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(User);
+        var result = await useCase.ExecuteAsync();
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -168,12 +147,9 @@ public sealed class NotificationWriteUseCasesTests
         var employeeId = Guid.NewGuid();
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(x => x.EmployeeId).Returns(employeeId);
-        _authorizationGateway
-            .Setup(g => g.CanReadAsync(User, It.IsAny<NotificationInboxResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-        var useCase = new PatchNotifications(_repo.Object, tenantProvider.Object, _authorizationGateway.Object);
+        var useCase = new PatchNotifications(_repo.Object, tenantProvider.Object);
 
-        var result = await useCase.ExecuteAsync(User);
+        var result = await useCase.ExecuteAsync();
 
         result.IsSuccess.Should().BeTrue();
         _repo.Verify(r => r.MarkAllAsReadAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);

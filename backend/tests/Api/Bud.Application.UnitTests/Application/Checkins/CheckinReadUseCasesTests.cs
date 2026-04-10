@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -10,8 +9,6 @@ namespace Bud.Application.UnitTests.Application.Checkins;
 
 public sealed class CheckinReadUseCasesTests
 {
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
-
     [Fact]
     public async Task GetByIdAsync_WhenFound_ReturnsSuccess()
     {
@@ -33,14 +30,10 @@ public sealed class CheckinReadUseCasesTests
             .Setup(r => r.GetCheckinByIdAsync(checkinId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checkin);
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new GetCheckinById(checkinRepository.Object, _authorizationGateway.Object);
+        var useCase = new GetCheckinById(checkinRepository.Object);
 
         // Act
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId, checkinId);
+        var result = await useCase.ExecuteAsync(indicatorId, checkinId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -58,10 +51,10 @@ public sealed class CheckinReadUseCasesTests
             .Setup(r => r.GetCheckinByIdAsync(checkinId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Checkin?)null);
 
-        var useCase = new GetCheckinById(checkinRepository.Object, _authorizationGateway.Object);
+        var useCase = new GetCheckinById(checkinRepository.Object);
 
         // Act
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId, checkinId);
+        var result = await useCase.ExecuteAsync(indicatorId, checkinId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -84,14 +77,10 @@ public sealed class CheckinReadUseCasesTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<Checkin>());
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<IndicatorResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var useCase = new ListCheckins(checkinRepository.Object, _authorizationGateway.Object);
+        var useCase = new ListCheckins(checkinRepository.Object);
 
         // Act
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), indicatorId, 1, 10);
+        var result = await useCase.ExecuteAsync(indicatorId, 1, 10);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -15,30 +14,18 @@ public sealed record CreateTaskCommand(
 public sealed partial class CreateTask(
     ITaskRepository taskRepository,
     ILogger<CreateTask> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<MissionTask>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateTaskCommand command,
         CancellationToken cancellationToken = default)
     {
         LogCreatingTask(logger, command.Name, command.MissionId);
 
-        var authorizationResult = await authorizationGateway.AuthorizeWriteAsync(
-            user,
-            new CreateTaskContext(command.MissionId),
-            cancellationToken);
-        if (!authorizationResult.IsSuccess)
-        {
-            LogTaskCreationFailed(logger, command.Name, authorizationResult.Error ?? "Authorization failed");
-            return authorizationResult.ToFailureResult<MissionTask>();
-        }
-
         var mission = await taskRepository.GetMissionByIdAsync(command.MissionId, cancellationToken);
         if (mission is null)
         {
-            LogTaskCreationFailed(logger, command.Name, "Mission not found after authorization");
+            LogTaskCreationFailed(logger, command.Name, UserErrorMessages.MissionNotFound);
             return Result<MissionTask>.NotFound(UserErrorMessages.MissionNotFound);
         }
 

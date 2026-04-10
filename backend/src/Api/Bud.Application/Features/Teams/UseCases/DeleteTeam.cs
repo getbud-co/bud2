@@ -1,19 +1,14 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
-using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Teams.UseCases;
 
 public sealed partial class DeleteTeam(
     ITeamRepository teamRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<DeleteTeam> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -24,13 +19,6 @@ public sealed partial class DeleteTeam(
         {
             LogTeamDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.TeamNotFound);
-        }
-
-        var canDelete = await authorizationGateway.CanWriteAsync(user, new TeamResource(id), cancellationToken);
-        if (!canDelete)
-        {
-            LogTeamDeletionFailed(logger, id, "Forbidden");
-            return Result.Forbidden(UserErrorMessages.TeamDeleteForbidden);
         }
 
         if (await teamRepository.HasSubTeamsAsync(id, cancellationToken))

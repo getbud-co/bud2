@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Bud.Application.Ports;
@@ -9,26 +8,20 @@ namespace Bud.Application.UnitTests.Application.Templates;
 
 public sealed class TemplateUseCasesTests
 {
-    private static readonly ClaimsPrincipal User = new(new ClaimsIdentity());
     private readonly Mock<ITemplateRepository> _repository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authorizationGateway = new();
 
     [Fact]
     public async Task CreateStrategicTemplate_WithValidRequest_CreatesTemplate()
     {
         _tenantProvider.SetupGet(x => x.TenantId).Returns(Guid.NewGuid());
-        _authorizationGateway
-            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<CreateTemplateContext>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         var useCase = new CreateTemplate(
             _repository.Object,
             _tenantProvider.Object,
             NullLogger<CreateTemplate>.Instance,
-            _authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, new CreateTemplateCommand(
+        var result = await useCase.ExecuteAsync(new CreateTemplateCommand(
             "Template",
             null,
             null,
@@ -60,17 +53,13 @@ public sealed class TemplateUseCasesTests
         _repository
             .Setup(repository => repository.GetByIdReadOnlyAsync(template.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Template { Id = template.Id, Name = "Updated", OrganizationId = template.OrganizationId });
-        _authorizationGateway
-            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TemplateResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
         var useCase = new PatchTemplate(
             _repository.Object,
             NullLogger<PatchTemplate>.Instance,
-            _authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, template.Id, new PatchTemplateCommand("Updated", default, default, default, [], []));
+        var result = await useCase.ExecuteAsync(template.Id, new PatchTemplateCommand("Updated", default, default, default, [], []));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("Updated");
@@ -87,10 +76,9 @@ public sealed class TemplateUseCasesTests
         var useCase = new PatchTemplate(
             _repository.Object,
             NullLogger<PatchTemplate>.Instance,
-            _authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, Guid.NewGuid(), new PatchTemplateCommand("Updated", default, default, default, [], []));
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchTemplateCommand("Updated", default, default, default, [], []));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -109,17 +97,13 @@ public sealed class TemplateUseCasesTests
         _repository
             .Setup(repository => repository.GetByIdAsync(template.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
-        _authorizationGateway
-            .Setup(gateway => gateway.CanWriteAsync(User, It.IsAny<TemplateResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
         var useCase = new DeleteTemplate(
             _repository.Object,
             NullLogger<DeleteTemplate>.Instance,
-            _authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, template.Id);
+        var result = await useCase.ExecuteAsync(template.Id);
 
         result.IsSuccess.Should().BeTrue();
         _repository.Verify(repository => repository.RemoveAsync(template, It.IsAny<CancellationToken>()), Times.Once);
@@ -136,10 +120,9 @@ public sealed class TemplateUseCasesTests
         var useCase = new DeleteTemplate(
             _repository.Object,
             NullLogger<DeleteTemplate>.Instance,
-            _authorizationGateway.Object,
             null);
 
-        var result = await useCase.ExecuteAsync(User, Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -153,13 +136,9 @@ public sealed class TemplateUseCasesTests
             .Setup(repository => repository.GetByIdReadOnlyAsync(templateId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Template { Id = templateId, Name = "Template", OrganizationId = Guid.NewGuid() });
 
-        _authorizationGateway
-            .Setup(gateway => gateway.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<TemplateResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        var useCase = new GetTemplateById(_repository.Object);
 
-        var useCase = new GetTemplateById(_repository.Object, _authorizationGateway.Object);
-
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), templateId);
+        var result = await useCase.ExecuteAsync(templateId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(templateId);

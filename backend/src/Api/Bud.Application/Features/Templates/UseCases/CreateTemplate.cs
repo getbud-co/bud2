@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -17,11 +16,9 @@ public sealed partial class CreateTemplate(
     ITemplateRepository templateRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTemplate> logger,
-    IApplicationAuthorizationGateway authorizationGateway,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Template>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateTemplateCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -30,16 +27,6 @@ public sealed partial class CreateTemplate(
         if (tenantProvider.TenantId is null)
         {
             LogTemplateCreationFailed(logger, command.Name, "Tenant not selected");
-            return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
-        }
-
-        var canWrite = await authorizationGateway.CanWriteAsync(
-            user,
-            new CreateTemplateContext(tenantProvider.TenantId.Value),
-            cancellationToken);
-        if (!canWrite)
-        {
-            LogTemplateCreationFailed(logger, command.Name, UserErrorMessages.TemplateCreateForbidden);
             return Result<Template>.Forbidden(UserErrorMessages.TemplateCreateForbidden);
         }
 

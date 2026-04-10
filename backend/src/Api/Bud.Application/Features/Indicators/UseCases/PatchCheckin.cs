@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -14,13 +13,11 @@ public sealed record PatchCheckinCommand(
 
 public sealed partial class PatchCheckin(
     IIndicatorRepository indicatorRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<PatchCheckin> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Checkin>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid indicatorId,
         Guid checkinId,
         PatchCheckinCommand command,
@@ -33,13 +30,6 @@ public sealed partial class PatchCheckin(
         {
             LogCheckinPatchFailed(logger, checkinId, "Not found");
             return Result<Checkin>.NotFound(UserErrorMessages.CheckinNotFound);
-        }
-
-        var canWrite = await authorizationGateway.CanWriteAsync(user, new IndicatorResource(indicatorId), cancellationToken);
-        if (!canWrite)
-        {
-            LogCheckinPatchFailed(logger, checkinId, "Indicator write forbidden");
-            return Result<Checkin>.Forbidden(UserErrorMessages.CheckinUpdateForbidden);
         }
 
         var employeeId = tenantProvider.EmployeeId;

@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Teams.UseCases;
@@ -16,12 +14,10 @@ public sealed record PatchTeamCommand(
 public sealed partial class PatchTeam(
     ITeamRepository teamRepository,
     IEmployeeRepository employeeRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchTeam> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<Team>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchTeamCommand command,
         CancellationToken cancellationToken = default)
@@ -33,13 +29,6 @@ public sealed partial class PatchTeam(
         {
             LogTeamPatchFailed(logger, id, "Not found");
             return Result<Team>.NotFound(UserErrorMessages.TeamNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanWriteAsync(user, new TeamResource(id), cancellationToken);
-        if (!canUpdate)
-        {
-            LogTeamPatchFailed(logger, id, "Forbidden");
-            return Result<Team>.Forbidden(UserErrorMessages.TeamUpdateForbidden);
         }
 
         var requestedParentTeamId = command.ParentTeamId.HasValue ? command.ParentTeamId.Value : team.ParentTeamId;

@@ -22,6 +22,7 @@ global using Bud.Application.Features.Templates;
 global using Bud.Application.Features.Templates.UseCases;
 global using Bud.Domain.Missions;
 global using Bud.Domain.Missions.Events;
+global using Bud.Domain.Tasks;
 global using Bud.Domain.Indicators;
 global using Bud.Domain.Indicators.Events;
 global using Bud.Domain.Notifications;

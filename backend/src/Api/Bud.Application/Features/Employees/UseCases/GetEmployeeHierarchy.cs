@@ -1,28 +1,17 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
-using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed class GetEmployeeHierarchy(
-    IEmployeeRepository employeeRepository,
-    IApplicationAuthorizationGateway authorizationGateway)
+    IEmployeeRepository employeeRepository)
 {
     public async Task<Result<List<EmployeeSubordinateResponse>>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         if (!await employeeRepository.ExistsAsync(employeeId, cancellationToken))
         {
             return Result<List<EmployeeSubordinateResponse>>.NotFound(UserErrorMessages.EmployeeNotFound);
-        }
-
-        var canRead = await authorizationGateway.CanReadAsync(user, new EmployeeResource(employeeId), cancellationToken);
-        if (!canRead)
-        {
-            return Result<List<EmployeeSubordinateResponse>>.Forbidden(UserErrorMessages.EmployeeNotFound);
         }
 
         var subordinates = await employeeRepository.GetSubordinatesAsync(employeeId, 5, cancellationToken);

@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Employees.UseCases;
@@ -16,12 +14,10 @@ public sealed record PatchEmployeeCommand(
 
 public sealed partial class PatchEmployee(
     IEmployeeRepository employeeRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<PatchEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         PatchEmployeeCommand command,
         CancellationToken cancellationToken = default)
@@ -33,13 +29,6 @@ public sealed partial class PatchEmployee(
         {
             LogEmployeePatchFailed(logger, id, "Not found");
             return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.EmployeeNotFound);
-        }
-
-        var canUpdate = await authorizationGateway.CanWriteAsync(user, new EmployeeResource(id), cancellationToken);
-        if (!canUpdate)
-        {
-            LogEmployeePatchFailed(logger, id, "Forbidden");
-            return Result<OrganizationEmployeeMember>.Forbidden(UserErrorMessages.EmployeeUpdateForbidden);
         }
 
         var requestedEmail = command.Email.HasValue ? command.Email.Value : member.Employee.Email;

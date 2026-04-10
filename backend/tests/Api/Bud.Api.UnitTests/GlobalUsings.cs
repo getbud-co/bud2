@@ -1,5 +1,6 @@
 global using Bud.Domain.Missions;
 global using Bud.Domain.Missions.Events;
+global using Bud.Domain.Tasks;
 global using Bud.Domain.Indicators;
 global using Bud.Domain.Indicators.Events;
 global using Bud.Domain.Notifications;
@@ -30,7 +31,6 @@ global using Bud.Application.Features.Teams;
 global using Bud.Application.Features.Teams.UseCases;
 global using Bud.Application.Features.Templates;
 global using Bud.Application.Features.Templates.UseCases;
-global using Bud.Infrastructure.Authorization;
 global using Bud.Infrastructure.Features.Missions;
 global using Bud.Infrastructure.Features.Tasks;
 global using Bud.Infrastructure.Features.Indicators;

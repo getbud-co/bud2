@@ -64,7 +64,7 @@ public sealed class MissionsController(
             request.ParentId,
             request.EmployeeId);
 
-        var result = await createMission.ExecuteAsync(User, command, cancellationToken);
+        var result = await createMission.ExecuteAsync(command, cancellationToken);
         return FromResult<Mission, MissionResponse>(result, mission =>
             CreatedAtAction(nameof(GetById), new { id = mission.Id }, mission.ToResponse()));
     }
@@ -101,7 +101,7 @@ public sealed class MissionsController(
             request.Status,
             request.EmployeeId);
 
-        var result = await patchMission.ExecuteAsync(User, id, command, cancellationToken);
+        var result = await patchMission.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, mission => mission.ToResponse());
     }
 
@@ -115,7 +115,7 @@ public sealed class MissionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await deleteMission.ExecuteAsync(User, id, cancellationToken);
+        var result = await deleteMission.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -129,7 +129,7 @@ public sealed class MissionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MissionResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await getMissionById.ExecuteAsync(User, id, cancellationToken);
+        var result = await getMissionById.ExecuteAsync(id, cancellationToken);
         return FromResultOk(result, mission => mission.ToResponse());
     }
 
@@ -208,7 +208,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await listMissionIndicators.ExecuteAsync(User, id, page, pageSize, cancellationToken);
+        var result = await listMissionIndicators.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result, paged => paged.MapPaged(i => i.ToResponse()));
     }
 
@@ -234,7 +234,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await listMissionChildren.ExecuteAsync(User, id, page, pageSize, cancellationToken);
+        var result = await listMissionChildren.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result, paged => paged.MapPaged(g => g.ToResponse()));
     }
 
@@ -260,7 +260,7 @@ public sealed class MissionsController(
             return paginationValidation;
         }
 
-        var result = await listTasks.ExecuteAsync(User, id, page, pageSize, cancellationToken);
+        var result = await listTasks.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result, paged => paged.MapPaged(t => t.ToResponse()));
     }
 }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
@@ -14,13 +13,11 @@ public sealed record CreateEmployeeCommand(
 
 public sealed partial class CreateEmployee(
     IEmployeeRepository employeeRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ITenantProvider tenantProvider,
     ILogger<CreateEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(
-        ClaimsPrincipal user,
         CreateEmployeeCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -31,16 +28,6 @@ public sealed partial class CreateEmployee(
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Organization context not found");
             return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
-        }
-
-        var canCreate = await authorizationGateway.CanWriteAsync(
-            user,
-            new CreateEmployeeContext(organizationId.Value),
-            cancellationToken);
-        if (!canCreate)
-        {
-            LogEmployeeCreationFailed(logger, command.FullName, "Forbidden");
-            return Result<OrganizationEmployeeMember>.Forbidden(UserErrorMessages.EmployeeCreateForbidden);
         }
 
         if (!EmailAddress.TryCreate(command.Email, out var emailAddress))

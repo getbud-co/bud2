@@ -1,19 +1,14 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
-using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed partial class DeleteEmployee(
     IEmployeeRepository employeeRepository,
-    IApplicationAuthorizationGateway authorizationGateway,
     ILogger<DeleteEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
     public async Task<Result> ExecuteAsync(
-        ClaimsPrincipal user,
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -24,13 +19,6 @@ public sealed partial class DeleteEmployee(
         {
             LogEmployeeDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.EmployeeNotFound);
-        }
-
-        var canDelete = await authorizationGateway.CanWriteAsync(user, new EmployeeResource(id), cancellationToken);
-        if (!canDelete)
-        {
-            LogEmployeeDeletionFailed(logger, id, "Forbidden");
-            return Result.Forbidden(UserErrorMessages.EmployeeDeleteForbidden);
         }
 
         if (await employeeRepository.HasSubordinatesAsync(id, cancellationToken))

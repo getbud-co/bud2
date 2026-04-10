@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bud.Application.Common;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -12,10 +11,9 @@ public sealed class MissionReadUseCasesTests
 {
     private readonly Mock<IMissionRepository> _repo = new();
     private readonly Mock<IMissionProgressReadStore> _progressService = new();
-    private readonly Mock<IApplicationAuthorizationGateway> _authGateway = new();
 
     private GetMissionById CreateGetMissionById()
-        => new(_repo.Object, _authGateway.Object);
+        => new(_repo.Object);
 
     private ListMissionProgress CreateListMissionProgress()
         => new(_progressService.Object);
@@ -24,10 +22,10 @@ public sealed class MissionReadUseCasesTests
         => new(_repo.Object);
 
     private ListMissionIndicators CreateListMissionMetrics()
-        => new(_repo.Object, _authGateway.Object);
+        => new(_repo.Object);
 
     private ListMissionChildren CreateListMissionChildren()
-        => new(_repo.Object, _authGateway.Object);
+        => new(_repo.Object);
 
     [Fact]
     public async Task GetByIdAsync_WithExistingMission_ReturnsSuccess()
@@ -35,13 +33,10 @@ public sealed class MissionReadUseCasesTests
         var missionId = Guid.NewGuid();
         _repo.Setup(r => r.GetByIdReadOnlyAsync(missionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Mission { Id = missionId, Name = "M", OrganizationId = Guid.NewGuid() });
-        _authGateway
-            .Setup(g => g.CanReadAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<MissionResource>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
         var useCase = CreateGetMissionById();
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), missionId);
+        var result = await useCase.ExecuteAsync(missionId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Id.Should().Be(missionId);
@@ -55,7 +50,7 @@ public sealed class MissionReadUseCasesTests
 
         var useCase = CreateGetMissionById();
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), Guid.NewGuid());
+        var result = await useCase.ExecuteAsync(Guid.NewGuid());
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -100,7 +95,7 @@ public sealed class MissionReadUseCasesTests
 
         var useCase = CreateListMissionMetrics();
 
-        var result = await useCase.ExecuteAsync(new ClaimsPrincipal(new ClaimsIdentity()), Guid.NewGuid(), 1, 10);
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), 1, 10);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
