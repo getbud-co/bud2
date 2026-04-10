@@ -1,51 +1,9 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
-
-const ROLE_MAP: Record<number, string> = {
-  0: "colaborador",
-  1: "lider",
-  2: "admin",
-};
-
-function mapEmployee(raw: Record<string, unknown>) {
-  const fullName = ((raw.fullName as string) ?? "").trim();
-  const parts = fullName.split(" ").filter(Boolean);
-  const initials =
-    parts
-      .map((p) => p[0] ?? "")
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || null;
-  const team = raw.team as { id: string; name: string } | null;
-
-  return {
-    id: raw.id,
-    orgId: raw.organizationId,
-    email: raw.email,
-    fullName,
-    initials,
-    jobTitle: null,
-    managerId: raw.leaderId ?? null,
-    avatarUrl: null,
-    nickname: null,
-    birthDate: null,
-    gender: null,
-    phone: null,
-    language: "pt-br",
-    status: "active",
-    invitedAt: null,
-    activatedAt: null,
-    lastLoginAt: null,
-    authProvider: "email",
-    authProviderId: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-    roleId: null,
-    roleType: ROLE_MAP[raw.role as number] ?? "colaborador",
-    teams: team ? [team.name] : [],
-  };
-}
+import {
+  EmployeeListResponseSchema,
+  EmployeeResponseSchema,
+} from "@/schemas/employee";
 
 export async function GET(request: NextRequest) {
   const apiUrl = process.env.BUD_API_URL;
@@ -76,6 +34,57 @@ export async function GET(request: NextRequest) {
   }
 
   const data = await response.json();
-  const items: Record<string, unknown>[] = data.items ?? [];
-  return NextResponse.json(items.map(mapEmployee));
+
+  const parsed = EmployeeListResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      "EmployeeListResponseSchema validation failed",
+      parsed.error.issues,
+    );
+    return NextResponse.json(
+      { error: "Invalid response from employees API" },
+      { status: 400 },
+    );
+  }
+  return NextResponse.json(parsed.data.items);
+}
+
+export async function POST(request: NextRequest) {
+  const apiUrl = process.env.BUD_API_URL;
+  const token = await getBudToken();
+  const tenantId = request.headers.get("X-Tenant-Id");
+  const body = await request.json();
+
+  const response = await fetch(`${apiUrl}/api/employees`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(tenantId ? { "X-Tenant-Id": tenantId } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Failed to create employee" },
+      { status: response.status },
+    );
+  }
+
+  const data = await response.json();
+
+  const parsed = EmployeeResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      "EmployeeResponseSchema validation failed",
+      parsed.error.issues,
+    );
+    return NextResponse.json(
+      { error: "Invalid response from employees API" },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(parsed.data, { status: 201 });
 }

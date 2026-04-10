@@ -1,3 +1,5 @@
+"use client";
+
 import { useRef, type RefObject } from "react";
 import {
   FilterBar,

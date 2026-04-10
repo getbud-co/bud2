@@ -66,8 +66,8 @@ export const UsersTableRow = memo(function UsersTableRow({
       <TableCell>
         <div className="flex flex-wrap gap-[var(--sp-3xs)]">
           {user.teams.map((team) => (
-            <Badge key={team} color="neutral">
-              {team}
+            <Badge key={team.id} color="neutral">
+              {team.name}
             </Badge>
           ))}
         </div>
@@ -81,8 +81,7 @@ export const UsersTableRow = memo(function UsersTableRow({
             type="button"
           >
             <span className="flex-1 min-w-0 font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-900)] leading-[1.15]">
-              {roleLabelBySlug.get(resolveRoleSlug(user.roleType)) ??
-                user.roleType}
+              {roleLabelBySlug.get(resolveRoleSlug(user.role)) ?? user.role}
             </span>
             <CaretDown
               size={14}
@@ -99,7 +98,7 @@ export const UsersTableRow = memo(function UsersTableRow({
                 <button
                   key={opt.value}
                   type="button"
-                  className={`flex items-start gap-[var(--sp-2xs)] px-[var(--sp-sm)] py-[var(--sp-2xs)] border-0 bg-transparent cursor-pointer text-left w-full rounded-[var(--radius-xs)] transition-colors duration-[120ms] hover:bg-[var(--color-caramel-100)] ${resolveRoleSlug(user.roleType) === opt.value ? "bg-[var(--color-caramel-50)]" : ""}`}
+                  className={`flex items-start gap-[var(--sp-2xs)] px-[var(--sp-sm)] py-[var(--sp-2xs)] border-0 bg-transparent cursor-pointer text-left w-full rounded-[var(--radius-xs)] transition-colors duration-[120ms] hover:bg-[var(--color-caramel-100)] ${resolveRoleSlug(user.role) === opt.value ? "bg-[var(--color-caramel-50)]" : ""}`}
                   onClick={() => onRoleChange(opt.value)}
                 >
                   <div className="flex flex-col gap-[2px] flex-1 min-w-0">

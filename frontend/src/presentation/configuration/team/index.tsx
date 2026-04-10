@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import {
   Table,
@@ -19,8 +21,8 @@ import {
   ArrowCounterClockwise,
 } from "@phosphor-icons/react";
 import type { Team, TeamMember, TeamColor } from "@/types";
-import { usePeopleData } from "@/contexts/PeopleDataContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrgPeople } from "@/hooks/useOrgPeople";
 import { useTeams } from "./hooks/useTeams";
 import {
   useCreateTeam,
@@ -37,6 +39,9 @@ import { TeamsTableRow } from "./components/TeamsTableRow";
 import { DeleteTeamModal } from "./components/DeleteTeamModal";
 import { TeamModal } from "./components/TeamModal";
 import type { PersonView } from "./components/TeamModal";
+import { PageHeader } from "@/presentation/layout/page-header";
+import { ConfigLoadingState } from "@/components/ConfigLoadingState";
+import { ConfigErrorState } from "@/components/ConfigErrorState";
 
 /* ——— View helper ——— */
 
@@ -54,10 +59,9 @@ function personFromMember(m: TeamMember): PersonView | null {
 /* ——— Component ——— */
 
 export function TeamsModule() {
-  const { orgPeople } = usePeopleData();
   const { activeOrgId } = useOrganization();
-
-  const { data: teams = [] } = useTeams(activeOrgId);
+  const { data: orgPeople = [] } = useOrgPeople(activeOrgId);
+  const { data: teams = [], isLoading, isError } = useTeams(activeOrgId);
   const createTeam = useCreateTeam(activeOrgId);
   const updateTeam = useUpdateTeam(activeOrgId);
   const deleteTeamMutation = useDeleteTeam(activeOrgId);
@@ -145,7 +149,7 @@ export function TeamsModule() {
             .join("")
             .toUpperCase(),
         teamIds: person.teams
-          .map((name) => teamIdByName.get(name))
+          .map((t) => teamIdByName.get(t.name))
           .filter((id): id is string => !!id),
       })),
     [orgPeople, teamIdByName],
@@ -172,6 +176,7 @@ export function TeamsModule() {
     description: string;
     color: TeamColor;
     members: TeamMember[];
+    parentTeamId: string | null;
   }) {
     const leaderId = extractLeaderId(data.members);
     const editingTeam = teamModalState?.team;
@@ -297,132 +302,141 @@ export function TeamsModule() {
 
   /* ——— Render ——— */
 
+  if (isLoading) return <ConfigLoadingState />;
+  if (isError)
+    return (
+      <ConfigErrorState message="Não foi possível carregar os times. Verifique sua conexão e tente novamente." />
+    );
+
   return (
-    <>
-      <Table
-        variant="divider"
-        elevated={false}
-        selectable
-        selectedRows={selectedRows}
-        rowIds={rowIds}
-        onSelectRow={handleSelectRow}
-        onSelectAll={(checked: boolean) => handleSelectAll(checked, rowIds)}
-      >
-        <TeamsTableHeader
-          count={filtered.length}
-          search={search}
-          onSearch={setSearch}
-          onCreate={openCreate}
-        />
+    <div className="flex flex-col gap-[var(--sp-2xs)] w-full">
+      <PageHeader title="Times" />
+      <div className="flex flex-col gap-[var(--sp-2xs)] min-w-0">
+        <Table
+          variant="divider"
+          elevated={false}
+          selectable
+          selectedRows={selectedRows}
+          rowIds={rowIds}
+          onSelectRow={handleSelectRow}
+          onSelectAll={(checked: boolean) => handleSelectAll(checked, rowIds)}
+        >
+          <TeamsTableHeader
+            count={filtered.length}
+            search={search}
+            onSearch={setSearch}
+            onCreate={openCreate}
+          />
 
-        <TeamsFilterBar
-          filterStatus={filterStatus}
-          onFilterStatusChange={setFilterStatus}
-        />
+          <TeamsFilterBar
+            filterStatus={filterStatus}
+            onFilterStatusChange={setFilterStatus}
+          />
 
-        <TableContent>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell isCheckbox />
-              <TableHeaderCell
-                sortable
-                sortDirection={getSortDirection("name")}
-                onSort={() => handleSort("name")}
-              >
-                Nome
-              </TableHeaderCell>
-              <TableHeaderCell>Líder</TableHeaderCell>
-              <TableHeaderCell
-                sortable
-                sortDirection={getSortDirection("members")}
-                onSort={() => handleSort("members")}
-              >
-                Membros
-              </TableHeaderCell>
-              <TableHeaderCell
-                sortable
-                sortDirection={getSortDirection("status")}
-                onSort={() => handleSort("status")}
-              >
-                Status
-              </TableHeaderCell>
-              <TableHeaderCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((team) => {
-              const members = team.members ?? [];
-              const leader = team.leaderId
-                ? personFromMember(
-                    members.find((m) => m.userId === team.leaderId) ?? {
-                      userId: "",
-                      teamId: "",
-                      roleInTeam: "member",
-                      joinedAt: "",
-                      user: undefined,
-                    },
-                  )
-                : null;
-              const avatars: AvatarGroupItem[] = members
-                .slice(0, 5)
-                .map((m) => ({ initials: m.user?.initials ?? "" }));
-
-              return (
-                <TeamsTableRow
-                  key={team.id}
-                  team={team}
-                  leader={leader}
-                  avatars={avatars}
-                  rowActions={getRowActions(team)}
-                  isActionsOpen={actionsPopoverTeam === team.id}
-                  onActionsToggle={() =>
-                    setActionsPopoverTeam(
-                      actionsPopoverTeam === team.id ? null : team.id,
+          <TableContent>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell isCheckbox />
+                <TableHeaderCell
+                  sortable
+                  sortDirection={getSortDirection("name")}
+                  onSort={() => handleSort("name")}
+                >
+                  Nome
+                </TableHeaderCell>
+                <TableHeaderCell>Líder</TableHeaderCell>
+                <TableHeaderCell
+                  sortable
+                  sortDirection={getSortDirection("members")}
+                  onSort={() => handleSort("members")}
+                >
+                  Membros
+                </TableHeaderCell>
+                <TableHeaderCell
+                  sortable
+                  sortDirection={getSortDirection("status")}
+                  onSort={() => handleSort("status")}
+                >
+                  Status
+                </TableHeaderCell>
+                <TableHeaderCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((team) => {
+                const members = team.members ?? [];
+                const leader = team.leaderId
+                  ? personFromMember(
+                      members.find((m) => m.userId === team.leaderId) ?? {
+                        userId: "",
+                        teamId: "",
+                        roleInTeam: "member",
+                        joinedAt: "",
+                        user: undefined,
+                      },
                     )
-                  }
-                  onActionsClose={() => setActionsPopoverTeam(null)}
-                  onOpenMembers={openMembers}
-                />
-              );
-            })}
-          </TableBody>
-        </TableContent>
+                  : null;
+                const avatars: AvatarGroupItem[] = members
+                  .slice(0, 5)
+                  .map((m) => ({ initials: m.user?.initials ?? "" }));
 
-        <TableBulkActions count={selectedRows.size} onClear={clearSelection}>
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={Archive}
-            onClick={handleBulkArchive}
-          >
-            Arquivar
-          </Button>
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={Trash}
-            onClick={handleBulkDelete}
-          >
-            Excluir
-          </Button>
-        </TableBulkActions>
-      </Table>
+                return (
+                  <TeamsTableRow
+                    key={team.id}
+                    team={team}
+                    leader={leader}
+                    avatars={avatars}
+                    rowActions={getRowActions(team)}
+                    isActionsOpen={actionsPopoverTeam === team.id}
+                    onActionsToggle={() =>
+                      setActionsPopoverTeam(
+                        actionsPopoverTeam === team.id ? null : team.id,
+                      )
+                    }
+                    onActionsClose={() => setActionsPopoverTeam(null)}
+                    onOpenMembers={openMembers}
+                  />
+                );
+              })}
+            </TableBody>
+          </TableContent>
 
-      <TeamModal
-        open={!!teamModalState}
-        team={teamModalState?.team ?? null}
-        initialTab={teamModalState?.tab ?? "details"}
-        peoplePool={peoplePool}
-        allTeams={teams.map((t) => ({ id: t.id, name: t.name }))}
-        onClose={() => setTeamModalState(null)}
-        onSave={handleTeamModalSave}
-      />
+          <TableBulkActions count={selectedRows.size} onClear={clearSelection}>
+            <Button
+              variant="secondary"
+              size="md"
+              leftIcon={Archive}
+              onClick={handleBulkArchive}
+            >
+              Arquivar
+            </Button>
+            <Button
+              variant="secondary"
+              size="md"
+              leftIcon={Trash}
+              onClick={handleBulkDelete}
+            >
+              Excluir
+            </Button>
+          </TableBulkActions>
+        </Table>
 
-      <DeleteTeamModal
-        team={deleteTeam}
-        onClose={() => setDeleteTeam(null)}
-        onConfirm={handleDelete}
-      />
-    </>
+        <TeamModal
+          open={!!teamModalState}
+          team={teamModalState?.team ?? null}
+          initialTab={teamModalState?.tab ?? "details"}
+          peoplePool={peoplePool}
+          allTeams={teams.map((t) => ({ id: t.id, name: t.name }))}
+          onClose={() => setTeamModalState(null)}
+          onSave={handleTeamModalSave}
+        />
+
+        <DeleteTeamModal
+          team={deleteTeam}
+          onClose={() => setDeleteTeam(null)}
+          onConfirm={handleDelete}
+        />
+      </div>
+    </div>
   );
 }

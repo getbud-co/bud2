@@ -1,13 +1,35 @@
-import type {
-  Gender,
-  Team,
-  TeamColor,
-  TeamMember,
-  User,
-  UserStatus,
-} from "@/types";
+import type { Team, TeamColor, TeamMember, User } from "@/types";
+
+export type UserStatus = "active" | "inactive" | "invited" | "suspended";
+export type AuthProvider = "email" | "google" | "microsoft" | "saml";
+export type Gender =
+  | "feminino"
+  | "masculino"
+  | "nao-binario"
+  | "prefiro-nao-dizer";
 
 export interface PeopleUserRecord extends User {
+  /** Computed initials for display (e.g. "JD"). Not in backend contract. */
+  initials: string | null;
+  /** Job title. Not in backend contract; kept for local seed data. */
+  jobTitle: string | null;
+  /** Avatar URL. Not in backend contract. */
+  avatarUrl: string | null;
+  /** User status for local seed/store. Not in backend contract. */
+  status: UserStatus;
+  /** Auth provider. Not in backend contract. */
+  authProvider: AuthProvider;
+  /** Auth provider ID. Not in backend contract. */
+  authProviderId: string | null;
+  invitedAt: string | null;
+  activatedAt: string | null;
+  lastLoginAt: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  phone: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
   /**
    * Foreign key to ConfigRoleRecord.id (e.g., "role-org-1-gestor")
    * This is the primary reference for user's role.
@@ -137,7 +159,7 @@ function createUser(input: {
   const now = new Date().toISOString();
   const parts = input.fullName.trim().split(" ");
   const emailPrefix = parts.map(slugify).join(".");
-  const orgId = input.orgId ?? DEFAULT_ORG_ID;
+  const organizationId = input.orgId ?? DEFAULT_ORG_ID;
   const initials = parts
     .filter(Boolean)
     .map((p) => p[0] ?? "")
@@ -147,12 +169,12 @@ function createUser(input: {
 
   return {
     id: input.id,
-    orgId,
+    organizationId,
     email: `${emailPrefix}@acme.com`,
     fullName: input.fullName,
     nickname: input.nickname ?? null,
     jobTitle: input.jobTitle,
-    managerId: input.managerId,
+    leaderId: input.managerId,
     avatarUrl: null,
     initials,
     birthDate: input.birthDate ?? null,
@@ -168,7 +190,10 @@ function createUser(input: {
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
-    roleId: createRoleIdForOrg(orgId, input.roleType),
+    role: input.roleType,
+    isGlobalAdmin: false,
+    teams: [],
+    roleId: createRoleIdForOrg(organizationId, input.roleType),
     roleType: input.roleType,
   };
 }
@@ -595,7 +620,7 @@ function sanitizeUsers(
       const roleType = String(item.roleType ?? "colaborador");
       // Migrate legacy data: if roleId is missing, create it from roleType
       const roleId =
-        item.roleId ?? createRoleIdForOrg(item.orgId ?? orgId, roleType);
+        item.roleId ?? createRoleIdForOrg(item.organizationId ?? orgId, roleType);
 
       return [
         id,

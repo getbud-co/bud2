@@ -13,8 +13,11 @@ async function fetchEmployees(orgId: string): Promise<PeopleUserView[]> {
   const res = await fetch("/api/employees?pageSize=100", {
     headers: tenantHeader(orgId),
   });
+
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  console.log("Fetched employees data:", data);
+  return data;
 }
 
 export function useEmployees(activeOrgId: string) {

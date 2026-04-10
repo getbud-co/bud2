@@ -10,25 +10,14 @@ export type Gender =
 
 export interface User {
   id: string;
-  orgId: string;
+  organizationId: string;
   email: string;
   fullName: string;
-  initials: string | null;
-  jobTitle: string | null;
-  managerId: string | null;
-  avatarUrl: string | null;
   nickname: string | null;
-  birthDate: string | null;
-  gender: string | null;
-  phone: string | null;
   language: string;
   status: UserStatus;
-  invitedAt: string | null;
-  activatedAt: string | null;
-  lastLoginAt: string | null;
-  authProvider: AuthProvider;
-  authProviderId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
+  role: string;
+  leaderId: string | null;
+  isGlobalAdmin: boolean;
+  teams: { id: string; name: string }[];
 }

@@ -1,8 +1,6 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
-import type { Team, TeamColor, TeamMember, TeamStatus } from "@/types";
-
-/* ——— Backend shapes (camelCase after ASP.NET serialization) ——— */
+import type { Team, TeamMember } from "@/types";
 
 interface BackendEmployee {
   id: string;
@@ -25,7 +23,9 @@ interface BackendTeam {
   employees: BackendEmployee[];
 }
 
-/* ——— Mapping helpers ——— */
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 function toInitials(fullName: string): string {
   return fullName
@@ -36,19 +36,6 @@ function toInitials(fullName: string): string {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-}
-
-/** "neutral" → "Neutral" (matches C# enum string conversion) */
-function toBackendEnum(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function mapColor(raw: string): TeamColor {
-  return raw.toLowerCase() as TeamColor;
-}
-
-function mapStatus(raw: string): TeamStatus {
-  return raw.toLowerCase() as TeamStatus;
 }
 
 function mapTeam(raw: BackendTeam): Team {
@@ -71,8 +58,8 @@ function mapTeam(raw: BackendTeam): Team {
     orgId: raw.organizationId,
     name: raw.name,
     description: raw.description,
-    color: mapColor(raw.color),
-    status: mapStatus(raw.status),
+    color: raw.color.toLowerCase() as Team["color"],
+    status: raw.status.toLowerCase() as Team["status"],
     leaderId: raw.leaderId,
     parentTeamId: raw.parentTeamId,
     createdAt: raw.createdAt,
@@ -81,8 +68,6 @@ function mapTeam(raw: BackendTeam): Team {
     members,
   };
 }
-
-/* ——— Routes ——— */
 
 export async function GET(request: NextRequest) {
   const apiUrl = process.env.BUD_API_URL;
@@ -126,7 +111,7 @@ export async function POST(request: NextRequest) {
   const backendBody = {
     name: body.name,
     description: body.description ?? null,
-    color: toBackendEnum(body.color as string),
+    color: capitalize(body.color as string),
     organizationId: body.organizationId,
     leaderId: body.leaderId,
     parentTeamId: body.parentTeamId ?? null,
@@ -143,7 +128,9 @@ export async function POST(request: NextRequest) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Unknown error" }));
     return NextResponse.json(error, { status: response.status });
   }
 

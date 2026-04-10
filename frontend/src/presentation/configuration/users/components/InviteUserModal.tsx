@@ -9,13 +9,10 @@ import {
   Button,
   Input,
   Select,
-  DatePicker,
   FilterDropdown,
 } from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
 import { CaretDown, Envelope } from "@phosphor-icons/react";
-import { Gender } from "@/types";
-import { GENDER_OPTIONS, LANGUAGE_OPTIONS } from "../consts";
+import { LANGUAGE_OPTIONS } from "../consts";
 
 export interface InviteFormData {
   fullName: string;
@@ -24,9 +21,7 @@ export interface InviteFormData {
   jobTitle: string;
   team: string;
   role: string;
-  birthDate: CalendarDate | null;
   language: string;
-  gender: string;
 }
 
 interface RoleOption {
@@ -62,9 +57,7 @@ export function InviteUserModal({
   const [role, setRole] = useState(defaultRole);
   const [roleOpen, setRoleOpen] = useState(false);
   const roleBtnRef = useRef<HTMLButtonElement>(null);
-  const [birthDate, setBirthDate] = useState<CalendarDate | null>(null);
   const [language, setLanguage] = useState("pt-br");
-  const [gender, setGender] = useState("");
 
   useEffect(() => {
     if (!role && defaultRole) setRole(defaultRole);
@@ -78,9 +71,7 @@ export function InviteUserModal({
       jobTitle,
       team,
       role,
-      birthDate,
       language,
-      gender,
     });
     setFullName("");
     setNickname("");
@@ -88,9 +79,7 @@ export function InviteUserModal({
     setJobTitle("");
     setTeam("");
     setRole(defaultRole);
-    setBirthDate(null);
     setLanguage("pt-br");
-    setGender("");
   }
 
   return (
@@ -139,24 +128,6 @@ export function InviteUserModal({
               value={team}
               onChange={setTeam}
               options={teamOptions}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-[var(--sp-md)]">
-            <div className="flex flex-col gap-[var(--sp-3xs)]">
-              <span className="font-[var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-700)] leading-[1.15]">
-                Data de nascimento
-              </span>
-              <DatePicker
-                mode="single"
-                value={birthDate}
-                onChange={setBirthDate}
-              />
-            </div>
-            <Select
-              label="Gênero"
-              value={gender}
-              onChange={setGender}
-              options={GENDER_OPTIONS}
             />
           </div>
           <Select

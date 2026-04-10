@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   Modal,
@@ -24,6 +26,7 @@ import {
   CaretDown,
 } from "@phosphor-icons/react";
 import type { Team, TeamMember, TeamColor } from "@/types";
+import { ConfigErrorState } from "@/components/ConfigErrorState";
 import {
   COLOR_OPTIONS,
   ROLE_OPTIONS,
@@ -36,8 +39,6 @@ import {
   filterActionItemCls,
 } from "../consts";
 
-/* ——— Types ——— */
-
 export interface PersonView {
   id: string;
   fullName: string;
@@ -48,9 +49,7 @@ export interface PersonView {
 
 export interface TeamModalProps {
   open: boolean;
-  /** null = creating a new team */
   team: Team | null;
-  /** Which tab to show first. Default: "details" */
   initialTab?: "details" | "members";
   peoplePool: PersonView[];
   allTeams: { id: string; name: string }[];
@@ -60,10 +59,9 @@ export interface TeamModalProps {
     description: string;
     color: TeamColor;
     members: TeamMember[];
+    parentTeamId: string | null;
   }) => void;
 }
-
-/* ——— Helper ——— */
 
 function memberFromPerson(
   person: PersonView,
@@ -98,23 +96,19 @@ export function TeamModal({
 }: TeamModalProps) {
   const isCreating = team === null;
 
-  /* ——— Tabs ——— */
   const [activeTab, setActiveTab] = useState<"details" | "members">(initialTab);
 
-  /* ——— Details form ——— */
   const [formName, setFormName] = useState("");
   const [formDesc, setFormDesc] = useState("");
   const [formColor, setFormColor] = useState<TeamColor>("neutral");
+  const [formParentTeamId, setFormParentTeamId] = useState<string | null>(null);
 
-  /* ——— Members ——— */
   const [pendingMembers, setPendingMembers] = useState<TeamMember[]>([]);
   const [originalMembers, setOriginalMembers] = useState<TeamMember[]>([]);
 
-  /* ——— Search ——— */
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  /* ——— Search panel filters ——— */
   const [searchActiveFilters, setSearchActiveFilters] = useState<string[]>([]);
   const [searchOpenFilter, setSearchOpenFilter] = useState<string | null>(null);
   const [filterMembership, setFilterMembership] = useState("all");
@@ -127,7 +121,6 @@ export function TeamModal({
   const cargoChipRef = useRef<HTMLDivElement>(null);
   const timeChipRef = useRef<HTMLDivElement>(null);
 
-  /* ——— Members panel filters ——— */
   const [membersActiveFilters, setMembersActiveFilters] = useState<string[]>(
     [],
   );
@@ -137,39 +130,42 @@ export function TeamModal({
   const [filterMembersRole, setFilterMembersRole] = useState("all");
   const membersRoleChipRef = useRef<HTMLDivElement>(null);
 
-  /* ——— Role dropdown per member ——— */
   const [openRoleFor, setOpenRoleFor] = useState<string | null>(null);
   const roleButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  /* ——— Mobile sub-tabs (within members tab) ——— */
   const [mobileMembersTab, setMobileMembersTab] = useState<"add" | "members">(
     "add",
   );
 
-  /* ——— Initialize on open ——— */
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
-    if (open) {
-      setActiveTab(initialTab);
-      setFormName(team?.name ?? "");
-      setFormDesc(team?.description ?? "");
-      setFormColor(team?.color ?? "neutral");
-      const initial = team?.members ?? [];
-      setPendingMembers(initial);
-      setOriginalMembers(initial);
-      setSearch("");
-      setSearchActiveFilters([]);
-      setSearchOpenFilter(null);
-      setFilterMembership("all");
-      setFilterRole("all");
-      setFilterCargos([]);
-      setFilterTeamIds([]);
-      setMembersActiveFilters([]);
-      setMembersOpenFilter(null);
-      setFilterMembersRole("all");
-      setOpenRoleFor(null);
-      setMobileMembersTab("add");
-    }
-  }, [open, team, initialTab]);
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (!justOpened) return;
+
+    setActiveTab(initialTab);
+    setFormName(team?.name ?? "");
+    setFormDesc(team?.description ?? "");
+    setFormColor(team?.color ?? "neutral");
+    setFormParentTeamId(team?.parentTeamId ?? null);
+    const initial = team?.members ?? [];
+    setPendingMembers(initial);
+    setOriginalMembers(initial);
+    setSearch("");
+    setSearchActiveFilters([]);
+    setSearchOpenFilter(null);
+    setFilterMembership("all");
+    setFilterRole("all");
+    setFilterCargos([]);
+    setFilterTeamIds([]);
+    setMembersActiveFilters([]);
+    setMembersOpenFilter(null);
+    setFilterMembersRole("all");
+    setOpenRoleFor(null);
+    setMobileMembersTab("add");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   /* ——— Auto-focus search when switching to members tab ——— */
   useEffect(() => {
@@ -220,9 +216,10 @@ export function TeamModal({
     return (
       formName !== (team?.name ?? "") ||
       formDesc !== (team?.description ?? "") ||
-      formColor !== (team?.color ?? "neutral")
+      formColor !== (team?.color ?? "neutral") ||
+      formParentTeamId !== (team?.parentTeamId ?? null)
     );
-  }, [isCreating, formName, formDesc, formColor, team]);
+  }, [isCreating, formName, formDesc, formColor, formParentTeamId, team]);
 
   const hasMembersChanges = useMemo(() => {
     if (pendingMembers.length !== originalMembers.length) return true;
@@ -469,6 +466,7 @@ export function TeamModal({
       description: formDesc.trim(),
       color: formColor,
       members: pendingMembers,
+      parentTeamId: formParentTeamId,
     });
   }
 
@@ -518,6 +516,28 @@ export function TeamModal({
         }
         rows={3}
       />
+      <div className="flex flex-col gap-[var(--sp-2xs)]">
+        <label
+          htmlFor="parent-team-select"
+          className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-700)]"
+        >
+          Esse time está relacionado a
+        </label>
+        <select
+          id="parent-team-select"
+          value={formParentTeamId ?? ""}
+          onChange={(e) => setFormParentTeamId(e.target.value || null)}
+          className="h-10 w-full rounded-[var(--radius-sm)] border border-[var(--color-caramel-200)] bg-white px-[var(--sp-sm)] font-[var(--font-body)] text-[var(--text-sm)] text-[var(--color-neutral-900)] outline-none focus:border-[var(--color-orange-400)] focus:ring-2 focus:ring-[var(--color-orange-100)]"
+        >
+          <option value="">Nenhum</option>
+          {teamOptions.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="flex flex-col gap-[var(--sp-2xs)]">
         <span className="font-[var(--font-label)] font-medium text-[var(--text-sm)] text-[var(--color-neutral-700)]">
           Cor do badge
@@ -1028,15 +1048,21 @@ export function TeamModal({
       )}
 
       <ModalBody>
-        {activeTab === "details" && detailsPanel}
-        {activeTab === "members" && (
+        {!isCreating && !team ? (
+          <ConfigErrorState message="Não foi possível carregar os dados do time. Verifique sua conexão e tente novamente." />
+        ) : (
           <>
-            <div className="flex flex-col h-full max-md:hidden">
-              {searchPanel}
-            </div>
-            <div className="hidden flex-col h-full max-md:flex">
-              {mobileMembersTab === "add" ? searchPanel : membersPanel}
-            </div>
+            {activeTab === "details" && detailsPanel}
+            {activeTab === "members" && (
+              <>
+                <div className="flex flex-col h-full max-md:hidden">
+                  {searchPanel}
+                </div>
+                <div className="hidden flex-col h-full max-md:flex">
+                  {mobileMembersTab === "add" ? searchPanel : membersPanel}
+                </div>
+              </>
+            )}
           </>
         )}
       </ModalBody>

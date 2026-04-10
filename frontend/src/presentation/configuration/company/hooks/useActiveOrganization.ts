@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 export interface OrganizationDetail {
   id: string;
   name: string;
+  cnpj: string;
   logoUrl: string | null;
   plan: string;
   contractStatus: string;

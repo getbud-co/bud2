@@ -1,3 +1,5 @@
+"use client";
+
 import { type RefObject, useMemo, useState } from "react";
 
 interface FilterOption {

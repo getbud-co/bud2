@@ -130,6 +130,57 @@
 }
 
 /* ——— Keyframes ——— */
+@keyframes highlightPulse {
+  0%, 100% { outline-color: var(--color-orange-300); }
+  50%       { outline-color: var(--color-orange-500); }
+}
+
+/* ——— Org chart: pseudo-element connectors (cannot be Tailwind) ——— */
+.org-chart-node-group > .org-chart-children-wrap::before {
+  content: "";
+  display: block;
+  width: 1px;
+  height: var(--sp-md);
+  background: var(--color-caramel-300);
+  margin: 0 auto;
+}
+
+.org-chart-children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 1px;
+  background: var(--color-caramel-300);
+  left: calc(50% - (50% - 80px));
+  right: calc(50% - (50% - 80px));
+}
+
+.org-chart-children-single::before {
+  display: none;
+}
+
+.org-chart-children > .org-chart-node-group::before {
+  content: "";
+  display: block;
+  width: 1px;
+  height: var(--sp-md);
+  background: var(--color-caramel-300);
+  margin: 0 auto;
+  margin-top: calc(-1 * var(--sp-md));
+}
+
+/* ——— Org highlight animations ——— */
+.org-node-highlighted {
+  outline: 2px solid var(--color-orange-300);
+  outline-offset: -2px;
+  animation: highlightPulse 1.5s ease-in-out 1;
+}
+
+.org-chart-card-highlighted {
+  animation: highlightPulse 1.5s ease-in-out 1;
+  border-color: var(--color-orange-400);
+}
+
 @keyframes fadeSlideIn {
   from {
     opacity: 0;

@@ -21,7 +21,10 @@ export interface UpdateTeamPayload {
   leaderId?: string | null;
 }
 
-async function createTeam(orgId: string, payload: CreateTeamPayload): Promise<Team> {
+async function createTeam(
+  orgId: string,
+  payload: CreateTeamPayload,
+): Promise<Team> {
   const res = await fetch("/api/teams", {
     method: "POST",
     headers: {
@@ -34,7 +37,10 @@ async function createTeam(orgId: string, payload: CreateTeamPayload): Promise<Te
   return res.json();
 }
 
-async function updateTeam(orgId: string, payload: UpdateTeamPayload): Promise<Team> {
+async function updateTeam(
+  orgId: string,
+  payload: UpdateTeamPayload,
+): Promise<Team> {
   const { id, ...body } = payload;
   const res = await fetch(`/api/teams/${id}`, {
     method: "PATCH",
@@ -67,8 +73,11 @@ export function useUpdateTeam(orgId: string | null) {
   return useMutation({
     mutationFn: (payload: UpdateTeamPayload) => updateTeam(orgId!, payload),
     onSuccess: (updated) => {
-      queryClient.setQueryData<Team[]>([TEAMS_QUERY_KEY, orgId], (prev) =>
-        prev?.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)) ?? [],
+      queryClient.setQueryData<Team[]>(
+        [TEAMS_QUERY_KEY, orgId],
+        (prev) =>
+          prev?.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)) ??
+          [],
       );
     },
   });
@@ -91,10 +100,12 @@ export function useBulkArchiveTeams(orgId: string | null) {
     },
     onSuccess: (_data, ids) => {
       const idSet = new Set(ids);
-      queryClient.setQueryData<Team[]>([TEAMS_QUERY_KEY, orgId], (prev) =>
-        prev?.map((t) =>
-          idSet.has(t.id) ? { ...t, status: "archived" as const } : t,
-        ) ?? [],
+      queryClient.setQueryData<Team[]>(
+        [TEAMS_QUERY_KEY, orgId],
+        (prev) =>
+          prev?.map((t) =>
+            idSet.has(t.id) ? { ...t, status: "archived" as const } : t,
+          ) ?? [],
       );
     },
   });
@@ -112,8 +123,9 @@ export function useDeleteTeam(orgId: string | null) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     },
     onSuccess: (_data, teamId) => {
-      queryClient.setQueryData<Team[]>([TEAMS_QUERY_KEY, orgId], (prev) =>
-        prev?.filter((t) => t.id !== teamId) ?? [],
+      queryClient.setQueryData<Team[]>(
+        [TEAMS_QUERY_KEY, orgId],
+        (prev) => prev?.filter((t) => t.id !== teamId) ?? [],
       );
     },
   });
@@ -136,8 +148,9 @@ export function useBulkDeleteTeams(orgId: string | null) {
     },
     onSuccess: (_data, ids) => {
       const idSet = new Set(ids);
-      queryClient.setQueryData<Team[]>([TEAMS_QUERY_KEY, orgId], (prev) =>
-        prev?.filter((t) => !idSet.has(t.id)) ?? [],
+      queryClient.setQueryData<Team[]>(
+        [TEAMS_QUERY_KEY, orgId],
+        (prev) => prev?.filter((t) => !idSet.has(t.id)) ?? [],
       );
     },
   });

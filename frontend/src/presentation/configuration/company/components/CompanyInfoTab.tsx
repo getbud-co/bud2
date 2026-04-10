@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Input, Button, toast } from "@mdonangelo/bud-ds";
-import { UploadSimple, FloppyDisk } from "@phosphor-icons/react";
+import { UploadSimpleIcon } from "@phosphor-icons/react";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useConfigData } from "@/contexts/ConfigDataContext";
 import { useActiveOrganization } from "../hooks/useActiveOrganization";
+import { ConfigLoadingState } from "@/components/ConfigLoadingState";
+import { ConfigErrorState } from "@/components/ConfigErrorState";
 
 function formatCnpj(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 14);
@@ -20,19 +20,7 @@ function formatCnpj(value: string): string {
 
 export function CompanyInfoTab() {
   const { activeOrgId } = useOrganization();
-  const { updateCompanyProfile } = useConfigData();
-  const { data: org, isLoading } = useActiveOrganization(activeOrgId);
-
-  const [companyName, setCompanyName] = useState("");
-  const [cnpj, setCnpj] = useState("");
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!org) return;
-    setCompanyName(org.name);
-    setLogoUrl(org.logoUrl);
-  }, [org]);
+  const { data: org, isLoading, isError } = useActiveOrganization(activeOrgId);
 
   function handleLogoUpload() {
     const input = document.createElement("input");
@@ -41,50 +29,17 @@ export function CompanyInfoTab() {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        setLogoUrl(URL.createObjectURL(file));
         toast.success("Símbolo atualizado");
       }
     };
     input.click();
   }
 
-  function handleSave() {
-    if (!companyName.trim()) {
-      toast.error("Nome da empresa é obrigatório");
-      return;
-    }
-    setSaving(true);
-    setTimeout(() => {
-      // TODO: replace with PATCH /api/organizations/:id
-      updateCompanyProfile({
-        name: companyName.trim(),
-        cnpj: cnpj.trim() || null,
-        logoUrl,
-      });
-      setSaving(false);
-      toast.success("Dados da empresa salvos");
-    }, 500);
-  }
-
-  if (isLoading) {
+  if (isLoading) return <ConfigLoadingState />;
+  if (isError || !org)
     return (
-      <div className="flex flex-col gap-[var(--sp-md)] p-[var(--sp-lg)] animate-pulse">
-        <div className="h-4 w-40 rounded bg-[var(--color-caramel-100)]" />
-        <div className="flex items-center gap-[var(--sp-md)]">
-          <div className="w-16 h-16 rounded-[var(--radius-sm)] bg-[var(--color-caramel-100)]" />
-          <div className="flex flex-col gap-2">
-            <div className="h-8 w-32 rounded bg-[var(--color-caramel-100)]" />
-            <div className="h-3 w-48 rounded bg-[var(--color-caramel-100)]" />
-          </div>
-        </div>
-        <div className="h-4 w-36 rounded bg-[var(--color-caramel-100)]" />
-        <div className="grid grid-cols-2 gap-[var(--sp-md)]">
-          <div className="h-10 rounded bg-[var(--color-caramel-100)]" />
-          <div className="h-10 rounded bg-[var(--color-caramel-100)]" />
-        </div>
-      </div>
+      <ConfigErrorState message="Não foi possível carregar os dados da empresa. Verifique sua conexão e tente novamente." />
     );
-  }
 
   return (
     <div className="flex flex-col gap-[var(--sp-md)] p-[var(--sp-lg)]">
@@ -94,15 +49,15 @@ export function CompanyInfoTab() {
 
       <div className="flex items-center gap-[var(--sp-md)] max-md:flex-col max-md:items-start">
         <div className="shrink-0">
-          {logoUrl ? (
+          {org.logoUrl ? (
             <img
-              src={logoUrl}
+              src={org.logoUrl}
               alt="Símbolo da empresa"
               className="w-16 h-16 rounded-[var(--radius-sm)] object-cover border border-[var(--color-caramel-200)]"
             />
           ) : (
             <div className="w-16 h-16 rounded-[var(--radius-sm)] border-2 border-dashed border-[var(--color-caramel-300)] flex items-center justify-center text-[var(--color-neutral-400)] bg-[var(--color-caramel-50)]">
-              <UploadSimple size={24} />
+              <UploadSimpleIcon size={24} />
             </div>
           )}
         </div>
@@ -110,10 +65,10 @@ export function CompanyInfoTab() {
           <Button
             variant="secondary"
             size="sm"
-            leftIcon={UploadSimple}
+            leftIcon={UploadSimpleIcon}
             onClick={handleLogoUpload}
           >
-            {logoUrl ? "Alterar símbolo" : "Enviar símbolo"}
+            {org.logoUrl ? "Alterar símbolo" : "Enviar símbolo"}
           </Button>
           <span className="font-[var(--font-body)] text-[var(--text-xs)] text-[var(--color-neutral-400)]">
             Imagem quadrada, PNG, JPG ou SVG. Máx. 2MB.
@@ -125,19 +80,19 @@ export function CompanyInfoTab() {
         </div>
       </div>
 
-      {logoUrl && (
+      {org.logoUrl && (
         <div className="flex items-center gap-[var(--sp-sm)]">
           <span className="font-[var(--font-label)] text-[var(--text-xs)] text-[var(--color-neutral-500)] whitespace-nowrap">
             Prévia no seletor:
           </span>
           <div className="flex items-center gap-[var(--sp-2xs)] px-[var(--sp-xs)] py-[var(--sp-2xs)] border border-[var(--color-caramel-200)] rounded-[var(--radius-sm)] bg-white">
             <img
-              src={logoUrl}
+              src={org.logoUrl}
               alt=""
               className="w-6 h-6 rounded-[var(--radius-2xs)] object-cover"
             />
             <span className="font-[var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-950)]">
-              {companyName || "Empresa"}
+              {org.name}
             </span>
           </div>
         </div>
@@ -151,33 +106,15 @@ export function CompanyInfoTab() {
         <Input
           label="Nome da empresa"
           disabled={true}
-          value={companyName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setCompanyName(e.target.value)
-          }
+          value={org.name}
           placeholder="Nome fantasia ou razão social"
         />
         <Input
           label="CNPJ"
           disabled={true}
-          value={cnpj}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setCnpj(formatCnpj(e.target.value))
-          }
+          value={formatCnpj(org.cnpj)}
           placeholder="00.000.000/0000-00"
         />
-      </div>
-
-      <div className="flex justify-end">
-        <Button
-          variant="primary"
-          size="md"
-          leftIcon={FloppyDisk}
-          onClick={handleSave}
-          loading={saving}
-        >
-          Salvar alterações
-        </Button>
       </div>
     </div>
   );

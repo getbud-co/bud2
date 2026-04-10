@@ -14,7 +14,7 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
-import type { Team, TeamMember, UserStatus } from "@/types";
+import type { Team, TeamMember } from "@/types";
 import { useConfigData } from "@/contexts/ConfigDataContext";
 import {
   createTeamIdFromName,
@@ -23,10 +23,11 @@ import {
   savePeopleSnapshot,
   type PeopleStoreSnapshot,
   type PeopleUserRecord,
+  type UserStatus,
 } from "@/lib/tempStorage/people-store";
 
 export interface PeopleUserView extends PeopleUserRecord {
-  teams: string[];
+  teams: { id: string; name: string }[];
 }
 
 export interface OrgPersonView {
@@ -34,9 +35,9 @@ export interface OrgPersonView {
   fullName: string;
   jobTitle: string | null;
   initials: string | null;
-  managerId: string | null;
+  leaderId: string | null;
   status: UserStatus;
-  teams: string[];
+  teams: { id: string; name: string }[];
 }
 
 export interface OwnerOption {
@@ -83,11 +84,6 @@ function normalizeKey(value: string): string {
     .trim();
 }
 
-function toTeamNameById(snapshot: PeopleStoreSnapshot): Map<string, string> {
-  return new Map(
-    Object.values(snapshot.teamsById).map((team) => [team.id, team.name]),
-  );
-}
 
 function membersByTeamId(
   snapshot: PeopleStoreSnapshot,
@@ -101,18 +97,17 @@ function membersByTeamId(
   return map;
 }
 
-function teamNamesByUserId(
+function teamsByUserId(
   snapshot: PeopleStoreSnapshot,
-): Map<string, string[]> {
-  const teamNameById = toTeamNameById(snapshot);
-  const result = new Map<string, string[]>();
+): Map<string, { id: string; name: string }[]> {
+  const result = new Map<string, { id: string; name: string }[]>();
 
   snapshot.teamMembers.forEach((member) => {
-    const teamName = teamNameById.get(member.teamId);
-    if (!teamName) return;
+    const team = snapshot.teamsById[member.teamId];
+    if (!team) return;
     const current = result.get(member.userId) ?? [];
-    if (!current.includes(teamName)) {
-      result.set(member.userId, [...current, teamName]);
+    if (!current.some((t) => t.id === team.id)) {
+      result.set(member.userId, [...current, { id: team.id, name: team.name }]);
     }
   });
 
@@ -128,7 +123,7 @@ function ensureCurrentUser(snapshot: PeopleStoreSnapshot): string {
 }
 
 function buildUsersView(snapshot: PeopleStoreSnapshot): PeopleUserView[] {
-  const teamsByUser = teamNamesByUserId(snapshot);
+  const teamsByUser = teamsByUserId(snapshot);
 
   return Object.values(snapshot.usersById)
     .map((user) => ({
@@ -192,18 +187,18 @@ function buildTeamMembersFromUsers(
   const nextMembers: TeamMember[] = [];
 
   users.forEach((user) => {
-    user.teams.forEach((teamName) => {
-      const normalizedName = normalizeKey(teamName);
+    user.teams.forEach((team) => {
+      const normalizedName = normalizeKey(team.name);
       if (!normalizedName) return;
 
-      let teamId = teamIdByName.get(normalizedName) ?? null;
-      if (!teamId) {
-        teamId = createTeamIdFromName(teamName);
+      let teamId = teamIdByName.get(normalizedName) ?? team.id ?? null;
+      if (!teamId || !nextTeamsById[teamId]) {
+        teamId = teamId ?? createTeamIdFromName(team.name);
         const now = new Date().toISOString();
         nextTeamsById[teamId] = {
           id: teamId,
-          orgId: user.orgId,
-          name: teamName,
+          orgId: user.organizationId,
+          name: team.name,
           description: null,
           color: "neutral",
           leaderId: null,
@@ -379,7 +374,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
         fullName: user.fullName,
         jobTitle: user.jobTitle,
         initials: user.initials,
-        managerId: user.managerId,
+        leaderId: user.leaderId,
         status: user.status,
         teams: user.teams,
       })),
@@ -394,7 +389,7 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
           fullName: user.fullName,
           jobTitle: user.jobTitle,
           initials: user.initials,
-          managerId: user.managerId,
+          leaderId: user.leaderId,
           status: user.status,
           teams: user.teams,
         }));
@@ -419,16 +414,16 @@ export function PeopleDataProvider({ children }: { children: ReactNode }) {
             fullName: person.fullName,
             jobTitle: person.jobTitle,
             initials: person.initials,
-            managerId: person.managerId,
+            leaderId: person.leaderId,
             status: person.status,
             teams: cloneDeep(person.teams),
             roleType:
               previous?.roleType ??
               prev.usersById[person.id]?.roleType ??
               "colaborador",
-            orgId:
-              previous?.orgId ??
-              prev.usersById[person.id]?.orgId ??
+            organizationId:
+              previous?.organizationId ??
+              prev.usersById[person.id]?.organizationId ??
               activeOrgId,
             email:
               previous?.email ??

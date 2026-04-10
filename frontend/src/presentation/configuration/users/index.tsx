@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Table,
@@ -23,11 +23,9 @@ import {
   UserCheck,
   Trash,
 } from "@phosphor-icons/react";
-import {
-  usePeopleData,
-  type PeopleUserView,
-} from "@/contexts/PeopleDataContext";
-import { useConfigData } from "@/contexts/ConfigDataContext";
+import type { PeopleUserView } from "@/contexts/PeopleDataContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTeams } from "@/presentation/configuration/team/hooks/useTeams";
 import { DEFAULT_ROLE_SLUG, STATUS_FILTER } from "./consts";
 import { useEmployees, EMPLOYEES_QUERY_KEY } from "./hooks/useEmployees";
 import { UsersLoadingState } from "./components/UsersLoadingState";
@@ -50,12 +48,44 @@ const FILTER_OPTIONS = [
   { id: "role", label: "Tipo de usuário" },
 ];
 
+// Values match EmployeeRole enum: Contributor=0, TeamLeader=1, HRManager=2, OrgAdmin=3
+const roleOptions = [
+  {
+    value: "OrgAdmin",
+    label: "Admin da Organização",
+    description: "Acesso total à organização",
+  },
+  {
+    value: "HRManager",
+    label: "Gerente de RH",
+    description: "Gestão de pessoas e times",
+  },
+  {
+    value: "TeamLeader",
+    label: "Líder de Time",
+    description: "Gestão do próprio time",
+  },
+  {
+    value: "Contributor",
+    label: "Colaborador",
+    description: "Acesso às próprias missões",
+  },
+];
+
+function resolveRoleSlug(role: string): string {
+  return role;
+}
+
 export function UsersModule() {
-  const { teamNameOptions } = usePeopleData();
-  const { activeOrgId, roleOptions, resolveRoleSlug } = useConfigData();
+  const { activeOrgId } = useOrganization();
+  const { data: teams = [] } = useTeams(activeOrgId ?? null);
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading, isError } = useEmployees(activeOrgId);
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+  } = useEmployees(activeOrgId ?? "");
 
   function invalidateUsers() {
     queryClient.invalidateQueries({
@@ -109,35 +139,22 @@ export function UsersModule() {
   });
 
   const inviteTeamOptions = useMemo(
-    () => teamNameOptions.map((t) => ({ value: t, label: t })),
-    [teamNameOptions],
+    () => teams.map((t) => ({ value: t.id, label: t.name })),
+    [teams],
   );
 
-  const roleSelectionOptions = useMemo(
-    () =>
-      roleOptions.map((r) => ({
-        value: r.value,
-        label: r.label,
-        description: r.description || "Sem descrição",
-      })),
-    [roleOptions],
-  );
+  const roleSelectionOptions = roleOptions.map((r) => ({
+    value: r.value,
+    label: r.label,
+    description: r.description,
+  }));
 
-  const roleFilterOptions = useMemo(
-    () => [
-      { id: "all", label: "Todos os tipos" },
-      ...roleSelectionOptions.map((r) => ({ id: r.value, label: r.label })),
-    ],
-    [roleSelectionOptions],
-  );
+  const roleFilterOptions = [
+    { id: "all", label: "Todos os tipos" },
+    ...roleSelectionOptions.map((r) => ({ id: r.value, label: r.label })),
+  ];
 
-  const defaultInviteRole = useMemo(
-    () =>
-      roleOptions.find((r) => r.isDefault)?.value ??
-      roleOptions[0]?.value ??
-      DEFAULT_ROLE_SLUG,
-    [roleOptions],
-  );
+  const defaultInviteRole = roleOptions[0]?.value ?? DEFAULT_ROLE_SLUG;
 
   const roleLabelBySlug = useMemo(
     () => new Map(roleSelectionOptions.map((r) => [r.value, r.label])),
@@ -161,7 +178,7 @@ export function UsersModule() {
             u.status !== filterStatus
           )
             return false;
-          const roleSlug = resolveRoleSlug(u.roleType);
+          const roleSlug = resolveRoleSlug(u.role);
           if (
             activeFilters.includes("role") &&
             filterRole !== "all" &&
@@ -181,9 +198,7 @@ export function UsersModule() {
             case "role":
               return (
                 dir *
-                resolveRoleSlug(a.roleType).localeCompare(
-                  resolveRoleSlug(b.roleType),
-                )
+                resolveRoleSlug(a.role).localeCompare(resolveRoleSlug(b.role))
               );
             case "status":
               return dir * a.status.localeCompare(b.status);
@@ -191,16 +206,7 @@ export function UsersModule() {
               return 0;
           }
         }),
-    [
-      users,
-      search,
-      activeFilters,
-      filterStatus,
-      filterRole,
-      sortKey,
-      sortDir,
-      resolveRoleSlug,
-    ],
+    [users, search, activeFilters, filterStatus, filterRole, sortKey, sortDir],
   );
 
   const rowIds = useMemo(() => filtered.map((u) => u.id), [filtered]);
@@ -261,9 +267,27 @@ export function UsersModule() {
     return items;
   }
 
-  function handleInvite(data: InviteFormData) {
-    void data;
-    // TODO: call POST /api/employees and invalidate
+  async function handleInvite(data: InviteFormData) {
+    const teamId = data.team || undefined;
+    const res = await fetch("/api/employees", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Tenant-Id": activeOrgId ?? "",
+      },
+      body: JSON.stringify({
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role,
+        ...(teamId ? { teamId } : {}),
+      }),
+    });
+
+    if (!res.ok) {
+      toast.error("Erro ao convidar usuário");
+      return;
+    }
+
     invalidateUsers();
     setInviteOpen(false);
     toast.success("Convite enviado com sucesso");
@@ -278,13 +302,29 @@ export function UsersModule() {
     setImportOpen(false);
   }
 
-  function handleToggleStatus() {
+  async function handleToggleStatus() {
     if (!deactivateUser) return;
     const newStatus =
       deactivateUser.status === "active"
         ? ("inactive" as const)
         : ("active" as const);
-    // TODO: call PATCH /api/employees/:id
+
+    const res = await fetch(`/api/employees/${deactivateUser.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Tenant-Id": activeOrgId ?? "",
+      },
+      body: JSON.stringify({
+        status: newStatus === "active" ? "Active" : "Inactive",
+      }),
+    });
+
+    if (!res.ok) {
+      toast.error("Erro ao alterar status do usuário");
+      return;
+    }
+
     invalidateUsers();
     setDeactivateUser(null);
     toast.success(
@@ -292,31 +332,84 @@ export function UsersModule() {
     );
   }
 
-  function handleBulkToggleStatus() {
-    const newStatus = allSelectedInactive
-      ? ("active" as const)
-      : ("inactive" as const);
-    // TODO: call PATCH /api/employees bulk
-    invalidateUsers();
-    toast.success(
-      allSelectedInactive
-        ? `${selectedRows.size} usuário(s) ativado(s)`
-        : `${selectedRows.size} usuário(s) desativado(s)`,
+  async function handleBulkToggleStatus() {
+    const newStatus = allSelectedInactive ? "Active" : "Inactive";
+    const ids = [...selectedRows];
+
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        fetch(`/api/employees/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-Id": activeOrgId ?? "",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }),
+      ),
     );
-    clearSelection();
-  }
 
-  function handleBulkDelete() {
-    // TODO: call DELETE /api/employees bulk
+    const failed = results.filter(
+      (r) =>
+        r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok),
+    ).length;
+
     invalidateUsers();
-    toast.success(`${selectedRows.size} usuário(s) removido(s)`);
     clearSelection();
+
+    if (failed > 0) {
+      toast.error(`${failed} usuário(s) não puderam ser atualizados`);
+    } else {
+      toast.success(
+        allSelectedInactive
+          ? `${ids.length} usuário(s) ativado(s)`
+          : `${ids.length} usuário(s) desativado(s)`,
+      );
+    }
   }
 
-  function handleRoleChange(userId: string, newRole: string) {
-    // TODO: call PATCH /api/employees/:id
-    void userId;
-    void newRole;
+  async function handleBulkDelete() {
+    const ids = [...selectedRows];
+
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        fetch(`/api/employees/${id}`, {
+          method: "DELETE",
+          headers: { "X-Tenant-Id": activeOrgId ?? "" },
+        }),
+      ),
+    );
+
+    const failed = results.filter(
+      (r) =>
+        r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok),
+    ).length;
+
+    invalidateUsers();
+    clearSelection();
+
+    if (failed > 0) {
+      toast.error(`${failed} usuário(s) não puderam ser removidos`);
+    } else {
+      toast.success(`${ids.length} usuário(s) removido(s)`);
+    }
+  }
+
+  async function handleRoleChange(userId: string, newRole: string) {
+    const res = await fetch(`/api/employees/${userId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Tenant-Id": activeOrgId ?? "",
+      },
+      body: JSON.stringify({ role: newRole }),
+    });
+
+    if (!res.ok) {
+      toast.error("Erro ao atualizar tipo de usuário");
+      return;
+    }
+
     invalidateUsers();
     setRolePopoverUser(null);
     toast.success("Tipo de usuário atualizado");

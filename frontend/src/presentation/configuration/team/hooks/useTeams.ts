@@ -9,6 +9,7 @@ async function fetchTeams(orgId: string): Promise<Team[]> {
   const res = await fetch("/api/teams?pageSize=100", {
     headers: { "X-Tenant-Id": orgId },
   });
+  console.log(res);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

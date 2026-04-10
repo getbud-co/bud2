@@ -1,6 +1,6 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
-import type { Team, TeamColor, TeamMember, TeamStatus } from "@/types";
+import type { Team, TeamMember } from "@/types";
 
 interface BackendEmployee {
   id: string;
@@ -23,6 +23,10 @@ interface BackendTeam {
   employees: BackendEmployee[];
 }
 
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function toInitials(fullName: string): string {
   return fullName
     .trim()
@@ -32,10 +36,6 @@ function toInitials(fullName: string): string {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-}
-
-function toBackendEnum(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function mapTeam(raw: BackendTeam): Team {
@@ -58,8 +58,8 @@ function mapTeam(raw: BackendTeam): Team {
     orgId: raw.organizationId,
     name: raw.name,
     description: raw.description,
-    color: raw.color.toLowerCase() as TeamColor,
-    status: raw.status.toLowerCase() as TeamStatus,
+    color: raw.color.toLowerCase() as Team["color"],
+    status: raw.status.toLowerCase() as Team["status"],
     leaderId: raw.leaderId,
     parentTeamId: raw.parentTeamId,
     createdAt: raw.createdAt,
@@ -107,8 +107,10 @@ export async function PATCH(
   const backendBody: Record<string, unknown> = {};
   if (body.name !== undefined) backendBody.name = body.name;
   if (body.description !== undefined) backendBody.description = body.description;
-  if (body.color !== undefined) backendBody.color = toBackendEnum(body.color as string);
-  if (body.status !== undefined) backendBody.status = toBackendEnum(body.status as string);
+  if (body.color !== undefined)
+    backendBody.color = capitalize(body.color as string);
+  if (body.status !== undefined)
+    backendBody.status = capitalize(body.status as string);
   if (body.leaderId !== undefined) backendBody.leaderId = body.leaderId;
   if (body.parentTeamId !== undefined) backendBody.parentTeamId = body.parentTeamId;
 
