@@ -8,7 +8,7 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Organization_Rename_WithEmptyName_ShouldThrow()
     {
-        var organization = Organization.Create(Guid.NewGuid(), "org.com");
+        var organization = Organization.Create(Guid.NewGuid(), "org.com", "00.000.000/0000-00");
 
         var act = () => organization.Rename("  ");
 
@@ -18,7 +18,7 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Organization_Rename_WithNameLongerThan200_ShouldThrow()
     {
-        var organization = Organization.Create(Guid.NewGuid(), "org.com");
+        var organization = Organization.Create(Guid.NewGuid(), "org.com", "00.000.000/0000-00");
         var longName = new string('A', 201);
 
         var act = () => organization.Rename(longName);
@@ -29,7 +29,7 @@ public sealed class AggregateInvariantsTests
     [Fact]
     public void Organization_Create_WithNonDomainName_ShouldThrow()
     {
-        var act = () => Organization.Create(Guid.NewGuid(), "Organizacao Teste");
+        var act = () => Organization.Create(Guid.NewGuid(), "Organizacao Teste", "00.000.000/0000-00");
 
         act.Should().Throw<DomainInvariantException>()
             .WithMessage("O nome da organização deve ser um domínio válido*");
@@ -50,9 +50,9 @@ public sealed class AggregateInvariantsTests
     public void Employee_UpdateProfile_WithSelfLeader_ShouldThrow()
     {
         var employeeId = Guid.NewGuid();
-        var member = OrganizationEmployeeMember.Create(employeeId, Guid.NewGuid(), EmployeeRole.Leader);
+        var member = OrganizationEmployeeMember.Create(employeeId, Guid.NewGuid(), EmployeeRole.TeamLeader);
 
-        var act = () => member.UpdateProfile(EmployeeRole.Leader, employeeId, employeeId);
+        var act = () => member.UpdateProfile(EmployeeRole.TeamLeader, employeeId, employeeId);
 
         act.Should().Throw<DomainInvariantException>();
     }

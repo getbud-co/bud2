@@ -119,7 +119,7 @@ public sealed class EfUnitOfWorkTests
         {
             EmployeeId = employeeId,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 

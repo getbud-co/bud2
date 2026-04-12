@@ -115,7 +115,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         {
             EmployeeId = leader.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
         });
         await dbContext.SaveChangesAsync();
 
@@ -124,7 +124,6 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
             Id = teamId,
             Name = "Dashboard Filter Team",
             OrganizationId = organizationId,
-            LeaderId = leader.Id
         };
         dbContext.Teams.Add(team);
 
@@ -140,7 +139,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         {
             EmployeeId = member.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
         });
 
         dbContext.Set<EmployeeTeam>().Add(new EmployeeTeam
@@ -190,15 +189,14 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         {
             EmployeeId = leader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
         });
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Time Dashboard",
-            OrganizationId = org.Id,
-            LeaderId = leader.Id
+            OrganizationId = org.Id
         };
         dbContext.Teams.Add(team);
 

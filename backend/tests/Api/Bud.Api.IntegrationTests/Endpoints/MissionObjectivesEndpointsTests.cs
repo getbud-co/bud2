@@ -55,14 +55,14 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
         };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
         dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id,
             IsGlobalAdmin = true
         });
@@ -477,7 +477,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
         });
 
         await dbContext.SaveChangesAsync();

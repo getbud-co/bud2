@@ -68,7 +68,7 @@ public sealed class DbSeederTests
         {
             EmployeeId = adminEmp.Id,
             OrganizationId = organization.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             IsGlobalAdmin = true
         });
 

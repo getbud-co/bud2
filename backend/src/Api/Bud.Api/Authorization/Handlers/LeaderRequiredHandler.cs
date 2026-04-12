@@ -27,12 +27,13 @@ public sealed class LeaderRequiredHandler(
             return;
         }
 
-        var employee = await dbContext.Employees
+        var member = await dbContext.OrganizationEmployeeMembers
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e => e.Id == tenantProvider.EmployeeId.Value);
+            .FirstOrDefaultAsync(m =>
+                m.EmployeeId == tenantProvider.EmployeeId.Value &&
+                m.OrganizationId == tenantProvider.TenantId.Value);
 
-        if (employee?.Role == EmployeeRole.Leader &&
-            employee.OrganizationId == tenantProvider.TenantId.Value)
+        if (member?.Role == EmployeeRole.TeamLeader)
         {
             context.Succeed(requirement);
         }

@@ -22,8 +22,7 @@ public sealed class TeamReadUseCasesTests
             {
                 Id = teamId,
                 Name = "Produto",
-                OrganizationId = Guid.NewGuid(),
-                LeaderId = Guid.NewGuid()
+                OrganizationId = Guid.NewGuid()
             });
 
         var useCase = new GetTeamById(_teamRepository.Object);
@@ -82,7 +81,6 @@ public sealed class TeamReadUseCasesTests
                 Id = teamId,
                 Name = "T",
                 OrganizationId = organizationId,
-                LeaderId = Guid.NewGuid()
             });
 
         _teamRepository

@@ -28,14 +28,13 @@ public sealed class EmployeeRepositoryTests
     }
 
     private static async Task<Team> CreateTestTeam(
-        ApplicationDbContext context, Guid organizationId, Guid leaderId, string name = "Test Team")
+        ApplicationDbContext context, Guid organizationId, string name = "Test Team")
     {
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = name,
             OrganizationId = organizationId,
-            LeaderId = leaderId
         };
         context.Teams.Add(team);
         await context.SaveChangesAsync();
@@ -57,7 +56,7 @@ public sealed class EmployeeRepositoryTests
     private static OrganizationEmployeeMember CreateTestMember(
         Guid employeeId,
         Guid organizationId,
-        EmployeeRole role = EmployeeRole.IndividualContributor,
+        EmployeeRole role = EmployeeRole.Contributor,
         Guid? leaderId = null)
     {
         return new OrganizationEmployeeMember
@@ -121,12 +120,12 @@ public sealed class EmployeeRepositoryTests
         var org = await CreateTestOrganization(context);
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
-        var leaderMember = CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader);
+        var leaderMember = CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader);
         context.Employees.Add(leader);
         context.OrganizationEmployeeMembers.Add(leaderMember);
         await context.SaveChangesAsync();
 
-        var team = await CreateTestTeam(context, org.Id, leader.Id);
+        var team = await CreateTestTeam(context, org.Id);
 
         var employee = CreateTestEmployee("Member", "member@test.com");
         var employeeMember = CreateTestMember(employee.Id, org.Id);
@@ -228,12 +227,12 @@ public sealed class EmployeeRepositoryTests
         var org = await CreateTestOrganization(context);
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
-        var leaderMember = CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader);
+        var leaderMember = CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader);
         context.Employees.Add(leader);
         context.OrganizationEmployeeMembers.Add(leaderMember);
         await context.SaveChangesAsync();
 
-        var team = await CreateTestTeam(context, org.Id, leader.Id);
+        var team = await CreateTestTeam(context, org.Id);
 
         var memberA = CreateTestEmployee("Member A", "a@test.com");
         var memberB = CreateTestEmployee("Member B", "b@test.com");
@@ -275,8 +274,8 @@ public sealed class EmployeeRepositoryTests
         var icEmp = CreateTestEmployee("IC One", "ic1@test.com");
         context.Employees.AddRange(leaderEmp, icEmp);
         context.OrganizationEmployeeMembers.AddRange(
-            CreateTestMember(leaderEmp.Id, org.Id, EmployeeRole.Leader),
-            CreateTestMember(icEmp.Id, org.Id, EmployeeRole.IndividualContributor));
+            CreateTestMember(leaderEmp.Id, org.Id, EmployeeRole.TeamLeader),
+            CreateTestMember(icEmp.Id, org.Id, EmployeeRole.Contributor));
         await context.SaveChangesAsync();
 
         // Act
@@ -300,8 +299,8 @@ public sealed class EmployeeRepositoryTests
         var leaderOrg2 = CreateTestEmployee("Leader Org2", "leader2@test.com");
         context.Employees.AddRange(leaderOrg1, leaderOrg2);
         context.OrganizationEmployeeMembers.AddRange(
-            CreateTestMember(leaderOrg1.Id, org1.Id, EmployeeRole.Leader),
-            CreateTestMember(leaderOrg2.Id, org2.Id, EmployeeRole.Leader));
+            CreateTestMember(leaderOrg1.Id, org1.Id, EmployeeRole.TeamLeader),
+            CreateTestMember(leaderOrg2.Id, org2.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         // Act
@@ -326,7 +325,7 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         var sub1 = CreateTestEmployee("Sub 1", "sub1@test.com");
@@ -354,12 +353,12 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         var mid = CreateTestEmployee("Mid Manager", "mid@test.com");
         context.Employees.Add(mid);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(mid.Id, org.Id, EmployeeRole.Leader, leader.Id));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(mid.Id, org.Id, EmployeeRole.TeamLeader, leader.Id));
         await context.SaveChangesAsync();
 
         var deep = CreateTestEmployee("Deep IC", "deep@test.com");
@@ -409,11 +408,11 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
-        var team1 = await CreateTestTeam(context, org.Id, leader.Id, "Team Alpha");
-        var team2 = await CreateTestTeam(context, org.Id, leader.Id, "Team Beta");
+        var team1 = await CreateTestTeam(context, org.Id, "Team Alpha");
+        var team2 = await CreateTestTeam(context, org.Id, "Team Beta");
 
         var employee = CreateTestEmployee("Member", "member@test.com");
         context.Employees.Add(employee);
@@ -466,11 +465,11 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
-        var teamAssigned = await CreateTestTeam(context, org.Id, leader.Id, "Assigned Team");
-        var teamEligible = await CreateTestTeam(context, org.Id, leader.Id, "Eligible Team");
+        var teamAssigned = await CreateTestTeam(context, org.Id, "Assigned Team");
+        var teamEligible = await CreateTestTeam(context, org.Id, "Eligible Team");
 
         var employee = CreateTestEmployee("Member", "member@test.com");
         context.Employees.Add(employee);
@@ -652,7 +651,7 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         var sub = CreateTestEmployee("Sub", "sub@test.com");
@@ -755,11 +754,11 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
-        var team1 = await CreateTestTeam(context, org.Id, leader.Id, "Team 1");
-        var team2 = await CreateTestTeam(context, org.Id, leader.Id, "Team 2");
+        var team1 = await CreateTestTeam(context, org.Id, "Team 1");
+        var team2 = await CreateTestTeam(context, org.Id, "Team 2");
 
         // Act
         var result = await repository.CountTeamsByIdsAndOrganizationAsync(
@@ -811,7 +810,7 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         // Act
@@ -831,7 +830,7 @@ public sealed class EmployeeRepositoryTests
 
         var ic = CreateTestEmployee("IC", "ic@test.com");
         context.Employees.Add(ic);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(ic.Id, org.Id, EmployeeRole.IndividualContributor));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(ic.Id, org.Id, EmployeeRole.Contributor));
         await context.SaveChangesAsync();
 
         // Act
@@ -866,7 +865,7 @@ public sealed class EmployeeRepositoryTests
 
         var leader = CreateTestEmployee("Leader", "leader@test.com");
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org1.Id, EmployeeRole.Leader));
+        context.OrganizationEmployeeMembers.Add(CreateTestMember(leader.Id, org1.Id, EmployeeRole.TeamLeader));
         await context.SaveChangesAsync();
 
         // Act

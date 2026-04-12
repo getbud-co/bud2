@@ -36,7 +36,7 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 

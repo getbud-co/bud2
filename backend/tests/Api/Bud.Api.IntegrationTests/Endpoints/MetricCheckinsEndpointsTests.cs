@@ -55,14 +55,14 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
         dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id,
             IsGlobalAdmin = true
         });
@@ -127,7 +127,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         return (org, quantMetric, qualMetric, employee, tenantClient);
     }
 
-    private async Task<Employee> CreateEmployeeInOrg(Guid organizationId, EmployeeRole role = EmployeeRole.IndividualContributor)
+    private async Task<Employee> CreateEmployeeInOrg(Guid organizationId, EmployeeRole role = EmployeeRole.Contributor)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
@@ -762,7 +762,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         SetTenantHeader(org.Id);
 
         // Create leader in the new org for team creation
-        var orgLeader = await CreateEmployeeInOrg(org.Id, EmployeeRole.Leader);
+        var orgLeader = await CreateEmployeeInOrg(org.Id, EmployeeRole.TeamLeader);
 
         var teamResponse = await _adminClient.PostAsJsonAsync("/api/teams",
             new CreateTeamRequest { Name = "Test Team", LeaderId = orgLeader.Id });

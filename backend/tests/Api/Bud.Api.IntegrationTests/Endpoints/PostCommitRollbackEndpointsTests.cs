@@ -170,7 +170,7 @@ public sealed class PostCommitRollbackEndpointsTests(CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
         });
         await dbContext.SaveChangesAsync();
 

@@ -59,7 +59,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Novo Colaborador",
             Email = $"novo-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor
         };
 
         var response = await tenantClient.PostAsJsonAsync("/api/employees", request);
@@ -94,7 +94,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Colaborador com Time",
             Email = $"employee-team-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor,
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor,
             TeamId = team.Id
         };
 
@@ -138,7 +138,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Colaborador Atualizado",
             Email = $"atualizado-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor
         };
 
         var response = await tenantClient.PatchAsJsonAsync($"/api/employees/{target.Id}", request);
@@ -313,7 +313,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.Leader
+            Role = EmployeeRole.TeamLeader
         });
         await dbContext.SaveChangesAsync();
 
@@ -337,7 +337,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             LeaderId = leaderId
         });
         await dbContext.SaveChangesAsync();
@@ -362,7 +362,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
             LeaderId = leaderId
         });
         await dbContext.SaveChangesAsync();
@@ -395,14 +395,14 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
         dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id
         });
 
@@ -428,7 +428,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 
@@ -452,7 +452,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 

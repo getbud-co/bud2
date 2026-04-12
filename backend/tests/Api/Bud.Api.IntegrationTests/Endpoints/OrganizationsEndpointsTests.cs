@@ -44,7 +44,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             var existingTeam = await dbContext.Teams.IgnoreQueryFilters().FirstOrDefaultAsync();
             if (existingTeam == null)
             {
-                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id, LeaderId = existingLeader.Id };
+                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id };
                 dbContext.Teams.Add(existingTeam);
             }
 
@@ -73,8 +73,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             Id = Guid.NewGuid(),
             Name = "Bud",
-            OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
+            OrganizationId = org.Id
         };
         dbContext.Teams.Add(team);
         await dbContext.SaveChangesAsync();
@@ -83,7 +82,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id
         });
         await dbContext.SaveChangesAsync();
@@ -352,7 +351,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
             TeamId = team.Id
         });
         await dbContext.SaveChangesAsync();
@@ -400,7 +399,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
             TeamId = team.Id
         });
         await dbContext.SaveChangesAsync();
@@ -445,7 +444,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor,
+            Role = EmployeeRole.Contributor,
             TeamId = team.Id
         });
         await dbContext.SaveChangesAsync();

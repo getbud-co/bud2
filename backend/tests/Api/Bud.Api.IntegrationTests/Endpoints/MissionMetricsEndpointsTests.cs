@@ -49,13 +49,13 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var adminLeader = new Employee { Id = Guid.NewGuid(), FullName = "Administrador", Email = "admin@getbud.co" };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
         dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
             EmployeeId = adminLeader.Id, OrganizationId = org.Id,
-            Role = EmployeeRole.Leader, TeamId = team.Id, IsGlobalAdmin = true
+            Role = EmployeeRole.TeamLeader, TeamId = team.Id, IsGlobalAdmin = true
         });
 
         await dbContext.SaveChangesAsync();
@@ -521,7 +521,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
         {
             EmployeeId = employee.Id, OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
 
         await dbContext.SaveChangesAsync();

@@ -22,7 +22,7 @@ public sealed class TeamWriteUseCasesTests
             _tenantProvider.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(new CreateTeamCommand("Team", Guid.NewGuid(), Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(new CreateTeamCommand("Team", "team description", TeamColor.Neutral, Guid.NewGuid(), Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);
@@ -41,7 +41,7 @@ public sealed class TeamWriteUseCasesTests
             _employeeRepository.Object,
             NullLogger<PatchTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchTeamCommand("Novo Team", Guid.NewGuid(), default));
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchTeamCommand("Novo Team", "team description", TeamColor.Neutral, TeamStatus.Active, Guid.NewGuid(), default));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.NotFound);
@@ -100,7 +100,6 @@ public sealed class TeamWriteUseCasesTests
             Id = Guid.NewGuid(),
             Name = "Team",
             OrganizationId = Guid.NewGuid(),
-            LeaderId = leaderId
         };
 
         _teamRepository

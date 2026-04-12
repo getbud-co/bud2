@@ -32,7 +32,7 @@ public sealed class EmployeeWriteUseCasesTests
         var result = await useCase.ExecuteAsync(new CreateEmployeeCommand(
             "User",
             "user@test.com",
-            EmployeeRole.IndividualContributor,
+            EmployeeRole.Contributor,
             teamId,
             null));
 
@@ -64,7 +64,7 @@ public sealed class EmployeeWriteUseCasesTests
         var result = await useCase.ExecuteAsync(new CreateEmployeeCommand(
             "User",
             "user@test.com",
-            EmployeeRole.IndividualContributor,
+            EmployeeRole.Contributor,
             teamId,
             null));
 
@@ -91,7 +91,10 @@ public sealed class EmployeeWriteUseCasesTests
         var result = await useCase.ExecuteAsync(Guid.NewGuid(), new PatchEmployeeCommand(
             "User",
             "user@test.com",
-            EmployeeRole.IndividualContributor,
+            "user test",
+            EmployeeLanguage.Pt,
+            EmployeeRole.Contributor,
+            Guid.NewGuid(),
             default));
 
         result.IsSuccess.Should().BeFalse();
@@ -123,7 +126,7 @@ public sealed class EmployeeWriteUseCasesTests
             _employeeRepository.Object,
             NullLogger<DeleteEmployee>.Instance);
 
-        var result = await useCase.ExecuteAsync(employee.Id);
+        var result = await useCase.ExecuteAsync(member.EmployeeId);
 
         result.IsSuccess.Should().BeTrue();
         _employeeRepository.Verify(repository => repository.RemoveAsync(member, It.IsAny<CancellationToken>()), Times.Once);
@@ -152,7 +155,7 @@ public sealed class EmployeeWriteUseCasesTests
             _employeeRepository.Object,
             NullLogger<DeleteEmployee>.Instance);
 
-        var result = await useCase.ExecuteAsync(employee.Id);
+        var result = await useCase.ExecuteAsync(member.EmployeeId);
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Conflict);
@@ -170,14 +173,14 @@ public sealed class EmployeeWriteUseCasesTests
         };
 
         _employeeRepository
-            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(employee.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(employee);
+            .Setup(repository => repository.GetByIdWithEmployeeTeamsAsync(member.EmployeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(member);
 
         var useCase = new PatchEmployeeTeams(
             _employeeRepository.Object,
             NullLogger<PatchEmployeeTeams>.Instance);
 
-        var result = await useCase.ExecuteAsync(employee.Id, new PatchEmployeeTeamsCommand([]));
+        var result = await useCase.ExecuteAsync(member.EmployeeId, new PatchEmployeeTeamsCommand([]));
 
         result.IsSuccess.Should().BeTrue();
         _employeeRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);

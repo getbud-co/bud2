@@ -38,24 +38,24 @@ public sealed class LeaderRequiredHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLeaderOfSameOrganization_ShouldSucceed()
+    public async Task Handle_WhenTeamLeaderOfSameOrganization_ShouldSucceed()
     {
         var orgId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         var tenantProvider = new TestTenantProvider { IsGlobalAdmin = false, TenantId = orgId, EmployeeId = employeeId };
         using var dbContext = CreateContext(tenantProvider);
 
-        var org = new Organization { Id = orgId, Name = "Test Org" };
-        var employee = new Employee
+        var org = new Organization { Id = orgId, Name = "test.org" };
+        var employee = new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" };
+        var member = new OrganizationEmployeeMember
         {
-            Id = employeeId,
+            EmployeeId = employeeId,
             OrganizationId = orgId,
-            FullName = "Leader",
-            Email = "leader@test.com",
-            Role = EmployeeRole.Leader
+            Role = EmployeeRole.TeamLeader
         };
         dbContext.Organizations.Add(org);
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);
@@ -68,24 +68,24 @@ public sealed class LeaderRequiredHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenIndividualContributor_ShouldNotSucceed()
+    public async Task Handle_WhenContributor_ShouldNotSucceed()
     {
         var orgId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         var tenantProvider = new TestTenantProvider { IsGlobalAdmin = false, TenantId = orgId, EmployeeId = employeeId };
         using var dbContext = CreateContext(tenantProvider);
 
-        var org = new Organization { Id = orgId, Name = "Test Org" };
-        var employee = new Employee
+        var org = new Organization { Id = orgId, Name = "test.org" };
+        var employee = new Employee { Id = employeeId, FullName = "Contributor", Email = "contrib@test.com" };
+        var member = new OrganizationEmployeeMember
         {
-            Id = employeeId,
+            EmployeeId = employeeId,
             OrganizationId = orgId,
-            FullName = "Contributor",
-            Email = "contrib@test.com",
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         };
         dbContext.Organizations.Add(org);
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);
@@ -99,7 +99,7 @@ public sealed class LeaderRequiredHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLeaderOfDifferentOrganization_ShouldNotSucceed()
+    public async Task Handle_WhenTeamLeaderOfDifferentOrganization_ShouldNotSucceed()
     {
         var orgId = Guid.NewGuid();
         var otherOrgId = Guid.NewGuid();
@@ -107,18 +107,18 @@ public sealed class LeaderRequiredHandlerTests
         var tenantProvider = new TestTenantProvider { IsGlobalAdmin = false, TenantId = orgId, EmployeeId = employeeId };
         using var dbContext = CreateContext(tenantProvider);
 
-        var org = new Organization { Id = orgId, Name = "Test Org" };
-        var otherOrg = new Organization { Id = otherOrgId, Name = "Other Org" };
-        var employee = new Employee
+        var org = new Organization { Id = orgId, Name = "test.org" };
+        var otherOrg = new Organization { Id = otherOrgId, Name = "other.org" };
+        var employee = new Employee { Id = employeeId, FullName = "Leader Elsewhere", Email = "leader@other.com" };
+        var member = new OrganizationEmployeeMember
         {
-            Id = employeeId,
+            EmployeeId = employeeId,
             OrganizationId = otherOrgId,
-            FullName = "Leader Elsewhere",
-            Email = "leader@other.com",
-            Role = EmployeeRole.Leader
+            Role = EmployeeRole.TeamLeader
         };
         dbContext.Organizations.AddRange(org, otherOrg);
         dbContext.Employees.Add(employee);
+        dbContext.OrganizationEmployeeMembers.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);

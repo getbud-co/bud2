@@ -32,7 +32,7 @@ public sealed class TeamRepositoryTests
         Guid organizationId,
         string fullName = "Test Employee",
         string email = "test@example.com",
-        EmployeeRole role = EmployeeRole.Leader)
+        EmployeeRole role = EmployeeRole.TeamLeader)
     {
         var employee = new Employee
         {
@@ -63,7 +63,6 @@ public sealed class TeamRepositoryTests
             Id = Guid.NewGuid(),
             Name = name,
             OrganizationId = organizationId,
-            LeaderId = leaderId,
             ParentTeamId = parentTeamId
         };
         context.Teams.Add(team);
@@ -120,7 +119,7 @@ public sealed class TeamRepositoryTests
         var leader = await CreateTestEmployee(context, org.Id);
         var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.Contributor);
         context.EmployeeTeams.Add(new EmployeeTeam
         {
             EmployeeId = member.Id,
@@ -391,7 +390,7 @@ public sealed class TeamRepositoryTests
         var leader = await CreateTestEmployee(context, org.Id);
         var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.Contributor);
         context.EmployeeTeams.Add(new EmployeeTeam
         {
             EmployeeId = member.Id,
@@ -439,8 +438,8 @@ public sealed class TeamRepositoryTests
         var leader = await CreateTestEmployee(context, org.Id);
         var team = await CreateTestTeam(context, org.Id, leader.Id);
 
-        var assigned = await CreateTestEmployee(context, org.Id, "Assigned", "assigned@test.com", EmployeeRole.IndividualContributor);
-        var eligible = await CreateTestEmployee(context, org.Id, "Eligible", "eligible@test.com", EmployeeRole.IndividualContributor);
+        var assigned = await CreateTestEmployee(context, org.Id, "Assigned", "assigned@test.com", EmployeeRole.Contributor);
+        var eligible = await CreateTestEmployee(context, org.Id, "Eligible", "eligible@test.com", EmployeeRole.Contributor);
 
         context.EmployeeTeams.Add(new EmployeeTeam
         {
@@ -470,7 +469,7 @@ public sealed class TeamRepositoryTests
 
         for (int i = 0; i < 5; i++)
         {
-            await CreateTestEmployee(context, org.Id, $"Eligible {i}", $"e{i}@test.com", EmployeeRole.IndividualContributor);
+            await CreateTestEmployee(context, org.Id, $"Eligible {i}", $"e{i}@test.com", EmployeeRole.Contributor);
         }
 
         // Act
@@ -616,7 +615,7 @@ public sealed class TeamRepositoryTests
         var org = await CreateTestOrganization(context);
         var leader = await CreateTestEmployee(context, org.Id);
         var team = await CreateTestTeam(context, org.Id, leader.Id);
-        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.IndividualContributor);
+        var member = await CreateTestEmployee(context, org.Id, "Member", "member@test.com", EmployeeRole.Contributor);
 
         context.EmployeeTeams.Add(new EmployeeTeam
         {
@@ -658,8 +657,7 @@ public sealed class TeamRepositoryTests
         {
             Id = Guid.NewGuid(),
             Name = "New Team",
-            OrganizationId = org.Id,
-            LeaderId = leader.Id
+            OrganizationId = org.Id
         };
 
         // Act

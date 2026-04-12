@@ -276,6 +276,7 @@ public sealed class TeamsController(
     /// <response code="204">Times arquivados com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
     /// <response code="403">Sem permissão para arquivar times.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost("bulk-archive")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -283,7 +284,7 @@ public sealed class TeamsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkArchive([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
-        var result = await bulkArchiveTeams.ExecuteAsync(User, new BulkArchiveTeamsCommand(ids), cancellationToken);
+        var result = await bulkArchiveTeams.ExecuteAsync(new BulkArchiveTeamsCommand(ids), cancellationToken);
         return FromResult(result, NoContent);
     }
 
@@ -292,13 +293,14 @@ public sealed class TeamsController(
     /// </summary>
     /// <response code="204">Times excluídos com sucesso.</response>
     /// <response code="403">Sem permissão para excluir times.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost("bulk-delete")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
-        var result = await bulkDeleteTeams.ExecuteAsync(User, new BulkDeleteTeamsCommand(ids), cancellationToken);
+        var result = await bulkDeleteTeams.ExecuteAsync(new BulkDeleteTeamsCommand(ids), cancellationToken);
         return FromResult(result, NoContent);
     }
 }

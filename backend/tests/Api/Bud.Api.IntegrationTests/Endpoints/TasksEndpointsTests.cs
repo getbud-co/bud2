@@ -117,8 +117,7 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
         {
             Id = Guid.NewGuid(),
             Name = "getbud.co",
-            OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
+            OrganizationId = org.Id
         };
         dbContext.Teams.Add(team);
 
@@ -128,7 +127,7 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id
         });
         await dbContext.SaveChangesAsync();

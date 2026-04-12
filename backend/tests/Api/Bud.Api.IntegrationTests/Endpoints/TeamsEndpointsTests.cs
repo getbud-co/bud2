@@ -61,7 +61,6 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             Name = "getbud.co",
             OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
         };
         dbContext.Teams.Add(team);
 
@@ -69,7 +68,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.Leader,
+            Role = EmployeeRole.TeamLeader,
             TeamId = team.Id
         });
 
@@ -103,7 +102,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             EmployeeId = leader.Id,
             OrganizationId = org!.Id,
-            Role = EmployeeRole.Leader
+            Role = EmployeeRole.TeamLeader
         });
         await dbContext.SaveChangesAsync();
 
@@ -128,7 +127,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 
@@ -593,8 +592,8 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         dbContext.Employees.AddRange(collab1, collab2);
         dbContext.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = collab1.Id, OrganizationId = org.Id, Role = EmployeeRole.IndividualContributor },
-            new OrganizationEmployeeMember { EmployeeId = collab2.Id, OrganizationId = org.Id, Role = EmployeeRole.Leader });
+            new OrganizationEmployeeMember { EmployeeId = collab1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new OrganizationEmployeeMember { EmployeeId = collab2.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader });
         dbContext.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = collab1.Id, TeamId = team!.Id },
             new EmployeeTeam { EmployeeId = collab2.Id, TeamId = team.Id });
@@ -662,7 +661,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             EmployeeId = otherCollab.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 
@@ -697,7 +696,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             EmployeeId = otherCollab.Id,
             OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor
+            Role = EmployeeRole.Contributor
         });
         await dbContext.SaveChangesAsync();
 
