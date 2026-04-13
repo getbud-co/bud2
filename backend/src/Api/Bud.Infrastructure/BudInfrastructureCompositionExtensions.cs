@@ -43,6 +43,7 @@ public static class BudInfrastructureCompositionExtensions
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ISessionAuthenticator, SessionAuthenticator>();
+        services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
         services.AddScoped<IMyOrganizationsReadStore, MyOrganizationsReadStore>();
         services.AddScoped<IMyDashboardReadStore, DashboardReadStore>();
         services.AddScoped<IMissionProgressReadStore, MissionProgressService>();
