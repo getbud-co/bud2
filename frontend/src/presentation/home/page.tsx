@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Fire, Plus } from "@phosphor-icons/react";
 
-import { Badge, Button, Tooltip } from "@mdonangelo/bud-ds";
+import { Badge, Button, Tooltip } from "@getbud-co/buds";
 import { PageHeader } from "@/presentation/layout/page-header";
 
 import { MissionsCard } from "./components/MissionsCard";

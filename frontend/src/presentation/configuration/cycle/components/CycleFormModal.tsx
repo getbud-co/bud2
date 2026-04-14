@@ -12,8 +12,8 @@ import {
   DatePicker,
   ChoiceBox,
   ChoiceBoxGroup,
-} from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 import type { Cycle, CycleType, CycleStatus } from "@/types";
 import { calendarDateToIso, isoToCalendarDate } from "../utils";
 import { TYPE_OPTIONS } from "../consts";

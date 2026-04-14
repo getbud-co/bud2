@@ -1,4 +1,4 @@
-import { Card, CardBody, Tooltip } from "@mdonangelo/bud-ds";
+import { Card, CardBody, Tooltip } from "@getbud-co/buds";
 import { Info } from "@phosphor-icons/react";
 
 interface ActiveMissionsCardProps {

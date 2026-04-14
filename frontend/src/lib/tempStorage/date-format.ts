@@ -10,7 +10,7 @@
  */
 
 // Re-export DS utilities for CalendarDate compatibility
-export { formatDate, parseDate, type CalendarDate } from "@mdonangelo/bud-ds";
+export { formatDate, parseDate, type CalendarDate } from "@getbud-co/buds";
 
 /**
  * Format ISO date string (YYYY-MM-DD or ISO datetime) to Brazilian format (DD/MM/YYYY)

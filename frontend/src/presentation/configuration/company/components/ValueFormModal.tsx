@@ -9,7 +9,7 @@ import {
   Button,
   Input,
   Textarea,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 
 interface ValueFormModalProps {
   open: boolean;

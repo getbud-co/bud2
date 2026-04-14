@@ -19,8 +19,8 @@ import {
   AssistantButton,
   Badge,
   Alert,
-} from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 import {
   Plus,
   CaretRight,

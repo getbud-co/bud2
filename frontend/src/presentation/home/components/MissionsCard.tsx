@@ -12,8 +12,8 @@ import {
   ModalHeader,
   ModalBody,
   Badge,
-} from "@mdonangelo/bud-ds";
-import type { DropdownItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { DropdownItem } from "@getbud-co/buds";
 import { ArrowsOutSimple, Users } from "@phosphor-icons/react";
 import { usePeopleData } from "@/contexts/PeopleDataContext";
 

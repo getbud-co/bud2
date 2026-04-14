@@ -1,5 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { Button } from "@mdonangelo/bud-ds";
+import { Button } from "@getbud-co/buds";
 import {
   CaretUp,
   CaretDown,

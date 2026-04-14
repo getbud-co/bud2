@@ -1,5 +1,5 @@
 import { ConfidenceLevel, KanbanStatus, TemplateConfig } from "@/types";
-import { BreadcrumbItem, FilterOption, MissionItem } from "@mdonangelo/bud-ds";
+import { BreadcrumbItem, FilterOption, MissionItem } from "@getbud-co/buds";
 import {
   ArrowsInLineHorizontal,
   CalendarBlank,

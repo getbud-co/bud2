@@ -10,7 +10,7 @@ import {
   Input,
   Select,
   FilterDropdown,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { CaretDown, Envelope } from "@phosphor-icons/react";
 import { LANGUAGE_OPTIONS } from "../consts";
 

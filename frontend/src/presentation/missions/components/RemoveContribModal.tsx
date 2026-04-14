@@ -4,7 +4,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { Trash } from "@phosphor-icons/react";
 
 interface RemoveContribConfirm {

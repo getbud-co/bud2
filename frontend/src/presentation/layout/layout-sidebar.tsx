@@ -13,8 +13,8 @@ import {
   SidebarUser,
   Avatar,
   Popover,
-} from "@mdonangelo/bud-ds";
-import type { PopoverItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { PopoverItem } from "@getbud-co/buds";
 import {
   House,
   Target,

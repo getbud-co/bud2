@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Table,
@@ -14,8 +14,8 @@ import {
   toast,
   useDataTable,
   useFilterChips,
-} from "@mdonangelo/bud-ds";
-import type { PopoverItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { PopoverItem } from "@getbud-co/buds";
 import {
   Key,
   UserCircle,

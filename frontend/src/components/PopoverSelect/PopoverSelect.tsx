@@ -7,7 +7,7 @@ import {
   Radio,
   Avatar,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import styles from "./PopoverSelect.module.css";
 
 /* ——— Types ——— */

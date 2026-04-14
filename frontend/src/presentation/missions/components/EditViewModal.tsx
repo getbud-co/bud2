@@ -6,7 +6,7 @@ import {
   ModalFooter,
   Input,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   Users,
   CalendarBlank,

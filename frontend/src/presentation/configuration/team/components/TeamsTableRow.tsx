@@ -4,8 +4,8 @@ import {
   Badge,
   AvatarLabelGroup,
   AvatarGroup,
-} from "@mdonangelo/bud-ds";
-import type { AvatarGroupItem, PopoverItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { AvatarGroupItem, PopoverItem } from "@getbud-co/buds";
 import { UsersThree } from "@phosphor-icons/react";
 import { RowActionsPopover } from "@/components/table/RowActionsPopover";
 import type { Team, TeamMember } from "@/types";

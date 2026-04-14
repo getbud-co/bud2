@@ -84,7 +84,6 @@ function normalizeKey(value: string): string {
     .trim();
 }
 
-
 function membersByTeamId(
   snapshot: PeopleStoreSnapshot,
 ): Map<string, TeamMember[]> {

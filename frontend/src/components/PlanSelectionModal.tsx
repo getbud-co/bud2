@@ -1,10 +1,4 @@
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Button,
-  Badge,
-} from "@mdonangelo/bud-ds";
+import { Modal, ModalHeader, ModalBody, Button, Badge } from "@getbud-co/buds";
 import { Check, ChatCircleDots } from "@phosphor-icons/react";
 import styles from "./PlanSelectionModal.module.css";
 

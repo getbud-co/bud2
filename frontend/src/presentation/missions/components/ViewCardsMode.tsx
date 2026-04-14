@@ -6,7 +6,7 @@ import {
   GoalProgressBar,
   AvatarGroup,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { PencilSimple, Trash, ArrowsOutSimple } from "@phosphor-icons/react";
 import type { Mission } from "@/types";
 import type { OwnerOption } from "@/contexts/PeopleDataContext";

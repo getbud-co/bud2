@@ -6,7 +6,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import type { PeopleUserView } from "@/contexts/PeopleDataContext";
 
 interface ToggleStatusModalProps {

@@ -1,4 +1,4 @@
-import { Card, CardBody, GoalProgressBar } from "@mdonangelo/bud-ds";
+import { Card, CardBody, GoalProgressBar } from "@getbud-co/buds";
 
 interface ProgressCardProps {
   value: number;

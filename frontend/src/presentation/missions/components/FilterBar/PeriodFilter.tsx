@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
-import { FilterDropdown, Radio, DatePicker } from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+import { FilterDropdown, Radio, DatePicker } from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 import { Plus, CaretRight } from "@phosphor-icons/react";
 
 interface PresetPeriod {

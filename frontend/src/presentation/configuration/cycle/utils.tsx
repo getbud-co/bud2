@@ -1,5 +1,5 @@
 import { formatDateBR } from "@/lib/tempStorage/date-format";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+import type { CalendarDate } from "@getbud-co/buds";
 
 /** Converts an ISO date string (YYYY-MM-DD) to a CalendarDate for the DatePicker */
 export function isoToCalendarDate(iso: string): CalendarDate {

@@ -8,9 +8,9 @@ import {
   AvatarLabelGroup,
   FilterDropdown,
   RowActionsPopover,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { CaretDown } from "@phosphor-icons/react";
-import type { PopoverItem } from "@mdonangelo/bud-ds";
+import type { PopoverItem } from "@getbud-co/buds";
 import type { PeopleUserView } from "@/contexts/PeopleDataContext";
 import { STATUS_BADGE } from "../consts";
 

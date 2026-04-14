@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { Button, Popover } from "@mdonangelo/bud-ds";
-import type { PopoverItem } from "@mdonangelo/bud-ds";
+import { Button, Popover } from "@getbud-co/buds";
+import type { PopoverItem } from "@getbud-co/buds";
 import { DotsThreeVertical } from "@phosphor-icons/react";
 
 interface RowActionsPopoverProps {

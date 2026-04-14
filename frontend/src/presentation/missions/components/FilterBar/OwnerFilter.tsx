@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { FilterDropdown, Checkbox, Avatar } from "@mdonangelo/bud-ds";
+import { FilterDropdown, Checkbox, Avatar } from "@getbud-co/buds";
 import type { OwnerOption } from "@/contexts/PeopleDataContext";
 
 type OwnerFilterOption =

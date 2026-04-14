@@ -1,7 +1,7 @@
 "use client";
 
 import { Warning } from "@phosphor-icons/react";
-import { Button } from "@mdonangelo/bud-ds";
+import { Button } from "@getbud-co/buds";
 
 export function ServerErrorScreen() {
   return (

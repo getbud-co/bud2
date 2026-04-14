@@ -7,7 +7,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { DownloadSimple, FileText, UploadSimple } from "@phosphor-icons/react";
 import { DEFAULT_ROLE_SLUG, GENDER_OPTIONS, LANGUAGE_OPTIONS } from "../consts";
 

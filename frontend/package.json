@@ -15,7 +15,7 @@
     "@fontsource/crimson-pro": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
-    "@mdonangelo/bud-ds": "0.2.1",
+    "@getbud-co/buds": "^0.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",

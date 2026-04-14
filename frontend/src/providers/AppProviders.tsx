@@ -20,21 +20,21 @@ export function AppProviders({ children, initialOrgId }: AppProvidersProps) {
   return (
     <QueryProvider>
       <LoggedUserProvider>
-      <OrganizationProvider initialOrgId={initialOrgId}>
-        <ConfigDataProvider>
-          <ActivityDataProvider>
-            <PeopleDataProvider>
-              <MissionsDataProvider>
-                <SettingsDataProvider>
-                  <IntegrationsDataProvider>
-                    {children}
-                  </IntegrationsDataProvider>
-                </SettingsDataProvider>
-              </MissionsDataProvider>
-            </PeopleDataProvider>
-          </ActivityDataProvider>
-        </ConfigDataProvider>
-      </OrganizationProvider>
+        <OrganizationProvider initialOrgId={initialOrgId}>
+          <ConfigDataProvider>
+            <ActivityDataProvider>
+              <PeopleDataProvider>
+                <MissionsDataProvider>
+                  <SettingsDataProvider>
+                    <IntegrationsDataProvider>
+                      {children}
+                    </IntegrationsDataProvider>
+                  </SettingsDataProvider>
+                </MissionsDataProvider>
+              </PeopleDataProvider>
+            </ActivityDataProvider>
+          </ConfigDataProvider>
+        </OrganizationProvider>
       </LoggedUserProvider>
     </QueryProvider>
   );

@@ -1,4 +1,4 @@
-import { CardBody } from "@mdonangelo/bud-ds";
+import { CardBody } from "@getbud-co/buds";
 import { ProgressCard } from "./ProgressCard";
 import { ActiveMissionsCard } from "./ActiveMissionsCard";
 import { OutdatedIndicatorsCard } from "./OutdatedIndicatorsCard";

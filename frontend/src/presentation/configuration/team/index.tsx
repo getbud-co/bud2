@@ -11,8 +11,8 @@ import {
   TableBulkActions,
   Button,
   toast,
-} from "@mdonangelo/bud-ds";
-import type { AvatarGroupItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { AvatarGroupItem } from "@getbud-co/buds";
 import {
   Archive,
   Trash,

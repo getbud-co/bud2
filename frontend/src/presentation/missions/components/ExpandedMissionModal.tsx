@@ -1,4 +1,4 @@
-import { Modal, ModalHeader, ModalBody } from "@mdonangelo/bud-ds";
+import { Modal, ModalHeader, ModalBody } from "@getbud-co/buds";
 import type { Mission, CheckinPayload, MissionTask } from "@/types";
 import type { MissionItemProps } from "./MissionItem";
 import { ModalMissionContent } from "./MissionItemContent";

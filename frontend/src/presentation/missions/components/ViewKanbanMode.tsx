@@ -13,7 +13,7 @@ import {
   AvatarGroup,
   Button,
   Checkbox,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   ArrowRight,
   CaretDown,
@@ -21,7 +21,7 @@ import {
   Target,
   PencilSimple,
 } from "@phosphor-icons/react";
-import { FilterDropdown } from "@mdonangelo/bud-ds";
+import { FilterDropdown } from "@getbud-co/buds";
 import type {
   Mission,
   KanbanStatus,

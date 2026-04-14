@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import { TableRow, TableCell, Badge } from "@mdonangelo/bud-ds";
-import type { PopoverItem } from "@mdonangelo/bud-ds";
+import { TableRow, TableCell, Badge } from "@getbud-co/buds";
+import type { PopoverItem } from "@getbud-co/buds";
 import { PencilSimple, Trash, Play, Stop } from "@phosphor-icons/react";
 import type { Cycle } from "@/types";
 import { RowActionsPopover } from "@/components/table/RowActionsPopover";

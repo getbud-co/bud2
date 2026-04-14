@@ -1,5 +1,5 @@
 import { OrgPersonView } from "@/contexts/PeopleDataContext";
-import { Avatar, Input } from "@mdonangelo/bud-ds";
+import { Avatar, Input } from "@getbud-co/buds";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 

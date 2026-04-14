@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Card, CardDivider, toast } from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+import { Card, CardDivider, toast } from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 
 import { formatMultiLabel } from "@/components/PopoverSelect";
 import { PageHeader } from "@/presentation/layout/page-header";

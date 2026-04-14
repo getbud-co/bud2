@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { FilterDropdown } from "@mdonangelo/bud-ds";
+import { FilterDropdown } from "@getbud-co/buds";
 import { ListBullets, SquaresFour, Kanban } from "@phosphor-icons/react";
 
 type ViewMode = "list" | "cards" | "kanban";

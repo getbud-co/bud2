@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Input, TableCardHeader } from "@mdonangelo/bud-ds";
+import { Badge, Button, Input, TableCardHeader } from "@getbud-co/buds";
 import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
 
 interface CyclesTableHeaderProps {

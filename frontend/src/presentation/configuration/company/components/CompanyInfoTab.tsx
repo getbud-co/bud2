@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Button, toast } from "@mdonangelo/bud-ds";
+import { Input, Button, toast } from "@getbud-co/buds";
 import { UploadSimpleIcon } from "@phosphor-icons/react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useActiveOrganization } from "../hooks/useActiveOrganization";

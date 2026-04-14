@@ -24,7 +24,7 @@ import {
   Drawer,
   DrawerHeader,
   DrawerBody,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   Target,
   GitBranch,

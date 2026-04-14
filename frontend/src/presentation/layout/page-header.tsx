@@ -29,8 +29,8 @@ import {
   CardBody,
   CommandPalette,
   NotificationPanel,
-} from "@mdonangelo/bud-ds";
-import type { CommandGroup, NotificationItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { CommandGroup, NotificationItem } from "@getbud-co/buds";
 
 import { useSidebar } from "@/contexts/SidebarContext";
 

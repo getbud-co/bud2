@@ -1,5 +1,5 @@
 import type { ChangeEvent } from "react";
-import { Badge, Button, Input, TableCardHeader } from "@mdonangelo/bud-ds";
+import { Badge, Button, Input, TableCardHeader } from "@getbud-co/buds";
 import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
 
 interface TeamsTableHeaderProps {
@@ -31,7 +31,12 @@ export function TeamsTableHeader({
               leftIcon={MagnifyingGlass}
             />
           </div>
-          <Button variant="primary" size="md" leftIcon={Plus} onClick={onCreate}>
+          <Button
+            variant="primary"
+            size="md"
+            leftIcon={Plus}
+            onClick={onCreate}
+          >
             Novo time
           </Button>
         </div>

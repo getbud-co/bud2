@@ -22,7 +22,7 @@ import {
   Modal,
   ModalHeader,
   ModalBody,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 
 interface Activity {
   icon: React.ComponentType<{ size?: number }>;

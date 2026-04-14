@@ -87,7 +87,9 @@ export async function DELETE(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Unknown error" }));
     return NextResponse.json(error, { status: response.status });
   }
 
@@ -106,13 +108,15 @@ export async function PATCH(
 
   const backendBody: Record<string, unknown> = {};
   if (body.name !== undefined) backendBody.name = body.name;
-  if (body.description !== undefined) backendBody.description = body.description;
+  if (body.description !== undefined)
+    backendBody.description = body.description;
   if (body.color !== undefined)
     backendBody.color = capitalize(body.color as string);
   if (body.status !== undefined)
     backendBody.status = capitalize(body.status as string);
   if (body.leaderId !== undefined) backendBody.leaderId = body.leaderId;
-  if (body.parentTeamId !== undefined) backendBody.parentTeamId = body.parentTeamId;
+  if (body.parentTeamId !== undefined)
+    backendBody.parentTeamId = body.parentTeamId;
 
   const response = await fetch(`${apiUrl}/api/teams/${id}`, {
     method: "PATCH",
@@ -125,7 +129,9 @@ export async function PATCH(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Unknown error" }));
     return NextResponse.json(error, { status: response.status });
   }
 

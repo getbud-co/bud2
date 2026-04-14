@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from "react";
 import type { RefObject, Dispatch, SetStateAction } from "react";
-import { FilterBar, FilterChip, CardBody, Button } from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+import { FilterBar, FilterChip, CardBody, Button } from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 import {
   Users,
   CalendarBlank,

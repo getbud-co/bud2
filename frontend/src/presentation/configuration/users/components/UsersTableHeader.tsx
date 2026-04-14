@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { Badge, Button, Input, TableCardHeader } from "@mdonangelo/bud-ds";
+import { Badge, Button, Input, TableCardHeader } from "@getbud-co/buds";
 import { MagnifyingGlass, Plus, UploadSimple } from "@phosphor-icons/react";
 
 interface UsersTableHeaderProps {

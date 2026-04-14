@@ -23,8 +23,8 @@ import {
   FilterChip,
   ChoiceBox,
   ChoiceBoxGroup,
-} from "@mdonangelo/bud-ds";
-import type { BreadcrumbItem, HeatmapCell } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { BreadcrumbItem, HeatmapCell } from "@getbud-co/buds";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import {
   MagnifyingGlass,

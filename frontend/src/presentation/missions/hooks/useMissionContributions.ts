@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { toast } from "@mdonangelo/bud-ds";
+import { toast } from "@getbud-co/buds";
 import type {
   ExternalContribution,
   Indicator,

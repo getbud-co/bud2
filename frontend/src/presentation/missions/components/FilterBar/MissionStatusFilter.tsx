@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { FilterDropdown, Checkbox } from "@mdonangelo/bud-ds";
+import { FilterDropdown, Checkbox } from "@getbud-co/buds";
 
 interface MissionStatusOption {
   id: string;

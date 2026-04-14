@@ -1,4 +1,4 @@
-import { CalendarDate } from "@mdonangelo/bud-ds";
+import { CalendarDate } from "@getbud-co/buds";
 
 export interface MissionItemData {
   id: string;

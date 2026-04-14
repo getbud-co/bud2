@@ -14,7 +14,7 @@ import {
   Button,
   Alert,
   toast,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { Trash } from "@phosphor-icons/react";
 import type { Cycle, CycleType, CycleStatus } from "@/types";
 import { useOrganization } from "@/contexts/OrganizationContext";

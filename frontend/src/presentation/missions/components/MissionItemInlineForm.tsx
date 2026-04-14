@@ -10,8 +10,8 @@ import {
   DatePicker,
   Badge,
   Avatar,
-} from "@mdonangelo/bud-ds";
-import type { CalendarDate } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { CalendarDate } from "@getbud-co/buds";
 import {
   Plus,
   CaretRight,
@@ -20,7 +20,6 @@ import {
   DotsThree,
   Tag,
   MagnifyingGlass,
-  ChartBar,
   PlusSquare,
 } from "@phosphor-icons/react";
 import {
@@ -308,7 +307,6 @@ export function MissionItemInlineForm({
                 />
               </div>
             )}
-
           </div>
         )}
       </div>
@@ -427,7 +425,6 @@ export function MissionItemInlineForm({
           })}
         </div>
       </FilterDropdown>
-
 
       {/* Período dropdown — presets */}
       <FilterDropdown

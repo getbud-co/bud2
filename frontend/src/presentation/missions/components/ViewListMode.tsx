@@ -1,5 +1,5 @@
 import type { MutableRefObject } from "react";
-import { CardBody } from "@mdonangelo/bud-ds";
+import { CardBody } from "@getbud-co/buds";
 import type { Mission, Indicator, MissionTask, CheckinPayload } from "@/types";
 import { MissionItem } from "./MissionItem";
 

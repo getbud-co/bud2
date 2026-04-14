@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { FilterDropdown, Radio } from "@mdonangelo/bud-ds";
+import { FilterDropdown, Radio } from "@getbud-co/buds";
 
 interface StatusOption {
   id: string;

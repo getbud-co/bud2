@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Lightning, ArrowRight } from "@phosphor-icons/react";
-import { Badge, Accordion, AccordionItem } from "@mdonangelo/bud-ds";
+import { Badge, Accordion, AccordionItem } from "@getbud-co/buds";
 
 import { useBriefingReadModel } from "../hooks/useBriefingReadModel";
 import { formatWeekdayDate } from "@/lib/tempStorage/date-format";

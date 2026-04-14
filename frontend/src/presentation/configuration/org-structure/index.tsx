@@ -21,7 +21,7 @@ import {
   DrawerHeader,
   DrawerBody,
   DragToCloseDrawer,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   MagnifyingGlass,
   Plus,

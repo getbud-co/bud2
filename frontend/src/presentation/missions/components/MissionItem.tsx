@@ -23,7 +23,7 @@ import {
   FilterDropdown,
   GoalGaugeBar,
   GoalProgressBar,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   ArrowsOutSimple,
   CaretDown,

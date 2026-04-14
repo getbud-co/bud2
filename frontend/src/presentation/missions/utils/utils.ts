@@ -1,7 +1,7 @@
 import { TemplateConfig } from "@/types";
 import { Mission } from "@/types/mission/mission";
 import { TEMPLATE_CONFIGS } from "../consts";
-import { CalendarDate } from "@mdonangelo/bud-ds";
+import { CalendarDate } from "@getbud-co/buds";
 
 export function getTemplateConfig(
   template: string | undefined,

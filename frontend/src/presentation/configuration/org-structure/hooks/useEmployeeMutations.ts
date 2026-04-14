@@ -44,9 +44,8 @@ export function usePatchEmployee(orgId: string | null) {
       queryClient.setQueryData<OrgPersonView[]>(
         [ORG_PEOPLE_QUERY_KEY, orgId],
         (prev) =>
-          prev?.map((p) =>
-            p.id === payload.id ? { ...p, ...payload } : p,
-          ) ?? [],
+          prev?.map((p) => (p.id === payload.id ? { ...p, ...payload } : p)) ??
+          [],
       );
       return { previous };
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, TabBar } from "@mdonangelo/bud-ds";
+import { Card, TabBar } from "@getbud-co/buds";
 import { TABS } from "./consts";
 import { CompanyInfoTab } from "./components/CompanyInfoTab";
 import { CompanyValuesTab } from "./components/CompanyValuesTab";

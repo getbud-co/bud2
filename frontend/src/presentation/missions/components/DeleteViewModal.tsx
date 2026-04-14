@@ -4,7 +4,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import { Warning } from "@phosphor-icons/react";
 import type { SavedView } from "@/contexts/SavedViewsContext";
 

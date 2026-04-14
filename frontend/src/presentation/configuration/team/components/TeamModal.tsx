@@ -18,7 +18,7 @@ import {
   Radio,
   TabBar,
   toast,
-} from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
 import {
   MagnifyingGlass,
   UsersThree,

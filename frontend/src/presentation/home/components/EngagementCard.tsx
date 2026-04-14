@@ -15,8 +15,8 @@ import {
   GoalProgressBar,
   AvatarLabelGroup,
   ChartTooltipContent,
-} from "@mdonangelo/bud-ds";
-import type { DropdownItem } from "@mdonangelo/bud-ds";
+} from "@getbud-co/buds";
+import type { DropdownItem } from "@getbud-co/buds";
 import {
   TrendUp,
   TrendDown,

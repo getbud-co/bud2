@@ -1,12 +1,7 @@
 "use client";
 
 import { useRef, type RefObject } from "react";
-import {
-  FilterBar,
-  FilterChip,
-  FilterDropdown,
-  Radio,
-} from "@mdonangelo/bud-ds";
+import { FilterBar, FilterChip, FilterDropdown, Radio } from "@getbud-co/buds";
 import { useFilterChips } from "@/hooks/useFilterChips";
 import { STATUS_FILTER, FILTER_OPTIONS } from "../consts";
 
@@ -43,7 +38,9 @@ export function TeamsFilterBar({
 
   function getFilterLabel(id: string): string {
     if (id === "status")
-      return STATUS_FILTER.find((s) => s.id === filterStatus)?.label ?? "Status";
+      return (
+        STATUS_FILTER.find((s) => s.id === filterStatus)?.label ?? "Status"
+      );
     return id;
   }
 

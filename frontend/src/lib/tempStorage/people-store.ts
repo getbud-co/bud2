@@ -620,7 +620,8 @@ function sanitizeUsers(
       const roleType = String(item.roleType ?? "colaborador");
       // Migrate legacy data: if roleId is missing, create it from roleType
       const roleId =
-        item.roleId ?? createRoleIdForOrg(item.organizationId ?? orgId, roleType);
+        item.roleId ??
+        createRoleIdForOrg(item.organizationId ?? orgId, roleType);
 
       return [
         id,

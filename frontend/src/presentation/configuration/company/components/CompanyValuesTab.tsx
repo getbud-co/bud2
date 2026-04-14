@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Button, Badge } from "@mdonangelo/bud-ds";
-import { RowActionsPopover } from "@mdonangelo/bud-ds";
+import { Input, Button } from "@getbud-co/buds";
+import { RowActionsPopover } from "@getbud-co/buds";
 import { ValueFormModal } from "./ValueFormModal";
 import { DeleteValueModal } from "./DeleteValueModal";
 import {

@@ -1,12 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import {
-  FilterBar,
-  FilterChip,
-  FilterDropdown,
-  Radio,
-} from "@mdonangelo/bud-ds";
+import { FilterBar, FilterChip, FilterDropdown, Radio } from "@getbud-co/buds";
 import { STATUS_FILTER } from "../consts";
 
 interface FilterOption {
