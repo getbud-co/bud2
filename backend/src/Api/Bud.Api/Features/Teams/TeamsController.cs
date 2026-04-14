@@ -49,7 +49,6 @@ public sealed class TeamsController(
             request.Name,
             request.Description,
             request.Color,
-            request.OrganizationId,
             request.LeaderId,
             request.ParentTeamId);
 

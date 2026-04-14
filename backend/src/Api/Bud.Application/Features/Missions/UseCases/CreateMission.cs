@@ -16,7 +16,7 @@ public sealed record CreateMissionCommand(
 
 public sealed partial class CreateMission(
     IMissionRepository missionRepository,
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateMission> logger,
     IUnitOfWork? unitOfWork = null)

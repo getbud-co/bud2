@@ -3,7 +3,7 @@ using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
-public sealed class ListEmployees(IEmployeeRepository employeeRepository)
+public sealed class ListEmployees(IMemberRepository employeeRepository)
 {
     public async Task<Result<PagedResult<OrganizationEmployeeMember>>> ExecuteAsync(
         Guid? teamId,

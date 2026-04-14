@@ -13,7 +13,7 @@ public sealed record CreateCheckinCommand(
 
 public sealed partial class CreateCheckin(
     IIndicatorRepository indicatorRepository,
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateCheckin> logger,
     IUnitOfWork? unitOfWork = null)

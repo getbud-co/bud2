@@ -1,6 +1,6 @@
 export interface Tag {
   id: string;
-  orgId: string;
+  organizationId: string;
   name: string;
   color: string;
   createdAt: string;

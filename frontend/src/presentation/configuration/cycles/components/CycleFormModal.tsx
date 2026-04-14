@@ -14,13 +14,13 @@ import {
   ChoiceBoxGroup,
 } from "@getbud-co/buds";
 import type { CalendarDate } from "@getbud-co/buds";
-import type { Cycle, CycleType, CycleStatus } from "@/types";
+import type { Cycle, CycleCadence, CycleStatus } from "@/types";
 import { calendarDateToIso, isoToCalendarDate } from "../utils";
 import { TYPE_OPTIONS } from "../consts";
 
 export interface CycleFormData {
   name: string;
-  type: CycleType;
+  cadence: CycleCadence;
   startDate: string;
   endDate: string;
   status: CycleStatus;
@@ -42,18 +42,17 @@ export function CycleFormModal({
   isPending,
 }: CycleFormModalProps) {
   const [name, setName] = useState("");
-  const [type, setType] = useState<CycleType>("quarterly");
+  const [cadence, setCadence] = useState<CycleCadence>("Quarterly");
   const [dates, setDates] = useState<
     [CalendarDate | null, CalendarDate | null]
   >([null, null]);
-  const [status, setStatus] = useState<CycleStatus>("planning");
+  const [status, setStatus] = useState<CycleStatus>("Planning");
 
-  // Sync form state when the modal opens or the editing target changes
   useEffect(() => {
     if (!open) return;
     if (editingCycle) {
       setName(editingCycle.name);
-      setType(editingCycle.type);
+      setCadence(editingCycle.cadence);
       setDates([
         isoToCalendarDate(editingCycle.startDate),
         isoToCalendarDate(editingCycle.endDate),
@@ -61,9 +60,9 @@ export function CycleFormModal({
       setStatus(editingCycle.status);
     } else {
       setName("");
-      setType("quarterly");
+      setCadence("Quarterly");
       setDates([null, null]);
-      setStatus("planning");
+      setStatus("Planning");
     }
   }, [open, editingCycle]);
 
@@ -71,7 +70,7 @@ export function CycleFormModal({
     if (!dates[0] || !dates[1]) return;
     onSave({
       name,
-      type,
+      cadence,
       startDate: calendarDateToIso(dates[0]),
       endDate: calendarDateToIso(dates[1]),
       status,
@@ -96,8 +95,8 @@ export function CycleFormModal({
           />
           <Select
             label="Tipo"
-            value={type}
-            onChange={(value: string) => setType(value as CycleType)}
+            value={cadence}
+            onChange={(value: string) => setCadence(value as CycleCadence)}
             options={TYPE_OPTIONS}
           />
           <div>
@@ -115,17 +114,17 @@ export function CycleFormModal({
               onChange={(v) => setStatus(v as CycleStatus)}
             >
               <ChoiceBox
-                value="active"
+                value="Active"
                 title="Ativo"
                 description="O ciclo está em andamento e visível para os usuários"
               />
               <ChoiceBox
-                value="planning"
+                value="Planning"
                 title="Futuro"
                 description="Agendado para início posterior, ainda não disponível"
               />
               <ChoiceBox
-                value="ended"
+                value="Ended"
                 title="Encerrado"
                 description="O ciclo já foi finalizado e está disponível apenas para consulta"
               />

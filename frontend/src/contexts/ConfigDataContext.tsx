@@ -328,7 +328,7 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
           tagsByOrg: {
             ...prev.tagsByOrg,
             [activeOrgId]: sortTags(
-              nextTags.map((tag) => ({ ...tag, orgId: activeOrgId })),
+              nextTags.map((tag) => ({ ...tag, organizationId: activeOrgId })),
             ),
           },
           cyclesByOrg: prev.cyclesByOrg,
@@ -360,7 +360,10 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
           cyclesByOrg: {
             ...prev.cyclesByOrg,
             [activeOrgId]: sortCycles(
-              nextCycles.map((cycle) => ({ ...cycle, orgId: activeOrgId })),
+              nextCycles.map((cycle) => ({
+                ...cycle,
+                organizationId: activeOrgId,
+              })),
             ),
           },
           rolesByOrg: prev.rolesByOrg,
@@ -492,7 +495,7 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
       );
       const tag: Tag = {
         id: nextId,
-        orgId: activeOrgId,
+        organizationId: activeOrgId,
         name: input.name,
         color: input.color ?? "neutral",
         createdAt: now,
@@ -531,12 +534,7 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
   );
 
   const createCycle = useCallback(
-    (
-      input: Omit<Cycle, "id" | "orgId" | "createdAt" | "updatedAt"> & {
-        id?: string;
-      },
-    ) => {
-      const now = new Date().toISOString();
+    (input: Omit<Cycle, "id" | "organizationId"> & { id?: string }) => {
       const nextId = input.id
         ? ensureUniqueId(
             cycles.map((cycle) => cycle.id),
@@ -548,16 +546,12 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
           );
       const cycle: Cycle = {
         id: nextId,
-        orgId: activeOrgId,
+        organizationId: activeOrgId,
         name: input.name,
-        type: input.type,
+        cadence: input.cadence,
         startDate: input.startDate,
         endDate: input.endDate,
         status: input.status,
-        okrDefinitionDeadline: input.okrDefinitionDeadline,
-        midReviewDate: input.midReviewDate,
-        createdAt: now,
-        updatedAt: now,
       };
 
       setCycles((prev) => [...prev, cycle]);
@@ -567,16 +561,13 @@ export function ConfigDataProvider({ children }: { children: ReactNode }) {
   );
 
   const updateCycle = useCallback(
-    (
-      cycleId: string,
-      patch: Partial<Omit<Cycle, "id" | "orgId" | "createdAt">>,
-    ) => {
+    (cycleId: string, patch: Partial<Omit<Cycle, "id" | "organizationId">>) => {
       let updated: Cycle | null = null;
 
       setCycles((prev) =>
         prev.map((cycle) => {
           if (cycle.id !== cycleId) return cycle;
-          updated = { ...cycle, ...patch, updatedAt: new Date().toISOString() };
+          updated = { ...cycle, ...patch };
           return updated;
         }),
       );

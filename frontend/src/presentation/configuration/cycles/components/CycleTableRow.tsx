@@ -40,7 +40,7 @@ export const CycleTableRow = memo(function CycleTableRow({
       icon: PencilSimple,
       onClick: () => onEdit(cycle),
     },
-    cycle.status === "active"
+    cycle.status === "Active"
       ? {
           id: "end",
           label: "Encerrar",
@@ -67,7 +67,8 @@ export const CycleTableRow = memo(function CycleTableRow({
       <TableCell isCheckbox rowId={cycle.id} />
       <TableCell>{cycle.name}</TableCell>
       <TableCell>
-        {TYPE_OPTIONS.find((t) => t.value === cycle.type)?.label ?? cycle.type}
+        {TYPE_OPTIONS.find((t) => t.value === cycle.cadence)?.label ??
+          cycle.cadence}
       </TableCell>
       <TableCell>{formatDateDisplay(cycle.startDate)}</TableCell>
       <TableCell>{formatDateDisplay(cycle.endDate)}</TableCell>

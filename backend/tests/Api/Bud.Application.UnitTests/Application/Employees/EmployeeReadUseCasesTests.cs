@@ -9,7 +9,7 @@ namespace Bud.Application.UnitTests.Application.Employees;
 
 public sealed class EmployeeReadUseCasesTests
 {
-    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<IMemberRepository> _employeeRepository = new();
 
     [Fact]
     public async Task GetEmployeeById_WithExistingEmployee_ReturnsSuccess()
@@ -52,18 +52,16 @@ public sealed class EmployeeReadUseCasesTests
     [Fact]
     public async Task ListLeaders_ReturnsSuccess()
     {
-        var organizationId = Guid.NewGuid();
-
         _employeeRepository
-            .Setup(repository => repository.GetLeadersAsync(organizationId, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetLeadersAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListLeaderEmployees(_employeeRepository.Object);
 
-        var result = await useCase.ExecuteAsync(organizationId);
+        var result = await useCase.ExecuteAsync();
 
         result.IsSuccess.Should().BeTrue();
-        _employeeRepository.Verify(repository => repository.GetLeadersAsync(organizationId, It.IsAny<CancellationToken>()), Times.Once);
+        _employeeRepository.Verify(repository => repository.GetLeadersAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

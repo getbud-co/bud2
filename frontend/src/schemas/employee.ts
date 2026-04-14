@@ -5,9 +5,13 @@ export const EmployeeResponseSchema = z.object({
   fullName: z.string(),
   email: z.string(),
   nickname: z.string().nullable().optional(),
-  language: z.string(),
-  status: z.string().transform((s) => s.toLowerCase()),
-  role: z.string(),
+  language: z.enum(["Pt", "En", "Es"]),
+  status: z
+    .enum(["Active", "Inactive", "Invited", "Suspended"])
+    .transform(
+      (s) => s.toLowerCase() as "active" | "inactive" | "invited" | "suspended",
+    ),
+  role: z.enum(["Contributor", "TeamLeader", "HRManager", "OrgAdmin"]),
   organizationId: z.string(),
   leaderId: z.string().nullable().optional(),
   isGlobalAdmin: z.boolean(),

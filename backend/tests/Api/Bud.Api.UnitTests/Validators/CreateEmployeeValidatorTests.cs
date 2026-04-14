@@ -8,7 +8,7 @@ namespace Bud.Api.UnitTests.Validators;
 
 public sealed class CreateEmployeeValidatorTests
 {
-    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<IMemberRepository> _employeeRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
     private readonly CreateEmployeeValidator _validator;
 

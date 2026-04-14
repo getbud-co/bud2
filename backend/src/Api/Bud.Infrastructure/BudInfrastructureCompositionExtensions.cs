@@ -1,6 +1,7 @@
 using Bud.Application.Abstractions;
 using Bud.Application.Features.Missions;
 using Bud.Application.Features.Indicators;
+using Bud.Application.Features.Tags;
 using Bud.Application.Features.Tasks;
 using Bud.Application.Features.Me;
 using Bud.Application.Features.Notifications;
@@ -14,6 +15,7 @@ using Bud.Infrastructure.Features.Notifications;
 using Bud.Infrastructure.Features.Tasks;
 using Bud.Infrastructure.Features.Templates;
 using Bud.Infrastructure.Features.Employees;
+using Bud.Infrastructure.Features.Tags;
 using Bud.Infrastructure.Features.Teams;
 using Bud.Application.Ports;
 using Bud.Infrastructure.Features.Me;
@@ -34,13 +36,14 @@ public static class BudInfrastructureCompositionExtensions
         }
 
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IMemberRepository, EmployeeRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<IMissionRepository, MissionRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IIndicatorRepository, IndicatorRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
+        services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ISessionAuthenticator, SessionAuthenticator>();
         services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();

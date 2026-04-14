@@ -7,7 +7,7 @@ namespace Bud.Application.UnitTests.Application.Employees;
 
 public sealed class EmployeeWriteUseCasesTests
 {
-    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<IMemberRepository> _employeeRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     [Fact]

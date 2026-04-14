@@ -12,7 +12,7 @@ export async function GET() {
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: "Failed to fetch organizations" },
+      { error: "Erro ao buscar organizações" },
       { status: response.status },
     );
   }
@@ -22,14 +22,24 @@ export async function GET() {
   const parsed = OrganizationListResponseSchema.safeParse(content);
   if (!parsed.success) {
     console.warn(
-      "[schema:organization] Type mismatch from backend:",
+      "[schema:organization] Divergência de contrato com o backend:",
       parsed.error.issues,
     );
     return NextResponse.json(
-      { error: "Unexpected response format from backend" },
+      { error: "Formato de resposta inesperado do backend" },
       { status: 400 },
     );
   }
 
-  return NextResponse.json(parsed.data.items);
+  return NextResponse.json(
+    parsed.data.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      cnpj: item.cnpj,
+      logoUrl: item.iconUrl ?? null,
+      plan: item.plan,
+      contractStatus: item.contractStatus,
+      createdAt: item.createdAt,
+    })),
+  );
 }

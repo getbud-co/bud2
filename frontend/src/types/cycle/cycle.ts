@@ -1,22 +1,18 @@
-export type CycleType = "quarterly" | "semi_annual" | "annual" | "custom";
+export type CycleCadence = "Quarterly" | "SemiAnnual" | "Annual" | "Custom";
 
 export type CycleStatus =
-  | "planning"
-  | "active"
-  | "review"
-  | "ended"
-  | "archived";
+  | "Active"
+  | "Ended"
+  | "Archived"
+  | "Planning"
+  | "Review";
 
 export interface Cycle {
   id: string;
-  orgId: string;
+  organizationId: string;
   name: string;
-  type: CycleType;
+  cadence: CycleCadence;
   startDate: string;
   endDate: string;
   status: CycleStatus;
-  okrDefinitionDeadline: string | null;
-  midReviewDate: string | null;
-  createdAt: string;
-  updatedAt: string;
 }

@@ -3,7 +3,7 @@ using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
-public sealed class GetEmployeeLookup(IEmployeeRepository employeeRepository)
+public sealed class GetEmployeeLookup(IMemberRepository employeeRepository)
 {
     public async Task<Result<List<EmployeeLookupResponse>>> ExecuteAsync(
         string? search,

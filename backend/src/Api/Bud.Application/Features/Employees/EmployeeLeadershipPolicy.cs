@@ -5,7 +5,7 @@ namespace Bud.Application.Features.Employees;
 internal static class EmployeeLeadershipPolicy
 {
     public static async Task<Result<T>?> ValidateLeaderForOrganizationAsync<T>(
-        IEmployeeRepository employeeRepository,
+        IMemberRepository employeeRepository,
         Guid leaderId,
         Guid organizationId,
         CancellationToken cancellationToken)

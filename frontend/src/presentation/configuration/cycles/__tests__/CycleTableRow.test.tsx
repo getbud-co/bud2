@@ -62,16 +62,12 @@ const baseProps = {
 function makeCycle(overrides: Partial<Cycle> = {}): Cycle {
   return {
     id: "c1",
-    orgId: "org-1",
+    organizationId: "org-1",
     name: "Q1 2025",
-    type: "quarterly",
+    cadence: "Quarterly",
     startDate: "2025-01-01",
     endDate: "2025-03-31",
-    status: "active",
-    okrDefinitionDeadline: null,
-    midReviewDate: null,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-01T00:00:00Z",
+    status: "Active",
     ...overrides,
   };
 }
@@ -83,9 +79,9 @@ beforeEach(() => {
 // ─── Ação de toggle de status ───
 
 describe("CycleTableRow — ação de toggle de status", () => {
-  it("exibe 'Encerrar' quando status é 'active'", () => {
+  it("exibe 'Encerrar' quando status é 'Active'", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "active" })} />,
+      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "Active" })} />,
     );
     expect(
       screen.getByRole("button", { name: "Encerrar" }),
@@ -95,9 +91,9 @@ describe("CycleTableRow — ação de toggle de status", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("exibe 'Ativar' quando status é 'ended'", () => {
+  it("exibe 'Ativar' quando status é 'Ended'", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "ended" })} />,
+      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "Ended" })} />,
     );
     expect(screen.getByRole("button", { name: "Ativar" })).toBeInTheDocument();
     expect(
@@ -105,25 +101,25 @@ describe("CycleTableRow — ação de toggle de status", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("exibe 'Ativar' quando status é 'planning'", () => {
+  it("exibe 'Ativar' quando status é 'Planning'", () => {
     render(
       <CycleTableRow
         {...baseProps}
-        cycle={makeCycle({ status: "planning" })}
+        cycle={makeCycle({ status: "Planning" })}
       />,
     );
     expect(screen.getByRole("button", { name: "Ativar" })).toBeInTheDocument();
   });
 
   it("chama onToggleStatus com o ciclo ao clicar em 'Encerrar'", () => {
-    const cycle = makeCycle({ status: "active" });
+    const cycle = makeCycle({ status: "Active" });
     render(<CycleTableRow {...baseProps} cycle={cycle} />);
     fireEvent.click(screen.getByRole("button", { name: "Encerrar" }));
     expect(baseProps.onToggleStatus).toHaveBeenCalledWith(cycle);
   });
 
   it("chama onToggleStatus com o ciclo ao clicar em 'Ativar'", () => {
-    const cycle = makeCycle({ status: "ended" });
+    const cycle = makeCycle({ status: "Ended" });
     render(<CycleTableRow {...baseProps} cycle={cycle} />);
     fireEvent.click(screen.getByRole("button", { name: "Ativar" }));
     expect(baseProps.onToggleStatus).toHaveBeenCalledWith(cycle);
@@ -163,14 +159,17 @@ describe("CycleTableRow — exibição", () => {
 
   it("exibe label do tipo corretamente", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ type: "quarterly" })} />,
+      <CycleTableRow
+        {...baseProps}
+        cycle={makeCycle({ cadence: "Quarterly" })}
+      />,
     );
     expect(screen.getByText("Trimestral")).toBeInTheDocument();
   });
 
   it("exibe label do status via badge", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "active" })} />,
+      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "Active" })} />,
     );
     expect(screen.getByText("Ativo")).toBeInTheDocument();
   });
@@ -186,16 +185,16 @@ describe("CycleTableRow — exibição", () => {
     expect(screen.getByText("display:2025-03-31")).toBeInTheDocument();
   });
 
-  it("badge usa a cor correta para status 'active'", () => {
+  it("badge usa a cor correta para status 'Active'", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "active" })} />,
+      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "Active" })} />,
     );
     expect(screen.getByText("Ativo")).toHaveAttribute("data-color", "success");
   });
 
-  it("badge usa a cor correta para status 'ended'", () => {
+  it("badge usa a cor correta para status 'Ended'", () => {
     render(
-      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "ended" })} />,
+      <CycleTableRow {...baseProps} cycle={makeCycle({ status: "Ended" })} />,
     );
     expect(screen.getByText("Encerrado")).toHaveAttribute(
       "data-color",

@@ -304,7 +304,7 @@ function createTag(
   const now = nowIso();
   return {
     id: input.id,
-    orgId,
+    organizationId: orgId,
     name: input.name,
     color: input.color,
     createdAt: now,
@@ -700,7 +700,7 @@ function sanitizeTag(raw: unknown, orgId: string): Tag | null {
   const now = nowIso();
   return {
     id: String(item.id),
-    orgId,
+    organizationId: orgId,
     name: String(item.name),
     color: String(item.color ?? "neutral"),
     createdAt: String(item.createdAt ?? now),

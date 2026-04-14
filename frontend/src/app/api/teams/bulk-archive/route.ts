@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   if (!response.ok) {
     const error = await response
       .json()
-      .catch(() => ({ detail: "Unknown error" }));
+      .catch(() => ({ detail: "Erro desconhecido" }));
     return NextResponse.json(error, { status: response.status });
   }
 

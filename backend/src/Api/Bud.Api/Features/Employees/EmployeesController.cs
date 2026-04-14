@@ -183,10 +183,9 @@ public sealed class EmployeesController(
     [HttpGet("leaders")]
     [ProducesResponseType(typeof(List<EmployeeLeaderResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<EmployeeLeaderResponse>>> GetLeaders(
-        [FromQuery] Guid? organizationId = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await listLeaderEmployees.ExecuteAsync(organizationId, cancellationToken);
+        var result = await listLeaderEmployees.ExecuteAsync(cancellationToken);
         return FromResultOk(result);
     }
 

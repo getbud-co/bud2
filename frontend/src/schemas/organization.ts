@@ -5,8 +5,8 @@ export const OrganizationResponseSchema = z.object({
   name: z.string(),
   cnpj: z.string(),
   iconUrl: z.string().nullable().optional(),
-  plan: z.string(),
-  contractStatus: z.string(),
+  plan: z.enum(["Free", "Pro", "Enterprise"]),
+  contractStatus: z.enum(["ToApproval", "Approved", "Cancelled"]),
   createdAt: z.string(),
 });
 

@@ -6,10 +6,10 @@ namespace Bud.Api.Features.Employees;
 
 public sealed class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRequest>
 {
-    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IMemberRepository _employeeRepository;
     private readonly ITenantProvider _tenantProvider;
 
-    public CreateEmployeeValidator(IEmployeeRepository employeeRepository, ITenantProvider tenantProvider)
+    public CreateEmployeeValidator(IMemberRepository employeeRepository, ITenantProvider tenantProvider)
     {
         _employeeRepository = employeeRepository;
         _tenantProvider = tenantProvider;
@@ -50,10 +50,10 @@ public sealed class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRe
 
 public sealed class PatchEmployeeValidator : AbstractValidator<PatchEmployeeRequest>
 {
-    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IMemberRepository _employeeRepository;
     private readonly ITenantProvider _tenantProvider;
 
-    public PatchEmployeeValidator(IEmployeeRepository employeeRepository, ITenantProvider tenantProvider)
+    public PatchEmployeeValidator(IMemberRepository employeeRepository, ITenantProvider tenantProvider)
     {
         _employeeRepository = employeeRepository;
         _tenantProvider = tenantProvider;

@@ -31,12 +31,6 @@ public sealed partial class CreateOrganization(
                 command.ContractStatus,
                 command.IconUrl);
 
-            if (await organizationRepository.ExistsByNameAsync(organization.Name, ct: cancellationToken))
-            {
-                LogOrganizationCreationFailed(logger, command.Name, "Organization name already exists");
-                return Result<Organization>.Failure(UserErrorMessages.OrganizationNameConflict, ErrorType.Conflict);
-            }
-
             await organizationRepository.AddAsync(organization, cancellationToken);
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);
 

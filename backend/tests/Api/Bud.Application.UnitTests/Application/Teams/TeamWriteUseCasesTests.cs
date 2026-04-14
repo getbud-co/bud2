@@ -8,7 +8,7 @@ namespace Bud.Application.UnitTests.Application.Teams;
 public sealed class TeamWriteUseCasesTests
 {
     private readonly Mock<ITeamRepository> _teamRepository = new();
-    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<IMemberRepository> _employeeRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class TeamWriteUseCasesTests
             _tenantProvider.Object,
             NullLogger<CreateTeam>.Instance);
 
-        var result = await useCase.ExecuteAsync(new CreateTeamCommand("Team", "team description", TeamColor.Neutral, Guid.NewGuid(), Guid.NewGuid(), null));
+        var result = await useCase.ExecuteAsync(new CreateTeamCommand("Team", "team description", TeamColor.Neutral, Guid.NewGuid(), null));
 
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ErrorType.Forbidden);

@@ -13,7 +13,7 @@ public sealed record PatchEmployeeCommand(
     Optional<EmployeeStatus> Status);
 
 public sealed partial class PatchEmployee(
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ILogger<PatchEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {

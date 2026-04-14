@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@mdonangelo/bud-ds/styles";
+@import "@getbud-co/buds/styles";
 
 
 @custom-variant dark (&:is(.dark *));

@@ -10,7 +10,7 @@ public sealed class PatchEmployeeValidatorTests
     [Fact]
     public async Task Validate_WithInvalidLeader_ShouldFail()
     {
-        var employeeRepository = new Mock<IEmployeeRepository>();
+        var employeeRepository = new Mock<IMemberRepository>();
         var tenantProvider = new Mock<ITenantProvider>();
         var tenantId = Guid.NewGuid();
 

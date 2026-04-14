@@ -130,16 +130,12 @@ function makeQueryResult(
 function makeCycle(id: string, name: string): Cycle {
   return {
     id,
-    orgId: "org-1",
+    organizationId: "org-1",
     name,
-    type: "quarterly",
+    cadence: "Quarterly",
     startDate: "2025-01-01",
     endDate: "2025-03-31",
-    status: "active",
-    okrDefinitionDeadline: null,
-    midReviewDate: null,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-01T00:00:00Z",
+    status: "Active",
   };
 }
 

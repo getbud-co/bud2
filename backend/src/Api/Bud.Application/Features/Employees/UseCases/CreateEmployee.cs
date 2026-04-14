@@ -12,7 +12,7 @@ public sealed record CreateEmployeeCommand(
     Guid? LeaderId);
 
 public sealed partial class CreateEmployee(
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateEmployee> logger,
     IUnitOfWork? unitOfWork = null)

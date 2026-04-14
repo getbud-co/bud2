@@ -6,7 +6,7 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record PatchEmployeeTeamsCommand(List<Guid> TeamIds);
 
 public sealed partial class PatchEmployeeTeams(
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ILogger<PatchEmployeeTeams> logger,
     IUnitOfWork? unitOfWork = null)
 {

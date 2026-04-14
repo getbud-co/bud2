@@ -1,3 +1,4 @@
+using Bud.Shared.Contracts.Features.Tags;
 using Bud.Shared.Kernel;
 
 namespace Bud.Shared.Contracts.Features.Missions;
@@ -18,6 +19,7 @@ public sealed class MissionResponse
     public List<MissionResponse> Children { get; set; } = [];
     public List<IndicatorResponse> Indicators { get; set; } = [];
     public List<TaskResponse> Tasks { get; set; } = [];
+    public List<TagResponse> Tags { get; set; } = [];
 }
 
 public sealed class MissionProgressResponse

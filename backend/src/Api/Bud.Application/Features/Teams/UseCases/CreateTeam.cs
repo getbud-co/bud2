@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Teams.UseCases;
 
-public sealed record CreateTeamCommand(string Name, string? Description, TeamColor Color, Guid OrganizationId, Guid LeaderId, Guid? ParentTeamId);
+public sealed record CreateTeamCommand(string Name, string? Description, TeamColor Color, Guid LeaderId, Guid? ParentTeamId);
 
 public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTeam> logger,
     IUnitOfWork? unitOfWork = null)

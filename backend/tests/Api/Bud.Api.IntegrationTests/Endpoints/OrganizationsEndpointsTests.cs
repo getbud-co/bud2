@@ -128,25 +128,6 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
     }
 
     [Fact]
-    public async Task Create_WithDuplicateDomain_ReturnsConflict()
-    {
-        var request = new CreateOrganizationRequest
-        {
-            Name = $"duplicate-{Guid.NewGuid():N}.com"
-        };
-
-        var firstResponse = await _client.PostAsJsonAsync("/api/organizations", request);
-        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        var secondResponse = await _client.PostAsJsonAsync("/api/organizations", request);
-
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await secondResponse.Content.ReadFromJsonAsync<ProblemDetails>();
-        problem.Should().NotBeNull();
-        problem!.Detail.Should().Be("Já existe uma organização cadastrada com este domínio.");
-    }
-
-    [Fact]
     public async Task GetById_WithExistingId_ReturnsOk()
     {
         // Arrange

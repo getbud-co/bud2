@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   Table,
@@ -16,9 +15,15 @@ import {
   toast,
 } from "@getbud-co/buds";
 import { Trash } from "@phosphor-icons/react";
-import type { Cycle, CycleType, CycleStatus } from "@/types";
+import type { Cycle, CycleStatus } from "@/types";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useDataTable } from "@/hooks/useDataTable";
+import {
+  useCycles,
+  useCreateCycle,
+  useUpdateCycle,
+  useDeleteCycle,
+} from "./hooks/useCycles";
 import { CyclesLoadingState } from "./components/CyclesLoadingState";
 import { CyclesErrorState } from "./components/CyclesErrorState";
 import { CyclesTableHeader } from "./components/CyclesTableHeader";
@@ -28,115 +33,14 @@ import type { CycleFormData } from "./components/CycleFormModal";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { PageHeader } from "../../layout/page-header";
 
-const CYCLES_QUERY_KEY = "cycles";
-
-function tenantHeader(orgId: string): Record<string, string> {
-  return { "X-Tenant-Id": orgId };
-}
-
-async function fetchCycles(orgId: string): Promise<Cycle[]> {
-  const res = await fetch("/api/organizations/cycles", {
-    headers: tenantHeader(orgId),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function createCycleApi(
-  orgId: string,
-  data: {
-    name: string;
-    type: CycleType;
-    startDate: string;
-    endDate: string;
-    status: CycleStatus;
-  },
-): Promise<Cycle> {
-  const res = await fetch("/api/organizations/cycles", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...tenantHeader(orgId) },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function updateCycleApi(
-  orgId: string,
-  id: string,
-  data: Partial<
-    Pick<Cycle, "name" | "type" | "startDate" | "endDate" | "status">
-  >,
-): Promise<Cycle> {
-  const res = await fetch(`/api/cycle/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...tenantHeader(orgId) },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function deleteCycleApi(orgId: string, id: string): Promise<void> {
-  const res = await fetch(`/api/cycle/${id}`, {
-    method: "DELETE",
-    headers: tenantHeader(orgId),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-}
-
 export function CyclesComponent() {
   const { activeOrgId } = useOrganization();
-  const queryClient = useQueryClient();
 
-  const {
-    data: cycles = [],
-    isLoading,
-    isError,
-  } = useQuery<Cycle[]>({
-    queryKey: [CYCLES_QUERY_KEY, activeOrgId],
-    queryFn: () => fetchCycles(activeOrgId!),
-    enabled: !!activeOrgId,
-  });
+  const { data: cycles = [], isLoading, isError } = useCycles(activeOrgId);
 
-  const createMutation = useMutation({
-    mutationFn: (data: Parameters<typeof createCycleApi>[1]) =>
-      createCycleApi(activeOrgId!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [CYCLES_QUERY_KEY, activeOrgId],
-      });
-      toast.success("Ciclo criado");
-      setModalOpen(false);
-    },
-    onError: () => toast.error("Erro ao criar ciclo"),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Parameters<typeof updateCycleApi>[2];
-    }) => updateCycleApi(activeOrgId!, id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [CYCLES_QUERY_KEY, activeOrgId],
-      });
-    },
-    onError: () => toast.error("Erro ao atualizar ciclo"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCycleApi(activeOrgId!, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [CYCLES_QUERY_KEY, activeOrgId],
-      });
-    },
-    onError: () => toast.error("Erro ao excluir ciclo"),
-  });
+  const createMutation = useCreateCycle(activeOrgId);
+  const updateMutation = useUpdateCycle(activeOrgId);
+  const deleteMutation = useDeleteCycle(activeOrgId);
 
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -181,7 +85,12 @@ export function CyclesComponent() {
         },
       );
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          toast.success("Ciclo criado");
+          setModalOpen(false);
+        },
+      });
     }
   }
 
@@ -197,13 +106,13 @@ export function CyclesComponent() {
 
   function handleToggleStatus(cycle: Cycle) {
     const newStatus: CycleStatus =
-      cycle.status === "active" ? "ended" : "active";
+      cycle.status === "Active" ? "Ended" : "Active";
     updateMutation.mutate(
       { id: cycle.id, data: { status: newStatus } },
       {
         onSuccess: () =>
           toast.success(
-            newStatus === "active" ? "Ciclo ativado" : "Ciclo encerrado",
+            newStatus === "Active" ? "Ciclo ativado" : "Ciclo encerrado",
           ),
       },
     );

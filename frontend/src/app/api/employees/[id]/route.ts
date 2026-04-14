@@ -23,10 +23,10 @@ export async function PATCH(
   });
 
   if (!response.ok) {
-    return NextResponse.json(
-      { error: "Failed to update employee" },
-      { status: response.status },
-    );
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Erro desconhecido" }));
+    return NextResponse.json(error, { status: response.status });
   }
 
   const data = await response.json();
@@ -34,11 +34,11 @@ export async function PATCH(
   const parsed = EmployeeResponseSchema.safeParse(data);
   if (!parsed.success) {
     console.warn(
-      "EmployeeResponseSchema validation failed",
+      "[schema:employee] Divergência de contrato com o backend:",
       parsed.error.issues,
     );
     return NextResponse.json(
-      { error: "Invalid response from employees API" },
+      { error: "Formato de resposta inesperado do backend" },
       { status: 400 },
     );
   }
@@ -64,10 +64,10 @@ export async function DELETE(
   });
 
   if (!response.ok) {
-    return NextResponse.json(
-      { error: "Failed to delete employee" },
-      { status: response.status },
-    );
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Erro desconhecido" }));
+    return NextResponse.json(error, { status: response.status });
   }
 
   return new NextResponse(null, { status: 204 });

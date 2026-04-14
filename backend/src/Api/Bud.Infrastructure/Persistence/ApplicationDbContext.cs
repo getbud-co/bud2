@@ -36,6 +36,8 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Cycle> Cycles => Set<Cycle>();
     public DbSet<MissionTask> MissionTasks => Set<MissionTask>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<MissionTag> MissionTags => Set<MissionTag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,6 +146,13 @@ public sealed class ApplicationDbContext : DbContext
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && c.OrganizationId == _tenantId)
+            );
+
+        modelBuilder.Entity<Tag>()
+            .HasQueryFilter(t =>
+                !_applyTenantFilter ||
+                (_isGlobalAdmin && _tenantId == null) ||
+                (_tenantId != null && t.OrganizationId == _tenantId)
             );
     }
 }

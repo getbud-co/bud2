@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed partial class DeleteEmployee(
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ILogger<DeleteEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {

@@ -1,6 +1,6 @@
 # Agent Note (non-normative)
 
-Contract-Version: 2026-03-30
+Contract-Version: 2026-04-14
 
 This is the base agent contract for the Bud monorepo.
 `CLAUDE.md` and `GEMINI.md` in the same directory should point to this file and must not diverge.

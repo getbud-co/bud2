@@ -15,8 +15,6 @@ public sealed class OrganizationsController(
     DeleteOrganization deleteOrganization,
     GetOrganizationById getOrganizationById,
     ListOrganizations listOrganizations,
-    ListOrganizationCycles listOrganizationCycles,
-    ListOrganizationEmployees listOrganizationEmployees,
     IValidator<CreateOrganizationRequest> createValidator,
     IValidator<PatchOrganizationRequest> updateValidator) : ApiControllerBase
 {
@@ -25,14 +23,12 @@ public sealed class OrganizationsController(
     /// </summary>
     /// <response code="201">Organização criada com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="409">Já existe uma organização com o mesmo domínio.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
     [HttpPost]
     [Authorize(Policy = AuthorizationPolicies.GlobalAdmin)]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(OrganizationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<OrganizationResponse>> Create(CreateOrganizationRequest request, CancellationToken cancellationToken)
     {
@@ -54,7 +50,7 @@ public sealed class OrganizationsController(
     /// </summary>
     /// <response code="200">Organização atualizada com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="409">Já existe uma organização com o mesmo domínio.</response>
+    /// <response code="409">Já existe uma organização com o mesmo nome.</response>
     /// <response code="404">Organização não encontrada.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
     [HttpPatch("{id:guid}")]
@@ -142,55 +138,4 @@ public sealed class OrganizationsController(
         return FromResultOk(result, paged => paged.MapPaged(o => o.ToResponse()));
     }
 
-    /// <summary>
-    /// Lista colaboradores de uma organização.
-    /// </summary>
-    /// <response code="200">Lista paginada retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    /// <response code="404">Organização não encontrada.</response>
-    [HttpGet("{id:guid}/employees")]
-    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetEmployees(
-        Guid id,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
-    {
-        var paginationValidation = ValidatePagination(page, pageSize);
-        if (paginationValidation is not null)
-        {
-            return paginationValidation;
-        }
-
-        var result = await listOrganizationEmployees.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
-    }
-
-    /// <summary>
-    /// Lista ciclos de uma organização.
-    /// </summary>
-    /// <response code="200">Lista paginada retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    /// <response code="404">Organização não encontrada.</response>
-    [HttpGet("{id:guid}/cycles")]
-    [ProducesResponseType(typeof(PagedResult<CycleResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<CycleResponse>>> GetCycles(
-        Guid id,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
-    {
-        var paginationValidation = ValidatePagination(page, pageSize);
-        if (paginationValidation is not null)
-        {
-            return paginationValidation;
-        }
-
-        var result = await listOrganizationCycles.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToResponse()));
-    }
 }

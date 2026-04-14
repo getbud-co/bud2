@@ -406,6 +406,62 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.ToTable("Organizations");
                 });
 
+            modelBuilder.Entity("Bud.Domain.Tags.MissionTag", b =>
+                {
+                    b.Property<Guid>("MissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("MissionId", "TagId");
+
+                    b.HasIndex("MissionId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("MissionTags");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("OrganizationId", "Name")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("Tags");
+                });
+
             modelBuilder.Entity("Bud.Domain.Tasks.MissionTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -629,32 +685,15 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
                     b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Bud.Domain.Employees.Employee", b =>
                 {
-                    b.HasOne("Bud.Domain.Employees.Employee", "Leader")
-                        .WithMany()
-                        .HasForeignKey("LeaderId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Teams.Team", "Team")
+                    b.HasOne("Bud.Domain.Teams.Team", null)
                         .WithMany("Employees")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Leader");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Team");
+                        .HasForeignKey("TeamId");
                 });
 
             modelBuilder.Entity("Bud.Domain.Employees.EmployeeAccessLog", b =>
@@ -818,6 +857,36 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("RecipientEmployee");
                 });
 
+            modelBuilder.Entity("Bud.Domain.Tags.MissionTag", b =>
+                {
+                    b.HasOne("Bud.Domain.Missions.Mission", "Mission")
+                        .WithMany("Tags")
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bud.Domain.Tags.Tag", "Tag")
+                        .WithMany("MissionTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mission");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
+                {
+                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Bud.Domain.Tasks.MissionTask", b =>
                 {
                     b.HasOne("Bud.Domain.Missions.Mission", "Mission")
@@ -839,12 +908,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
                 {
-                    b.HasOne("Bud.Domain.Employees.Employee", "Leader")
-                        .WithMany()
-                        .HasForeignKey("LeaderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
                         .WithMany()
                         .HasForeignKey("OrganizationId")
@@ -855,8 +918,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ParentTeamId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Leader");
 
                     b.Navigation("Organization");
 
@@ -929,6 +990,8 @@ namespace Bud.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bud.Domain.Employees.Employee", b =>
                 {
                     b.Navigation("EmployeeTeams");
+
+                    b.Navigation("Memberships");
                 });
 
             modelBuilder.Entity("Bud.Domain.Indicators.Indicator", b =>
@@ -942,7 +1005,14 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Indicators");
 
+                    b.Navigation("Tags");
+
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
+                {
+                    b.Navigation("MissionTags");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>

@@ -8,7 +8,6 @@ public sealed class CreateTeamRequest
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public TeamColor Color { get; set; } = TeamColor.Neutral;
-    public Guid OrganizationId { get; set; }
     public Guid LeaderId { get; set; }
     public Guid? ParentTeamId { get; set; }
 }

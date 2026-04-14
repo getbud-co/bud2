@@ -7,7 +7,7 @@ public sealed record PatchTeamEmployeesCommand(List<Guid> EmployeeIds);
 
 public sealed partial class PatchTeamEmployees(
     ITeamRepository teamRepository,
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ILogger<PatchTeamEmployees> logger,
     IUnitOfWork? unitOfWork = null)
 {

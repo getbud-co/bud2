@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: "Failed to fetch employees" },
+      { error: "Erro ao buscar colaboradores" },
       { status: response.status },
     );
   }
@@ -38,11 +38,11 @@ export async function GET(request: NextRequest) {
   const parsed = EmployeeListResponseSchema.safeParse(data);
   if (!parsed.success) {
     console.warn(
-      "EmployeeListResponseSchema validation failed",
+      "[schema:employee] Divergência de contrato com o backend:",
       parsed.error.issues,
     );
     return NextResponse.json(
-      { error: "Invalid response from employees API" },
+      { error: "Formato de resposta inesperado do backend" },
       { status: 400 },
     );
   }
@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
   });
 
   if (!response.ok) {
-    return NextResponse.json(
-      { error: "Failed to create employee" },
-      { status: response.status },
-    );
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Erro desconhecido" }));
+    return NextResponse.json(error, { status: response.status });
   }
 
   const data = await response.json();
@@ -77,11 +77,11 @@ export async function POST(request: NextRequest) {
   const parsed = EmployeeResponseSchema.safeParse(data);
   if (!parsed.success) {
     console.warn(
-      "EmployeeResponseSchema validation failed",
+      "[schema:employee] Divergência de contrato com o backend:",
       parsed.error.issues,
     );
     return NextResponse.json(
-      { error: "Invalid response from employees API" },
+      { error: "Formato de resposta inesperado do backend" },
       { status: 400 },
     );
   }

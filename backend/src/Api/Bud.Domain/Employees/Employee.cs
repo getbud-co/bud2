@@ -1,6 +1,10 @@
 namespace Bud.Domain.Employees;
 
-public sealed class Employee : IAggregateRoot
+/// <summary>
+/// Registro de identidade global. Não é um Aggregate Root operacional —
+/// as invariantes de negócio vivem em OrganizationEmployeeMember.
+/// </summary>
+public sealed class Employee
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;

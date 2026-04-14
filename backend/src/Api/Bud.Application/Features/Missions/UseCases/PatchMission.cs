@@ -15,7 +15,7 @@ public sealed record PatchMissionCommand(
 
 public sealed partial class PatchMission(
     IMissionRepository missionRepository,
-    IEmployeeRepository employeeRepository,
+    IMemberRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<PatchMission> logger,
     IUnitOfWork? unitOfWork = null)

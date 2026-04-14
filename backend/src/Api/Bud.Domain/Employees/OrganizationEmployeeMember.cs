@@ -1,6 +1,6 @@
 namespace Bud.Domain.Employees;
 
-public sealed class OrganizationEmployeeMember : ITenantEntity
+public sealed class OrganizationEmployeeMember : IAggregateRoot, ITenantEntity
 {
     public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;

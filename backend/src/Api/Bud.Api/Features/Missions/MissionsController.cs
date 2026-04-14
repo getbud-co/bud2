@@ -2,6 +2,7 @@ using Bud.Api.Authorization;
 using Bud.Application.Common;
 using Bud.Application.Features.Missions;
 using Bud.Application.Features.Indicators;
+using Bud.Application.Features.Tags.UseCases;
 using Bud.Application.Features.Tasks;
 using Bud.Application.Ports;
 using Bud.Shared.Contracts;
@@ -25,6 +26,8 @@ public sealed class MissionsController(
     ListMissionIndicators listMissionIndicators,
     ListMissionChildren listMissionChildren,
     ListTasks listTasks,
+    AssignTagToMission assignTagToMission,
+    RemoveTagFromMission removeTagFromMission,
     ITenantProvider tenantProvider,
     IValidator<CreateMissionRequest> createValidator,
     IValidator<PatchMissionRequest> updateValidator) : ApiControllerBase
@@ -262,5 +265,39 @@ public sealed class MissionsController(
 
         var result = await listTasks.ExecuteAsync(id, page, pageSize, cancellationToken);
         return FromResultOk(result, paged => paged.MapPaged(t => t.ToResponse()));
+    }
+
+    /// <summary>
+    /// Atribui uma tag a uma meta.
+    /// Colaboradores só podem atribuir tags em metas pelas quais são responsáveis.
+    /// </summary>
+    /// <response code="204">Tag atribuída com sucesso.</response>
+    /// <response code="403">Sem permissão para atribuir a tag.</response>
+    /// <response code="404">Meta ou tag não encontrada.</response>
+    [HttpPost("{id:guid}/tags/{tagId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AssignTag(Guid id, Guid tagId, CancellationToken cancellationToken)
+    {
+        var result = await assignTagToMission.ExecuteAsync(id, tagId, cancellationToken);
+        return FromResult(result, NoContent);
+    }
+
+    /// <summary>
+    /// Remove uma tag de uma meta.
+    /// Colaboradores só podem remover tags de metas pelas quais são responsáveis.
+    /// </summary>
+    /// <response code="204">Tag removida com sucesso.</response>
+    /// <response code="403">Sem permissão para remover a tag.</response>
+    /// <response code="404">Meta não encontrada.</response>
+    [HttpDelete("{id:guid}/tags/{tagId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveTag(Guid id, Guid tagId, CancellationToken cancellationToken)
+    {
+        var result = await removeTagFromMission.ExecuteAsync(id, tagId, cancellationToken);
+        return FromResult(result, NoContent);
     }
 }

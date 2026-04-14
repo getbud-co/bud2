@@ -12,8 +12,6 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<DeleteOrganization>();
         services.AddScoped<GetOrganizationById>();
         services.AddScoped<ListOrganizations>();
-        services.AddScoped<ListOrganizationCycles>();
-        services.AddScoped<ListOrganizationEmployees>();
 
         services.AddScoped<CreateTeam>();
         services.AddScoped<PatchTeam>();
@@ -83,6 +81,14 @@ public static class BudApplicationCompositionExtensions
         services.AddScoped<DeleteTemplate>();
         services.AddScoped<GetTemplateById>();
         services.AddScoped<ListTemplates>();
+
+        services.AddScoped<CreateTag>();
+        services.AddScoped<PatchTag>();
+        services.AddScoped<DeleteTag>();
+        services.AddScoped<GetTagById>();
+        services.AddScoped<ListTags>();
+        services.AddScoped<AssignTagToMission>();
+        services.AddScoped<RemoveTagFromMission>();
 
         services.AddScoped<GetMyDashboard>();
 

@@ -16,7 +16,7 @@ export async function GET(
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: "Failed to fetch organization" },
+      { error: "Erro ao buscar organização" },
       { status: response.status },
     );
   }
@@ -26,11 +26,11 @@ export async function GET(
   const parsed = OrganizationResponseSchema.safeParse(data);
   if (!parsed.success) {
     console.warn(
-      "[schema:organization] Type mismatch from backend:",
+      "[schema:organization] Divergência de contrato com o backend:",
       parsed.error.issues,
     );
     return NextResponse.json(
-      { error: "Unexpected response format from backend" },
+      { error: "Formato de resposta inesperado do backend" },
       { status: 400 },
     );
   }

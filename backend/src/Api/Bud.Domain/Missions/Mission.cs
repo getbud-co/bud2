@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Bud.Domain.Tags;
 
 namespace Bud.Domain.Missions;
 
@@ -33,6 +34,7 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
     public ICollection<Indicator> Indicators { get; set; } = [];
     public ICollection<MissionTask> Tasks { get; set; } = [];
+    public ICollection<MissionTag> Tags { get; set; } = [];
 
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();

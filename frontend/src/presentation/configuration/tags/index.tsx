@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import { formatDateBR } from "@/lib/tempStorage/date-format";
 import {
@@ -26,13 +28,18 @@ import {
   MagnifyingGlass,
 } from "@phosphor-icons/react";
 import { useConfigData } from "@/contexts/ConfigDataContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import type { TagView } from "./types";
 import { TagFormModal } from "./components/TagFormModal";
 import { DeleteTagModal } from "./components/DeleteTagModal";
 import { PageHeader } from "@/presentation/layout/page-header";
+import { useTags } from "./hooks/useTags";
 
 export function TagsModule() {
-  const { tags, createTag, updateTag, deleteTag } = useConfigData();
+  const { activeOrgId } = useOrganization();
+  const { data: tags = [] } = useTags(activeOrgId);
+  const { createTag, updateTag, deleteTag } = useConfigData();
+
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<TagView | null>(null);
@@ -62,7 +69,8 @@ export function TagsModule() {
     () =>
       tags.map((tag) => ({
         ...tag,
-        linkedItems: 0,
+        deletedAt: null,
+        linkedItems: tag.linkedItems,
         createdAt: formatDateBR(tag.createdAt),
         updatedAt: formatDateBR(tag.updatedAt),
       })),

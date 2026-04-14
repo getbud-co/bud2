@@ -5,7 +5,7 @@ using Bud.Shared.Contracts;
 
 namespace Bud.Infrastructure.Features.Employees;
 
-public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmployeeRepository
+public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IMemberRepository
 {
     public async Task<OrganizationEmployeeMember?> GetByIdAsync(Guid employeeId, CancellationToken ct = default)
         => await dbContext.OrganizationEmployeeMembers
@@ -69,24 +69,15 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         return new PagedResult<OrganizationEmployeeMember> { Items = items, Total = total, Page = page, PageSize = pageSize };
     }
 
-    public async Task<List<OrganizationEmployeeMember>> GetLeadersAsync(Guid? organizationId, CancellationToken ct = default)
-    {
-        var query = dbContext.OrganizationEmployeeMembers
+    public async Task<List<OrganizationEmployeeMember>> GetLeadersAsync(CancellationToken ct = default)
+        => await dbContext.OrganizationEmployeeMembers
             .AsNoTracking()
             .Include(m => m.Employee)
             .Include(m => m.Team)
             .Include(m => m.Organization)
-            .Where(m => m.Role == EmployeeRole.TeamLeader);
-
-        if (organizationId.HasValue)
-        {
-            query = query.Where(m => m.OrganizationId == organizationId.Value);
-        }
-
-        return await query
+            .Where(m => m.Role == EmployeeRole.TeamLeader)
             .OrderBy(m => m.Employee.FullName)
             .ToListAsync(ct);
-    }
 
     public async Task<List<OrganizationEmployeeMember>> GetSubordinatesAsync(
         Guid employeeId, int maxDepth, CancellationToken ct = default)
