@@ -95,7 +95,7 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         if (existingLeader != null)
         {
-            var existingMember = await dbContext.OrganizationEmployeeMembers
+            var existingMember = await dbContext.Memberships
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
             SetTenantHeader(existingMember!.OrganizationId);
@@ -123,12 +123,17 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
         await dbContext.SaveChangesAsync();
 

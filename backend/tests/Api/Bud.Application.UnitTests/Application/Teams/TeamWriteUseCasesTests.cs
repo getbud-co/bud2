@@ -8,7 +8,7 @@ namespace Bud.Application.UnitTests.Application.Teams;
 public sealed class TeamWriteUseCasesTests
 {
     private readonly Mock<ITeamRepository> _teamRepository = new();
-    private readonly Mock<IMemberRepository> _employeeRepository = new();
+    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     [Fact]

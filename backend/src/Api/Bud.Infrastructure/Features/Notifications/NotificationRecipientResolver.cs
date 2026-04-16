@@ -28,7 +28,7 @@ public sealed class NotificationRecipientResolver(ApplicationDbContext dbContext
             // Responsible employee + their leader
             recipientIds = [mission.EmployeeId.Value];
 
-            var leaderId = await dbContext.OrganizationEmployeeMembers
+            var leaderId = await dbContext.Memberships
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.EmployeeId == mission.EmployeeId.Value && m.OrganizationId == organizationId)
@@ -43,7 +43,7 @@ public sealed class NotificationRecipientResolver(ApplicationDbContext dbContext
         else
         {
             // No responsible: notify all employees in the org
-            recipientIds = await dbContext.OrganizationEmployeeMembers
+            recipientIds = await dbContext.Memberships
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.OrganizationId == organizationId)

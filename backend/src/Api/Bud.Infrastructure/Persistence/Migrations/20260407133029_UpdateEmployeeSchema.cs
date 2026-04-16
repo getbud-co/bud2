@@ -48,7 +48,7 @@ namespace Bud.Infrastructure.Persistence.Migrations
                 table: "Employees");
 
             migrationBuilder.CreateTable(
-                name: "OrganizationEmployeeMembers",
+                name: "Memberships",
                 columns: table => new
                 {
                     EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -60,27 +60,27 @@ namespace Bud.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrganizationEmployeeMembers", x => new { x.EmployeeId, x.OrganizationId });
+                    table.PrimaryKey("PK_Memberships", x => new { x.EmployeeId, x.OrganizationId });
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Employees_EmployeeId",
+                        name: "FK_Memberships_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Employees_LeaderId",
+                        name: "FK_Memberships_Employees_LeaderId",
                         column: x => x.LeaderId,
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Organizations_OrganizationId",
+                        name: "FK_Memberships_Organizations_OrganizationId",
                         column: x => x.OrganizationId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Teams_TeamId",
+                        name: "FK_Memberships_Teams_TeamId",
                         column: x => x.TeamId,
                         principalTable: "Teams",
                         principalColumn: "Id",
@@ -88,18 +88,18 @@ namespace Bud.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_LeaderId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_LeaderId",
+                table: "Memberships",
                 column: "LeaderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_OrganizationId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_OrganizationId",
+                table: "Memberships",
                 column: "OrganizationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_TeamId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_TeamId",
+                table: "Memberships",
                 column: "TeamId");
 
             migrationBuilder.AddForeignKey(
@@ -118,7 +118,7 @@ namespace Bud.Infrastructure.Persistence.Migrations
                 table: "Employees");
 
             migrationBuilder.DropTable(
-                name: "OrganizationEmployeeMembers");
+                name: "Memberships");
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsGlobalAdmin",

@@ -8,7 +8,7 @@ public sealed record PatchTagCommand(string Name, TeamColor Color);
 
 public sealed partial class PatchTag(
     ITagRepository tagRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<PatchTag> logger,
     IUnitOfWork? unitOfWork = null)
@@ -27,7 +27,8 @@ public sealed partial class PatchTag(
         }
 
         var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null || currentMember.Role < EmployeeRole.HRManager)
+        if (currentMember is null ||
+            !currentMember.HasMinimumRoleIn(tenantProvider.TenantId!.Value, EmployeeRole.HRManager))
         {
             LogUpdateFailed(logger, id, "Insufficient role");
             return Result<Tag>.Forbidden(UserErrorMessages.TagUpdateForbidden);

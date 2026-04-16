@@ -59,7 +59,7 @@ public class AuthServiceTests
             Email = "admin@getbud.co",
         };
         context.Employees.Add(adminEmployee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = adminEmployee.Id,
             OrganizationId = org.Id,
@@ -129,12 +129,11 @@ public class AuthServiceTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
         });
         await context.SaveChangesAsync();
 
@@ -173,12 +172,11 @@ public class AuthServiceTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
         });
         await context.SaveChangesAsync();
 
@@ -280,12 +278,11 @@ public class AuthServiceTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
         });
         await context.SaveChangesAsync();
 
@@ -325,12 +322,11 @@ public class AuthServiceTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(adminEmployee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = adminEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id,
             IsGlobalAdmin = true
         });
         await context.SaveChangesAsync();
@@ -369,12 +365,11 @@ public class AuthServiceTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(adminEmployee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = adminEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id,
             IsGlobalAdmin = true
         });
         await context.SaveChangesAsync();
@@ -412,7 +407,7 @@ public class AuthServiceTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -450,7 +445,7 @@ public class AuthServiceTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -492,7 +487,7 @@ public class AuthServiceTests
             Email = "globaladmin@anycompany.com",
         };
         context.Employees.Add(adminEmployee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = adminEmployee.Id,
             OrganizationId = org1.Id,
@@ -534,12 +529,11 @@ public class AuthServiceTests
             Email = userEmail,
         };
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org1.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
         });
         await context.SaveChangesAsync();
 
@@ -576,12 +570,11 @@ public class AuthServiceTests
             Email = ownerEmail,
         };
         context.Employees.Add(ownerEmployee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = ownerEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
         });
         await context.SaveChangesAsync();
 

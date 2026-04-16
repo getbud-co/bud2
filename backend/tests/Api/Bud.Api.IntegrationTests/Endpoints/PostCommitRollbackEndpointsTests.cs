@@ -166,7 +166,7 @@ public sealed class PostCommitRollbackEndpointsTests(CustomWebApplicationFactory
         dbContext.Employees.Add(employee);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,

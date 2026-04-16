@@ -90,7 +90,7 @@ public class MissionProgressServiceTests
             Email = $"test-{Guid.NewGuid():N}@example.com",
         };
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = employee.Id, OrganizationId = organizationId });
+        context.Memberships.Add(new Membership { EmployeeId = employee.Id, OrganizationId = organizationId });
 
         var checkin = new Checkin
         {

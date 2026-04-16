@@ -3,7 +3,7 @@ using Bud.Application.Common;
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed class GetEmployeeHierarchy(
-    IMemberRepository employeeRepository)
+    IEmployeeRepository employeeRepository)
 {
     public async Task<Result<List<EmployeeSubordinateResponse>>> ExecuteAsync(
         Guid employeeId,
@@ -16,9 +16,9 @@ public sealed class GetEmployeeHierarchy(
 
         var subordinates = await employeeRepository.GetSubordinatesAsync(employeeId, 5, cancellationToken);
         var childrenByLeader = subordinates
-            .Where(m => m.LeaderId.HasValue)
-            .GroupBy(m => m.LeaderId!.Value)
-            .ToDictionary(group => group.Key, group => group.OrderBy(m => m.Employee.FullName).ToList());
+            .Where(e => e.GetMembership()?.LeaderId.HasValue == true)
+            .GroupBy(e => e.GetMembership()!.LeaderId!.Value)
+            .ToDictionary(group => group.Key, group => group.OrderBy(e => e.FullName).ToList());
 
         var tree = BuildTree(employeeId, childrenByLeader, 0, 5);
         return Result<List<EmployeeSubordinateResponse>>.Success(tree);
@@ -26,7 +26,7 @@ public sealed class GetEmployeeHierarchy(
 
     private static List<EmployeeSubordinateResponse> BuildTree(
         Guid leaderId,
-        Dictionary<Guid, List<OrganizationEmployeeMember>> childrenByLeader,
+        Dictionary<Guid, List<Employee>> childrenByLeader,
         int depth,
         int maxDepth)
     {
@@ -36,13 +36,13 @@ public sealed class GetEmployeeHierarchy(
         }
 
         return children
-            .Select(member => new EmployeeSubordinateResponse
+            .Select(employee => new EmployeeSubordinateResponse
             {
-                Id = member.EmployeeId,
-                FullName = member.Employee.FullName,
-                Initials = GetInitials(member.Employee.FullName),
-                Role = member.Role == EmployeeRole.TeamLeader ? "Líder" : "Contribuidor individual",
-                Children = BuildTree(member.EmployeeId, childrenByLeader, depth + 1, maxDepth),
+                Id = employee.Id,
+                FullName = employee.FullName,
+                Initials = GetInitials(employee.FullName),
+                Role = employee.GetMembership()?.Role == EmployeeRole.TeamLeader ? "Líder" : "Contribuidor individual",
+                Children = BuildTree(employee.Id, childrenByLeader, depth + 1, maxDepth),
             })
             .ToList();
     }

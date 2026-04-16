@@ -78,12 +78,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         dbContext.Teams.Add(team);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
         await dbContext.SaveChangesAsync();
 
@@ -328,12 +333,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
         await dbContext.SaveChangesAsync();
 
@@ -376,12 +386,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
         await dbContext.SaveChangesAsync();
 
@@ -421,12 +436,17 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         dbContext.Employees.Add(nonAdminEmployee);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = nonAdminEmployee.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.Contributor,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
         await dbContext.SaveChangesAsync();
 

@@ -6,7 +6,7 @@ namespace Bud.Application.Features.Tags.UseCases;
 
 public sealed partial class DeleteTag(
     ITagRepository tagRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<DeleteTag> logger,
     IUnitOfWork? unitOfWork = null)
@@ -24,7 +24,8 @@ public sealed partial class DeleteTag(
         }
 
         var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null || currentMember.Role < EmployeeRole.HRManager)
+        if (currentMember is null ||
+            !currentMember.HasMinimumRoleIn(tenantProvider.TenantId!.Value, EmployeeRole.HRManager))
         {
             LogDeletionFailed(logger, id, "Insufficient role");
             return Result.Forbidden(UserErrorMessages.TagDeleteForbidden);

@@ -41,7 +41,7 @@ public sealed class TeamRepositoryTests
             Email = email
         };
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -321,9 +321,9 @@ public sealed class TeamRepositoryTests
             Email = "b@test.com"
         };
         context.Employees.AddRange(member1, member2);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id });
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id });
         context.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
             new EmployeeTeam { EmployeeId = member2.Id, TeamId = team.Id });
@@ -357,7 +357,7 @@ public sealed class TeamRepositoryTests
             };
 
             context.Employees.Add(member);
-            context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = member.Id, OrganizationId = org.Id });
+            context.Memberships.Add(new Membership { EmployeeId = member.Id, OrganizationId = org.Id });
             context.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = member.Id,
@@ -450,11 +450,11 @@ public sealed class TeamRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, org.Id, null, 10);
+        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, null, 10);
 
         // Assert
-        result.Should().Contain(c => c.EmployeeId == eligible.Id);
-        result.Should().NotContain(c => c.EmployeeId == assigned.Id);
+        result.Should().Contain(c => c.Id == eligible.Id);
+        result.Should().NotContain(c => c.Id == assigned.Id);
     }
 
     [Fact]
@@ -473,7 +473,7 @@ public sealed class TeamRepositoryTests
         }
 
         // Act
-        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, org.Id, null, 3);
+        var result = await repository.GetEligibleEmployeesForAssignmentAsync(team.Id, null, 3);
 
         // Assert
         result.Should().HaveCountLessOrEqualTo(3);

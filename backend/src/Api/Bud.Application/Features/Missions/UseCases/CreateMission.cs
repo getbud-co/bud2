@@ -16,7 +16,7 @@ public sealed record CreateMissionCommand(
 
 public sealed partial class CreateMission(
     IMissionRepository missionRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateMission> logger,
     IUnitOfWork? unitOfWork = null)
@@ -82,7 +82,7 @@ public sealed partial class CreateMission(
                     return Result<Mission>.NotFound(UserErrorMessages.EmployeeNotFound);
                 }
 
-                if (employee.OrganizationId != organizationId.Value)
+                if (!employee.Memberships.Any(m => m.OrganizationId == organizationId.Value))
                 {
                     LogMissionCreationFailed(logger, command.Name, "Employee belongs to different organization");
                     return Result<Mission>.Forbidden(UserErrorMessages.MissionCreateForbidden);

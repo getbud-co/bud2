@@ -193,10 +193,10 @@ public sealed class TeamsController(
     /// <response code="400">Parâmetros inválidos.</response>
     /// <response code="404">Time não encontrado.</response>
     [HttpGet("{id:guid}/employees")]
-    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<EmployeeMembershipResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetEmployees(
+    public async Task<ActionResult<PagedResult<EmployeeMembershipResponse>>> GetEmployees(
         Guid id,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -209,7 +209,7 @@ public sealed class TeamsController(
         }
 
         var result = await listTeamEmployees.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
+        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeMembershipResponse()));
     }
 
     /// <summary>

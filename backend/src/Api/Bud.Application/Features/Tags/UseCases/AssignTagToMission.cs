@@ -8,7 +8,7 @@ namespace Bud.Application.Features.Tags.UseCases;
 public sealed partial class AssignTagToMission(
     ITagRepository tagRepository,
     IMissionRepository missionRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<AssignTagToMission> logger,
     IUnitOfWork? unitOfWork = null)
@@ -40,7 +40,9 @@ public sealed partial class AssignTagToMission(
             return Result.Forbidden(UserErrorMessages.TagAssignForbidden);
         }
 
-        if (currentMember.Role == EmployeeRole.Contributor && mission.EmployeeId != tenantProvider.EmployeeId)
+        var isContributor = currentMember.Memberships.Any(m =>
+            m.OrganizationId == tenantProvider.TenantId!.Value && m.Role == EmployeeRole.Contributor);
+        if (isContributor && mission.EmployeeId != tenantProvider.EmployeeId)
         {
             LogAssignFailed(logger, missionId, tagId, "Contributor can only tag their own missions");
             return Result.Forbidden(UserErrorMessages.TagAssignForbiddenContributor);

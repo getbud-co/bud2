@@ -8,7 +8,7 @@ public sealed record CreateTeamCommand(string Name, string? Description, TeamCol
 
 public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTeam> logger,
     IUnitOfWork? unitOfWork = null)

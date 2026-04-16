@@ -309,7 +309,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -333,7 +333,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -358,7 +358,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -398,12 +398,17 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
 
         await dbContext.SaveChangesAsync();
@@ -424,7 +429,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -448,7 +453,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,

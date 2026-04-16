@@ -6,7 +6,7 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record PatchEmployeeTeamsCommand(List<Guid> TeamIds);
 
 public sealed partial class PatchEmployeeTeams(
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ILogger<PatchEmployeeTeams> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -17,10 +17,17 @@ public sealed partial class PatchEmployeeTeams(
     {
         LogPatchingEmployeeTeams(logger, id);
 
-        var member = await employeeRepository.GetByIdWithEmployeeTeamsAsync(id, cancellationToken);
-        if (member is null)
+        var employee = await employeeRepository.GetByIdWithEmployeeTeamsAsync(id, cancellationToken);
+        if (employee is null)
         {
             LogEmployeeTeamsPatchFailed(logger, id, "Employee not found");
+            return Result.NotFound(UserErrorMessages.EmployeeNotFound);
+        }
+
+        var membership = employee.GetMembership();
+        if (membership is null)
+        {
+            LogEmployeeTeamsPatchFailed(logger, id, "Membership not found");
             return Result.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
@@ -30,7 +37,7 @@ public sealed partial class PatchEmployeeTeams(
         {
             var validCount = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
                 distinctTeamIds,
-                member.OrganizationId,
+                membership.OrganizationId,
                 cancellationToken);
 
             if (validCount != distinctTeamIds.Count)
@@ -40,11 +47,11 @@ public sealed partial class PatchEmployeeTeams(
             }
         }
 
-        member.Employee.EmployeeTeams.Clear();
+        employee.EmployeeTeams.Clear();
 
         foreach (var teamId in distinctTeamIds)
         {
-            member.Employee.EmployeeTeams.Add(new EmployeeTeam
+            employee.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = id,
                 TeamId = teamId,

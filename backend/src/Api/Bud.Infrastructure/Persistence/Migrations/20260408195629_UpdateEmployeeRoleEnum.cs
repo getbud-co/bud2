@@ -13,14 +13,14 @@ namespace Bud.Infrastructure.Persistence.Migrations
             // OrgAdmin shifted from 2 → 3; HRManager is the new 2.
             // Promote existing OrgAdmin rows before the new value takes that slot.
             migrationBuilder.Sql(
-                "UPDATE \"OrganizationEmployeeMembers\" SET \"Role\" = 3 WHERE \"Role\" = 2;");
+                "UPDATE \"Memberships\" SET \"Role\" = 3 WHERE \"Role\" = 2;");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
-                "UPDATE \"OrganizationEmployeeMembers\" SET \"Role\" = 2 WHERE \"Role\" = 3;");
+                "UPDATE \"Memberships\" SET \"Role\" = 2 WHERE \"Role\" = 3;");
         }
     }
 }

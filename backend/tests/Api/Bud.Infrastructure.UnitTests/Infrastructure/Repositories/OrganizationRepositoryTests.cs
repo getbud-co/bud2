@@ -135,11 +135,11 @@ public sealed class OrganizationRepositoryTests
     #region GetEmployeesAsync Tests
 
     [Fact]
-    public async Task GetEmployeesAsync_ReturnsEmployeesForOrganization()
+    public async Task GetMembersAsync_ReturnsMembersForOrganization()
     {
         // Arrange
         using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
+        var repository = new EmployeeRepository(context);
 
         var org = CreateTestOrganization();
         context.Organizations.Add(org);
@@ -148,13 +148,13 @@ public sealed class OrganizationRepositoryTests
         var alice = new Employee { Id = Guid.NewGuid(), FullName = "Alice", Email = "alice@test.com" };
         var bob = new Employee { Id = Guid.NewGuid(), FullName = "Bob", Email = "bob@test.com" };
         context.Employees.AddRange(alice, bob);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = alice.Id, OrganizationId = org.Id },
-            new OrganizationEmployeeMember { EmployeeId = bob.Id, OrganizationId = org.Id });
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = alice.Id, OrganizationId = org.Id },
+            new Membership { EmployeeId = bob.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetEmployeesAsync(org.Id, 1, 10);
+        var result = await repository.GetAllAsync(null, null, 1, 10);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -162,11 +162,11 @@ public sealed class OrganizationRepositoryTests
     }
 
     [Fact]
-    public async Task GetEmployeesAsync_ReturnsPaginatedResults()
+    public async Task GetMembersAsync_ReturnsPaginatedResults()
     {
         // Arrange
         using var context = CreateInMemoryContext();
-        var repository = new OrganizationRepository(context);
+        var repository = new EmployeeRepository(context);
 
         var org = CreateTestOrganization();
         context.Organizations.Add(org);
@@ -176,12 +176,12 @@ public sealed class OrganizationRepositoryTests
         {
             var emp = new Employee { Id = Guid.NewGuid(), FullName = $"Employee {i:D2}", Email = $"collab{i}@test.com" };
             context.Employees.Add(emp);
-            context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = emp.Id, OrganizationId = org.Id });
+            context.Memberships.Add(new Membership { EmployeeId = emp.Id, OrganizationId = org.Id });
         }
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetEmployeesAsync(org.Id, 1, 2);
+        var result = await repository.GetAllAsync(null, null, 1, 2);
 
         // Assert
         result.Items.Should().HaveCount(2);
@@ -243,7 +243,7 @@ public sealed class OrganizationRepositoryTests
 
         var emp = new Employee { Id = Guid.NewGuid(), FullName = "Test", Email = "test@test.com" };
         context.Employees.Add(emp);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember { EmployeeId = emp.Id, OrganizationId = org.Id });
+        context.Memberships.Add(new Membership { EmployeeId = emp.Id, OrganizationId = org.Id });
         await context.SaveChangesAsync();
 
         // Act

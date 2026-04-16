@@ -37,7 +37,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         if (existingLeader != null)
         {
-            var existingMember = await dbContext.OrganizationEmployeeMembers.IgnoreQueryFilters()
+            var existingMember = await dbContext.Memberships.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
             SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
@@ -52,10 +52,16 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
         var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id, OrganizationId = org.Id,
-            Role = EmployeeRole.TeamLeader, TeamId = team.Id, IsGlobalAdmin = true
+            Role = EmployeeRole.TeamLeader, IsGlobalAdmin = true
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
 
         await dbContext.SaveChangesAsync();
@@ -518,7 +524,7 @@ public class MissionMetricsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         dbContext.Employees.Add(employee);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id, OrganizationId = organizationId,
             Role = EmployeeRole.Contributor

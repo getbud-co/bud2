@@ -64,7 +64,7 @@ public sealed class DbSeederTests
         context.Organizations.Add(organization);
         var adminEmp = new Employee { Id = Guid.NewGuid(), FullName = "Administrador Global", Email = "admin@getbud.co" };
         context.Employees.Add(adminEmp);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = adminEmp.Id,
             OrganizationId = organization.Id,

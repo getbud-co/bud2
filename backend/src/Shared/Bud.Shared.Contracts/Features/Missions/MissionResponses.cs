@@ -15,7 +15,7 @@ public sealed class MissionResponse
     public Guid OrganizationId { get; set; }
     public Guid? ParentId { get; set; }
     public Guid? EmployeeId { get; set; }
-    public EmployeeResponse? Employee { get; set; }
+    public EmployeeMembershipResponse? Employee { get; set; }
     public List<MissionResponse> Children { get; set; } = [];
     public List<IndicatorResponse> Indicators { get; set; } = [];
     public List<TaskResponse> Tasks { get; set; } = [];

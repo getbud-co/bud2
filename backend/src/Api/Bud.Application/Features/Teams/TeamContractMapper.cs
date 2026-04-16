@@ -24,9 +24,9 @@ public static class TeamContractMapper
             ParentTeam = source.ParentTeam?.ToResponse(),
             Employees = source.EmployeeTeams
             .Where(et => et.Employee is not null)
-            .Select(et => et.Employee!.ToEmployeeResponse())
+            .Select(et => et.Employee!.ToEmployeeMembershipResponse())
             .ToList(),
-            Leader = leaderEntry?.Employee?.ToEmployeeResponse()
+            Leader = leaderEntry?.Employee?.ToEmployeeMembershipResponse()
         };
     }
 }

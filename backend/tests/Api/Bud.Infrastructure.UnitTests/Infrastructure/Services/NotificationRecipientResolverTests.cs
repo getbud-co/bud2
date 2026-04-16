@@ -30,10 +30,10 @@ public class NotificationRecipientResolverTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.AddRange(leader, c1, c2);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = c1.Id, OrganizationId = org.Id, LeaderId = leader.Id },
-            new OrganizationEmployeeMember { EmployeeId = c2.Id, OrganizationId = org.Id });
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = c1.Id, OrganizationId = org.Id, LeaderId = leader.Id },
+            new Membership { EmployeeId = c2.Id, OrganizationId = org.Id });
         context.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = c1.Id, TeamId = team.Id },
             new EmployeeTeam { EmployeeId = c2.Id, TeamId = team.Id }

@@ -38,7 +38,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         if (existingLeader != null)
         {
-            var existingMember = await dbContext.OrganizationEmployeeMembers.IgnoreQueryFilters()
+            var existingMember = await dbContext.Memberships.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
             SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
@@ -64,12 +64,17 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         };
         dbContext.Teams.Add(team);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
 
         await dbContext.SaveChangesAsync();
@@ -98,7 +103,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}"
         };
         dbContext.Employees.Add(leader);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = org!.Id,
@@ -123,7 +128,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,
@@ -591,9 +596,9 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         dbContext.Employees.AddRange(collab1, collab2);
-        dbContext.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = collab1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = collab2.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader });
+        dbContext.Memberships.AddRange(
+            new Membership { EmployeeId = collab1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = collab2.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader });
         dbContext.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = collab1.Id, TeamId = team!.Id },
             new EmployeeTeam { EmployeeId = collab2.Id, TeamId = team.Id });
@@ -657,7 +662,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Email = $"other-{Guid.NewGuid():N}@test-org.com"
         };
         dbContext.Employees.Add(otherCollab);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = otherCollab.Id,
             OrganizationId = org.Id,
@@ -692,7 +697,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Email = $"consistent-{Guid.NewGuid():N}@test-org.com"
         };
         dbContext.Employees.Add(otherCollab);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = otherCollab.Id,
             OrganizationId = org.Id,

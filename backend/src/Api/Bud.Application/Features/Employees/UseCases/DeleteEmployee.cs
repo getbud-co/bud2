@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed partial class DeleteEmployee(
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ILogger<DeleteEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -14,8 +14,8 @@ public sealed partial class DeleteEmployee(
     {
         LogDeletingEmployee(logger, id);
 
-        var member = await employeeRepository.GetByIdAsync(id, cancellationToken);
-        if (member is null)
+        var employee = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (employee is null)
         {
             LogEmployeeDeletionFailed(logger, id, "Not found");
             return Result.NotFound(UserErrorMessages.EmployeeNotFound);
@@ -37,7 +37,7 @@ public sealed partial class DeleteEmployee(
                 ErrorType.Conflict);
         }
 
-        await employeeRepository.RemoveAsync(member, cancellationToken);
+        await employeeRepository.RemoveAsync(employee, cancellationToken);
         await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
         LogEmployeeDeleted(logger, id);

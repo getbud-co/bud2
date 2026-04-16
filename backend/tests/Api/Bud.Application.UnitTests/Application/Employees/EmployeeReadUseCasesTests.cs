@@ -9,29 +9,25 @@ namespace Bud.Application.UnitTests.Application.Employees;
 
 public sealed class EmployeeReadUseCasesTests
 {
-    private readonly Mock<IMemberRepository> _employeeRepository = new();
+    private readonly Mock<IEmployeeRepository> _employeeRepository = new();
+    private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     [Fact]
     public async Task GetEmployeeById_WithExistingEmployee_ReturnsSuccess()
     {
         var employeeId = Guid.NewGuid();
-        var member = new OrganizationEmployeeMember
-        {
-            EmployeeId = employeeId,
-            OrganizationId = Guid.NewGuid(),
-            Employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" },
-        };
+        var employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" };
 
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(member);
+            .ReturnsAsync(employee);
 
         var useCase = new GetEmployeeById(_employeeRepository.Object);
 
         var result = await useCase.ExecuteAsync(employeeId);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.EmployeeId.Should().Be(employeeId);
+        result.Value!.Id.Should().Be(employeeId);
     }
 
     [Fact]
@@ -39,7 +35,7 @@ public sealed class EmployeeReadUseCasesTests
     {
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((OrganizationEmployeeMember?)null);
+            .ReturnsAsync((Employee?)null);
 
         var useCase = new GetEmployeeById(_employeeRepository.Object);
 
@@ -53,7 +49,7 @@ public sealed class EmployeeReadUseCasesTests
     public async Task ListLeaders_ReturnsSuccess()
     {
         _employeeRepository
-            .Setup(repository => repository.GetLeadersAsync(It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetLeadersAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListLeaderEmployees(_employeeRepository.Object);
@@ -61,7 +57,7 @@ public sealed class EmployeeReadUseCasesTests
         var result = await useCase.ExecuteAsync();
 
         result.IsSuccess.Should().BeTrue();
-        _employeeRepository.Verify(repository => repository.GetLeadersAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _employeeRepository.Verify(repository => repository.GetLeadersAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -69,21 +65,17 @@ public sealed class EmployeeReadUseCasesTests
     {
         var employeeId = Guid.NewGuid();
         var organizationId = Guid.NewGuid();
-        var member = new OrganizationEmployeeMember
-        {
-            EmployeeId = employeeId,
-            OrganizationId = organizationId,
-            Employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" },
-        };
+        var employee = new Employee { Id = employeeId, FullName = "Ana", Email = "ana@getbud.co" };
 
+        _tenantProvider.SetupGet(p => p.TenantId).Returns(organizationId);
         _employeeRepository
             .Setup(repository => repository.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(member);
+            .ReturnsAsync(employee);
         _employeeRepository
             .Setup(repository => repository.GetEligibleTeamsForAssignmentAsync(employeeId, organizationId, "produto", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        var useCase = new ListAvailableTeamsForEmployee(_employeeRepository.Object);
+        var useCase = new ListAvailableTeamsForEmployee(_employeeRepository.Object, _tenantProvider.Object);
 
         var result = await useCase.ExecuteAsync(employeeId, "produto");
 

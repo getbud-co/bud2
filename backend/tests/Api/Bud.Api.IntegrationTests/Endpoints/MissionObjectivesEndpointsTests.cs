@@ -37,7 +37,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
 
         if (existingLeader != null)
         {
-            var existingMember = await dbContext.OrganizationEmployeeMembers
+            var existingMember = await dbContext.Memberships
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
             SetTenantHeader(existingMember!.OrganizationId);
@@ -58,13 +58,18 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
         var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = adminLeader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader,
-            TeamId = team.Id,
             IsGlobalAdmin = true
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
         });
 
         await dbContext.SaveChangesAsync();
@@ -473,7 +478,7 @@ public class MissionObjectivesEndpointsTests : IClassFixture<CustomWebApplicatio
 
         dbContext.Employees.Add(employee);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = organizationId,

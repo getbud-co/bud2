@@ -11,12 +11,22 @@ public sealed class EmployeeResponse
     public string? Nickname { get; set; }
     public EmployeeLanguage Language { get; set; } = EmployeeLanguage.Pt;
     public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
+}
+
+public sealed class EmployeeMembershipResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
+    public EmployeeLanguage Language { get; set; } = EmployeeLanguage.Pt;
+    public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
     public EmployeeRole Role { get; set; } = EmployeeRole.Contributor;
     public Guid OrganizationId { get; set; }
     public Guid? LeaderId { get; set; }
     public bool IsGlobalAdmin { get; set; }
     public List<TeamResponse> Teams { get; set; } = [];
-    public EmployeeResponse? Leader { get; set; }
+    public EmployeeMembershipResponse? Leader { get; set; }
 }
 
 public sealed class EmployeeLookupResponse

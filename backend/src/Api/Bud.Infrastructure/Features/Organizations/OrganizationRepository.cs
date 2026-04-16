@@ -39,7 +39,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 
     public async Task<bool> HasEmployeesAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.OrganizationEmployeeMembers.AnyAsync(m => m.OrganizationId == organizationId, ct);
+        => await dbContext.Memberships.AnyAsync(m => m.OrganizationId == organizationId, ct);
 
     public async Task AddAsync(Organization entity, CancellationToken ct = default)
         => await dbContext.Organizations.AddAsync(entity, ct);

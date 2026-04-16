@@ -8,7 +8,7 @@ public sealed record CreateTagCommand(string Name, TeamColor Color);
 
 public sealed partial class CreateTag(
     ITagRepository tagRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTag> logger,
     IUnitOfWork? unitOfWork = null)
@@ -33,7 +33,7 @@ public sealed partial class CreateTag(
         }
 
         var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null || currentMember.Role < EmployeeRole.HRManager)
+        if (currentMember is null || !currentMember.HasMinimumRoleIn(organizationId.Value, EmployeeRole.HRManager))
         {
             LogCreationFailed(logger, command.Name, "Insufficient role");
             return Result<Tag>.Forbidden(UserErrorMessages.TagCreateForbidden);

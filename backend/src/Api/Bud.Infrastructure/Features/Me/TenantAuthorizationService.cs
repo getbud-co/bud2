@@ -20,7 +20,7 @@ public sealed class TenantAuthorizationService(
             return false;
         }
 
-        return await dbContext.OrganizationEmployeeMembers
+        return await dbContext.Memberships
             .AsNoTracking()
             .IgnoreQueryFilters()
             .AnyAsync(
@@ -44,7 +44,7 @@ public sealed class TenantAuthorizationService(
             return [];
         }
 
-        return await dbContext.OrganizationEmployeeMembers
+        return await dbContext.Memberships
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(m => m.EmployeeId == tenantProvider.EmployeeId.Value)

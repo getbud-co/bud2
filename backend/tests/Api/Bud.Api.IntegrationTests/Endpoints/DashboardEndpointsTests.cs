@@ -111,7 +111,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = organizationId,
@@ -135,7 +135,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         };
         dbContext.Employees.Add(member);
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = member.Id,
             OrganizationId = organizationId,
@@ -159,7 +159,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var membership = await dbContext.OrganizationEmployeeMembers
+        var membership = await dbContext.Memberships
             .IgnoreQueryFilters()
             .Include(m => m.Employee)
             .FirstOrDefaultAsync(m => m.Employee.Email == email);
@@ -185,7 +185,7 @@ public sealed class DashboardEndpointsTests : IClassFixture<CustomWebApplication
         dbContext.Employees.Add(leader);
         await dbContext.SaveChangesAsync();
 
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = org.Id,

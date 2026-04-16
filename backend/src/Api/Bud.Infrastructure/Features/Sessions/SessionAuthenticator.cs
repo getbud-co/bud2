@@ -37,7 +37,7 @@ public sealed class SessionAuthenticator(
         }
 
         // Load the membership for the organization context
-        var member = await dbContext.OrganizationEmployeeMembers
+        var member = await dbContext.Memberships
             .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.EmployeeId == employee.Id, cancellationToken);

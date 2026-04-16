@@ -32,7 +32,7 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Email = $"notif-{Guid.NewGuid()}@example.com"
         };
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,

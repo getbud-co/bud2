@@ -1,19 +1,22 @@
 namespace Bud.Domain.Employees;
 
-public sealed class OrganizationEmployeeMember : IAggregateRoot, ITenantEntity
+/// <summary>
+/// Componente secundário do agregado Employee. Representa o vínculo de um colaborador
+/// a uma organização específica. Só deve ser acessado via Employee.Memberships.
+/// </summary>
+public sealed class Membership : ITenantEntity
 {
     public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
     public EmployeeRole Role { get; set; } = EmployeeRole.Contributor;
-    public Guid? TeamId { get; set; }
-    public Team? Team { get; set; }
     public Guid? LeaderId { get; set; }
-    public Employee? Leader { get; set; }
+
+    // TODO: Remove GlobalAdmin Flag and replace for a specific Role, with stronger requirements
     public bool IsGlobalAdmin { get; set; }
 
-    public static OrganizationEmployeeMember Create(
+    public static Membership Create(
         Guid employeeId,
         Guid organizationId,
         EmployeeRole role,
@@ -24,7 +27,7 @@ public sealed class OrganizationEmployeeMember : IAggregateRoot, ITenantEntity
             throw new DomainInvariantException("Colaborador deve pertencer a uma organização válida.");
         }
 
-        return new OrganizationEmployeeMember
+        return new Membership
         {
             EmployeeId = employeeId,
             OrganizationId = organizationId,

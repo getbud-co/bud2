@@ -25,7 +25,7 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        var adminMember = await context.OrganizationEmployeeMembers
+        var adminMember = await context.Memberships
             .IgnoreQueryFilters()
             .Include(m => m.Employee)
             .FirstOrDefaultAsync(m =>
@@ -41,7 +41,7 @@ public static class DbSeeder
                 FullName = "Administrador Global",
                 Email = DefaultAdminEmail,
             };
-            adminMember = new OrganizationEmployeeMember
+            adminMember = new Membership
             {
                 EmployeeId = adminId,
                 OrganizationId = budOrg.Id,
@@ -50,7 +50,7 @@ public static class DbSeeder
                 Employee = adminEmployee,
             };
             context.Employees.Add(adminEmployee);
-            context.OrganizationEmployeeMembers.Add(adminMember);
+            context.Memberships.Add(adminMember);
             await context.SaveChangesAsync();
         }
 

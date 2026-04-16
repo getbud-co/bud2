@@ -12,12 +12,12 @@ public sealed record CreateEmployeeCommand(
     Guid? LeaderId);
 
 public sealed partial class CreateEmployee(
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(
+    public async Task<Result<Employee>> ExecuteAsync(
         CreateEmployeeCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -27,19 +27,19 @@ public sealed partial class CreateEmployee(
         if (!organizationId.HasValue)
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Organization context not found");
-            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
+            return Result<Employee>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
         }
 
         if (!EmailAddress.TryCreate(command.Email, out var emailAddress))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid email");
-            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
+            return Result<Employee>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
         }
 
         if (!PersonName.TryCreate(command.FullName, out var personName))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid name");
-            return Result<OrganizationEmployeeMember>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
+            return Result<Employee>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
         }
 
         try
@@ -54,14 +54,15 @@ public sealed partial class CreateEmployee(
                 if (validTeams != 1)
                 {
                     LogEmployeeCreationFailed(logger, command.FullName, "Team not found");
-                    return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.TeamNotFound);
+                    return Result<Employee>.NotFound(UserErrorMessages.TeamNotFound);
                 }
             }
 
             var newId = Guid.NewGuid();
             var employee = Employee.Create(newId, personName.Value, emailAddress.Value);
-            var member = OrganizationEmployeeMember.Create(newId, organizationId.Value, command.Role, command.LeaderId);
+            var member = Membership.Create(newId, organizationId.Value, command.Role, command.LeaderId);
             member.Employee = employee;
+            employee.Memberships.Add(member);
 
             if (command.TeamId.HasValue)
             {
@@ -73,16 +74,16 @@ public sealed partial class CreateEmployee(
                 });
             }
 
-            await employeeRepository.AddAsync(employee, member, cancellationToken);
+            await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
             LogEmployeeCreated(logger, newId, employee.FullName);
-            return Result<OrganizationEmployeeMember>.Success(member);
+            return Result<Employee>.Success(employee);
         }
         catch (DomainInvariantException ex)
         {
             LogEmployeeCreationFailed(logger, command.FullName, ex.Message);
-            return Result<OrganizationEmployeeMember>.Failure(ex.Message, ErrorType.Validation);
+            return Result<Employee>.Failure(ex.Message, ErrorType.Validation);
         }
     }
 

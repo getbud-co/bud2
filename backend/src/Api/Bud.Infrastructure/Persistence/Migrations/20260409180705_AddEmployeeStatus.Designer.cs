@@ -149,7 +149,7 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.ToTable("EmployeeTeams");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Employees.OrganizationEmployeeMember", b =>
+            modelBuilder.Entity("Bud.Domain.Employees.Membership", b =>
                 {
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
@@ -179,7 +179,7 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("OrganizationEmployeeMembers");
+                    b.ToTable("Memberships");
                 });
 
             modelBuilder.Entity("Bud.Domain.Indicators.Checkin", b =>
@@ -681,7 +681,7 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Employees.OrganizationEmployeeMember", b =>
+            modelBuilder.Entity("Bud.Domain.Employees.Membership", b =>
                 {
                     b.HasOne("Bud.Domain.Employees.Employee", "Employee")
                         .WithMany("Memberships")

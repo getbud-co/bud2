@@ -36,7 +36,7 @@ public static class BudInfrastructureCompositionExtensions
         }
 
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-        services.AddScoped<IMemberRepository, EmployeeRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<IMissionRepository, MissionRepository>();

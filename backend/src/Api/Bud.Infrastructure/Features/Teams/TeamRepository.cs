@@ -86,19 +86,22 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
             .ToListAsync(ct);
     }
 
-    public async Task<List<OrganizationEmployeeMember>> GetEligibleEmployeesForAssignmentAsync(
-        Guid teamId, Guid organizationId, string? search, int limit, CancellationToken ct = default)
+    public async Task<List<Employee>> GetEligibleEmployeesForAssignmentAsync(
+        Guid teamId, string? search, int limit, CancellationToken ct = default)
     {
         var currentEmployeeIds = await dbContext.EmployeeTeams
             .Where(et => et.TeamId == teamId)
             .Select(et => et.EmployeeId)
             .ToListAsync(ct);
 
-        var query = dbContext.OrganizationEmployeeMembers
+        var employeeIdsInOrg = dbContext.Memberships
+            .Select(m => m.EmployeeId);
+
+        var query = dbContext.Employees
             .AsNoTracking()
-            .Include(m => m.Employee)
-            .Where(m => m.OrganizationId == organizationId)
-            .Where(m => !currentEmployeeIds.Contains(m.EmployeeId));
+            .Include(e => e.Memberships)
+            .Where(e => employeeIdsInOrg.Contains(e.Id))
+            .Where(e => !currentEmployeeIds.Contains(e.Id));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -106,7 +109,7 @@ public sealed class TeamRepository(ApplicationDbContext dbContext) : ITeamReposi
         }
 
         return await query
-            .OrderBy(m => m.Employee.FullName)
+            .OrderBy(e => e.FullName)
             .Take(limit)
             .ToListAsync(ct);
     }

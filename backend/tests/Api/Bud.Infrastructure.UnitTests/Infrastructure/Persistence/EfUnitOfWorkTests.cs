@@ -115,7 +115,7 @@ public sealed class EfUnitOfWorkTests
             Name = "org-transacao.com"
         });
         dbContext.Employees.Add(new Employee { Id = employeeId, FullName = "Colaborador", Email = "colaborador@org-transacao.com" });
-        dbContext.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        dbContext.Memberships.Add(new Membership
         {
             EmployeeId = employeeId,
             OrganizationId = organizationId,

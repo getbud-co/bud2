@@ -9,7 +9,7 @@ public interface ITeamRepository
     Task<PagedResult<Team>> GetSubTeamsAsync(Guid teamId, int page, int pageSize, CancellationToken ct = default);
     Task<PagedResult<Employee>> GetEmployeesAsync(Guid teamId, int page, int pageSize, CancellationToken ct = default);
     Task<List<Employee>> GetEmployeeLookupAsync(Guid teamId, CancellationToken ct = default);
-    Task<List<OrganizationEmployeeMember>> GetEligibleEmployeesForAssignmentAsync(Guid teamId, Guid organizationId, string? search, int limit, CancellationToken ct = default);
+    Task<List<Employee>> GetEligibleEmployeesForAssignmentAsync(Guid teamId, string? search, int limit, CancellationToken ct = default);
     Task<bool> ExistsAsync(Guid id, CancellationToken ct = default);
     Task<bool> HasSubTeamsAsync(Guid teamId, CancellationToken ct = default);
     Task<bool> HasMissionsAsync(Guid teamId, CancellationToken ct = default);

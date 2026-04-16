@@ -13,7 +13,7 @@ public sealed record PatchTeamCommand(
 
 public sealed partial class PatchTeam(
     ITeamRepository teamRepository,
-    IMemberRepository employeeRepository,
+    IEmployeeRepository employeeRepository,
     ILogger<PatchTeam> logger,
     IUnitOfWork? unitOfWork = null)
 {

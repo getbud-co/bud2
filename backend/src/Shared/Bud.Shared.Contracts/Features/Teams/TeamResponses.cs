@@ -16,8 +16,8 @@ public sealed class TeamResponse
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     public TeamResponse? ParentTeam { get; set; }
-    public List<EmployeeResponse> Employees { get; set; } = [];
-    public EmployeeResponse? Leader { get; set; }
+    public List<EmployeeMembershipResponse> Employees { get; set; } = [];
+    public EmployeeMembershipResponse? Leader { get; set; }
 }
 
 public sealed class TeamEmployeeEligibleResponse

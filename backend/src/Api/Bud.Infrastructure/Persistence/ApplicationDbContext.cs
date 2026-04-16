@@ -24,7 +24,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<Employee> Employees => Set<Employee>();
-    public DbSet<OrganizationEmployeeMember> OrganizationEmployeeMembers => Set<OrganizationEmployeeMember>();
+    public DbSet<Membership> Memberships => Set<Membership>();
     public DbSet<Mission> Missions => Set<Mission>();
     public DbSet<Indicator> Indicators => Set<Indicator>();
     public DbSet<EmployeeTeam> EmployeeTeams => Set<EmployeeTeam>();
@@ -62,9 +62,9 @@ public sealed class ApplicationDbContext : DbContext
             );
 
         // Employee is now a global identity entity – no tenant filter applied.
-        // Tenant isolation for employees is enforced through OrganizationEmployeeMember.
+        // Tenant isolation for employees is enforced through Membership.
 
-        modelBuilder.Entity<OrganizationEmployeeMember>()
+        modelBuilder.Entity<Membership>()
             .HasQueryFilter(m =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||

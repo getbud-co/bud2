@@ -46,13 +46,13 @@ public class DashboardReadStoreTests
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.AddRange(leader, employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = org.Id,
             Role = EmployeeRole.TeamLeader
         });
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -85,7 +85,7 @@ public class DashboardReadStoreTests
         var team = new Team { Id = Guid.NewGuid(), Name = "Engenharia", OrganizationId = org.Id };
         context.Organizations.Add(org);
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = org.Id,
@@ -117,7 +117,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(leader);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = leader.Id,
             OrganizationId = org.Id,
@@ -146,7 +146,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -179,10 +179,10 @@ public class DashboardReadStoreTests
         context.Employees.Add(leader);
         context.Teams.Add(team);
         context.Employees.AddRange(member1, member2);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().AddRange(
             new EmployeeTeam { EmployeeId = leader.Id, TeamId = team.Id },
@@ -219,10 +219,10 @@ public class DashboardReadStoreTests
         context.Employees.Add(leader);
         context.Teams.Add(team);
         context.Employees.AddRange(member1, member2);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().AddRange(
             new EmployeeTeam { EmployeeId = leader.Id, TeamId = team.Id },
@@ -259,10 +259,10 @@ public class DashboardReadStoreTests
         context.Employees.Add(leader);
         context.Teams.Add(team);
         context.Employees.AddRange(member1, member2);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().AddRange(
             new EmployeeTeam { EmployeeId = leader.Id, TeamId = team.Id },
@@ -306,9 +306,9 @@ public class DashboardReadStoreTests
         context.Employees.Add(leader);
         context.Teams.Add(team);
         context.Employees.Add(member);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = member.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = member.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().Add(
             new EmployeeTeam { EmployeeId = leader.Id, TeamId = team.Id }
@@ -384,7 +384,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -446,7 +446,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -511,7 +511,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -549,11 +549,11 @@ public class DashboardReadStoreTests
         context.Employees.Add(teamLeader);
         context.Teams.Add(team);
         context.Employees.AddRange(employee, member1, member2, outsider);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = teamLeader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = employee.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = teamLeader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = employee.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().AddRange(
             new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
@@ -589,9 +589,9 @@ public class DashboardReadStoreTests
         context.Employees.Add(teamLeader);
         context.Teams.Add(team);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = teamLeader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = employee.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = teamLeader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = employee.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().Add(
             new EmployeeTeam { EmployeeId = employee.Id, TeamId = team.Id }
@@ -623,9 +623,9 @@ public class DashboardReadStoreTests
         context.Organizations.Add(org);
         context.Employees.AddRange(member1, member2);
         context.Teams.Add(team);
-        context.OrganizationEmployeeMembers.AddRange(
-            new OrganizationEmployeeMember { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
-            new OrganizationEmployeeMember { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = member1.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = member2.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor }
         );
         context.Set<EmployeeTeam>().AddRange(
             new EmployeeTeam { EmployeeId = member1.Id, TeamId = team.Id },
@@ -694,7 +694,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -731,7 +731,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -761,7 +761,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -821,7 +821,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,
@@ -903,7 +903,7 @@ public class DashboardReadStoreTests
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
-        context.OrganizationEmployeeMembers.Add(new OrganizationEmployeeMember
+        context.Memberships.Add(new Membership
         {
             EmployeeId = employee.Id,
             OrganizationId = org.Id,

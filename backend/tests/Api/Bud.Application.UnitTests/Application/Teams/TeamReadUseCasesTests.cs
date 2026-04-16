@@ -84,7 +84,7 @@ public sealed class TeamReadUseCasesTests
             });
 
         _teamRepository
-            .Setup(repository => repository.GetEligibleEmployeesForAssignmentAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetEligibleEmployeesForAssignmentAsync(teamId, "ana", 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var useCase = new ListAvailableEmployeesForTeam(_teamRepository.Object);
@@ -93,7 +93,7 @@ public sealed class TeamReadUseCasesTests
 
         result.IsSuccess.Should().BeTrue();
         _teamRepository.Verify(
-            repository => repository.GetEligibleEmployeesForAssignmentAsync(teamId, organizationId, "ana", 50, It.IsAny<CancellationToken>()),
+            repository => repository.GetEligibleEmployeesForAssignmentAsync(teamId, "ana", 50, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

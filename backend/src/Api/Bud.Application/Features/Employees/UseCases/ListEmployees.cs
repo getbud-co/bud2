@@ -3,9 +3,9 @@ using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
-public sealed class ListEmployees(IMemberRepository employeeRepository)
+public sealed class ListEmployees(IEmployeeRepository employeeRepository)
 {
-    public async Task<Result<PagedResult<OrganizationEmployeeMember>>> ExecuteAsync(
+    public async Task<Result<PagedResult<Employee>>> ExecuteAsync(
         Guid? teamId,
         string? search,
         int page,
@@ -14,6 +14,6 @@ public sealed class ListEmployees(IMemberRepository employeeRepository)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
         var result = await employeeRepository.GetAllAsync(teamId, search, page, pageSize, cancellationToken);
-        return Result<PagedResult<OrganizationEmployeeMember>>.Success(result.MapPaged(x => x));
+        return Result<PagedResult<Employee>>.Success(result);
     }
 }

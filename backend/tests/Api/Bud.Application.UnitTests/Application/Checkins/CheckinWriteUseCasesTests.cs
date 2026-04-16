@@ -34,7 +34,7 @@ public sealed class CheckinWriteUseCasesTests
         checkinRepository
             .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
-        var employeeRepository = new Mock<IMemberRepository>(MockBehavior.Strict);
+        var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns((Guid?)null);
@@ -83,10 +83,10 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetIndicatorWithMissionAsync(indicator.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(indicator);
 
-        var employeeRepository = new Mock<IMemberRepository>(MockBehavior.Strict);
+        var employeeRepository = new Mock<IEmployeeRepository>(MockBehavior.Strict);
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((OrganizationEmployeeMember?)null);
+            .ReturnsAsync((Employee?)null);
 
         var tenantProvider = new Mock<ITenantProvider>(MockBehavior.Strict);
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);
@@ -143,10 +143,10 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var employeeRepository = new Mock<IMemberRepository>();
+        var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -201,10 +201,10 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.GetIndicatorWithMissionAsync(metric.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metric);
 
-        var employeeRepository = new Mock<IMemberRepository>();
+        var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -387,10 +387,10 @@ public sealed class CheckinWriteUseCasesTests
             .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var employeeRepository = new Mock<IMemberRepository>();
+        var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new OrganizationEmployeeMember { EmployeeId = employeeId, OrganizationId = orgId, Employee = new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" } });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);

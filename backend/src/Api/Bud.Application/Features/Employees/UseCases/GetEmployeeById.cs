@@ -3,16 +3,16 @@ using Bud.Application.Common;
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed class GetEmployeeById(
-    IMemberRepository employeeRepository)
+    IEmployeeRepository employeeRepository)
 {
-    public async Task<Result<OrganizationEmployeeMember>> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<Employee>> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var member = await employeeRepository.GetByIdAsync(id, cancellationToken);
-        if (member is null)
+        var employee = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (employee is null)
         {
-            return Result<OrganizationEmployeeMember>.NotFound(UserErrorMessages.EmployeeNotFound);
+            return Result<Employee>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
-        return Result<OrganizationEmployeeMember>.Success(member);
+        return Result<Employee>.Success(employee);
     }
 }

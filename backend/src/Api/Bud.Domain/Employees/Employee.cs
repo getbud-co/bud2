@@ -1,10 +1,10 @@
 namespace Bud.Domain.Employees;
 
 /// <summary>
-/// Registro de identidade global. Não é um Aggregate Root operacional —
-/// as invariantes de negócio vivem em OrganizationEmployeeMember.
+/// Raiz do agregado de colaborador. Representa a identidade global do colaborador
+/// e é o único ponto de acesso ao seu vínculo organizacional (Membership).
 /// </summary>
-public sealed class Employee
+public sealed class Employee : IAggregateRoot
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
@@ -14,7 +14,19 @@ public sealed class Employee
     public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
 
     public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
-    public ICollection<OrganizationEmployeeMember> Memberships { get; set; } = new List<OrganizationEmployeeMember>();
+    public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
+
+    /// <summary>
+    /// Retorna o vínculo organizacional do colaborador. Com o filtro de tenant ativo,
+    /// a coleção contém no máximo um item correspondente à organização corrente.
+    /// </summary>
+    public Membership? GetMembership() => Memberships.FirstOrDefault();
+
+    /// <summary>
+    /// Verifica se o colaborador possui o papel mínimo exigido na organização especificada.
+    /// </summary>
+    public bool HasMinimumRoleIn(Guid organizationId, EmployeeRole minimumRole)
+        => Memberships.Any(m => m.OrganizationId == organizationId && m.Role >= minimumRole);
 
     public static Employee Create(Guid id, string fullName, string email)
     {

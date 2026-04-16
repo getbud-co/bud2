@@ -21,7 +21,7 @@ public static class MissionContractMapper
             OrganizationId = source.OrganizationId,
             ParentId = source.ParentId,
             EmployeeId = source.EmployeeId,
-            Employee = source.Employee?.ToEmployeeResponse(),
+            Employee = source.Employee?.ToEmployeeMembershipResponse(),
             Children = source.Children.Select(c => c.ToResponse()).ToList(),
             Indicators = source.Indicators.Select(i => i.ToResponse()).ToList(),
             Tasks = source.Tasks.Select(t => t.ToResponse()).ToList(),

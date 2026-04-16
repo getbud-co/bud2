@@ -47,7 +47,7 @@ public sealed class LeaderRequiredHandlerTests
 
         var org = new Organization { Id = orgId, Name = "test.org" };
         var employee = new Employee { Id = employeeId, FullName = "Leader", Email = "leader@test.com" };
-        var member = new OrganizationEmployeeMember
+        var member = new Membership
         {
             EmployeeId = employeeId,
             OrganizationId = orgId,
@@ -55,7 +55,7 @@ public sealed class LeaderRequiredHandlerTests
         };
         dbContext.Organizations.Add(org);
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(member);
+        dbContext.Memberships.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);
@@ -77,7 +77,7 @@ public sealed class LeaderRequiredHandlerTests
 
         var org = new Organization { Id = orgId, Name = "test.org" };
         var employee = new Employee { Id = employeeId, FullName = "Contributor", Email = "contrib@test.com" };
-        var member = new OrganizationEmployeeMember
+        var member = new Membership
         {
             EmployeeId = employeeId,
             OrganizationId = orgId,
@@ -85,7 +85,7 @@ public sealed class LeaderRequiredHandlerTests
         };
         dbContext.Organizations.Add(org);
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(member);
+        dbContext.Memberships.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);
@@ -110,7 +110,7 @@ public sealed class LeaderRequiredHandlerTests
         var org = new Organization { Id = orgId, Name = "test.org" };
         var otherOrg = new Organization { Id = otherOrgId, Name = "other.org" };
         var employee = new Employee { Id = employeeId, FullName = "Leader Elsewhere", Email = "leader@other.com" };
-        var member = new OrganizationEmployeeMember
+        var member = new Membership
         {
             EmployeeId = employeeId,
             OrganizationId = otherOrgId,
@@ -118,7 +118,7 @@ public sealed class LeaderRequiredHandlerTests
         };
         dbContext.Organizations.AddRange(org, otherOrg);
         dbContext.Employees.Add(employee);
-        dbContext.OrganizationEmployeeMembers.Add(member);
+        dbContext.Memberships.Add(member);
         await dbContext.SaveChangesAsync();
 
         var handler = new LeaderRequiredHandler(dbContext, tenantProvider);

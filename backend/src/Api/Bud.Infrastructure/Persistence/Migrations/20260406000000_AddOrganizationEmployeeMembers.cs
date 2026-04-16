@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Bud.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddOrganizationEmployeeMembers : Migration
+    public partial class AddMemberships : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Create OrganizationEmployeeMembers table
+            // Create Memberships table
             migrationBuilder.CreateTable(
-                name: "OrganizationEmployeeMembers",
+                name: "Memberships",
                 columns: table => new
                 {
                     EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -24,36 +24,36 @@ namespace Bud.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrganizationEmployeeMembers", x => new { x.EmployeeId, x.OrganizationId });
+                    table.PrimaryKey("PK_Memberships", x => new { x.EmployeeId, x.OrganizationId });
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Employees_EmployeeId",
+                        name: "FK_Memberships_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Organizations_OrganizationId",
+                        name: "FK_Memberships_Organizations_OrganizationId",
                         column: x => x.OrganizationId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Teams_TeamId",
+                        name: "FK_Memberships_Teams_TeamId",
                         column: x => x.TeamId,
                         principalTable: "Teams",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_OrganizationEmployeeMembers_Employees_LeaderId",
+                        name: "FK_Memberships_Employees_LeaderId",
                         column: x => x.LeaderId,
                         principalTable: "Employees",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            // Migrate existing data from Employees to OrganizationEmployeeMembers
+            // Migrate existing data from Employees to Memberships
             migrationBuilder.Sql(@"
-                INSERT INTO ""OrganizationEmployeeMembers"" (""EmployeeId"", ""OrganizationId"", ""Role"", ""TeamId"", ""LeaderId"", ""IsGlobalAdmin"")
+                INSERT INTO ""Memberships"" (""EmployeeId"", ""OrganizationId"", ""Role"", ""TeamId"", ""LeaderId"", ""IsGlobalAdmin"")
                 SELECT ""Id"", ""OrganizationId"", ""Role"", ""TeamId"", ""LeaderId"", ""IsGlobalAdmin""
                 FROM ""Employees""
                 WHERE ""OrganizationId"" IS NOT NULL
@@ -61,25 +61,25 @@ namespace Bud.Infrastructure.Persistence.Migrations
 
             // Create indexes
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_OrganizationId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_OrganizationId",
+                table: "Memberships",
                 column: "OrganizationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_TeamId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_TeamId",
+                table: "Memberships",
                 column: "TeamId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationEmployeeMembers_LeaderId",
-                table: "OrganizationEmployeeMembers",
+                name: "IX_Memberships_LeaderId",
+                table: "Memberships",
                 column: "LeaderId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "OrganizationEmployeeMembers");
+            migrationBuilder.DropTable(name: "Memberships");
         }
     }
 }

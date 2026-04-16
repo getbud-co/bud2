@@ -16,13 +16,19 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
 
-        var member = await dbContext.OrganizationEmployeeMembers
+        var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Include(m => m.Employee)
-            .FirstOrDefaultAsync(m => m.Employee.Email == normalizedEmail, cancellationToken);
+            .Include(e => e.Memberships)
+                .ThenInclude(m => m.Organization)
+            .FirstOrDefaultAsync(e => e.Email == normalizedEmail, cancellationToken);
 
-        if (member?.IsGlobalAdmin == true)
+        if (employee is null)
+        {
+            return Result<List<OrganizationSnapshot>>.Success([]);
+        }
+
+        if (employee.Memberships.Any(m => m.IsGlobalAdmin))
         {
             var allOrgs = await dbContext.Organizations
                 .AsNoTracking()
@@ -38,19 +44,12 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             return Result<List<OrganizationSnapshot>>.Success(allOrgs);
         }
 
-        var orgsFromMembership = await dbContext.OrganizationEmployeeMembers
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .Where(m => m.Employee.Email == normalizedEmail)
-            .Include(m => m.Organization)
+        var organizations = employee.Memberships
             .Select(m => new OrganizationSnapshot
             {
                 Id = m.Organization.Id,
                 Name = m.Organization.Name,
             })
-            .ToListAsync(cancellationToken);
-
-        var organizations = orgsFromMembership
             .GroupBy(o => o.Id)
             .Select(g => g.First())
             .OrderBy(o => o.Name)

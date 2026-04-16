@@ -41,7 +41,7 @@ public sealed class AggregateInvariantsTests
     public void Employee_UpdateProfile_WithSelfLeader_ShouldThrow()
     {
         var employeeId = Guid.NewGuid();
-        var member = OrganizationEmployeeMember.Create(employeeId, Guid.NewGuid(), EmployeeRole.TeamLeader);
+        var member = Membership.Create(employeeId, Guid.NewGuid(), EmployeeRole.TeamLeader);
 
         var act = () => member.UpdateProfile(EmployeeRole.TeamLeader, employeeId, employeeId);
 

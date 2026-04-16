@@ -8,7 +8,7 @@ namespace Bud.Application.UnitTests.Application.Missions;
 public sealed class MissionWriteUseCasesTests
 {
     private readonly Mock<IMissionRepository> _repo = new();
-    private readonly Mock<IMemberRepository> _employeeRepo = new();
+    private readonly Mock<IEmployeeRepository> _employeeRepo = new();
     private readonly Mock<ITenantProvider> _tenantProvider = new();
 
     private CreateMission CreatePlanningUseCase()
