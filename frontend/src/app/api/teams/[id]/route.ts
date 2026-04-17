@@ -1,6 +1,7 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
-import { capitalize, mapTeam, type BackendTeam } from "@/lib/api/team-mapper";
+import { capitalize, mapTeam } from "@/lib/api/team-mapper";
+import { BackendTeamResponseSchema } from "@/schemas/team";
 
 export async function DELETE(
   request: NextRequest,
@@ -68,6 +69,17 @@ export async function PATCH(
     return NextResponse.json(error, { status: response.status });
   }
 
-  const updated = (await response.json()) as BackendTeam;
-  return NextResponse.json(mapTeam(updated));
+  const data = await response.json();
+  const parsed = BackendTeamResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      "[schema:team] Divergência de contrato com o backend:",
+      parsed.error.issues,
+    );
+    return NextResponse.json(
+      { error: "Formato de resposta inesperado do backend" },
+      { status: 400 },
+    );
+  }
+  return NextResponse.json(mapTeam(parsed.data));
 }

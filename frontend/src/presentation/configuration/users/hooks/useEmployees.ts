@@ -16,7 +16,6 @@ async function fetchEmployees(orgId: string): Promise<PeopleUserView[]> {
 
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  console.log("Fetched employees data:", data);
   return data;
 }
 

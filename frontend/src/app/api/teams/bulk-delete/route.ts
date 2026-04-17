@@ -1,11 +1,18 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
+import { TeamBulkIdsSchema } from "@/schemas/team";
 
 export async function POST(request: NextRequest) {
   const apiUrl = process.env.BUD_API_URL;
   const token = await getBudToken();
   const tenantId = request.headers.get("X-Tenant-Id");
-  const ids: string[] = await request.json();
+
+  const body = await request.json();
+  const parsed = TeamBulkIdsSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "IDs inválidos" }, { status: 422 });
+  }
+  const ids = parsed.data;
 
   const response = await fetch(`${apiUrl}/api/teams/bulk-delete`, {
     method: "POST",

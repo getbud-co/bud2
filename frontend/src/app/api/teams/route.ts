@@ -1,6 +1,10 @@
 import { getBudToken } from "@/lib/bud-token";
 import { NextRequest, NextResponse } from "next/server";
-import { capitalize, mapTeam, type BackendTeam } from "@/lib/api/team-mapper";
+import { capitalize, mapTeam } from "@/lib/api/team-mapper";
+import {
+  BackendTeamListResponseSchema,
+  BackendTeamResponseSchema,
+} from "@/schemas/team";
 
 export async function GET(request: NextRequest) {
   const apiUrl = process.env.BUD_API_URL;
@@ -31,8 +35,18 @@ export async function GET(request: NextRequest) {
   }
 
   const data = await response.json();
-  const items: BackendTeam[] = Array.isArray(data.items) ? data.items : [];
-  return NextResponse.json(items.map(mapTeam));
+  const parsed = BackendTeamListResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      "[schema:team] Divergência de contrato com o backend:",
+      parsed.error.issues,
+    );
+    return NextResponse.json(
+      { error: "Formato de resposta inesperado do backend" },
+      { status: 400 },
+    );
+  }
+  return NextResponse.json(parsed.data.items.map(mapTeam));
 }
 
 export async function POST(request: NextRequest) {
@@ -67,6 +81,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(error, { status: response.status });
   }
 
-  const created = (await response.json()) as BackendTeam;
-  return NextResponse.json(mapTeam(created), { status: 201 });
+  const data = await response.json();
+  const parsed = BackendTeamResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      "[schema:team] Divergência de contrato com o backend:",
+      parsed.error.issues,
+    );
+    return NextResponse.json(
+      { error: "Formato de resposta inesperado do backend" },
+      { status: 400 },
+    );
+  }
+  return NextResponse.json(mapTeam(parsed.data), { status: 201 });
 }
