@@ -27,6 +27,27 @@ public sealed class CreateEmployeeValidatorTests
     }
 
     [Fact]
+    public async Task Validate_WithEmailNeedingNormalization_ShouldQueryUniquenessWithCanonicalValue()
+    {
+        var repository = new Mock<IEmployeeRepository>();
+        repository.Setup(x => x.IsEmailUniqueAsync("colab@bud.com", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var validator = new CreateEmployeeValidator(repository.Object);
+        var request = new CreateEmployeeRequest
+        {
+            FullName = "Colaborador Bud",
+            Email = "  COLAB@BUD.COM ",
+            Role = EmployeeRole.Leader
+        };
+
+        var result = await validator.ValidateAsync(request);
+
+        result.IsValid.Should().BeTrue();
+        repository.Verify(x => x.IsEmailUniqueAsync("colab@bud.com", null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task Validate_WithDuplicateEmail_ShouldFail()
     {
         var repository = new Mock<IEmployeeRepository>();

@@ -8,13 +8,14 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext context, IOptions<GlobalAdminSettings> settings)
     {
-        var organizationName = settings.Value.OrganizationName?.Trim();
-        var adminEmail = settings.Value.Email?.Trim().ToLowerInvariant();
-
-        if (string.IsNullOrWhiteSpace(organizationName) || string.IsNullOrWhiteSpace(adminEmail))
+        if (!OrganizationDomainName.TryCreate(settings.Value.OrganizationName, out var organizationDomainName)
+            || !EmailAddress.TryCreate(settings.Value.Email, out var adminEmailAddress))
         {
             return;
         }
+
+        var organizationName = organizationDomainName.Value;
+        var adminEmail = adminEmailAddress.Value;
 
         var organization = await context.Organizations
             .IgnoreQueryFilters()

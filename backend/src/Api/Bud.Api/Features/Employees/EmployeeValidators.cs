@@ -1,3 +1,4 @@
+using Bud.Domain.ValueObjects;
 using FluentValidation;
 
 namespace Bud.Api.Features.Employees;
@@ -13,8 +14,16 @@ public sealed class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRe
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("E-mail é obrigatório.")
             .MaximumLength(320).WithMessage("E-mail deve ter no máximo 320 caracteres.")
-            .EmailAddress().WithMessage("E-mail deve ser válido.")
-            .MustAsync((email, cancellationToken) => employeeRepository.IsEmailUniqueAsync(email, null, cancellationToken))
+            .Must(static email => EmailAddress.TryCreate(email, out _)).WithMessage("E-mail deve ser válido.")
+            .MustAsync((email, cancellationToken) =>
+            {
+                if (!EmailAddress.TryCreate(email, out var emailAddress))
+                {
+                    return Task.FromResult(true);
+                }
+
+                return employeeRepository.IsEmailUniqueAsync(emailAddress.Value, null, cancellationToken);
+            })
             .WithMessage("E-mail já está em uso.");
 
         RuleFor(x => x.Role)
@@ -34,7 +43,7 @@ public sealed class PatchEmployeeValidator : AbstractValidator<PatchEmployeeRequ
         RuleFor(x => x.Email.Value)
             .NotEmpty().WithMessage("E-mail é obrigatório.")
             .MaximumLength(320).WithMessage("E-mail deve ter no máximo 320 caracteres.")
-            .EmailAddress().WithMessage("E-mail deve ser válido.")
+            .Must(static email => EmailAddress.TryCreate(email, out _)).WithMessage("E-mail deve ser válido.")
             .When(x => x.Email.HasValue);
 
         RuleFor(x => x.Role.Value)

@@ -9,8 +9,8 @@ public sealed class TenantAuthorizationService(
 {
     public async Task<bool> UserBelongsToTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
-        var userEmail = NormalizeEmail(tenantProvider.UserEmail);
-        if (string.IsNullOrWhiteSpace(userEmail))
+        var userEmail = TryNormalizeEmail(tenantProvider.UserEmail);
+        if (userEmail is null)
         {
             return false;
         }
@@ -36,8 +36,8 @@ public sealed class TenantAuthorizationService(
 
     public async Task<List<Guid>> GetUserTenantIdsAsync(CancellationToken cancellationToken = default)
     {
-        var userEmail = NormalizeEmail(tenantProvider.UserEmail);
-        if (string.IsNullOrWhiteSpace(userEmail))
+        var userEmail = TryNormalizeEmail(tenantProvider.UserEmail);
+        if (userEmail is null)
         {
             return [];
         }
@@ -66,6 +66,6 @@ public sealed class TenantAuthorizationService(
             .ToListAsync(cancellationToken);
     }
 
-    private static string? NormalizeEmail(string? email)
-        => string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();
+    private static string? TryNormalizeEmail(string? email)
+        => EmailAddress.TryCreate(email, out var emailAddress) ? emailAddress.Value : null;
 }

@@ -10,8 +10,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         string email,
         CancellationToken cancellationToken = default)
     {
-        var normalizedEmail = email?.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        if (!EmailAddress.TryCreate(email, out var emailAddress))
         {
             return Result<List<OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
@@ -19,7 +18,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Email == emailAddress.Value, cancellationToken);
 
         if (employee?.IsGlobalAdmin == true)
         {
@@ -40,7 +39,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         var orgsFromMembership = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(c => c.Email == normalizedEmail)
+            .Where(c => c.Email == emailAddress.Value)
             .Include(c => c.Organization)
             .Select(c => new OrganizationSnapshot
             {

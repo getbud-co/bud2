@@ -30,7 +30,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
 
     public async Task<bool> IsEmailUniqueAsync(string email, Guid? excludeId, CancellationToken ct = default)
     {
-        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var normalizedEmail = EmailAddress.Create(email).Value;
         var query = dbContext.Employees.AsQueryable();
 
         if (excludeId.HasValue)

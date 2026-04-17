@@ -18,18 +18,15 @@ public sealed class SessionAuthenticator(
 
     public async Task<Result<LoginResult>> LoginAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
     {
-        var email = request.Email?.Trim();
-        if (string.IsNullOrWhiteSpace(email))
+        if (!EmailAddress.TryCreate(request.Email, out var emailAddress))
         {
             return Result<LoginResult>.Failure("Informe o e-mail.");
         }
 
-        var normalizedEmail = email.ToLowerInvariant();
-
         var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Email == emailAddress.Value, cancellationToken);
 
         if (employee is null)
         {

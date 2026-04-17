@@ -22,7 +22,7 @@ public readonly partial record struct OrganizationDomainName
             return false;
         }
 
-        var normalized = raw.Trim();
+        var normalized = raw.Trim().ToLowerInvariant();
         if (normalized.Length > MaxLength)
         {
             return false;

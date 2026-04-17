@@ -34,18 +34,27 @@ public sealed class Employee : ITenantEntity, IAggregateRoot
 
     public void UpdateProfile(string fullName, string email, EmployeeRole role)
     {
-        if (!PersonName.TryCreate(fullName, out var personName))
+        var normalizedFullName = NormalizeFullName(fullName);
+        if (normalizedFullName is null)
         {
             throw new DomainInvariantException("O nome do colaborador é obrigatório.");
         }
 
-        if (string.IsNullOrWhiteSpace(email))
+        var emailAddress = EmailAddress.Create(email);
+
+        FullName = normalizedFullName;
+        Email = emailAddress.Value;
+        Role = role;
+    }
+
+    private static string? NormalizeFullName(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new DomainInvariantException("O e-mail do colaborador é obrigatório.");
+            return null;
         }
 
-        FullName = personName.Value;
-        Email = email.Trim();
-        Role = role;
+        var normalized = string.Join(' ', raw.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        return normalized.Length >= 2 ? normalized : null;
     }
 }

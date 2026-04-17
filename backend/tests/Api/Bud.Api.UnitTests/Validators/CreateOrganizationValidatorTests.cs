@@ -103,6 +103,19 @@ public class CreateOrganizationValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Validate_WithUppercaseDomain_ShouldPass()
+    {
+        var request = new CreateOrganizationRequest
+        {
+            Name = "Empresa.COM.BR",
+        };
+
+        var result = await _validator.ValidateAsync(request);
+
+        result.IsValid.Should().BeTrue();
+    }
+
     [Theory]
     [InlineData("just text")]
     [InlineData("no-dots")]

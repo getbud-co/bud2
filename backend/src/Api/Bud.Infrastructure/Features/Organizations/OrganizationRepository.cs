@@ -34,7 +34,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
 
     public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null, CancellationToken ct = default)
     {
-        var normalizedName = name.Trim();
+        var normalizedName = OrganizationDomainName.Create(name).Value;
 
         var organizations = await dbContext.Organizations
             .IgnoreQueryFilters()
@@ -43,7 +43,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
 
         return organizations.Any(organization =>
             (!excludeId.HasValue || organization.Id != excludeId.Value) &&
-            string.Equals(organization.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
+            organization.Name == normalizedName);
     }
 
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
