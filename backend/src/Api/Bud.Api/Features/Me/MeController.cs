@@ -10,8 +10,7 @@ namespace Bud.Api.Features.Me;
 [Route("api/me")]
 [Produces("application/json")]
 public sealed class MeController(
-    ListMyOrganizations listMyOrganizations,
-    GetMyDashboard getMyDashboard) : ApiControllerBase
+    ListMyOrganizations listMyOrganizations) : ApiControllerBase
 {
     /// <summary>
     /// Lista organizações disponíveis para o usuário autenticado.
@@ -31,19 +30,4 @@ public sealed class MeController(
         return FromResultOk(result);
     }
 
-    /// <summary>
-    /// Retorna os dados do dashboard do colaborador autenticado.
-    /// </summary>
-    [Authorize(Policy = AuthorizationPolicies.TenantSelected)]
-    [HttpGet("dashboard")]
-    [ProducesResponseType(typeof(MyDashboardResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MyDashboardResponse>> GetDashboard(
-        [FromQuery] Guid? teamId,
-        CancellationToken cancellationToken)
-    {
-        var result = await getMyDashboard.ExecuteAsync(teamId, cancellationToken);
-        return FromResultOk(result);
-    }
 }

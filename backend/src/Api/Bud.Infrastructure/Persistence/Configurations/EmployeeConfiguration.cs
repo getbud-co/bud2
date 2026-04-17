@@ -23,18 +23,6 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 
         builder.HasIndex(c => c.OrganizationId);
 
-        builder.HasOne(c => c.Team)
-            .WithMany(t => t.Employees)
-            .HasForeignKey(c => c.TeamId)
-            .OnDelete(DeleteBehavior.SetNull)
-            .IsRequired(false);
-
-        builder.HasOne(c => c.Leader)
-            .WithMany()
-            .HasForeignKey(c => c.LeaderId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
-
         builder.HasIndex(c => c.Email)
             .IsUnique();
     }

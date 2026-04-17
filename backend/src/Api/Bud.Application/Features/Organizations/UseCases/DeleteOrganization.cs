@@ -30,7 +30,7 @@ public sealed partial class DeleteOrganization(
             LogOrganizationDeletionFailed(logger, id, "Protected organization");
             return Result.Failure(
                 "Esta organização está protegida e não pode ser excluída.",
-                ErrorType.Validation);
+                ErrorType.Conflict);
         }
 
         if (await organizationRepository.HasEmployeesAsync(id, cancellationToken))

@@ -1,4 +1,3 @@
-using Bud.Api.Authorization;
 using Bud.Shared.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -20,14 +19,14 @@ public sealed class SessionsController(
     /// </summary>
     /// <response code="200">Login realizado com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Usuário não encontrado.</response>
+    /// <response code="401">Falha de autenticação.</response>
     /// <response code="429">Limite de requisições excedido.</response>
     [HttpPost]
     [EnableRateLimiting("auth-login")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(SessionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<SessionResponse>> Create(CreateSessionRequest request, CancellationToken cancellationToken)
     {
@@ -45,9 +44,10 @@ public sealed class SessionsController(
     /// Encerra a sessão do usuário no cliente.
     /// </summary>
     /// <response code="204">Logout concluído.</response>
-    [Authorize(Policy = AuthorizationPolicies.TenantSelected)]
+    [Authorize]
     [HttpDelete("current")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteCurrent(CancellationToken cancellationToken)
     {
         var result = await deleteCurrentSession.ExecuteAsync(cancellationToken);

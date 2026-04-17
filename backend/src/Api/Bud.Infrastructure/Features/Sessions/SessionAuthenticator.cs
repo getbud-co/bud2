@@ -33,7 +33,7 @@ public sealed class SessionAuthenticator(
 
         if (employee is null)
         {
-            return Result<LoginResult>.NotFound("Usuário não encontrado.");
+            return Result<LoginResult>.Unauthorized("Falha ao autenticar.");
         }
 
         var claims = new List<Claim>
@@ -42,15 +42,14 @@ public sealed class SessionAuthenticator(
             new("email", employee.Email),
             new("employee_id", employee.Id.ToString()),
             new("organization_id", employee.OrganizationId.ToString()),
-            new(ClaimTypes.Name, employee.FullName)
+            new(ClaimTypes.Name, employee.FullName),
+            new(ClaimTypes.Role, employee.Role.ToString())
         };
 
         if (employee.IsGlobalAdmin)
         {
             claims.Add(new(ClaimTypes.Role, "GlobalAdmin"));
         }
-
-        await RegisterAccessLogAsync(employee.Id, employee.OrganizationId, cancellationToken);
 
         var token = GenerateJwtToken(claims);
 
@@ -64,13 +63,6 @@ public sealed class SessionAuthenticator(
             Role = employee.Role,
             OrganizationId = employee.OrganizationId
         });
-    }
-
-    private async Task RegisterAccessLogAsync(Guid employeeId, Guid organizationId, CancellationToken cancellationToken)
-    {
-        dbContext.EmployeeAccessLogs.Add(
-            EmployeeAccessLog.Create(Guid.NewGuid(), employeeId, organizationId, DateTime.UtcNow));
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private string GenerateJwtToken(List<Claim> claims)

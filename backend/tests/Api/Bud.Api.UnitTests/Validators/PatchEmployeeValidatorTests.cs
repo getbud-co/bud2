@@ -1,35 +1,37 @@
-using Bud.Shared.Contracts;
 using FluentAssertions;
-using Moq;
 using Xunit;
 
 namespace Bud.Api.UnitTests.Validators;
 
 public sealed class PatchEmployeeValidatorTests
 {
+    private readonly PatchEmployeeValidator _validator = new();
+
     [Fact]
-    public async Task Validate_WithInvalidLeader_ShouldFail()
+    public async Task Validate_WithValidPartialRequest_ShouldPass()
     {
-        var employeeRepository = new Mock<IEmployeeRepository>();
-        var tenantProvider = new Mock<ITenantProvider>();
-        var tenantId = Guid.NewGuid();
-
-        tenantProvider.SetupGet(x => x.TenantId).Returns(tenantId);
-        employeeRepository
-            .Setup(x => x.IsValidLeaderAsync(It.IsAny<Guid>(), tenantId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var validator = new PatchEmployeeValidator(employeeRepository.Object, tenantProvider.Object);
         var request = new PatchEmployeeRequest
         {
-            FullName = "John Doe",
-            Email = "john.doe@example.com",
-            LeaderId = Guid.NewGuid()
+            FullName = "Colaborador Atualizado",
+            Role = EmployeeRole.Leader
         };
 
-        var result = await validator.ValidateAsync(request);
+        var result = await _validator.ValidateAsync(request);
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Validate_WithInvalidEmail_ShouldFail()
+    {
+        var request = new PatchEmployeeRequest
+        {
+            Email = "invalido"
+        };
+
+        var result = await _validator.ValidateAsync(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName.Contains("LeaderId"));
+        result.Errors.Should().Contain(x => x.ErrorMessage == "E-mail deve ser válido.");
     }
 }

@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Bud.Mcp.Configuration;
-using Bud.Mcp.Clients;
 using Bud.Shared.Contracts;
 
 namespace Bud.Mcp.Auth;
@@ -113,7 +113,30 @@ public sealed class BudApiSession(HttpClient httpClient, BudMcpOptions options)
     {
         if (!response.IsSuccessStatusCode)
         {
-            throw await BudApiException.FromHttpResponseAsync(response, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                try
+                {
+                    using var document = JsonDocument.Parse(body);
+                    var root = document.RootElement;
+                    if (root.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
+                    {
+                        throw new InvalidOperationException(detail.GetString());
+                    }
+
+                    if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                    {
+                        throw new InvalidOperationException(title.GetString());
+                    }
+                }
+                catch (JsonException)
+                {
+                    throw new InvalidOperationException($"Erro ao chamar a API Bud ({(int)response.StatusCode}).");
+                }
+            }
+
+            throw new InvalidOperationException($"Erro ao chamar a API Bud ({(int)response.StatusCode}).");
         }
 
         var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken);

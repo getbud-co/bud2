@@ -69,7 +69,6 @@ public sealed class McpJsonRpcDispatcherTests
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://bud.test") };
         var options = new BudMcpOptions("http://bud.test", null, null, 30, 30);
         var session = new BudApiSession(httpClient, options);
-        var client = new BudApiClient(httpClient, session);
-        return new McpToolService(client, session);
+        return new McpToolService(session);
     }
 }

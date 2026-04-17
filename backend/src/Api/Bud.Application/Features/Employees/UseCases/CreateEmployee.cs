@@ -1,5 +1,3 @@
-using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Employees.UseCases;
@@ -7,9 +5,7 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record CreateEmployeeCommand(
     string FullName,
     string Email,
-    EmployeeRole Role,
-    Guid? TeamId,
-    Guid? LeaderId);
+    EmployeeRole Role);
 
 public sealed partial class CreateEmployee(
     IEmployeeRepository employeeRepository,
@@ -27,54 +23,29 @@ public sealed partial class CreateEmployee(
         if (!organizationId.HasValue)
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Organization context not found");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
+            return Result<Employee>.Failure("Contexto de organização não encontrado.", ErrorType.Validation);
         }
 
         if (!EmailAddress.TryCreate(command.Email, out var emailAddress))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid email");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
+            return Result<Employee>.Failure("E-mail inválido.", ErrorType.Validation);
         }
 
-        if (!PersonName.TryCreate(command.FullName, out var personName))
+        if (!await employeeRepository.IsEmailUniqueAsync(emailAddress.Value, null, cancellationToken))
         {
-            LogEmployeeCreationFailed(logger, command.FullName, "Invalid name");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
+            LogEmployeeCreationFailed(logger, command.FullName, "Email already in use");
+            return Result<Employee>.Failure("E-mail já está em uso.", ErrorType.Validation);
         }
 
         try
         {
-            if (command.TeamId.HasValue)
-            {
-                var validTeams = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
-                    [command.TeamId.Value],
-                    organizationId.Value,
-                    cancellationToken);
-
-                if (validTeams != 1)
-                {
-                    LogEmployeeCreationFailed(logger, command.FullName, "Team not found");
-                    return Result<Employee>.NotFound(UserErrorMessages.TeamNotFound);
-                }
-            }
-
             var employee = Employee.Create(
                 Guid.NewGuid(),
                 organizationId.Value,
-                personName.Value,
+                command.FullName,
                 emailAddress.Value,
-                command.Role,
-                command.LeaderId);
-
-            if (command.TeamId.HasValue)
-            {
-                employee.EmployeeTeams.Add(new EmployeeTeam
-                {
-                    EmployeeId = employee.Id,
-                    TeamId = command.TeamId.Value,
-                    AssignedAt = DateTime.UtcNow
-                });
-            }
+                command.Role);
 
             await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);

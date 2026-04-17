@@ -1,5 +1,7 @@
 using Bud.Infrastructure.Persistence;
+using Bud.Application.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Bud.Api.DependencyInjection;
 
@@ -44,10 +46,11 @@ public static partial class WebApplicationExtensions
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var settings = scope.ServiceProvider.GetRequiredService<IOptions<GlobalAdminSettings>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger("DatabaseSetup");
 
-        await DbSeeder.SeedAsync(dbContext);
+        await DbSeeder.SeedAsync(dbContext, settings);
         LogDatabaseSeedCompleted(logger);
     }
 

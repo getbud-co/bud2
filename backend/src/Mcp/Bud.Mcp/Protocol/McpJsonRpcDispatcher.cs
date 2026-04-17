@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Bud.Mcp.Clients;
 using Bud.Mcp.Tools;
 
 namespace Bud.Mcp.Protocol;
@@ -144,32 +143,13 @@ public sealed class McpJsonRpcDispatcher
             var execution = await toolService.ExecuteAsync(toolName, arguments, cancellationToken);
             return ToolResult(execution, isError: false);
         }
-        catch (Exception ex) when (ex is BudApiException or InvalidOperationException or TimeoutException or HttpRequestException)
+        catch (Exception ex) when (ex is InvalidOperationException or TimeoutException or HttpRequestException)
         {
             var payload = new JsonObject
             {
                 ["message"] = ex.Message,
                 ["tool"] = toolName
             };
-
-            if (ex is BudApiException budApiException)
-            {
-                payload["statusCode"] = (int)budApiException.StatusCode;
-                if (!string.IsNullOrWhiteSpace(budApiException.Title))
-                {
-                    payload["title"] = budApiException.Title;
-                }
-
-                if (!string.IsNullOrWhiteSpace(budApiException.Detail))
-                {
-                    payload["detail"] = budApiException.Detail;
-                }
-
-                if (budApiException.ValidationErrors.Count > 0)
-                {
-                    payload["errors"] = ToJsonErrors(budApiException.ValidationErrors);
-                }
-            }
 
             return ToolResult(payload, isError: true);
         }
@@ -189,22 +169,5 @@ public sealed class McpJsonRpcDispatcher
             },
             ["isError"] = isError
         };
-    }
-
-    private static JsonObject ToJsonErrors(IReadOnlyDictionary<string, IReadOnlyList<string>> validationErrors)
-    {
-        var jsonErrors = new JsonObject();
-        foreach (var (key, messages) in validationErrors)
-        {
-            var jsonMessages = new JsonArray();
-            foreach (var message in messages)
-            {
-                jsonMessages.Add(message);
-            }
-
-            jsonErrors[key] = jsonMessages;
-        }
-
-        return jsonErrors;
     }
 }

@@ -1,8 +1,5 @@
-using Bud.Application.Common;
 using Bud.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-
-using Bud.Shared.Contracts;
 
 namespace Bud.Infrastructure.Features.Organizations;
 
@@ -27,30 +24,6 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
             .ToListAsync(ct);
 
         return new PagedResult<Organization>
-        {
-            Items = items,
-            Total = total,
-            Page = page,
-            PageSize = pageSize
-        };
-    }
-
-    public async Task<PagedResult<Employee>> GetEmployeesAsync(
-        Guid organizationId, int page, int pageSize, CancellationToken ct = default)
-    {
-        var query = dbContext.Employees
-            .AsNoTracking()
-            .Where(c => c.OrganizationId == organizationId);
-
-        var total = await query.CountAsync(ct);
-        var items = await query
-            .Include(c => c.Team)
-            .OrderBy(c => c.FullName)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
-        return new PagedResult<Employee>
         {
             Items = items,
             Total = total,

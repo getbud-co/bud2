@@ -23,6 +23,9 @@ public sealed class Result
 
     public static Result Forbidden(string error)
         => new(false, error, ErrorType.Forbidden);
+
+    public static Result Unauthorized(string error)
+        => new(false, error, ErrorType.Unauthorized);
 }
 
 #pragma warning disable CA1000 // static factory methods are intentional for Result pattern ergonomics
@@ -51,6 +54,9 @@ public sealed class Result<T>
 
     public static Result<T> Forbidden(string error)
         => new(false, default, error, ErrorType.Forbidden);
+
+    public static Result<T> Unauthorized(string error)
+        => new(false, default, error, ErrorType.Unauthorized);
 }
 #pragma warning restore CA1000
 
@@ -60,5 +66,6 @@ public enum ErrorType
     Validation,
     NotFound,
     Conflict,
-    Forbidden
+    Forbidden,
+    Unauthorized
 }

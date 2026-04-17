@@ -146,6 +146,20 @@ public sealed class ApiControllerBaseTests
     }
 
     [Fact]
+    public void FromResult_WhenUnauthorized_ReturnsUnauthorizedProblem()
+    {
+        var controller = new TestController();
+
+        var actionResult = controller.CallFromResult(Result.Unauthorized("Falha ao autenticar."));
+
+        var objectResult = actionResult.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(401);
+        var problem = objectResult.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problem.Title.Should().Be("Não autenticado");
+        problem.Detail.Should().Be("Falha ao autenticar.");
+    }
+
+    [Fact]
     public void FromResultGeneric_WhenSuccess_ReturnsOkWithPayload()
     {
         // Arrange

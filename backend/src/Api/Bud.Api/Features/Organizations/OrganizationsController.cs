@@ -11,11 +11,10 @@ namespace Bud.Api.Features.Organizations;
 [Produces("application/json")]
 public sealed class OrganizationsController(
     CreateOrganization createOrganization,
-    PatchOrganization patchOrganization,
+    UpdateOrganization updateOrganization,
     DeleteOrganization deleteOrganization,
     GetOrganizationById getOrganizationById,
     ListOrganizations listOrganizations,
-    ListOrganizationEmployees listOrganizationEmployees,
     IValidator<CreateOrganizationRequest> createValidator,
     IValidator<PatchOrganizationRequest> updateValidator) : ApiControllerBase
 {
@@ -72,9 +71,9 @@ public sealed class OrganizationsController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var command = new PatchOrganizationCommand(request.Name);
+        var command = new UpdateOrganizationCommand(request.Name);
 
-        var result = await patchOrganization.ExecuteAsync(id, command, cancellationToken);
+        var result = await updateOrganization.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, organization => organization.ToResponse());
     }
 
@@ -141,29 +140,4 @@ public sealed class OrganizationsController(
         return FromResultOk(result, paged => paged.MapPaged(o => o.ToResponse()));
     }
 
-    /// <summary>
-    /// Lista colaboradores de uma organização.
-    /// </summary>
-    /// <response code="200">Lista paginada retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
-    /// <response code="404">Organização não encontrada.</response>
-    [HttpGet("{id:guid}/employees")]
-    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetEmployees(
-        Guid id,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
-    {
-        var paginationValidation = ValidatePagination(page, pageSize);
-        if (paginationValidation is not null)
-        {
-            return paginationValidation;
-        }
-
-        var result = await listOrganizationEmployees.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
-    }
 }

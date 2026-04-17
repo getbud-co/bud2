@@ -8,20 +8,14 @@ public sealed class Employee : ITenantEntity, IAggregateRoot
     public EmployeeRole Role { get; set; } = EmployeeRole.IndividualContributor;
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
-    public Guid? TeamId { get; set; }
-    public Team? Team { get; set; }
-    public Guid? LeaderId { get; set; }
-    public Employee? Leader { get; set; }
     public bool IsGlobalAdmin { get; set; }
-    public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
 
     public static Employee Create(
         Guid id,
         Guid organizationId,
         string fullName,
         string email,
-        EmployeeRole role,
-        Guid? leaderId = null)
+        EmployeeRole role)
     {
         if (organizationId == Guid.Empty)
         {
@@ -31,15 +25,14 @@ public sealed class Employee : ITenantEntity, IAggregateRoot
         var employee = new Employee
         {
             Id = id,
-            OrganizationId = organizationId,
-            TeamId = null
+            OrganizationId = organizationId
         };
 
-        employee.UpdateProfile(fullName, email, role, leaderId, id);
+        employee.UpdateProfile(fullName, email, role);
         return employee;
     }
 
-    public void UpdateProfile(string fullName, string email, EmployeeRole role, Guid? leaderId, Guid selfId)
+    public void UpdateProfile(string fullName, string email, EmployeeRole role)
     {
         if (!PersonName.TryCreate(fullName, out var personName))
         {
@@ -51,27 +44,8 @@ public sealed class Employee : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("O e-mail do colaborador é obrigatório.");
         }
 
-        if (leaderId.HasValue && leaderId.Value == selfId)
-        {
-            throw new DomainInvariantException("Um colaborador não pode ser líder de si mesmo.");
-        }
-
         FullName = personName.Value;
         Email = email.Trim();
         Role = role;
-        LeaderId = leaderId;
-    }
-
-    public void EnsureCanLeadOrganization(Guid organizationId)
-    {
-        if (Role != EmployeeRole.Leader)
-        {
-            throw new DomainInvariantException("O colaborador selecionado deve ter o perfil de Líder.");
-        }
-
-        if (OrganizationId != organizationId)
-        {
-            throw new DomainInvariantException("O líder deve pertencer à mesma organização.");
-        }
     }
 }

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+
 namespace Bud.Api.Authorization.Requirements;
 
-public sealed class LeaderRequiredRequirement : Microsoft.AspNetCore.Authorization.IAuthorizationRequirement { }
+public sealed class LeaderRequiredRequirement : IAuthorizationRequirement;

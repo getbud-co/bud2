@@ -13,7 +13,10 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.Message)
             .HasMaxLength(1000);
 
-        builder.Property(n => n.RelatedEntityType)
+        builder.Property(n => n.Category)
+            .HasMaxLength(100);
+
+        builder.Property(n => n.ReferenceType)
             .HasMaxLength(100);
 
         builder.HasOne(n => n.Organization)
@@ -26,7 +29,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
             .HasForeignKey(n => n.RecipientEmployeeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(n => n.OrganizationId);
-        builder.HasIndex(n => new { n.RecipientEmployeeId, n.IsRead, n.CreatedAtUtc });
+        builder.HasIndex(n => new { n.RecipientEmployeeId, n.CreatedAtUtc });
+        builder.HasIndex(n => new { n.OrganizationId, n.IsRead });
     }
 }

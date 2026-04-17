@@ -27,6 +27,15 @@ public abstract class ApiControllerBase : ControllerBase
         });
     }
 
+    protected ObjectResult UnauthorizedProblem(string detail)
+    {
+        return StatusCode(StatusCodes.Status401Unauthorized, new ProblemDetails
+        {
+            Title = "Não autenticado",
+            Detail = detail
+        });
+    }
+
     protected async Task<ActionResult?> EnsureAuthorizedAsync(
         IAuthorizationService authorizationService,
         object resource,
@@ -83,6 +92,7 @@ public abstract class ApiControllerBase : ControllerBase
             ErrorType.NotFound => NotFound(new ProblemDetails { Detail = result.Error }),
             ErrorType.Conflict => Conflict(new ProblemDetails { Detail = result.Error }),
             ErrorType.Forbidden => ForbiddenProblem(result.Error ?? "Você não tem permissão para realizar esta ação."),
+            ErrorType.Unauthorized => UnauthorizedProblem(result.Error ?? "Falha de autenticação."),
             _ => BadRequest(new ProblemDetails { Detail = result.Error })
         };
     }
@@ -99,6 +109,7 @@ public abstract class ApiControllerBase : ControllerBase
             ErrorType.NotFound => NotFound(new ProblemDetails { Detail = result.Error }),
             ErrorType.Conflict => Conflict(new ProblemDetails { Detail = result.Error }),
             ErrorType.Forbidden => ForbiddenProblem(result.Error ?? "Você não tem permissão para realizar esta ação."),
+            ErrorType.Unauthorized => UnauthorizedProblem(result.Error ?? "Falha de autenticação."),
             _ => BadRequest(new ProblemDetails { Detail = result.Error })
         };
     }
@@ -115,6 +126,7 @@ public abstract class ApiControllerBase : ControllerBase
             ErrorType.NotFound => NotFound(new ProblemDetails { Detail = result.Error }),
             ErrorType.Conflict => Conflict(new ProblemDetails { Detail = result.Error }),
             ErrorType.Forbidden => ForbiddenProblem(result.Error ?? "Você não tem permissão para realizar esta ação."),
+            ErrorType.Unauthorized => UnauthorizedProblem(result.Error ?? "Falha de autenticação."),
             _ => BadRequest(new ProblemDetails { Detail = result.Error })
         };
     }
@@ -136,6 +148,7 @@ public abstract class ApiControllerBase : ControllerBase
             ErrorType.NotFound => NotFound(new ProblemDetails { Detail = result.Error }),
             ErrorType.Conflict => Conflict(new ProblemDetails { Detail = result.Error }),
             ErrorType.Forbidden => ForbiddenProblem(result.Error ?? "Você não tem permissão para realizar esta ação."),
+            ErrorType.Unauthorized => UnauthorizedProblem(result.Error ?? "Falha de autenticação."),
             _ => BadRequest(new ProblemDetails { Detail = result.Error })
         };
     }

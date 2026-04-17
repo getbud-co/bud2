@@ -13,6 +13,7 @@ public static class ResultConversionExtensions
         {
             ErrorType.NotFound => Result<T>.NotFound(result.Error ?? "Recurso não encontrado."),
             ErrorType.Forbidden => Result<T>.Forbidden(result.Error ?? "Acesso negado."),
+            ErrorType.Unauthorized => Result<T>.Unauthorized(result.Error ?? "Não autenticado."),
             ErrorType.Conflict => Result<T>.Failure(result.Error ?? "Conflito.", ErrorType.Conflict),
             _ => Result<T>.Failure(result.Error ?? "Falha de validação.", result.ErrorType)
         };

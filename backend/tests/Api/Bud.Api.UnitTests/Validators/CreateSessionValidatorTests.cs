@@ -13,10 +13,6 @@ public sealed class CreateSessionValidatorTests
     [Theory]
     [InlineData("user@example.com")]
     [InlineData("nome@empresa.com.br")]
-    [InlineData("admin")]
-    [InlineData("Admin")]
-    [InlineData("ADMIN")]
-    [InlineData("admin@local")]
     [InlineData("admin@something.com")]
     public async Task Validate_WithValidEmail_Passes(string email)
     {
@@ -47,6 +43,10 @@ public sealed class CreateSessionValidatorTests
     }
 
     [Theory]
+    [InlineData("admin")]
+    [InlineData("Admin")]
+    [InlineData("ADMIN")]
+    [InlineData("admin@local")]
     [InlineData("not-an-email")]
     [InlineData("missing-at-sign")]
     [InlineData("@no-local-part.com")]

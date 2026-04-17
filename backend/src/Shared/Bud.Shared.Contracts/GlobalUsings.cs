@@ -1,11 +1,6 @@
-global using Bud.Shared.Contracts.Features.Missions;
-global using Bud.Shared.Contracts.Features.Indicators;
+global using Bud.Shared.Contracts.Features.Employees;
 global using Bud.Shared.Contracts.Features.Me;
 global using Bud.Shared.Contracts.Features.Notifications;
 global using Bud.Shared.Contracts.Features.Organizations;
-global using Bud.Shared.Contracts.Features.Employees;
 global using Bud.Shared.Contracts.Features.Sessions;
-global using Bud.Shared.Contracts.Features.Tasks;
-global using Bud.Shared.Contracts.Features.Teams;
-global using Bud.Shared.Contracts.Features.Templates;
 global using Bud.Shared.Kernel.Enums;
