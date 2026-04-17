@@ -10,11 +10,6 @@ export const CycleResponseSchema = z.object({
   status: z.enum(["Active", "Ended", "Archived", "Planning", "Review"]),
 });
 
-export const CycleListResponseSchema = z.object({
-  items: z.array(CycleResponseSchema),
-  total: z.number(),
-  page: z.number(),
-  pageSize: z.number(),
-});
+export const CycleListResponseSchema = z.array(CycleResponseSchema);
 
 export type CycleResponse = z.infer<typeof CycleResponseSchema>;

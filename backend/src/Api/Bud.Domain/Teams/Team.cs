@@ -17,7 +17,7 @@ public sealed class Team : ITenantEntity, IAggregateRoot
     public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
 
-    public Guid? LeaderId => EmployeeTeams.FirstOrDefault(et => et.Role == TeamRole.Leader)?.EmployeeId;
+    public Guid? LeaderId => EmployeeTeams.SingleOrDefault(et => et.Role == TeamRole.Leader)?.EmployeeId;
 
     public static Team Create(Guid id, Guid organizationId, string name, Guid leaderId, Guid? parentTeamId = null, string? description = null, TeamColor color = TeamColor.Neutral)
     {
@@ -56,9 +56,10 @@ public sealed class Team : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("O líder do time é obrigatório.");
         }
 
-        foreach (var et in EmployeeTeams.Where(et => et.Role == TeamRole.Leader))
+        var currentLeader = EmployeeTeams.SingleOrDefault(et => et.Role == TeamRole.Leader);
+        if (currentLeader is not null)
         {
-            et.Role = TeamRole.Member;
+            currentLeader.Role = TeamRole.Member;
         }
 
         var entry = EmployeeTeams.FirstOrDefault(et => et.EmployeeId == newLeaderId);

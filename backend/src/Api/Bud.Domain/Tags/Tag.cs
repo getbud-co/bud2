@@ -8,7 +8,7 @@ public sealed class Tag : ITenantEntity, IAggregateRoot
     public Organization Organization { get; set; } = null!;
 
     public string Name { get; set; } = string.Empty;
-    public TeamColor Color { get; set; }
+    public TagColor Color { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -20,7 +20,7 @@ public sealed class Tag : ITenantEntity, IAggregateRoot
         Guid id,
         Guid organizationId,
         string name,
-        TeamColor color)
+        TagColor color)
     {
         if (organizationId == Guid.Empty)
         {
@@ -39,13 +39,13 @@ public sealed class Tag : ITenantEntity, IAggregateRoot
         return tag;
     }
 
-    public void UpdateDetails(string name, TeamColor color)
+    public void UpdateDetails(string name, TagColor color)
     {
         ApplyDetails(name, color);
         UpdatedAt = DateTime.UtcNow;
     }
 
-    private void ApplyDetails(string name, TeamColor color)
+    private void ApplyDetails(string name, TagColor color)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
         {

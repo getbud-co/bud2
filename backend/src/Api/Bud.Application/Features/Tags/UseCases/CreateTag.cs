@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Tags.UseCases;
 
-public sealed record CreateTagCommand(string Name, TeamColor Color);
+public sealed record CreateTagCommand(string Name, TagColor Color);
 
 public sealed partial class CreateTag(
     ITagRepository tagRepository,

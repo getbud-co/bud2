@@ -50,7 +50,6 @@ public sealed class OrganizationsController(
     /// </summary>
     /// <response code="200">Organização atualizada com sucesso.</response>
     /// <response code="400">Payload inválido.</response>
-    /// <response code="409">Já existe uma organização com o mesmo nome.</response>
     /// <response code="404">Organização não encontrada.</response>
     /// <response code="403">Acesso restrito a administrador global.</response>
     [HttpPatch("{id:guid}")]
