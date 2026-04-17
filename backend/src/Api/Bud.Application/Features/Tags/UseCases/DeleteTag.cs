@@ -1,13 +1,10 @@
 using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Tags.UseCases;
 
 public sealed partial class DeleteTag(
     ITagRepository tagRepository,
-    IEmployeeRepository employeeRepository,
-    ITenantProvider tenantProvider,
     ILogger<DeleteTag> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -16,20 +13,6 @@ public sealed partial class DeleteTag(
         CancellationToken cancellationToken = default)
     {
         LogDeleting(logger, id);
-
-        if (!tenantProvider.EmployeeId.HasValue)
-        {
-            LogDeletionFailed(logger, id, "Employee not identified");
-            return Result.Forbidden(UserErrorMessages.TagDeleteForbidden);
-        }
-
-        var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null ||
-            !currentMember.HasMinimumRoleIn(tenantProvider.TenantId!.Value, EmployeeRole.HRManager))
-        {
-            LogDeletionFailed(logger, id, "Insufficient role");
-            return Result.Forbidden(UserErrorMessages.TagDeleteForbidden);
-        }
 
         var tag = await tagRepository.GetByIdAsync(id, cancellationToken);
         if (tag is null)

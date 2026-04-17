@@ -1,6 +1,5 @@
 using Bud.Application.Common;
 using Bud.Application.Features.Missions;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Tags.UseCases;
@@ -8,8 +7,6 @@ namespace Bud.Application.Features.Tags.UseCases;
 public sealed partial class AssignTagToMission(
     ITagRepository tagRepository,
     IMissionRepository missionRepository,
-    IEmployeeRepository employeeRepository,
-    ITenantProvider tenantProvider,
     ILogger<AssignTagToMission> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -20,32 +17,11 @@ public sealed partial class AssignTagToMission(
     {
         LogAssigning(logger, missionId, tagId);
 
-        if (!tenantProvider.EmployeeId.HasValue)
-        {
-            LogAssignFailed(logger, missionId, tagId, "Employee not identified");
-            return Result.Forbidden(UserErrorMessages.TagAssignForbidden);
-        }
-
         var mission = await missionRepository.GetByIdReadOnlyAsync(missionId, cancellationToken);
         if (mission is null)
         {
             LogAssignFailed(logger, missionId, tagId, "Mission not found");
             return Result.NotFound(UserErrorMessages.MissionNotFound);
-        }
-
-        var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null)
-        {
-            LogAssignFailed(logger, missionId, tagId, "Employee not found");
-            return Result.Forbidden(UserErrorMessages.TagAssignForbidden);
-        }
-
-        var isContributor = currentMember.Memberships.Any(m =>
-            m.OrganizationId == tenantProvider.TenantId!.Value && m.Role == EmployeeRole.Contributor);
-        if (isContributor && mission.EmployeeId != tenantProvider.EmployeeId)
-        {
-            LogAssignFailed(logger, missionId, tagId, "Contributor can only tag their own missions");
-            return Result.Forbidden(UserErrorMessages.TagAssignForbiddenContributor);
         }
 
         var tagExists = await tagRepository.ExistsAsync(tagId, cancellationToken);

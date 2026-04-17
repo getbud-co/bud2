@@ -8,7 +8,6 @@ public sealed record CreateTagCommand(string Name, TagColor Color);
 
 public sealed partial class CreateTag(
     ITagRepository tagRepository,
-    IEmployeeRepository employeeRepository,
     ITenantProvider tenantProvider,
     ILogger<CreateTag> logger,
     IUnitOfWork? unitOfWork = null)
@@ -19,27 +18,9 @@ public sealed partial class CreateTag(
     {
         LogCreating(logger, command.Name);
 
-        var organizationId = tenantProvider.TenantId;
-        if (!organizationId.HasValue)
-        {
-            LogCreationFailed(logger, command.Name, "Tenant not selected");
-            return Result<Tag>.Forbidden(UserErrorMessages.TagCreateForbidden);
-        }
+        var organizationId = tenantProvider.TenantId!.Value;
 
-        if (!tenantProvider.EmployeeId.HasValue)
-        {
-            LogCreationFailed(logger, command.Name, "Employee not identified");
-            return Result<Tag>.Forbidden(UserErrorMessages.TagCreateForbidden);
-        }
-
-        var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null || !currentMember.HasMinimumRoleIn(organizationId.Value, EmployeeRole.HRManager))
-        {
-            LogCreationFailed(logger, command.Name, "Insufficient role");
-            return Result<Tag>.Forbidden(UserErrorMessages.TagCreateForbidden);
-        }
-
-        var isNameUnique = await tagRepository.IsNameUniqueAsync(command.Name, organizationId.Value, null, cancellationToken);
+        var isNameUnique = await tagRepository.IsNameUniqueAsync(command.Name, organizationId, null, cancellationToken);
         if (!isNameUnique)
         {
             LogCreationFailed(logger, command.Name, "Name already in use");
@@ -48,7 +29,7 @@ public sealed partial class CreateTag(
 
         try
         {
-            var tag = Tag.Create(Guid.NewGuid(), organizationId.Value, command.Name, command.Color);
+            var tag = Tag.Create(Guid.NewGuid(), organizationId, command.Name, command.Color);
             await tagRepository.AddAsync(tag, cancellationToken);
             await unitOfWork.CommitAsync(tagRepository.SaveChangesAsync, cancellationToken);
 

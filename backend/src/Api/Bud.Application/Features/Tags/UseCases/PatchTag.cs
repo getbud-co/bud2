@@ -1,5 +1,4 @@
 using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Tags.UseCases;
@@ -8,8 +7,6 @@ public sealed record PatchTagCommand(string Name, TagColor Color);
 
 public sealed partial class PatchTag(
     ITagRepository tagRepository,
-    IEmployeeRepository employeeRepository,
-    ITenantProvider tenantProvider,
     ILogger<PatchTag> logger,
     IUnitOfWork? unitOfWork = null)
 {
@@ -19,20 +16,6 @@ public sealed partial class PatchTag(
         CancellationToken cancellationToken = default)
     {
         LogUpdating(logger, id);
-
-        if (!tenantProvider.EmployeeId.HasValue)
-        {
-            LogUpdateFailed(logger, id, "Employee not identified");
-            return Result<Tag>.Forbidden(UserErrorMessages.TagUpdateForbidden);
-        }
-
-        var currentMember = await employeeRepository.GetByIdAsync(tenantProvider.EmployeeId.Value, cancellationToken);
-        if (currentMember is null ||
-            !currentMember.HasMinimumRoleIn(tenantProvider.TenantId!.Value, EmployeeRole.HRManager))
-        {
-            LogUpdateFailed(logger, id, "Insufficient role");
-            return Result<Tag>.Forbidden(UserErrorMessages.TagUpdateForbidden);
-        }
 
         var tag = await tagRepository.GetByIdAsync(id, cancellationToken);
         if (tag is null)

@@ -275,6 +275,7 @@ public sealed class MissionsController(
     /// <response code="403">Sem permissão para atribuir a tag.</response>
     /// <response code="404">Meta ou tag não encontrada.</response>
     [HttpPost("{id:guid}/tags/{tagId:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.MissionOwnerOrHRManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -292,6 +293,7 @@ public sealed class MissionsController(
     /// <response code="403">Sem permissão para remover a tag.</response>
     /// <response code="404">Meta não encontrada.</response>
     [HttpDelete("{id:guid}/tags/{tagId:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.MissionOwnerOrHRManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

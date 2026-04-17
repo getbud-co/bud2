@@ -29,6 +29,7 @@ public sealed class TagsController(
     /// <response code="403">Sem permissão para criar tags.</response>
     /// <response code="409">Já existe uma tag com este nome na organização.</response>
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.HRManagerRequired)]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TagResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -57,6 +58,7 @@ public sealed class TagsController(
     /// <response code="404">Tag não encontrada.</response>
     /// <response code="409">Já existe uma tag com este nome na organização.</response>
     [HttpPatch("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.HRManagerRequired)]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TagResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -83,6 +85,7 @@ public sealed class TagsController(
     /// <response code="403">Sem permissão para remover tags.</response>
     /// <response code="404">Tag não encontrada.</response>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.HRManagerRequired)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
