@@ -19,26 +19,26 @@ public static class DbSeeder
 
         var organization = await context.Organizations
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(o => o.Name == organizationName);
+            .FirstOrDefaultAsync(o => EF.Property<string>(o, nameof(Organization.Name)) == organizationName);
 
         if (organization is null)
         {
-            organization = Organization.Create(Guid.NewGuid(), organizationName);
+            organization = Organization.Create(Guid.NewGuid(), organizationDomainName);
             context.Organizations.Add(organization);
             await context.SaveChangesAsync();
         }
 
         var admin = await context.Employees
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e => e.Email == adminEmail);
+            .FirstOrDefaultAsync(e => EF.Property<string>(e, nameof(Employee.Email)) == adminEmail);
 
         if (admin is null)
         {
             admin = Employee.Create(
                 Guid.NewGuid(),
                 organization.Id,
-                "Administrador Global",
-                adminEmail,
+                EmployeeName.Create("Administrador Global"),
+                adminEmailAddress,
                 EmployeeRole.Leader);
             admin.IsGlobalAdmin = true;
 

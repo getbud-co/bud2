@@ -32,7 +32,13 @@ public sealed partial class CreateEmployee(
             return Result<Employee>.Failure("E-mail inválido.", ErrorType.Validation);
         }
 
-        if (!await employeeRepository.IsEmailUniqueAsync(emailAddress.Value, null, cancellationToken))
+        if (!EmployeeName.TryCreate(command.FullName, out var employeeName))
+        {
+            LogEmployeeCreationFailed(logger, command.FullName, "Invalid full name");
+            return Result<Employee>.Failure("O nome do colaborador é obrigatório.", ErrorType.Validation);
+        }
+
+        if (!await employeeRepository.IsEmailUniqueAsync(emailAddress, null, cancellationToken))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Email already in use");
             return Result<Employee>.Failure("E-mail já está em uso.", ErrorType.Validation);
@@ -43,14 +49,14 @@ public sealed partial class CreateEmployee(
             var employee = Employee.Create(
                 Guid.NewGuid(),
                 organizationId.Value,
-                command.FullName,
-                emailAddress.Value,
+                employeeName,
+                emailAddress,
                 command.Role);
 
             await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeeCreated(logger, employee.Id, employee.FullName);
+            LogEmployeeCreated(logger, employee.Id, employee.FullName.Value);
             return Result<Employee>.Success(employee);
         }
         catch (DomainInvariantException ex)

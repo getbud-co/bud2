@@ -18,7 +18,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(o => o.Name)
+            .OrderBy(o => EF.Property<string>(o, nameof(Organization.Name)))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -32,18 +32,12 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         };
     }
 
-    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null, CancellationToken ct = default)
+    public async Task<bool> ExistsByNameAsync(OrganizationDomainName name, Guid? excludeId = null, CancellationToken ct = default)
     {
-        var normalizedName = OrganizationDomainName.Create(name).Value;
-
-        var organizations = await dbContext.Organizations
+        return await dbContext.Organizations
             .IgnoreQueryFilters()
-            .Select(o => new { o.Id, o.Name })
-            .ToListAsync(ct);
-
-        return organizations.Any(organization =>
-            (!excludeId.HasValue || organization.Id != excludeId.Value) &&
-            organization.Name == normalizedName);
+            .Where(o => !excludeId.HasValue || o.Id != excludeId.Value)
+            .AnyAsync(o => EF.Property<string>(o, nameof(Organization.Name)) == name.Value, ct);
     }
 
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)

@@ -6,7 +6,7 @@ Backend ASP.NET Core 10 reiniciado sobre uma base enxuta, preservando infraestru
 
 - `Bud.Api`: API HTTP com autenticação JWT, multitenancy por `OrganizationId`, middleware, OpenAPI e health checks.
 - `Bud.Application`: casos de uso mínimos para sessão, organizações, colaboradores, notificações e contexto do usuário.
-- `Bud.Domain`: domínio reduzido a `Organization`, `Employee`, `Notification` e primitivos compartilhados.
+- `Bud.Domain`: domínio reduzido a `Organization`, `Employee`, `Notification` e value objects como `EmployeeName`, `EmailAddress` e `OrganizationDomainName`.
 - `Bud.Infrastructure`: EF Core, repositórios mínimos, `ApplicationDbContext`, seed, inbox de notificações e migrations.
 - `Bud.Mcp`: host MCP limpo, com sessão, autenticação, seleção de tenant, observabilidade e protocolo JSON-RPC.
 

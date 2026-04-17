@@ -34,4 +34,18 @@ public sealed class PatchEmployeeValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(x => x.ErrorMessage == "E-mail deve ser válido.");
     }
+
+    [Fact]
+    public async Task Validate_WithInvalidFullName_ShouldFail()
+    {
+        var request = new PatchEmployeeRequest
+        {
+            FullName = "A"
+        };
+
+        var result = await _validator.ValidateAsync(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(x => x.ErrorMessage == "Nome completo é obrigatório.");
+    }
 }

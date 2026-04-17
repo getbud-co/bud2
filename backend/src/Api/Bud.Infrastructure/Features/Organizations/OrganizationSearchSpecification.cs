@@ -11,7 +11,7 @@ public sealed class OrganizationSearchSpecification(string? search, bool isNpgsq
             query,
             search,
             isNpgsql,
-            (q, pattern) => q.Where(o => EF.Functions.ILike(o.Name, pattern)),
-            (q, term) => q.Where(o => o.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            (q, pattern) => q.Where(o => EF.Functions.ILike(EF.Property<string>(o, nameof(Organization.Name)), pattern)),
+            (q, term) => q.Where(o => EF.Property<string>(o, nameof(Organization.Name)).Contains(term, StringComparison.OrdinalIgnoreCase)));
     }
 }

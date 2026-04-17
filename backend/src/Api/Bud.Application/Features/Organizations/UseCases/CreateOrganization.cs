@@ -18,7 +18,8 @@ public sealed partial class CreateOrganization(
 
         try
         {
-            var organization = Organization.Create(Guid.NewGuid(), command.Name);
+            var organizationDomainName = OrganizationDomainName.Create(command.Name);
+            var organization = Organization.Create(Guid.NewGuid(), organizationDomainName);
 
             if (await organizationRepository.ExistsByNameAsync(organization.Name, ct: cancellationToken))
             {
@@ -29,7 +30,7 @@ public sealed partial class CreateOrganization(
             await organizationRepository.AddAsync(organization, cancellationToken);
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);
 
-            LogOrganizationCreated(logger, organization.Id, organization.Name);
+            LogOrganizationCreated(logger, organization.Id, organization.Name.Value);
             return Result<Organization>.Success(organization);
         }
         catch (DomainInvariantException ex)

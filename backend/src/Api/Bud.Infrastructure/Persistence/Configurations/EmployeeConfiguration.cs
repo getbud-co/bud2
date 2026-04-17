@@ -8,9 +8,15 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     public void Configure(EntityTypeBuilder<Employee> builder)
     {
         builder.Property(c => c.FullName)
+            .HasConversion(
+                fullName => fullName.Value,
+                value => EmployeeName.Create(value))
             .HasMaxLength(200);
 
         builder.Property(c => c.Email)
+            .HasConversion(
+                email => email.Value,
+                value => EmailAddress.Create(value))
             .HasMaxLength(320);
 
         builder.Property(c => c.IsGlobalAdmin)

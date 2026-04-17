@@ -7,7 +7,7 @@ public static class OrganizationContractMapper
         return new OrganizationResponse
         {
             Id = source.Id,
-            Name = source.Name
+            Name = source.Name.Value
         };
     }
 }

@@ -26,17 +26,37 @@ public sealed partial class UpdateEmployee(
             return Result<Employee>.NotFound("Funcionário não encontrado.");
         }
 
-        var requestedEmail = command.Email.HasValue ? command.Email.Value : employee.Email;
-        var requestedFullName = command.FullName.HasValue ? command.FullName.Value : employee.FullName;
         var requestedRole = command.Role.HasValue ? command.Role.Value : employee.Role;
 
-        if (!EmailAddress.TryCreate(requestedEmail, out var emailAddress))
+        EmployeeName requestedFullName;
+        if (command.FullName.HasValue)
         {
-            LogEmployeeUpdateFailed(logger, id, "Invalid email");
-            return Result<Employee>.Failure("E-mail inválido.", ErrorType.Validation);
+            if (!EmployeeName.TryCreate(command.FullName.Value, out requestedFullName))
+            {
+                LogEmployeeUpdateFailed(logger, id, "Invalid full name");
+                return Result<Employee>.Failure("O nome do colaborador é obrigatório.", ErrorType.Validation);
+            }
+        }
+        else
+        {
+            requestedFullName = employee.FullName;
         }
 
-        if (employee.Email != emailAddress.Value && !await employeeRepository.IsEmailUniqueAsync(emailAddress.Value, id, cancellationToken))
+        EmailAddress requestedEmail;
+        if (command.Email.HasValue)
+        {
+            if (!EmailAddress.TryCreate(command.Email.Value, out requestedEmail))
+            {
+                LogEmployeeUpdateFailed(logger, id, "Invalid email");
+                return Result<Employee>.Failure("E-mail inválido.", ErrorType.Validation);
+            }
+        }
+        else
+        {
+            requestedEmail = employee.Email;
+        }
+
+        if (employee.Email != requestedEmail && !await employeeRepository.IsEmailUniqueAsync(requestedEmail, id, cancellationToken))
         {
             LogEmployeeUpdateFailed(logger, id, "Email already in use");
             return Result<Employee>.Failure("E-mail já está em uso.", ErrorType.Validation);
@@ -44,10 +64,10 @@ public sealed partial class UpdateEmployee(
 
         try
         {
-            employee.UpdateProfile(requestedFullName!, emailAddress.Value, requestedRole);
+            employee.UpdateProfile(requestedFullName, requestedEmail, requestedRole);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeeUpdated(logger, id, employee.FullName);
+            LogEmployeeUpdated(logger, id, employee.FullName.Value);
             return Result<Employee>.Success(employee);
         }
         catch (DomainInvariantException ex)

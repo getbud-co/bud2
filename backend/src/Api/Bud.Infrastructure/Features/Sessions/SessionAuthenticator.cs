@@ -26,7 +26,7 @@ public sealed class SessionAuthenticator(
         var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == emailAddress.Value, cancellationToken);
+            .FirstOrDefaultAsync(c => EF.Property<string>(c, nameof(Employee.Email)) == emailAddress.Value, cancellationToken);
 
         if (employee is null)
         {
@@ -35,11 +35,11 @@ public sealed class SessionAuthenticator(
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, employee.Email),
-            new("email", employee.Email),
+            new(ClaimTypes.Email, employee.Email.Value),
+            new("email", employee.Email.Value),
             new("employee_id", employee.Id.ToString()),
             new("organization_id", employee.OrganizationId.ToString()),
-            new(ClaimTypes.Name, employee.FullName),
+            new(ClaimTypes.Name, employee.FullName.Value),
             new(ClaimTypes.Role, employee.Role.ToString())
         };
 
@@ -53,8 +53,8 @@ public sealed class SessionAuthenticator(
         return Result<LoginResult>.Success(new LoginResult
         {
             Token = token,
-            Email = employee.Email,
-            DisplayName = employee.FullName,
+            Email = employee.Email.Value,
+            DisplayName = employee.FullName.Value,
             IsGlobalAdmin = employee.IsGlobalAdmin,
             EmployeeId = employee.Id,
             Role = employee.Role,

@@ -14,7 +14,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(c => c.FullName)
+            .OrderBy(c => EF.Property<string>(c, nameof(Employee.FullName)))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -28,9 +28,8 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         };
     }
 
-    public async Task<bool> IsEmailUniqueAsync(string email, Guid? excludeId, CancellationToken ct = default)
+    public async Task<bool> IsEmailUniqueAsync(EmailAddress email, Guid? excludeId, CancellationToken ct = default)
     {
-        var normalizedEmail = EmailAddress.Create(email).Value;
         var query = dbContext.Employees.AsQueryable();
 
         if (excludeId.HasValue)
@@ -38,7 +37,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
             query = query.Where(c => c.Id != excludeId.Value);
         }
 
-        return !await query.AnyAsync(c => c.Email == normalizedEmail, ct);
+        return !await query.AnyAsync(c => EF.Property<string>(c, nameof(Employee.Email)) == email.Value, ct);
     }
 
     public Task AddAsync(Employee entity, CancellationToken ct = default)
@@ -62,7 +61,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
 
         var normalized = $"%{search.Trim()}%";
         return query.Where(c =>
-            EF.Functions.ILike(c.FullName, normalized) ||
-            EF.Functions.ILike(c.Email, normalized));
+            EF.Functions.ILike(EF.Property<string>(c, nameof(Employee.FullName)), normalized) ||
+            EF.Functions.ILike(EF.Property<string>(c, nameof(Employee.Email)), normalized));
     }
 }

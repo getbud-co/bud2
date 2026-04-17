@@ -7,8 +7,8 @@ public static class EmployeesContractMapper
         return new EmployeeResponse
         {
             Id = source.Id,
-            FullName = source.FullName,
-            Email = source.Email,
+            FullName = source.FullName.Value,
+            Email = source.Email.Value,
             Role = source.Role,
             OrganizationId = source.OrganizationId,
             IsGlobalAdmin = source.IsGlobalAdmin

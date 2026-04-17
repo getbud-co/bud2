@@ -24,8 +24,8 @@ public class ApplicationDbContextTenantFilterTests
         var tenantProvider = new TestTenantProvider { TenantId = null, IsGlobalAdmin = false };
         using var context = CreateContext(tenantProvider);
 
-        var org1 = new Organization { Id = Guid.NewGuid(), Name = "Org 1" };
-        var org2 = new Organization { Id = Guid.NewGuid(), Name = "Org 2" };
+        var org1 = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("org1.com"));
+        var org2 = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("org2.com"));
         context.Organizations.AddRange(org1, org2);
         await context.SaveChangesAsync();
 
@@ -43,8 +43,8 @@ public class ApplicationDbContextTenantFilterTests
         var tenantProvider = new TestTenantProvider { TenantId = null, IsGlobalAdmin = true };
         using var context = CreateContext(tenantProvider);
 
-        var org1 = new Organization { Id = Guid.NewGuid(), Name = "Org 1" };
-        var org2 = new Organization { Id = Guid.NewGuid(), Name = "Org 2" };
+        var org1 = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("org1.com"));
+        var org2 = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("org2.com"));
         context.Organizations.AddRange(org1, org2);
         await context.SaveChangesAsync();
 
@@ -63,8 +63,8 @@ public class ApplicationDbContextTenantFilterTests
         var tenantProvider = new TestTenantProvider { TenantId = tenantId, IsGlobalAdmin = false };
         using var context = CreateContext(tenantProvider);
 
-        var org1 = new Organization { Id = tenantId, Name = "Tenant Org" };
-        var org2 = new Organization { Id = Guid.NewGuid(), Name = "Other Org" };
+        var org1 = Organization.Create(tenantId, OrganizationDomainName.Create("tenant.org"));
+        var org2 = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("other.org"));
         context.Organizations.AddRange(org1, org2);
         await context.SaveChangesAsync();
 

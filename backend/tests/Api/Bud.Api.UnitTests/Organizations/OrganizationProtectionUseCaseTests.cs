@@ -12,7 +12,7 @@ public sealed class OrganizationProtectionUseCaseTests
     [Fact]
     public async Task UpdateOrganization_WhenProtected_ShouldReturnConflict()
     {
-        var protectedOrganization = Organization.Create(Guid.NewGuid(), "admin.bud.local");
+        var protectedOrganization = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("admin.bud.local"));
         var repository = new Mock<IOrganizationRepository>();
         repository.Setup(x => x.GetByIdAsync(protectedOrganization.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(protectedOrganization);
@@ -33,7 +33,7 @@ public sealed class OrganizationProtectionUseCaseTests
     [Fact]
     public async Task DeleteOrganization_WhenProtected_ShouldReturnConflict()
     {
-        var protectedOrganization = Organization.Create(Guid.NewGuid(), "admin.bud.local");
+        var protectedOrganization = Organization.Create(Guid.NewGuid(), OrganizationDomainName.Create("admin.bud.local"));
         var repository = new Mock<IOrganizationRepository>();
         repository.Setup(x => x.GetByIdAsync(protectedOrganization.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(protectedOrganization);

@@ -3,9 +3,9 @@ namespace Bud.Domain.Organizations;
 public sealed class Organization : IAggregateRoot
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public OrganizationDomainName Name { get; private set; }
 
-    public static Organization Create(Guid id, string name)
+    public static Organization Create(Guid id, OrganizationDomainName name)
     {
         var organization = new Organization
         {
@@ -16,8 +16,8 @@ public sealed class Organization : IAggregateRoot
         return organization;
     }
 
-    public void Rename(string name)
+    public void Rename(OrganizationDomainName name)
     {
-        Name = OrganizationDomainName.Create(name).Value;
+        Name = name;
     }
 }

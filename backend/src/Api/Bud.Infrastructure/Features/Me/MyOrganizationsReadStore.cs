@@ -18,18 +18,18 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == emailAddress.Value, cancellationToken);
+            .FirstOrDefaultAsync(c => EF.Property<string>(c, nameof(Employee.Email)) == emailAddress.Value, cancellationToken);
 
         if (employee?.IsGlobalAdmin == true)
         {
             var allOrgs = await dbContext.Organizations
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .OrderBy(o => o.Name)
+                .OrderBy(o => EF.Property<string>(o, nameof(Organization.Name)))
                 .Select(o => new OrganizationSnapshot
                 {
                     Id = o.Id,
-                    Name = o.Name
+                    Name = EF.Property<string>(o, nameof(Organization.Name))
                 })
                 .ToListAsync(cancellationToken);
 
@@ -39,12 +39,12 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         var orgsFromMembership = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(c => c.Email == emailAddress.Value)
+            .Where(c => EF.Property<string>(c, nameof(Employee.Email)) == emailAddress.Value)
             .Include(c => c.Organization)
             .Select(c => new OrganizationSnapshot
             {
                 Id = c.Organization.Id,
-                Name = c.Organization.Name
+                Name = EF.Property<string>(c.Organization, nameof(Organization.Name))
             })
             .ToListAsync(cancellationToken);
 

@@ -11,46 +11,31 @@ public sealed class EmployeeTests
         var employee = Employee.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "  Maria   da   Silva  ",
-            "  MARIA@Example.COM ",
+            EmployeeName.Create("  Maria   da   Silva  "),
+            EmailAddress.Create("  MARIA@Example.COM "),
             EmployeeRole.Leader);
 
-        employee.FullName.Should().Be("Maria da Silva");
-        employee.Email.Should().Be("maria@example.com");
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("A")]
-    public void UpdateProfile_WithInvalidName_ThrowsDomainInvariantException(string fullName)
-    {
-        var employee = Employee.Create(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            "Maria Silva",
-            "maria@example.com",
-            EmployeeRole.Leader);
-
-        var act = () => employee.UpdateProfile(fullName, "maria@example.com", EmployeeRole.Leader);
-
-        act.Should().Throw<DomainInvariantException>()
-            .WithMessage("O nome do colaborador é obrigatório.");
+        employee.FullName.Value.Should().Be("Maria da Silva");
+        employee.Email.Value.Should().Be("maria@example.com");
     }
 
     [Fact]
-    public void UpdateProfile_WithInvalidEmail_ThrowsDomainInvariantException()
+    public void UpdateProfile_WithValidName_UpdatesCanonicalValues()
     {
         var employee = Employee.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "Maria Silva",
-            "maria@example.com",
+            EmployeeName.Create("Maria Silva"),
+            EmailAddress.Create("maria@example.com"),
             EmployeeRole.Leader);
 
-        var act = () => employee.UpdateProfile("Maria Silva", "invalid", EmployeeRole.Leader);
+        employee.UpdateProfile(
+            EmployeeName.Create("  Maria   Souza  "),
+            EmailAddress.Create("  MARIA@bud.com "),
+            EmployeeRole.IndividualContributor);
 
-        act.Should().Throw<DomainInvariantException>()
-            .WithMessage("O e-mail informado é inválido.");
+        employee.FullName.Value.Should().Be("Maria Souza");
+        employee.Email.Value.Should().Be("maria@bud.com");
+        employee.Role.Should().Be(EmployeeRole.IndividualContributor);
     }
 }

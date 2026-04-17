@@ -7,8 +7,8 @@ Formato por linha:
 
 Linhas iniciadas com `#` são comentários.
 
-src/Api/Bud.Application/Features/Employees/UseCases/CreateEmployee.cs|EmailAddress.TryCreate(command.Email||Employee.Create(|
-src/Api/Bud.Application/Features/Employees/UseCases/UpdateEmployee.cs|EmailAddress.TryCreate(requestedEmail||UpdateProfile(|
+src/Api/Bud.Application/Features/Employees/UseCases/CreateEmployee.cs|EmailAddress.TryCreate(command.Email)||EmployeeName.TryCreate(command.FullName)||Employee.Create(|
+src/Api/Bud.Application/Features/Employees/UseCases/UpdateEmployee.cs|EmployeeName.TryCreate(command.FullName.Value)||EmailAddress.TryCreate(command.Email.Value)||UpdateProfile(|
 src/Api/Bud.Application/Features/Organizations/UseCases/CreateOrganization.cs|Organization.Create(|
 src/Api/Bud.Application/Features/Organizations/UseCases/UpdateOrganization.cs|organization.Rename(|
 src/Api/Bud.Application/Features/Indicators/UseCases/CreateCheckin.cs|indicator.CreateCheckin(|

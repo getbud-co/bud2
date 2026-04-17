@@ -13,7 +13,10 @@ public sealed partial class UpdateOrganization(
     ILogger<UpdateOrganization> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    private readonly string _globalAdminOrgName = globalAdminSettings.Value.OrganizationName;
+    private readonly OrganizationDomainName? _globalAdminOrgName =
+        OrganizationDomainName.TryCreate(globalAdminSettings.Value.OrganizationName, out var organizationDomainName)
+            ? organizationDomainName
+            : null;
 
     public async Task<Result<Organization>> ExecuteAsync(
         Guid id,
@@ -41,7 +44,8 @@ public sealed partial class UpdateOrganization(
         {
             if (command.Name.HasValue)
             {
-                organization.Rename(command.Name.Value ?? string.Empty);
+                var organizationDomainName = OrganizationDomainName.Create(command.Name.Value ?? string.Empty);
+                organization.Rename(organizationDomainName);
 
                 if (await organizationRepository.ExistsByNameAsync(organization.Name, organization.Id, cancellationToken))
                 {
@@ -52,7 +56,7 @@ public sealed partial class UpdateOrganization(
 
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);
 
-            LogOrganizationUpdated(logger, id, organization.Name);
+            LogOrganizationUpdated(logger, id, organization.Name.Value);
             return Result<Organization>.Success(organization);
         }
         catch (DomainInvariantException ex)
