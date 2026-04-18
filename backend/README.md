@@ -56,8 +56,12 @@ backend/
 │       ├── Bud.Shared.Contracts
 │       └── Bud.Shared.Kernel
 ├── tests/
-│   ├── Api/Bud.Api.UnitTests
-│   └── Mcp/Bud.Mcp.Tests
+│   ├── Api/Bud.Api.Tests
+│   ├── Application/Bud.Application.Tests
+│   ├── Domain/Bud.Domain.Tests
+│   ├── Infrastructure/Bud.Infrastructure.Tests
+│   ├── Mcp/Bud.Mcp.Tests
+│   └── Shared/Bud.TestHelpers
 ├── Bud.sln
 ├── Dockerfile
 └── Dockerfile.Production
