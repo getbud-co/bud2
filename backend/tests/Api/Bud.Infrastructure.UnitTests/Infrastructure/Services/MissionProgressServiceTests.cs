@@ -88,9 +88,9 @@ public class MissionProgressServiceTests
             Id = employeeId ?? Guid.NewGuid(),
             FullName = employeeName ?? "Test User",
             Email = $"test-{Guid.NewGuid():N}@example.com",
-            OrganizationId = organizationId
         };
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership { EmployeeId = employee.Id, OrganizationId = organizationId });
 
         var checkin = new Checkin
         {

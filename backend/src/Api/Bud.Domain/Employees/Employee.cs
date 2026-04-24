@@ -1,45 +1,41 @@
 namespace Bud.Domain.Employees;
 
-public sealed class Employee : ITenantEntity, IAggregateRoot
+/// <summary>
+/// Raiz do agregado de colaborador. Representa a identidade global do colaborador
+/// e é o único ponto de acesso ao seu vínculo organizacional (Membership).
+/// </summary>
+public sealed class Employee : IAggregateRoot
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public EmployeeRole Role { get; set; } = EmployeeRole.IndividualContributor;
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
-    public Guid? TeamId { get; set; }
-    public Team? Team { get; set; }
-    public Guid? LeaderId { get; set; }
-    public Employee? Leader { get; set; }
-    public bool IsGlobalAdmin { get; set; }
+    public string? Nickname { get; set; }
+    public EmployeeLanguage Language { get; set; } = EmployeeLanguage.Pt;
+    public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
+
     public ICollection<EmployeeTeam> EmployeeTeams { get; set; } = new List<EmployeeTeam>();
+    public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
 
-    public static Employee Create(
-        Guid id,
-        Guid organizationId,
-        string fullName,
-        string email,
-        EmployeeRole role,
-        Guid? leaderId = null)
+    /// <summary>
+    /// Retorna o vínculo organizacional do colaborador. Com o filtro de tenant ativo,
+    /// a coleção contém no máximo um item correspondente à organização corrente.
+    /// </summary>
+    public Membership? GetMembership() => Memberships.FirstOrDefault();
+
+    /// <summary>
+    /// Verifica se o colaborador possui o papel mínimo exigido na organização especificada.
+    /// </summary>
+    public bool HasMinimumRoleIn(Guid organizationId, EmployeeRole minimumRole)
+        => Memberships.Any(m => m.OrganizationId == organizationId && m.Role >= minimumRole);
+
+    public static Employee Create(Guid id, string fullName, string email)
     {
-        if (organizationId == Guid.Empty)
-        {
-            throw new DomainInvariantException("Colaborador deve pertencer a uma organização válida.");
-        }
-
-        var employee = new Employee
-        {
-            Id = id,
-            OrganizationId = organizationId,
-            TeamId = null
-        };
-
-        employee.UpdateProfile(fullName, email, role, leaderId, id);
+        var employee = new Employee { Id = id };
+        employee.UpdateIdentity(fullName, email);
         return employee;
     }
 
-    public void UpdateProfile(string fullName, string email, EmployeeRole role, Guid? leaderId, Guid selfId)
+    public void UpdateIdentity(string fullName, string email)
     {
         if (!PersonName.TryCreate(fullName, out var personName))
         {
@@ -51,27 +47,7 @@ public sealed class Employee : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("O e-mail do colaborador é obrigatório.");
         }
 
-        if (leaderId.HasValue && leaderId.Value == selfId)
-        {
-            throw new DomainInvariantException("Um colaborador não pode ser líder de si mesmo.");
-        }
-
         FullName = personName.Value;
         Email = email.Trim();
-        Role = role;
-        LeaderId = leaderId;
-    }
-
-    public void EnsureCanLeadOrganization(Guid organizationId)
-    {
-        if (Role != EmployeeRole.Leader)
-        {
-            throw new DomainInvariantException("O colaborador selecionado deve ter o perfil de Líder.");
-        }
-
-        if (OrganizationId != organizationId)
-        {
-            throw new DomainInvariantException("O líder deve pertencer à mesma organização.");
-        }
     }
 }

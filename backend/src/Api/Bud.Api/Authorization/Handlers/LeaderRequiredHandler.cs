@@ -28,11 +28,10 @@ public sealed class LeaderRequiredHandler(
         }
 
         var employee = await dbContext.Employees
-            .IgnoreQueryFilters()
+            .Include(e => e.Memberships)
             .FirstOrDefaultAsync(e => e.Id == tenantProvider.EmployeeId.Value);
 
-        if (employee?.Role == EmployeeRole.Leader &&
-            employee.OrganizationId == tenantProvider.TenantId.Value)
+        if (employee?.HasMinimumRoleIn(tenantProvider.TenantId.Value, EmployeeRole.TeamLeader) == true)
         {
             context.Succeed(requirement);
         }

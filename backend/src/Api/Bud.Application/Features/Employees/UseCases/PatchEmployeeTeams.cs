@@ -24,13 +24,20 @@ public sealed partial class PatchEmployeeTeams(
             return Result.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
+        var membership = employee.GetMembership();
+        if (membership is null)
+        {
+            LogEmployeeTeamsPatchFailed(logger, id, "Membership not found");
+            return Result.NotFound(UserErrorMessages.EmployeeNotFound);
+        }
+
         var distinctTeamIds = command.TeamIds.Distinct().ToList();
 
         if (distinctTeamIds.Count > 0)
         {
             var validCount = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
                 distinctTeamIds,
-                employee.OrganizationId,
+                membership.OrganizationId,
                 cancellationToken);
 
             if (validCount != distinctTeamIds.Count)
@@ -48,7 +55,7 @@ public sealed partial class PatchEmployeeTeams(
             {
                 EmployeeId = id,
                 TeamId = teamId,
-                AssignedAt = DateTime.UtcNow
+                AssignedAt = DateTime.UtcNow,
             });
         }
 
@@ -60,9 +67,9 @@ public sealed partial class PatchEmployeeTeams(
     [LoggerMessage(EventId = 4049, Level = LogLevel.Information, Message = "Patching teams for employee {EmployeeId}")]
     private static partial void LogPatchingEmployeeTeams(ILogger logger, Guid employeeId);
 
-    [LoggerMessage(EventId = 4049, Level = LogLevel.Information, Message = "Employee teams patched successfully: {EmployeeId} with {Count} teams")]
+    [LoggerMessage(EventId = 4050, Level = LogLevel.Information, Message = "Employee teams patched successfully: {EmployeeId} with {Count} teams")]
     private static partial void LogEmployeeTeamsPatched(ILogger logger, Guid employeeId, int count);
 
-    [LoggerMessage(EventId = 4049, Level = LogLevel.Warning, Message = "Employee teams patch failed for {EmployeeId}: {Reason}")]
+    [LoggerMessage(EventId = 4051, Level = LogLevel.Warning, Message = "Employee teams patch failed for {EmployeeId}: {Reason}")]
     private static partial void LogEmployeeTeamsPatchFailed(ILogger logger, Guid employeeId, string reason);
 }

@@ -13,27 +13,18 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(c => c.Email)
             .HasMaxLength(320);
 
-        builder.Property(c => c.IsGlobalAdmin)
-            .HasDefaultValue(false);
+        builder.Property(c => c.Nickname)
+            .HasMaxLength(100);
 
-        builder.HasOne(c => c.Organization)
-            .WithMany()
-            .HasForeignKey(c => c.OrganizationId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(c => c.Language)
+            .HasConversion<string>()
+            .HasMaxLength(10)
+            .IsRequired();
 
-        builder.HasIndex(c => c.OrganizationId);
-
-        builder.HasOne(c => c.Team)
-            .WithMany(t => t.Employees)
-            .HasForeignKey(c => c.TeamId)
-            .OnDelete(DeleteBehavior.SetNull)
-            .IsRequired(false);
-
-        builder.HasOne(c => c.Leader)
-            .WithMany()
-            .HasForeignKey(c => c.LeaderId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
+        builder.Property(c => c.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
         builder.HasIndex(c => c.Email)
             .IsUnique();

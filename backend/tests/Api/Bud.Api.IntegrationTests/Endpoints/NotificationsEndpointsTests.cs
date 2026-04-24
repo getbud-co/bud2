@@ -29,11 +29,15 @@ public class NotificationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             Id = Guid.NewGuid(),
             FullName = "NotificationResponse User",
-            Email = $"notif-{Guid.NewGuid()}@example.com",
-            OrganizationId = org.Id,
-            Role = EmployeeRole.IndividualContributor
+            Email = $"notif-{Guid.NewGuid()}@example.com"
         };
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         var client = _factory.CreateTenantClient(org.Id, employee.Email, employee.Id);

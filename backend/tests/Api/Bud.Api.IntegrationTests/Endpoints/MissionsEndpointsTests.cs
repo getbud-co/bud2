@@ -40,30 +40,33 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         if (existingLeader != null)
         {
-            SetTenantHeader(existingLeader.OrganizationId);
+            var existingMember = await dbContext.Memberships.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
+            SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
         }
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "getbud.co" };
         dbContext.Organizations.Add(org);
 
-        var adminLeader = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Administrador",
-            Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = org.Id
-        };
+        var adminLeader = new Employee { Id = Guid.NewGuid(), FullName = "Administrador", Email = "admin@getbud.co" };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id, OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader, IsGlobalAdmin = true
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
 
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);
@@ -269,12 +272,17 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
-            Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            Email = $"colaborador-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id, OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor
+        });
+
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -441,12 +449,16 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Líder Org Teste",
-            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org!.Id,
-            TeamId = null
+            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}"
         };
         dbContext.Employees.Add(orgLeader);
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = orgLeader.Id, OrganizationId = org!.Id,
+            Role = EmployeeRole.TeamLeader
+        });
+
         await dbContext.SaveChangesAsync();
 
         var teamResponse = await _client.PostAsJsonAsync("/api/teams",
@@ -457,13 +469,23 @@ public class MissionsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Test User",
-            Email = $"test-{Guid.NewGuid():N}@example.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org!.Id,
-            TeamId = team!.Id
+            Email = $"test-{Guid.NewGuid():N}@example.com"
         };
 
         dbContext.Employees.Add(employee);
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id, OrganizationId = org!.Id,
+            Role = EmployeeRole.Contributor
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = employee.Id,
+            TeamId = team!.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
+
         await dbContext.SaveChangesAsync();
 
         // Create missions: one org-level, one employee-level

@@ -11,8 +11,8 @@ public sealed class EmployeeSearchSpecificationTests
     {
         var data = new List<Employee>
         {
-            new() { Id = Guid.NewGuid(), FullName = "Ana Silva", Email = "ana@example.com", OrganizationId = Guid.NewGuid() },
-            new() { Id = Guid.NewGuid(), FullName = "Bruno Costa", Email = "bruno@example.com", OrganizationId = Guid.NewGuid() }
+            new() { Id = Guid.NewGuid(), FullName = "Ana Silva", Email = "ana@example.com" },
+            new() { Id = Guid.NewGuid(), FullName = "Bruno Costa", Email = "bruno@example.com" }
         }.AsQueryable();
 
         var specification = new EmployeeSearchSpecification("ANA", isNpgsql: false);

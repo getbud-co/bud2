@@ -38,6 +38,9 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         if (existingLeader != null)
         {
+            var existingMember = await dbContext.Memberships.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
+            SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
         }
 
@@ -49,10 +52,7 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
-            Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = org.Id
+            Email = "admin@getbud.co"
         };
         dbContext.Employees.Add(adminLeader);
 
@@ -61,14 +61,22 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             Id = Guid.NewGuid(),
             Name = "getbud.co",
             OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
         };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
 
-        // Now update employee's team
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -92,12 +100,15 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Líder Teste",
-            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org!.Id,
-            TeamId = null
+            Email = $"leader-{Guid.NewGuid():N}@{organizationDomain}"
         };
         dbContext.Employees.Add(leader);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = leader.Id,
+            OrganizationId = org!.Id,
+            Role = EmployeeRole.TeamLeader
+        });
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org!.Id);
@@ -113,13 +124,16 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
-            Email = $"colaborador-{Guid.NewGuid():N}@example.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId,
-            TeamId = null
+            Email = $"colaborador-{Guid.NewGuid():N}@example.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -571,21 +585,20 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Employee 1",
-            Email = "collab1@example.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id
+            Email = "collab1@example.com"
         };
 
         var collab2 = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Employee 2",
-            Email = "collab2@example.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
+            Email = "collab2@example.com"
         };
 
         dbContext.Employees.AddRange(collab1, collab2);
+        dbContext.Memberships.AddRange(
+            new Membership { EmployeeId = collab1.Id, OrganizationId = org.Id, Role = EmployeeRole.Contributor },
+            new Membership { EmployeeId = collab2.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader });
         dbContext.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = collab1.Id, TeamId = team!.Id },
             new EmployeeTeam { EmployeeId = collab2.Id, TeamId = team.Id });
@@ -646,11 +659,15 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Other Employee",
-            Email = $"other-{Guid.NewGuid():N}@test-org.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id
+            Email = $"other-{Guid.NewGuid():N}@test-org.com"
         };
         dbContext.Employees.Add(otherCollab);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = otherCollab.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         // Act: update employees WITHOUT the leader
@@ -677,12 +694,15 @@ public class TeamsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             Id = Guid.NewGuid(),
             FullName = "Consistent Employee",
-            Email = $"consistent-{Guid.NewGuid():N}@test-org.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = null
+            Email = $"consistent-{Guid.NewGuid():N}@test-org.com"
         };
         dbContext.Employees.Add(otherCollab);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = otherCollab.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         var updateResponse = await _client.PatchAsJsonAsync($"/api/teams/{team!.Id}/employees",

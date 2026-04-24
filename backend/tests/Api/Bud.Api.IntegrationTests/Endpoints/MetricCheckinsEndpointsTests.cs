@@ -37,7 +37,10 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         if (existingLeader != null)
         {
-            SetTenantHeader(existingLeader.OrganizationId);
+            var existingMember = await dbContext.Memberships
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
+            SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
         }
 
@@ -49,17 +52,26 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
 
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);
@@ -120,7 +132,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         return (org, quantMetric, qualMetric, employee, tenantClient);
     }
 
-    private async Task<Employee> CreateEmployeeInOrg(Guid organizationId, EmployeeRole role = EmployeeRole.IndividualContributor)
+    private async Task<Employee> CreateEmployeeInOrg(Guid organizationId, EmployeeRole role = EmployeeRole.Contributor)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<Bud.Infrastructure.Persistence.ApplicationDbContext>();
@@ -130,11 +142,17 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
             Email = $"collab-{Guid.NewGuid():N}@test.com",
-            Role = role,
-            OrganizationId = organizationId
         };
 
         dbContext.Employees.Add(employee);
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = role,
+        });
+
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -749,7 +767,7 @@ public class MetricCheckinsEndpointsTests : IClassFixture<CustomWebApplicationFa
         SetTenantHeader(org.Id);
 
         // Create leader in the new org for team creation
-        var orgLeader = await CreateEmployeeInOrg(org.Id, EmployeeRole.Leader);
+        var orgLeader = await CreateEmployeeInOrg(org.Id, EmployeeRole.TeamLeader);
 
         var teamResponse = await _adminClient.PostAsJsonAsync("/api/teams",
             new CreateTeamRequest { Name = "Test Team", LeaderId = orgLeader.Id });

@@ -24,6 +24,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Membership> Memberships => Set<Membership>();
     public DbSet<Mission> Missions => Set<Mission>();
     public DbSet<Indicator> Indicators => Set<Indicator>();
     public DbSet<EmployeeTeam> EmployeeTeams => Set<EmployeeTeam>();
@@ -33,7 +34,10 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<TemplateIndicator> TemplateIndicators => Set<TemplateIndicator>();
     public DbSet<EmployeeAccessLog> EmployeeAccessLogs => Set<EmployeeAccessLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Cycle> Cycles => Set<Cycle>();
     public DbSet<MissionTask> MissionTasks => Set<MissionTask>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<MissionTag> MissionTags => Set<MissionTag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,9 +49,9 @@ public sealed class ApplicationDbContext : DbContext
         // Global admins see all ONLY when no tenant is selected; otherwise they see the selected tenant
         modelBuilder.Entity<Organization>()
             .HasQueryFilter(o =>
-                !_applyTenantFilter || // No tenant provider (schema creation/tests)
-                (_isGlobalAdmin && _tenantId == null) || // Global admin with no tenant selected sees all
-                (_tenantId != null && o.Id == _tenantId) // Anyone with tenant selected sees only that tenant
+                !_applyTenantFilter ||
+                (_isGlobalAdmin && _tenantId == null) ||
+                (_tenantId != null && o.Id == _tenantId)
             );
 
         modelBuilder.Entity<Team>()
@@ -57,18 +61,21 @@ public sealed class ApplicationDbContext : DbContext
                 (_tenantId != null && t.OrganizationId == _tenantId)
             );
 
-        modelBuilder.Entity<Employee>()
-            .HasQueryFilter(c =>
+        // Employee is now a global identity entity – no tenant filter applied.
+        // Tenant isolation for employees is enforced through Membership.
+
+        modelBuilder.Entity<Membership>()
+            .HasQueryFilter(m =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && c.OrganizationId == _tenantId)
+                (_tenantId != null && m.OrganizationId == _tenantId)
             );
 
         modelBuilder.Entity<EmployeeTeam>()
             .HasQueryFilter(ct =>
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
-                (_tenantId != null && ct.Employee.OrganizationId == _tenantId)
+                (_tenantId != null && ct.Employee.Memberships.Any(m => m.OrganizationId == _tenantId))
             );
 
         modelBuilder.Entity<Mission>()
@@ -132,6 +139,20 @@ public sealed class ApplicationDbContext : DbContext
                 !_applyTenantFilter ||
                 (_isGlobalAdmin && _tenantId == null) ||
                 (_tenantId != null && gt.OrganizationId == _tenantId)
+            );
+
+        modelBuilder.Entity<Cycle>()
+            .HasQueryFilter(c =>
+                !_applyTenantFilter ||
+                (_isGlobalAdmin && _tenantId == null) ||
+                (_tenantId != null && c.OrganizationId == _tenantId)
+            );
+
+        modelBuilder.Entity<Tag>()
+            .HasQueryFilter(t =>
+                !_applyTenantFilter ||
+                (_isGlobalAdmin && _tenantId == null) ||
+                (_tenantId != null && t.OrganizationId == _tenantId)
             );
     }
 }

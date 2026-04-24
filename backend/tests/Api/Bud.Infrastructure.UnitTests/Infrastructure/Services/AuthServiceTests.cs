@@ -57,11 +57,15 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "Administrador Global",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            IsGlobalAdmin = true
         };
         context.Employees.Add(adminEmployee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = adminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -114,21 +118,23 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             Name = "Test Team",
             OrganizationId = org.Id,
-            LeaderId = Guid.NewGuid()
         };
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "John Doe",
             Email = "john.doe@example.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -144,7 +150,7 @@ public class AuthServiceTests
         result.Value!.Email.Should().Be("john.doe@example.com");
         result.Value!.DisplayName.Should().Be("John Doe");
         result.Value!.EmployeeId.Should().Be(employee.Id);
-        result.Value!.Role.Should().Be(EmployeeRole.IndividualContributor);
+        result.Value!.Role.Should().Be(EmployeeRole.Contributor);
         result.Value!.OrganizationId.Should().Be(org.Id);
     }
 
@@ -155,20 +161,23 @@ public class AuthServiceTests
         using var context = CreateInMemoryContext();
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id };
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Jane Doe",
             Email = "jane.doe@example.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -257,22 +266,24 @@ public class AuthServiceTests
         {
             Id = Guid.NewGuid(),
             Name = "Test Team",
-            OrganizationId = org.Id,
-            LeaderId = Guid.NewGuid()
+            OrganizationId = org.Id
         };
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Test User",
             Email = expectedEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -300,21 +311,24 @@ public class AuthServiceTests
         var globalAdminEmail = "admin@getbud.co";
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Admin Org" };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id };
         var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Admin Employee",
             Email = globalAdminEmail,
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            TeamId = team.Id,
-            IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(adminEmployee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = adminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -340,21 +354,24 @@ public class AuthServiceTests
         var globalAdminEmail = "admin@getbud.co";
 
         var org = new Organization { Id = Guid.NewGuid(), Name = "Admin Org" };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Admin Team", OrganizationId = org.Id };
         var adminEmployee = new Employee
         {
             Id = Guid.NewGuid(),
             FullName = "Admin Employee",
             Email = globalAdminEmail,
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            TeamId = team.Id,
-            IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.Add(adminEmployee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = adminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -386,13 +403,17 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "Custom Admin",
             Email = "custom.admin@anycompany.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            IsGlobalAdmin = true
         };
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -420,13 +441,17 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "Not Actually Admin",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id,
-            IsGlobalAdmin = false
         };
 
         context.Organizations.Add(org);
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = false
+        });
         await context.SaveChangesAsync();
 
         var service = CreateService(context);
@@ -460,11 +485,15 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "Global Admin",
             Email = "globaladmin@anycompany.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org1.Id,
-            IsGlobalAdmin = true
         };
         context.Employees.Add(adminEmployee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = adminEmployee.Id,
+            OrganizationId = org1.Id,
+            Role = EmployeeRole.TeamLeader,
+            IsGlobalAdmin = true
+        });
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);
@@ -490,7 +519,7 @@ public class AuthServiceTests
         var org2 = new Organization { Id = Guid.NewGuid(), Name = "Other Org" };
         context.Organizations.AddRange(org1, org2);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org1.Id, LeaderId = Guid.NewGuid() };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org1.Id};
         context.Teams.Add(team);
 
         var employee = new Employee
@@ -498,11 +527,14 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "User",
             Email = userEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org1.Id,
-            TeamId = team.Id
         };
         context.Employees.Add(employee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = org1.Id,
+            Role = EmployeeRole.Contributor,
+        });
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);
@@ -528,7 +560,7 @@ public class AuthServiceTests
         var org = new Organization { Id = Guid.NewGuid(), Name = "Owned Org" };
         context.Organizations.Add(org);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Team", OrganizationId = org.Id };
         context.Teams.Add(team);
 
         var ownerEmployee = new Employee
@@ -536,11 +568,14 @@ public class AuthServiceTests
             Id = Guid.NewGuid(),
             FullName = "Employee",
             Email = ownerEmail,
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         context.Employees.Add(ownerEmployee);
+        context.Memberships.Add(new Membership
+        {
+            EmployeeId = ownerEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
         await context.SaveChangesAsync();
 
         var service = CreateReadStore(context);

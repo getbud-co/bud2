@@ -16,9 +16,9 @@ public sealed class GetEmployeeHierarchy(
 
         var subordinates = await employeeRepository.GetSubordinatesAsync(employeeId, 5, cancellationToken);
         var childrenByLeader = subordinates
-            .Where(c => c.LeaderId.HasValue)
-            .GroupBy(c => c.LeaderId!.Value)
-            .ToDictionary(group => group.Key, group => group.OrderBy(c => c.FullName).ToList());
+            .Where(e => e.GetMembership()?.LeaderId.HasValue == true)
+            .GroupBy(e => e.GetMembership()!.LeaderId!.Value)
+            .ToDictionary(group => group.Key, group => group.OrderBy(e => e.FullName).ToList());
 
         var tree = BuildTree(employeeId, childrenByLeader, 0, 5);
         return Result<List<EmployeeSubordinateResponse>>.Success(tree);
@@ -41,8 +41,8 @@ public sealed class GetEmployeeHierarchy(
                 Id = employee.Id,
                 FullName = employee.FullName,
                 Initials = GetInitials(employee.FullName),
-                Role = employee.Role == EmployeeRole.Leader ? "Líder" : "Contribuidor individual",
-                Children = BuildTree(employee.Id, childrenByLeader, depth + 1, maxDepth)
+                Role = employee.GetMembership()?.Role == EmployeeRole.TeamLeader ? "Líder" : "Contribuidor individual",
+                Children = BuildTree(employee.Id, childrenByLeader, depth + 1, maxDepth),
             })
             .ToList();
     }

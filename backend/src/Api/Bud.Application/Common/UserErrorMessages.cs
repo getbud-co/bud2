@@ -27,7 +27,6 @@ internal static class UserErrorMessages
     public const string EmployeeEmailAlreadyInUse = "O email já está em uso.";
     public const string EmployeeTeamsInvalid = "Uma ou mais equipes são inválidas ou pertencem a outra organização.";
     public const string OrganizationNotFound = "Organização não encontrada.";
-    public const string OrganizationNameConflict = "Já existe uma organização cadastrada com este domínio.";
     public const string LeaderNotFound = "Líder não encontrado.";
     public const string LeaderMustHaveRole = "O funcionário selecionado deve ter o perfil de Líder.";
     public const string LeaderMustBelongSameOrganization = "O líder deve pertencer à mesma organização.";
@@ -39,4 +38,19 @@ internal static class UserErrorMessages
     public const string MissionProgressCalculationFailed = "Falha ao calcular progresso das metas.";
     public const string ListOrganizationsFailed = "Falha ao carregar organizações.";
     public const string TaskNotFound = "Tarefa não encontrada.";
+    public const string TaskCreateForbidden = "Você não tem permissão para criar tarefas nesta meta.";
+    public const string TaskUpdateForbidden = "Você não tem permissão para atualizar esta tarefa.";
+    public const string TaskDeleteForbidden = "Você não tem permissão para excluir esta tarefa.";
+    public const string CycleNotFound = "Ciclo não encontrado.";
+    public const string CycleCreateForbidden = "Você não tem permissão para criar ciclos nesta organização.";
+    public const string CycleUpdateForbidden = "Você não tem permissão para atualizar ciclos nesta organização.";
+    public const string CycleDeleteForbidden = "Você não tem permissão para excluir ciclos nesta organização.";
+    public const string CycleListForbidden = "Você não tem permissão para listar ciclos nesta organização.";
+    public const string TagNotFound = "Tag não encontrada.";
+    public const string TagNameConflict = "Já existe uma tag com este nome na organização.";
+    public const string TagCreateForbidden = "Apenas HRManager ou superior pode criar tags.";
+    public const string TagUpdateForbidden = "Apenas HRManager ou superior pode atualizar tags.";
+    public const string TagDeleteForbidden = "Apenas HRManager ou superior pode excluir tags.";
+    public const string TagAssignForbidden = "Você não tem permissão para atribuir tags a esta meta.";
+    public const string TagAssignForbiddenContributor = "Colaboradores só podem atribuir ou remover tags de metas pelas quais são responsáveis.";
 }

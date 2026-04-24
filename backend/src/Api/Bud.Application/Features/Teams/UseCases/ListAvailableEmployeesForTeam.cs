@@ -16,7 +16,7 @@ public sealed class ListAvailableEmployeesForTeam(
             return Result<List<TeamEmployeeEligibleResponse>>.NotFound(UserErrorMessages.TeamNotFound);
         }
 
-        var summaries = await teamRepository.GetEligibleEmployeesForAssignmentAsync(teamId, team.OrganizationId, search, 50, cancellationToken);
+        var summaries = await teamRepository.GetEligibleEmployeesForAssignmentAsync(teamId, search, 50, cancellationToken);
         return Result<List<TeamEmployeeEligibleResponse>>.Success(summaries.Select(c => c.ToTeamEmployeeEligibleResponse()).ToList());
     }
 }

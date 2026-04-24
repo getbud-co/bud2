@@ -88,7 +88,7 @@ public sealed partial class PatchMission(
                         return Result<Mission>.NotFound(UserErrorMessages.EmployeeNotFound);
                     }
 
-                    if (employee.OrganizationId != mission.OrganizationId)
+                    if (!employee.Memberships.Any(m => m.OrganizationId == mission.OrganizationId))
                     {
                         LogMissionPatchFailed(logger, id, "Employee belongs to different organization");
                         return Result<Mission>.Forbidden(UserErrorMessages.MissionUpdateForbidden);

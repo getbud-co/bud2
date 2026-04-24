@@ -95,7 +95,10 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         if (existingLeader != null)
         {
-            SetTenantHeader(existingLeader.OrganizationId);
+            var existingMember = await dbContext.Memberships
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m => m.EmployeeId == existingLeader.Id);
+            SetTenantHeader(existingMember!.OrganizationId);
             return existingLeader.Id;
         }
 
@@ -107,8 +110,6 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(adminLeader);
 
@@ -116,14 +117,24 @@ public sealed class TasksEndpointsTests : IClassFixture<CustomWebApplicationFact
         {
             Id = Guid.NewGuid(),
             Name = "getbud.co",
-            OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
+            OrganizationId = org.Id
         };
         dbContext.Teams.Add(team);
 
         await dbContext.SaveChangesAsync();
 
-        adminLeader.TeamId = team.Id;
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
         await dbContext.SaveChangesAsync();
 
         SetTenantHeader(org.Id);

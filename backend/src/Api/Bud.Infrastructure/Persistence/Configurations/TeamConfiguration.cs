@@ -10,23 +10,27 @@ public sealed class TeamConfiguration : IEntityTypeConfiguration<Team>
         builder.Property(t => t.Name)
             .HasMaxLength(200);
 
+        builder.Property(t => t.Description)
+            .HasMaxLength(500);
+
+        builder.Property(t => t.Color)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(t => t.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         builder.HasOne(t => t.Organization)
             .WithMany()
             .HasForeignKey(t => t.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(t => t.OrganizationId);
-
-        builder.HasOne(t => t.Leader)
-            .WithMany()
-            .HasForeignKey(t => t.LeaderId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasIndex(t => t.LeaderId);
         builder.HasIndex(t => t.ParentTeamId);
 
-        builder.HasMany(t => t.SubTeams)
-            .WithOne(t => t.ParentTeam)
+        builder.HasOne(t => t.ParentTeam)
+            .WithMany()
             .HasForeignKey(t => t.ParentTeamId)
             .OnDelete(DeleteBehavior.Restrict);
     }

@@ -5,6 +5,9 @@ namespace Bud.Application.Features.Teams.UseCases;
 
 public sealed record PatchTeamCommand(
     Optional<string> Name,
+    Optional<string?> Description,
+    Optional<TeamColor> Color,
+    Optional<TeamStatus> Status,
     Optional<Guid> LeaderId,
     Optional<Guid?> ParentTeamId);
 
@@ -29,7 +32,6 @@ public sealed partial class PatchTeam(
         }
 
         var requestedParentTeamId = command.ParentTeamId.HasValue ? command.ParentTeamId.Value : team.ParentTeamId;
-        var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : team.LeaderId;
         var requestedName = command.Name.HasValue ? (command.Name.Value ?? team.Name) : team.Name;
 
         if (command.ParentTeamId.HasValue && requestedParentTeamId != team.ParentTeamId)
@@ -40,47 +42,60 @@ public sealed partial class PatchTeam(
                 return Result<Team>.Failure(UserErrorMessages.TeamSelfParentForbidden);
             }
 
-            var parentTeam = requestedParentTeamId.HasValue
-                ? await teamRepository.GetByIdAsync(requestedParentTeamId.Value, cancellationToken)
-                : null;
-            if (parentTeam is null)
+            if (requestedParentTeamId.HasValue)
             {
-                LogTeamPatchFailed(logger, id, "Parent team not found");
-                return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
-            }
+                var parentTeam = await teamRepository.GetByIdAsync(requestedParentTeamId.Value, cancellationToken);
+                if (parentTeam is null)
+                {
+                    LogTeamPatchFailed(logger, id, "Parent team not found");
+                    return Result<Team>.NotFound(UserErrorMessages.ParentTeamNotFound);
+                }
 
-            if (parentTeam.OrganizationId != team.OrganizationId)
-            {
-                LogTeamPatchFailed(logger, id, "Parent team belongs to different organization");
-                return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameOrganization);
+                if (parentTeam.OrganizationId != team.OrganizationId)
+                {
+                    LogTeamPatchFailed(logger, id, "Parent team belongs to different organization");
+                    return Result<Team>.Failure(UserErrorMessages.TeamParentMustBeSameOrganization);
+                }
             }
         }
 
-        var leaderValidation = await EmployeeLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
-            employeeRepository,
-            requestedLeaderId,
-            team.OrganizationId,
-            cancellationToken);
-        if (leaderValidation is not null)
+        if (command.LeaderId.HasValue)
         {
-            LogTeamPatchFailed(logger, id, "Leader validation failed");
-            return leaderValidation;
+            var leaderValidation = await EmployeeLeadershipPolicy.ValidateLeaderForOrganizationAsync<Team>(
+                employeeRepository,
+                command.LeaderId.Value,
+                team.OrganizationId,
+                cancellationToken);
+            if (leaderValidation is not null)
+            {
+                LogTeamPatchFailed(logger, id, "Leader validation failed");
+                return leaderValidation;
+            }
         }
 
         try
         {
             team.Rename(requestedName);
-            team.AssignLeader(requestedLeaderId);
             team.Reparent(requestedParentTeamId, team.Id);
 
-            if (!team.EmployeeTeams.Any(ct => ct.EmployeeId == requestedLeaderId))
+            if (command.Description.HasValue)
             {
-                team.EmployeeTeams.Add(new EmployeeTeam
-                {
-                    EmployeeId = requestedLeaderId,
-                    TeamId = team.Id,
-                    AssignedAt = DateTime.UtcNow
-                });
+                team.Describe(command.Description.Value);
+            }
+
+            if (command.Color.HasValue)
+            {
+                team.SetColor(command.Color.Value);
+            }
+
+            if (command.Status.HasValue)
+            {
+                team.SetStatus(command.Status.Value);
+            }
+
+            if (command.LeaderId.HasValue)
+            {
+                team.AssignLeader(command.LeaderId.Value);
             }
 
             await unitOfWork.CommitAsync(teamRepository.SaveChangesAsync, cancellationToken);

@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using Bud.Application.Common;
-using Bud.Application.Ports;
 using Bud.Shared.Contracts;
 
 namespace Bud.Application.Features.Employees.UseCases;
@@ -16,7 +14,6 @@ public sealed class ListEmployees(IEmployeeRepository employeeRepository)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
         var result = await employeeRepository.GetAllAsync(teamId, search, page, pageSize, cancellationToken);
-        return Result<PagedResult<Employee>>.Success(result.MapPaged(x => x));
+        return Result<PagedResult<Employee>>.Success(result);
     }
 }
-

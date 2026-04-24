@@ -22,34 +22,18 @@ public class NotificationRecipientResolverTests
     private static async Task<(Organization org, Team team, Employee c1, Employee c2, Employee leader)> CreateTestHierarchy(ApplicationDbContext context)
     {
         var org = new Organization { Id = Guid.NewGuid(), Name = "Test Org" };
-        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id, LeaderId = Guid.NewGuid() };
-        var leader = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Leader",
-            Email = $"leader-{Guid.NewGuid()}@example.com",
-            OrganizationId = org.Id,
-            Role = EmployeeRole.Leader
-        };
-        var c1 = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Collab 1",
-            Email = $"c1-{Guid.NewGuid()}@example.com",
-            OrganizationId = org.Id,
-            LeaderId = leader.Id
-        };
-        var c2 = new Employee
-        {
-            Id = Guid.NewGuid(),
-            FullName = "Collab 2",
-            Email = $"c2-{Guid.NewGuid()}@example.com",
-            OrganizationId = org.Id
-        };
+        var team = new Team { Id = Guid.NewGuid(), Name = "Test Team", OrganizationId = org.Id };
+        var leader = new Employee { Id = Guid.NewGuid(), FullName = "Leader", Email = $"leader-{Guid.NewGuid()}@example.com" };
+        var c1 = new Employee { Id = Guid.NewGuid(), FullName = "Collab 1", Email = $"c1-{Guid.NewGuid()}@example.com" };
+        var c2 = new Employee { Id = Guid.NewGuid(), FullName = "Collab 2", Email = $"c2-{Guid.NewGuid()}@example.com" };
 
         context.Organizations.Add(org);
         context.Teams.Add(team);
         context.Employees.AddRange(leader, c1, c2);
+        context.Memberships.AddRange(
+            new Membership { EmployeeId = leader.Id, OrganizationId = org.Id, Role = EmployeeRole.TeamLeader },
+            new Membership { EmployeeId = c1.Id, OrganizationId = org.Id, LeaderId = leader.Id },
+            new Membership { EmployeeId = c2.Id, OrganizationId = org.Id });
         context.EmployeeTeams.AddRange(
             new EmployeeTeam { EmployeeId = c1.Id, TeamId = team.Id },
             new EmployeeTeam { EmployeeId = c2.Id, TeamId = team.Id }

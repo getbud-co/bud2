@@ -15,39 +15,48 @@ public static class DbSeeder
 
         if (budOrg is null)
         {
-            budOrg = new Organization
-            {
-                Id = Guid.NewGuid(),
-                Name = DefaultOrganizationName
-            };
+            budOrg = Organization.Create(
+                Guid.NewGuid(),
+                DefaultOrganizationName,
+                cnpj: "00.000.000/0001-00",
+                OrganizationPlan.Free,
+                OrganizationContractStatus.ToApproval);
             context.Organizations.Add(budOrg);
             await context.SaveChangesAsync();
         }
 
-        var adminLeader = await context.Employees
+        var adminMember = await context.Memberships
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c =>
-                c.OrganizationId == budOrg.Id &&
-                c.Email == DefaultAdminEmail);
+            .Include(m => m.Employee)
+            .FirstOrDefaultAsync(m =>
+                m.OrganizationId == budOrg.Id &&
+                m.Employee.Email == DefaultAdminEmail);
 
-        if (adminLeader is null)
+        if (adminMember is null)
         {
-            adminLeader = new Employee
+            var adminId = Guid.NewGuid();
+            var adminEmployee = new Employee
             {
-                Id = Guid.NewGuid(),
+                Id = adminId,
                 FullName = "Administrador Global",
                 Email = DefaultAdminEmail,
-                Role = EmployeeRole.Leader,
-                OrganizationId = budOrg.Id,
-                IsGlobalAdmin = true
             };
-            context.Employees.Add(adminLeader);
+            adminMember = new Membership
+            {
+                EmployeeId = adminId,
+                OrganizationId = budOrg.Id,
+                Role = EmployeeRole.TeamLeader,
+                IsGlobalAdmin = true,
+                Employee = adminEmployee,
+            };
+            context.Employees.Add(adminEmployee);
+            context.Memberships.Add(adminMember);
             await context.SaveChangesAsync();
         }
 
-        if (!adminLeader.IsGlobalAdmin)
+        if (!adminMember.IsGlobalAdmin)
         {
-            adminLeader.IsGlobalAdmin = true;
+            adminMember.IsGlobalAdmin = true;
             await context.SaveChangesAsync();
         }
 

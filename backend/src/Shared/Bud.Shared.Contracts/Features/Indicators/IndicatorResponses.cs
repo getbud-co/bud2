@@ -28,7 +28,7 @@ public sealed class CheckinResponse
     public DateTime CheckinDate { get; set; }
     public string? Note { get; set; }
     public int ConfidenceLevel { get; set; }
-    public EmployeeResponse? Employee { get; set; }
+    public EmployeeMembershipResponse? Employee { get; set; }
 }
 
 public sealed class IndicatorProgressResponse

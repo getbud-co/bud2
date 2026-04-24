@@ -44,7 +44,7 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             var existingTeam = await dbContext.Teams.IgnoreQueryFilters().FirstOrDefaultAsync();
             if (existingTeam == null)
             {
-                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id, LeaderId = existingLeader.Id };
+                existingTeam = new Team { Id = Guid.NewGuid(), Name = "Bud", OrganizationId = existingOrg.Id };
                 dbContext.Teams.Add(existingTeam);
             }
 
@@ -65,9 +65,6 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Administrador",
             Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            TeamId = null,
-            OrganizationId = org.Id
         };
         dbContext.Employees.Add(adminLeader);
         await dbContext.SaveChangesAsync();
@@ -76,14 +73,23 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
         {
             Id = Guid.NewGuid(),
             Name = "Bud",
-            OrganizationId = org.Id,
-            LeaderId = adminLeader.Id
+            OrganizationId = org.Id
         };
         dbContext.Teams.Add(team);
         await dbContext.SaveChangesAsync();
 
-        // Update employee's team
-        adminLeader.TeamId = team.Id;
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -124,25 +130,6 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task Create_WithDuplicateDomain_ReturnsConflict()
-    {
-        var request = new CreateOrganizationRequest
-        {
-            Name = $"duplicate-{Guid.NewGuid():N}.com"
-        };
-
-        var firstResponse = await _client.PostAsJsonAsync("/api/organizations", request);
-        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        var secondResponse = await _client.PostAsJsonAsync("/api/organizations", request);
-
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await secondResponse.Content.ReadFromJsonAsync<ProblemDetails>();
-        problem.Should().NotBeNull();
-        problem!.Detail.Should().Be("Já existe uma organização cadastrada com este domínio.");
     }
 
     [Fact]
@@ -342,11 +329,22 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-create-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
@@ -384,11 +382,22 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-update-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(
@@ -423,11 +432,22 @@ public class OrganizationsEndpointsTests : IClassFixture<CustomWebApplicationFac
             Id = Guid.NewGuid(),
             FullName = "Usuário Regular",
             Email = $"user-delete-{Guid.NewGuid()}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = org.Id,
-            TeamId = team.Id
         };
         dbContext.Employees.Add(nonAdminEmployee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.Contributor,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = nonAdminEmployee.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
         await dbContext.SaveChangesAsync();
 
         var nonAdminClient = _factory.CreateTenantClient(

@@ -35,7 +35,7 @@ public static class IndicatorContractMapper
             CheckinDate = source.CheckinDate,
             Note = source.Note,
             ConfidenceLevel = source.ConfidenceLevel,
-            Employee = source.Employee?.ToEmployeeResponse()
+            Employee = source.Employee?.ToEmployeeMembershipResponse()
         };
     }
 }

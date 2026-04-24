@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Teams.UseCases;
 
-public sealed record CreateTeamCommand(string Name, Guid LeaderId, Guid? ParentTeamId);
+public sealed record CreateTeamCommand(string Name, string? Description, TeamColor Color, Guid LeaderId, Guid? ParentTeamId);
 
 public sealed partial class CreateTeam(
     ITeamRepository teamRepository,
@@ -61,12 +61,15 @@ public sealed partial class CreateTeam(
                 organizationId,
                 command.Name,
                 command.LeaderId,
-                command.ParentTeamId);
+                command.ParentTeamId,
+                command.Description,
+                command.Color);
 
             team.EmployeeTeams.Add(new EmployeeTeam
             {
                 EmployeeId = command.LeaderId,
                 TeamId = team.Id,
+                Role = TeamRole.Leader,
                 AssignedAt = DateTime.UtcNow
             });
 

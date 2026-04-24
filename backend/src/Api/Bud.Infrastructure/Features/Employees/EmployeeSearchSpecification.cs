@@ -11,9 +11,9 @@ public sealed class EmployeeSearchSpecification(string? search, bool isNpgsql) :
             query,
             search,
             isNpgsql,
-            (q, pattern) => q.Where(c => EF.Functions.ILike(c.FullName, pattern) || EF.Functions.ILike(c.Email, pattern)),
-            (q, term) => q.Where(c =>
-                c.FullName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                c.Email.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            (q, pattern) => q.Where(m => EF.Functions.ILike(m.FullName, pattern) || EF.Functions.ILike(m.Email, pattern)),
+            (q, term) => q.Where(m =>
+                m.FullName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                m.Email.Contains(term, StringComparison.OrdinalIgnoreCase)));
     }
 }

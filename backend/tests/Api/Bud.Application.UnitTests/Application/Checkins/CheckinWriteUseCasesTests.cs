@@ -146,7 +146,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -204,7 +204,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.IsGlobalAdmin).Returns(false);
@@ -390,7 +390,7 @@ public sealed class CheckinWriteUseCasesTests
         var employeeRepository = new Mock<IEmployeeRepository>();
         employeeRepository
             .Setup(r => r.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com", OrganizationId = orgId });
+            .ReturnsAsync(new Employee { Id = employeeId, FullName = "Test", Email = "test@test.com" });
 
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.SetupGet(t => t.EmployeeId).Returns(employeeId);

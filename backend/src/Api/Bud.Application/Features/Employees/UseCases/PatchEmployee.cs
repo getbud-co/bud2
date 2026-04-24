@@ -6,8 +6,11 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record PatchEmployeeCommand(
     Optional<string> FullName,
     Optional<string> Email,
+    Optional<string?> Nickname,
+    Optional<EmployeeLanguage> Language,
     Optional<EmployeeRole> Role,
-    Optional<Guid?> LeaderId);
+    Optional<Guid?> LeaderId,
+    Optional<EmployeeStatus> Status);
 
 public sealed partial class PatchEmployee(
     IEmployeeRepository employeeRepository,
@@ -28,10 +31,20 @@ public sealed partial class PatchEmployee(
             return Result<Employee>.NotFound(UserErrorMessages.EmployeeNotFound);
         }
 
+        var membership = employee.GetMembership();
+        if (membership is null)
+        {
+            LogEmployeePatchFailed(logger, id, "Membership not found");
+            return Result<Employee>.NotFound(UserErrorMessages.EmployeeNotFound);
+        }
+
         var requestedEmail = command.Email.HasValue ? command.Email.Value : employee.Email;
         var requestedFullName = command.FullName.HasValue ? command.FullName.Value : employee.FullName;
-        var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : employee.LeaderId;
-        var requestedRole = command.Role.HasValue ? command.Role.Value : employee.Role;
+        var requestedNickname = command.Nickname.HasValue ? command.Nickname.Value : employee.Nickname;
+        var requestedLanguage = command.Language.HasValue ? command.Language.Value : employee.Language;
+        var requestedLeaderId = command.LeaderId.HasValue ? command.LeaderId.Value : membership.LeaderId;
+        var requestedRole = command.Role.HasValue ? command.Role.Value : membership.Role;
+        var requestedStatus = command.Status.HasValue ? command.Status.Value : employee.Status;
 
         if (!EmailAddress.TryCreate(requestedEmail, out var emailAddress))
         {
@@ -56,8 +69,15 @@ public sealed partial class PatchEmployee(
 
         if (command.LeaderId.HasValue && requestedLeaderId.HasValue)
         {
-            var leader = await employeeRepository.GetByIdAsync(requestedLeaderId.Value, cancellationToken);
-            if (leader is null)
+            var leaderEmployee = await employeeRepository.GetByIdAsync(requestedLeaderId.Value, cancellationToken);
+            if (leaderEmployee is null)
+            {
+                LogEmployeePatchFailed(logger, id, "Leader not found");
+                return Result<Employee>.NotFound(UserErrorMessages.LeaderNotFound);
+            }
+
+            var leaderMembership = leaderEmployee.GetMembership();
+            if (leaderMembership is null)
             {
                 LogEmployeePatchFailed(logger, id, "Leader not found");
                 return Result<Employee>.NotFound(UserErrorMessages.LeaderNotFound);
@@ -65,7 +85,7 @@ public sealed partial class PatchEmployee(
 
             try
             {
-                leader.EnsureCanLeadOrganization(employee.OrganizationId);
+                leaderMembership.EnsureCanLeadOrganization(membership.OrganizationId);
             }
             catch (DomainInvariantException ex)
             {
@@ -74,8 +94,8 @@ public sealed partial class PatchEmployee(
             }
         }
 
-        if (employee.Role == EmployeeRole.Leader &&
-            requestedRole == EmployeeRole.IndividualContributor)
+        if (membership.Role == EmployeeRole.TeamLeader &&
+            requestedRole == EmployeeRole.Contributor)
         {
             if (await employeeRepository.HasSubordinatesAsync(id, cancellationToken))
             {
@@ -88,12 +108,11 @@ public sealed partial class PatchEmployee(
 
         try
         {
-            employee.UpdateProfile(
-                personName.Value,
-                emailAddress.Value,
-                requestedRole,
-                requestedLeaderId,
-                employee.Id);
+            employee.UpdateIdentity(personName.Value, emailAddress.Value);
+            employee.Nickname = requestedNickname;
+            employee.Language = requestedLanguage;
+            employee.Status = requestedStatus;
+            membership.UpdateProfile(requestedRole, requestedLeaderId, employee.Id);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
             LogEmployeePatched(logger, id, employee.FullName);

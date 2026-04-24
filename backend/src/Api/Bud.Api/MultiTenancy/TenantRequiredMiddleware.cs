@@ -5,7 +5,7 @@ namespace Bud.Api.MultiTenancy;
 
 public sealed class TenantRequiredMiddleware(RequestDelegate next)
 {
-    private static readonly HashSet<string> ExcludedPaths = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _excludedPaths = new(StringComparer.OrdinalIgnoreCase)
     {
         "/api/sessions",
         "/api/sessions/current",
@@ -21,7 +21,7 @@ public sealed class TenantRequiredMiddleware(RequestDelegate next)
 
         // Allow excluded auth paths
         if (!path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) ||
-            ExcludedPaths.Contains(path))
+            _excludedPaths.Contains(path))
         {
             await next(context);
             return;

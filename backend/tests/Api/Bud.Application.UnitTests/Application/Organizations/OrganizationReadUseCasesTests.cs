@@ -69,20 +69,4 @@ public sealed class OrganizationReadUseCasesTests
         _orgRepo.Verify(r => r.GetAllAsync("bud", 1, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task GetEmployeesAsync_WithNonExistingOrganization_ReturnsNotFound()
-    {
-        // Arrange
-        _orgRepo.Setup(r => r.ExistsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
-
-        var useCase = new ListOrganizationEmployees(_orgRepo.Object);
-
-        // Act
-        var result = await useCase.ExecuteAsync(Guid.NewGuid(), 1, 10);
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.Should().Be("Organização não encontrada.");
-    }
 }

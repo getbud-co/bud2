@@ -1,3 +1,6 @@
+global using Bud.Domain.Cycles;
+global using Bud.Domain.Tags;
+global using Bud.Domain.Cycles.Events;
 global using Bud.Domain.Missions;
 global using Bud.Domain.Missions.Events;
 global using Bud.Domain.Tasks;

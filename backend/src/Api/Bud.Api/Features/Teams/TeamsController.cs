@@ -20,6 +20,8 @@ public sealed class TeamsController(
     GetTeamEmployeeLookup listTeamEmployeeOptions,
     PatchTeamEmployees patchTeamEmployees,
     ListAvailableEmployeesForTeam listAvailableEmployeesForTeam,
+    BulkArchiveTeams bulkArchiveTeams,
+    BulkDeleteTeams bulkDeleteTeams,
     IValidator<CreateTeamRequest> createValidator,
     IValidator<PatchTeamRequest> updateValidator) : ApiControllerBase
 {
@@ -34,7 +36,6 @@ public sealed class TeamsController(
     [Consumes("application/json")]
     [ProducesResponseType(typeof(TeamResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TeamResponse>> Create(CreateTeamRequest request, CancellationToken cancellationToken)
     {
@@ -46,6 +47,8 @@ public sealed class TeamsController(
 
         var command = new CreateTeamCommand(
             request.Name,
+            request.Description,
+            request.Color,
             request.LeaderId,
             request.ParentTeamId);
 
@@ -78,6 +81,9 @@ public sealed class TeamsController(
 
         var command = new PatchTeamCommand(
             request.Name,
+            request.Description,
+            request.Color,
+            request.Status,
             request.LeaderId,
             request.ParentTeamId);
 
@@ -187,10 +193,10 @@ public sealed class TeamsController(
     /// <response code="400">Parâmetros inválidos.</response>
     /// <response code="404">Time não encontrado.</response>
     [HttpGet("{id:guid}/employees")]
-    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<EmployeeMembershipResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetEmployees(
+    public async Task<ActionResult<PagedResult<EmployeeMembershipResponse>>> GetEmployees(
         Guid id,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -203,7 +209,7 @@ public sealed class TeamsController(
         }
 
         var result = await listTeamEmployees.ExecuteAsync(id, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
+        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeMembershipResponse()));
     }
 
     /// <summary>
@@ -260,6 +266,40 @@ public sealed class TeamsController(
     {
         var command = new PatchTeamEmployeesCommand(request.EmployeeIds);
         var result = await patchTeamEmployees.ExecuteAsync(id, command, cancellationToken);
+        return FromResult(result, NoContent);
+    }
+
+    /// <summary>
+    /// Arquiva múltiplos times.
+    /// </summary>
+    /// <response code="204">Times arquivados com sucesso.</response>
+    /// <response code="400">Payload inválido.</response>
+    /// <response code="403">Sem permissão para arquivar times.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
+    [HttpPost("bulk-archive")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> BulkArchive([FromBody] List<Guid> ids, CancellationToken cancellationToken)
+    {
+        var result = await bulkArchiveTeams.ExecuteAsync(new BulkArchiveTeamsCommand(ids), cancellationToken);
+        return FromResult(result, NoContent);
+    }
+
+    /// <summary>
+    /// Exclui múltiplos times.
+    /// </summary>
+    /// <response code="204">Times excluídos com sucesso.</response>
+    /// <response code="403">Sem permissão para excluir times.</response>
+    [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
+    [HttpPost("bulk-delete")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids, CancellationToken cancellationToken)
+    {
+        var result = await bulkDeleteTeams.ExecuteAsync(new BulkDeleteTeamsCommand(ids), cancellationToken);
         return FromResult(result, NoContent);
     }
 }

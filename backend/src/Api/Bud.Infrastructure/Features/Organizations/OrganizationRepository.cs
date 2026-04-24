@@ -35,49 +35,11 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         };
     }
 
-    public async Task<PagedResult<Employee>> GetEmployeesAsync(
-        Guid organizationId, int page, int pageSize, CancellationToken ct = default)
-    {
-        var query = dbContext.Employees
-            .AsNoTracking()
-            .Where(c => c.OrganizationId == organizationId);
-
-        var total = await query.CountAsync(ct);
-        var items = await query
-            .Include(c => c.Team)
-            .OrderBy(c => c.FullName)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
-        return new PagedResult<Employee>
-        {
-            Items = items,
-            Total = total,
-            Page = page,
-            PageSize = pageSize
-        };
-    }
-
-    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null, CancellationToken ct = default)
-    {
-        var normalizedName = name.Trim();
-
-        var organizations = await dbContext.Organizations
-            .IgnoreQueryFilters()
-            .Select(o => new { o.Id, o.Name })
-            .ToListAsync(ct);
-
-        return organizations.Any(organization =>
-            (!excludeId.HasValue || organization.Id != excludeId.Value) &&
-            string.Equals(organization.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
-    }
-
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 
     public async Task<bool> HasEmployeesAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Employees.AnyAsync(c => c.OrganizationId == organizationId, ct);
+        => await dbContext.Memberships.AnyAsync(m => m.OrganizationId == organizationId, ct);
 
     public async Task AddAsync(Organization entity, CancellationToken ct = default)
         => await dbContext.Organizations.AddAsync(entity, ct);

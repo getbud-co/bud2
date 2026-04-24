@@ -13,12 +13,29 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
     {
         var employee = await dbContext.Employees
             .AsNoTracking()
-            .Include(c => c.Leader)
-            .FirstOrDefaultAsync(c => c.Id == employeeId, ct);
+            .Include(e => e.Memberships)
+            .FirstOrDefaultAsync(e => e.Id == employeeId, ct);
 
         if (employee is null)
         {
             return null;
+        }
+
+        var membership = employee.GetMembership();
+        if (membership is null)
+        {
+            return null;
+        }
+
+        // Load leader employee if LeaderId is set
+        Employee? leaderEmployee = null;
+        if (membership.LeaderId.HasValue)
+        {
+            leaderEmployee = await dbContext.Employees
+                .AsNoTracking()
+                .Include(e => e.Memberships)
+                .Include(e => e.EmployeeTeams).ThenInclude(et => et.Team)
+                .FirstOrDefaultAsync(e => e.Id == membership.LeaderId.Value, ct);
         }
 
         Employee? leaderSource;
@@ -29,22 +46,29 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         {
             var team = await dbContext.Teams
                 .AsNoTracking()
-                .Include(t => t.Leader)
+                .Include(t => t.EmployeeTeams)
                 .FirstOrDefaultAsync(t => t.Id == teamId.Value, ct);
 
-            leaderSource = team?.Leader;
+            leaderSource = team?.LeaderId is not null
+                ? await dbContext.Employees
+                    .AsNoTracking()
+                    .Include(e => e.Memberships)
+                    .Include(e => e.EmployeeTeams).ThenInclude(et => et.Team)
+                    .FirstOrDefaultAsync(e => e.Id == team.LeaderId.Value, ct)
+                : null;
             teamNameOverride = team?.Name;
 
             var memberIds = await dbContext.EmployeeTeams
                 .AsNoTracking()
-                .Where(cteam => cteam.TeamId == teamId.Value)
-                .Select(cteam => cteam.EmployeeId)
+                .Where(et => et.TeamId == teamId.Value)
+                .Select(et => et.EmployeeId)
                 .ToListAsync(ct);
 
             teamMembers = memberIds.Count > 0
                 ? await dbContext.Employees
                     .AsNoTracking()
-                    .Where(c => memberIds.Contains(c.Id))
+                    .Include(e => e.Memberships)
+                    .Where(e => memberIds.Contains(e.Id))
                     .ToListAsync(ct)
                 : [];
         }
@@ -52,8 +76,8 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         {
             var teamIds = await dbContext.EmployeeTeams
                 .AsNoTracking()
-                .Where(cteam => cteam.EmployeeId == employee.Id)
-                .Select(cteam => cteam.TeamId)
+                .Where(et => et.EmployeeId == employee.Id)
+                .Select(et => et.TeamId)
                 .Distinct()
                 .ToListAsync(ct);
 
@@ -61,47 +85,54 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             {
                 var teams = await dbContext.Teams
                     .AsNoTracking()
-                    .Include(t => t.Leader)
+                    .Include(t => t.EmployeeTeams)
                     .Where(t => teamIds.Contains(t.Id))
                     .ToListAsync(ct);
 
                 var memberIds = await dbContext.EmployeeTeams
                     .AsNoTracking()
-                    .Where(cteam => teamIds.Contains(cteam.TeamId))
-                    .Select(cteam => cteam.EmployeeId)
+                    .Where(et => teamIds.Contains(et.TeamId))
+                    .Select(et => et.EmployeeId)
                     .Distinct()
                     .ToListAsync(ct);
 
                 teamMembers = memberIds.Count > 0
                     ? await dbContext.Employees
                         .AsNoTracking()
-                        .Where(c => memberIds.Contains(c.Id))
+                        .Include(e => e.Memberships)
+                        .Where(e => memberIds.Contains(e.Id))
                         .ToListAsync(ct)
                     : [];
 
                 if (teams.Count == 1)
                 {
-                    leaderSource = teams[0].Leader;
+                    leaderSource = teams[0].LeaderId is not null
+                        ? await dbContext.Employees
+                            .AsNoTracking()
+                            .Include(e => e.Memberships)
+                            .Include(e => e.EmployeeTeams).ThenInclude(et => et.Team)
+                            .FirstOrDefaultAsync(e => e.Id == teams[0].LeaderId!.Value, ct)
+                        : null;
                     teamNameOverride = teams[0].Name;
                 }
                 else
                 {
-                    leaderSource = employee.Leader
-                        ?? (employee.Role == EmployeeRole.Leader ? employee : null);
+                    leaderSource = leaderEmployee
+                        ?? (membership.Role == EmployeeRole.TeamLeader ? employee : null);
                 }
             }
             else
             {
-                leaderSource = employee.Leader
-                    ?? (employee.Role == EmployeeRole.Leader ? employee : null);
+                leaderSource = leaderEmployee
+                    ?? (membership.Role == EmployeeRole.TeamLeader ? employee : null);
 
                 if (leaderSource is not null)
                 {
                     var leaderTeamNames = await dbContext.EmployeeTeams
                         .AsNoTracking()
-                        .Where(cteam => cteam.EmployeeId == leaderSource.Id)
-                        .Include(cteam => cteam.Team)
-                        .Select(cteam => cteam.Team.Name)
+                        .Where(et => et.EmployeeId == leaderSource.Id)
+                        .Include(et => et.Team)
+                        .Select(et => et.Team.Name)
                         .Distinct()
                         .ToListAsync(ct);
 
@@ -118,17 +149,17 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         if (leaderSource is not null)
         {
             teamMembers = teamMembers
-                .Where(member => member.Id != leaderSource.Id)
+                .Where(e => e.Id != leaderSource.Id)
                 .ToList();
         }
 
-        var teamHealth = await BuildTeamHealthAsync(leaderSource, teamMembers, employee.Id, employee.OrganizationId, teamNameOverride, ct);
-        var pendingTasks = await BuildPendingTasksAsync(employee, ct);
+        var teamHealth = await BuildTeamHealthAsync(leaderSource, teamMembers, employee.Id, membership.OrganizationId, teamNameOverride, ct);
+        var pendingTasks = await BuildPendingTasksAsync(employee, membership.OrganizationId, ct);
 
         return new DashboardSnapshot
         {
             TeamHealth = teamHealth,
-            PendingTasks = pendingTasks
+            PendingTasks = pendingTasks,
         };
     }
 
@@ -142,7 +173,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
     {
         var leader = BuildLeaderDto(leaderSource, teamNameOverride);
         var teamMemberDtos = BuildTeamMembers(directReports);
-        var teamMemberIds = directReports.Select(m => m.Id).ToList();
+        var teamMemberIds = directReports.Select(e => e.Id).ToList();
 
         // Indicadores sempre incluem o próprio usuário
         var indicatorMemberIds = new HashSet<Guid>(teamMemberIds) { currentEmployeeId };
@@ -162,7 +193,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             Engagement = engagement,
             WeeklyAccess = weeklyAccess,
             MissionsUpdated = missionsUpdated,
-            FormsResponded = formsResponded
+            FormsResponded = formsResponded,
         };
     }
 
@@ -173,23 +204,24 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             return null;
         }
 
+        var leaderMembership = leaderSource.GetMembership();
         return new TeamLeaderSnapshot
         {
             Id = leaderSource.Id,
             FullName = leaderSource.FullName,
             Initials = GetInitials(leaderSource.FullName),
-            Role = leaderSource.Role == EmployeeRole.Leader ? "Líder" : "Colaborador",
-            TeamName = teamNameOverride ?? leaderSource.Team?.Name ?? string.Empty
+            Role = leaderMembership?.Role == EmployeeRole.TeamLeader ? "Líder" : "Colaborador",
+            TeamName = teamNameOverride ?? leaderSource.EmployeeTeams.FirstOrDefault()?.Team?.Name ?? string.Empty,
         };
     }
 
     private static List<TeamMemberSnapshot> BuildTeamMembers(List<Employee> members)
     {
-        return members.Select(m => new TeamMemberSnapshot
+        return members.Select(e => new TeamMemberSnapshot
         {
-            Id = m.Id,
-            FullName = m.FullName,
-            Initials = GetInitials(m.FullName)
+            Id = e.Id,
+            FullName = e.FullName,
+            Initials = GetInitials(e.FullName),
         }).ToList();
     }
 
@@ -357,12 +389,13 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
 
     private async Task<List<PendingTaskSnapshot>> BuildPendingTasksAsync(
         Employee employee,
+        Guid organizationId,
         CancellationToken ct)
     {
         var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
 
         var memberIds = new List<Guid> { employee.Id };
-        var myMissions = await BuildMyActiveMissionsQuery(memberIds, employee.OrganizationId)
+        var myMissions = await BuildMyActiveMissionsQuery(memberIds, organizationId)
             .Include(g => g.Indicators)
                 .ThenInclude(i => i.Checkins)
             .ToListAsync(ct);
@@ -382,7 +415,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                     TaskType = "mission_checkin",
                     Title = mission.Name,
                     Description = "Check-in pendente há mais de 7 dias",
-                    NavigateUrl = $"/missions/{mission.Id}"
+                    NavigateUrl = $"/missions/{mission.Id}",
                 });
             }
         }
@@ -407,7 +440,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                     TaskType = "mission_task",
                     Title = missionTask.Name,
                     Description = $"Meta: {missionName} — {GetTaskStateLabel(missionTask.State)}",
-                    NavigateUrl = $"/missions/{missionTask.MissionId}"
+                    NavigateUrl = $"/missions/{missionTask.MissionId}",
                 });
             }
         }
@@ -419,7 +452,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
     {
         TaskState.ToDo => "A fazer",
         TaskState.Doing => "Em andamento",
-        _ => string.Empty
+        _ => string.Empty,
     };
 
     private static string GetInitials(string fullName)

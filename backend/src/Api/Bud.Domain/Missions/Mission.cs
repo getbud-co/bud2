@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Bud.Domain.Tags;
 
 namespace Bud.Domain.Missions;
 
@@ -7,6 +8,13 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
     private readonly List<IDomainEvent> _domainEvents = [];
 
     public Guid Id { get; set; }
+
+    // Organization
+    public Guid OrganizationId { get; set; }
+    public Organization Organization { get; set; } = null!;
+
+    // Cycle
+
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Dimension { get; set; }
@@ -14,9 +22,6 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public DateTime EndDate { get; set; }
     public MissionStatus Status { get; set; }
 
-    // Tenant discriminator — always set to the owning organization
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
 
     // Recursive parent-child relationship
     public Guid? ParentId { get; set; }
@@ -29,6 +34,7 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
     public ICollection<Indicator> Indicators { get; set; } = [];
     public ICollection<MissionTask> Tasks { get; set; } = [];
+    public ICollection<MissionTag> Tags { get; set; } = [];
 
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();

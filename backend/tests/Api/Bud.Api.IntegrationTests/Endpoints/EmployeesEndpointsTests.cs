@@ -59,7 +59,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Novo Colaborador",
             Email = $"novo-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor
         };
 
         var response = await tenantClient.PostAsJsonAsync("/api/employees", request);
@@ -94,7 +94,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Colaborador com Time",
             Email = $"employee-team-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor,
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor,
             TeamId = team.Id
         };
 
@@ -138,7 +138,7 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             FullName = "Colaborador Atualizado",
             Email = $"atualizado-{Guid.NewGuid():N}@test.com",
-            Role = Bud.Shared.Kernel.Enums.EmployeeRole.IndividualContributor
+            Role = Bud.Shared.Kernel.Enums.EmployeeRole.Contributor
         };
 
         var response = await tenantClient.PatchAsJsonAsync($"/api/employees/{target.Id}", request);
@@ -305,12 +305,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Líder {Guid.NewGuid():N}",
-            Email = $"leader-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId
+            Email = $"leader-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.TeamLeader
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -325,13 +329,17 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Sub-líder {Guid.NewGuid():N}",
-            Email = $"subleader-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.Leader,
-            OrganizationId = organizationId,
-            LeaderId = leaderId
+            Email = $"subleader-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.TeamLeader,
+            LeaderId = leaderId
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -346,13 +354,17 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = $"Liderado {Guid.NewGuid():N}",
-            Email = $"sub-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId,
-            LeaderId = leaderId
+            Email = $"sub-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor,
+            LeaderId = leaderId
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -379,18 +391,26 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Administrador",
-            Email = "admin@getbud.co",
-            Role = EmployeeRole.Leader,
-            OrganizationId = org.Id
+            Email = "admin@getbud.co"
         };
         dbContext.Employees.Add(adminLeader);
 
-        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id, LeaderId = adminLeader.Id };
+        var team = new Team { Id = Guid.NewGuid(), Name = "getbud.co", OrganizationId = org.Id };
         dbContext.Teams.Add(team);
 
-        await dbContext.SaveChangesAsync();
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = adminLeader.Id,
+            OrganizationId = org.Id,
+            Role = EmployeeRole.TeamLeader,
+        });
+        dbContext.EmployeeTeams.Add(new EmployeeTeam
+        {
+            EmployeeId = adminLeader.Id,
+            TeamId = team.Id,
+            AssignedAt = DateTime.UtcNow,
+        });
 
-        adminLeader.TeamId = team.Id;
         await dbContext.SaveChangesAsync();
 
         return adminLeader.Id;
@@ -405,12 +425,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Teste",
-            Email = $"colaborador-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            Email = $"colaborador-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
@@ -425,12 +449,16 @@ public class EmployeesEndpointsTests : IClassFixture<CustomWebApplicationFactory
         {
             Id = Guid.NewGuid(),
             FullName = "Colaborador Alvo",
-            Email = $"alvo-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
+            Email = $"alvo-{Guid.NewGuid():N}@test.com"
         };
 
         dbContext.Employees.Add(employee);
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;

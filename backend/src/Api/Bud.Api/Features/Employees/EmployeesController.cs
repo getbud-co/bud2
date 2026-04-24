@@ -34,11 +34,11 @@ public sealed class EmployeesController(
     [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(EmployeeMembershipResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<EmployeeResponse>> Create(CreateEmployeeRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<EmployeeMembershipResponse>> Create(CreateEmployeeRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -54,8 +54,8 @@ public sealed class EmployeesController(
             request.LeaderId);
 
         var result = await createEmployee.ExecuteAsync(command, cancellationToken);
-        return FromResult<Employee, EmployeeResponse>(result, employee =>
-            CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee.ToEmployeeResponse()));
+        return FromResult<Employee, EmployeeMembershipResponse>(result, employee =>
+            CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee.ToEmployeeMembershipResponse()));
     }
 
     /// <summary>
@@ -68,11 +68,11 @@ public sealed class EmployeesController(
     [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EmployeeMembershipResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<EmployeeResponse>> Update(Guid id, PatchEmployeeRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<EmployeeMembershipResponse>> Update(Guid id, PatchEmployeeRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -83,11 +83,14 @@ public sealed class EmployeesController(
         var command = new PatchEmployeeCommand(
             request.FullName,
             request.Email,
+            request.Nickname,
+            request.Language,
             request.Role,
-            request.LeaderId);
+            request.LeaderId,
+            request.Status);
 
         var result = await patchEmployee.ExecuteAsync(id, command, cancellationToken);
-        return FromResultOk(result, employee => employee.ToEmployeeResponse());
+        return FromResultOk(result, member => member.ToEmployeeMembershipResponse());
     }
 
     /// <summary>
@@ -120,7 +123,7 @@ public sealed class EmployeesController(
     public async Task<ActionResult<EmployeeResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await getEmployeeById.ExecuteAsync(id, cancellationToken);
-        return FromResultOk(result, employee => employee.ToEmployeeResponse());
+        return FromResultOk(result, member => member.ToEmployeeResponse());
     }
 
     /// <summary>
@@ -129,9 +132,9 @@ public sealed class EmployeesController(
     /// <response code="200">Lista paginada retornada com sucesso.</response>
     /// <response code="400">Parâmetros inválidos.</response>
     [HttpGet]
-    [ProducesResponseType(typeof(PagedResult<EmployeeResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<EmployeeMembershipResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PagedResult<EmployeeResponse>>> GetAll(
+    public async Task<ActionResult<PagedResult<EmployeeMembershipResponse>>> GetAll(
         [FromQuery] Guid? teamId,
         [FromQuery] string? search = null,
         [FromQuery] int page = 1,
@@ -151,7 +154,7 @@ public sealed class EmployeesController(
         }
 
         var result = await listEmployees.ExecuteAsync(teamId, searchValidation.Value, page, pageSize, cancellationToken);
-        return FromResultOk(result, paged => paged.MapPaged(c => c.ToEmployeeResponse()));
+        return FromResultOk(result, paged => paged.MapPaged(m => m.ToEmployeeMembershipResponse()));
     }
 
     /// <summary>
@@ -180,10 +183,9 @@ public sealed class EmployeesController(
     [HttpGet("leaders")]
     [ProducesResponseType(typeof(List<EmployeeLeaderResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<EmployeeLeaderResponse>>> GetLeaders(
-        [FromQuery] Guid? organizationId = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await listLeaderEmployees.ExecuteAsync(organizationId, cancellationToken);
+        var result = await listLeaderEmployees.ExecuteAsync(cancellationToken);
         return FromResultOk(result);
     }
 

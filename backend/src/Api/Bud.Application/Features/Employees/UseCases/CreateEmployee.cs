@@ -58,28 +58,26 @@ public sealed partial class CreateEmployee(
                 }
             }
 
-            var employee = Employee.Create(
-                Guid.NewGuid(),
-                organizationId.Value,
-                personName.Value,
-                emailAddress.Value,
-                command.Role,
-                command.LeaderId);
+            var newId = Guid.NewGuid();
+            var employee = Employee.Create(newId, personName.Value, emailAddress.Value);
+            var member = Membership.Create(newId, organizationId.Value, command.Role, command.LeaderId);
+            member.Employee = employee;
+            employee.Memberships.Add(member);
 
             if (command.TeamId.HasValue)
             {
                 employee.EmployeeTeams.Add(new EmployeeTeam
                 {
-                    EmployeeId = employee.Id,
+                    EmployeeId = newId,
                     TeamId = command.TeamId.Value,
-                    AssignedAt = DateTime.UtcNow
+                    AssignedAt = DateTime.UtcNow,
                 });
             }
 
             await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeeCreated(logger, employee.Id, employee.FullName);
+            LogEmployeeCreated(logger, newId, employee.FullName);
             return Result<Employee>.Success(employee);
         }
         catch (DomainInvariantException ex)

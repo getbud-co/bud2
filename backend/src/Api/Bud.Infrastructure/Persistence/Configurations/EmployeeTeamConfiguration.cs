@@ -9,6 +9,10 @@ public sealed class EmployeeTeamConfiguration : IEntityTypeConfiguration<Employe
     {
         builder.HasKey(ct => new { ct.EmployeeId, ct.TeamId });
 
+        builder.Property(ct => ct.Role)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         builder.HasOne(ct => ct.Employee)
             .WithMany(c => c.EmployeeTeams)
             .HasForeignKey(ct => ct.EmployeeId)

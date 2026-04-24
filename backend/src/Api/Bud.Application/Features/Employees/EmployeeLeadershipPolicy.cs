@@ -10,15 +10,21 @@ internal static class EmployeeLeadershipPolicy
         Guid organizationId,
         CancellationToken cancellationToken)
     {
-        var leader = await employeeRepository.GetByIdAsync(leaderId, cancellationToken);
-        if (leader is null)
+        var leaderEmployee = await employeeRepository.GetByIdAsync(leaderId, cancellationToken);
+        if (leaderEmployee is null)
+        {
+            return Result<T>.NotFound(UserErrorMessages.LeaderNotFound);
+        }
+
+        var leaderMembership = leaderEmployee.GetMembership();
+        if (leaderMembership is null)
         {
             return Result<T>.NotFound(UserErrorMessages.LeaderNotFound);
         }
 
         try
         {
-            leader.EnsureCanLeadOrganization(organizationId);
+            leaderMembership.EnsureCanLeadOrganization(organizationId);
             return null;
         }
         catch (DomainInvariantException ex)

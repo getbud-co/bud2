@@ -1,6 +1,13 @@
-# Bud Web - Frontend
+# Bud 2.0 Web Application
 
-Frontend Next.js da aplicação Bud.
+> web application for bud 2.0 project
+
+## 🚀 Requisitos
+
+```
+ Node @22.14.0
+ Yarn @1.22.22
+```
 
 ## Tech Stack
 
@@ -25,44 +32,32 @@ frontend/
 └── Dockerfile             # Build + runtime Node.js
 ```
 
-## Setup Local
+## 🚀 Instalando Web Application
 
-### Pré-requisitos
+Para instalar o Web Application, siga estas etapas:
 
-- Node.js 20+ com npm
-
-### Iniciar
-
-```bash
-cd frontend
-npm install
-npm run dev
+```
+ yarn install 
 ```
 
-Abre http://localhost:3000
+## ☕ Usando Web Application
 
-### Variáveis de Ambiente
+Para usar Web Application, siga estas etapas:
 
-Criar `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8082
+```
+ yarn dev
 ```
 
-## Desenvolvimento
+## ☕ Usando Docker
 
-### Build para Produção
+Para rodar a imagem da aplicação, é necessário adicionar o arquivo .env como no exemplo:
 
-```bash
-npm run build
-npm run start
+```
+ docker run -d -p 3000:3000 --env-file .env bud-web:latest
 ```
 
-### Type Checking
 
-```bash
-npm run type-check
-```
+## 📝 Licença
 
 ### Testes (planejado)
 

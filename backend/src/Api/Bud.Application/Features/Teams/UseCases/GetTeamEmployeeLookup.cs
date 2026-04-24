@@ -15,6 +15,6 @@ public sealed class GetTeamEmployeeLookup(
         }
 
         var summaries = await teamRepository.GetEmployeeLookupAsync(teamId, cancellationToken);
-        return Result<List<EmployeeLookupResponse>>.Success(summaries.Select(c => c.ToResponse()).ToList());
+        return Result<List<EmployeeLookupResponse>>.Success(summaries.Select(c => c.ToLookupResponse()).ToList());
     }
 }

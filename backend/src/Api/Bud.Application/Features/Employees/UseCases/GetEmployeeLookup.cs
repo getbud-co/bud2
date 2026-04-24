@@ -9,7 +9,7 @@ public sealed class GetEmployeeLookup(IEmployeeRepository employeeRepository)
         string? search,
         CancellationToken cancellationToken = default)
     {
-        var summaries = await employeeRepository.GetLookupAsync(search, 50, cancellationToken);
-        return Result<List<EmployeeLookupResponse>>.Success(summaries.Select(c => c.ToResponse()).ToList());
+        var employees = await employeeRepository.GetLookupAsync(search, 50, cancellationToken);
+        return Result<List<EmployeeLookupResponse>>.Success(employees.Select(e => e.ToLookupResponse()).ToList());
     }
 }

@@ -1,6 +1,5 @@
 using Bud.Application.Common;
 using Bud.Application.Configuration;
-using Bud.Shared.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

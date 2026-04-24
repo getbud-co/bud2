@@ -1,15 +1,22 @@
 using Bud.Application.Common;
+using Bud.Application.Ports;
 
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed class ListAvailableTeamsForEmployee(
-    IEmployeeRepository employeeRepository)
+    IEmployeeRepository employeeRepository,
+    ITenantProvider tenantProvider)
 {
     public async Task<Result<List<EmployeeTeamEligibleResponse>>> ExecuteAsync(
         Guid employeeId,
         string? search,
         CancellationToken cancellationToken = default)
     {
+        if (!tenantProvider.TenantId.HasValue)
+        {
+            return Result<List<EmployeeTeamEligibleResponse>>.NotFound(UserErrorMessages.EmployeeNotFound);
+        }
+
         var employee = await employeeRepository.GetByIdAsync(employeeId, cancellationToken);
         if (employee is null)
         {
@@ -18,7 +25,7 @@ public sealed class ListAvailableTeamsForEmployee(
 
         var teams = await employeeRepository.GetEligibleTeamsForAssignmentAsync(
             employeeId,
-            employee.OrganizationId,
+            tenantProvider.TenantId.Value,
             search,
             50,
             cancellationToken);

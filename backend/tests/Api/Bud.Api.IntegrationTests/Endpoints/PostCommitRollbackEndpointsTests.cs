@@ -161,11 +161,17 @@ public sealed class PostCommitRollbackEndpointsTests(CustomWebApplicationFactory
             Id = Guid.NewGuid(),
             FullName = "Colaborador rollback",
             Email = $"rollback-{Guid.NewGuid():N}@test.com",
-            Role = EmployeeRole.IndividualContributor,
-            OrganizationId = organizationId
         };
 
         dbContext.Employees.Add(employee);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.Memberships.Add(new Membership
+        {
+            EmployeeId = employee.Id,
+            OrganizationId = organizationId,
+            Role = EmployeeRole.Contributor,
+        });
         await dbContext.SaveChangesAsync();
 
         return employee;
