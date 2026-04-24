@@ -50,7 +50,7 @@ jobs:
             --results-directory TestResults \
             --collect:"XPlat Code Coverage"
 
-      - uses: dorny/test-reporter@v1
+      - uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Backend Tests
