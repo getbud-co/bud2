@@ -1,24 +1,25 @@
-import { ConfidenceLevel, KanbanStatus, TemplateConfig } from "@/types";
-import { BreadcrumbItem, FilterOption, MissionItem } from "@getbud-co/buds";
 import {
-  ArrowsInLineHorizontal,
-  CalendarBlank,
-  ChartLineUp,
-  Crosshair,
-  Eye,
-  FunnelSimple,
-  Gauge,
-  GitBranch,
-  ListBullets,
-  ListChecks,
-  Tag,
-  Target,
-  TrendDown,
-  UploadSimple,
-  User,
   Users,
+  CalendarBlank,
+  FunnelSimple,
+  User,
+  ListBullets,
+  Crosshair,
+  GitBranch,
   UsersThree,
+  ListChecks,
+  Target,
+  Tag,
+  Eye,
+  Gauge,
+  UploadSimple,
+  ChartLineUp,
+  TrendDown,
+  ArrowsInLineHorizontal,
+  ChartBar,
 } from "@phosphor-icons/react";
+import type { FilterOption, BreadcrumbItem, MissionItem as DsMissionItem } from "@getbud-co/buds";
+import type { KanbanStatus, ConfidenceLevel } from "@/types";
 
 export const FILTER_OPTIONS: FilterOption[] = [
   { id: "team", label: "Time", icon: Users },
@@ -55,6 +56,7 @@ export const INDICATOR_TYPE_OPTIONS = [
   { id: "below", label: "Manter abaixo" },
   { id: "between", label: "Manter entre" },
   { id: "reduce", label: "Reduzir" },
+  { id: "survey", label: "Pesquisa" },
   { id: "external", label: "Fonte externa" },
   { id: "linked_mission", label: "Missão vinculada" },
 ];
@@ -81,36 +83,29 @@ export const MISSION_STATUS_OPTIONS = [
   { id: "cancelled", label: "Cancelada" },
 ];
 
-/* ——— Mission templates ——— */
-
 export const MISSION_TEMPLATES = [
   { value: "okr", title: "OKR", description: "Objetivo + Key Results" },
-  {
-    value: "pdi",
-    title: "PDI",
-    description: "Plano de Desenvolvimento Individual",
-  },
-  {
-    value: "bsc",
-    title: "BSC",
-    description: "Balanced Scorecard — 4 perspectivas",
-  },
-  {
-    value: "kpi",
-    title: "KPI",
-    description: "Indicador chave com alvo e frequência",
-  },
-  {
-    value: "meta",
-    title: "Meta simples",
-    description: "Título, descrição, alvo e prazo",
-  },
-  {
-    value: "scratch",
-    title: "Criar do zero",
-    description: "Monte sua estrutura com campos livres",
-  },
+  { value: "pdi", title: "PDI", description: "Plano de Desenvolvimento Individual" },
+  { value: "bsc", title: "BSC", description: "Balanced Scorecard — 4 perspectivas" },
+  { value: "kpi", title: "KPI", description: "Indicador chave com alvo e frequência" },
+  { value: "meta", title: "Meta simples", description: "Título, descrição, alvo e prazo" },
+  { value: "scratch", title: "Criar do zero", description: "Monte sua estrutura com campos livres" },
 ];
+
+export interface TemplateConfig {
+  stepTitle: string;
+  namePlaceholder: string;
+  descPlaceholder: string;
+  addItemLabel: string;
+  addItemFormTitle: string;
+  editItemFormTitle: string;
+  itemTitlePlaceholder: string;
+  itemDescPlaceholder: string;
+  /** Which measurement modes to show; null = show all */
+  allowedModes: string[] | null;
+  /** Override label for "Tags" in more options menu */
+  tagLabel?: string;
+}
 
 export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   okr: {
@@ -137,7 +132,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   },
   bsc: {
     stepTitle: "Objetivo estratégico BSC",
-    namePlaceholder: "Nome do BSC",
+    namePlaceholder: "Objetivo BSC",
     descPlaceholder: "Descreva onde deseja chegar com o objetivo",
     addItemLabel: "Adicionar indicador",
     addItemFormTitle: "Adicionar indicador",
@@ -145,6 +140,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     itemTitlePlaceholder: "Título do indicador",
     itemDescPlaceholder: "Descrição",
     allowedModes: ["mission", "manual", "task", "external"],
+    tagLabel: "Tag / perspectiva",
   },
   kpi: {
     stepTitle: "Definir KPI",
@@ -181,6 +177,223 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   },
 };
 
+export interface ExampleEntry {
+  objective: string;
+  keyResults: string[];
+}
+
+export interface ExampleCategory {
+  label: string;
+  examples: ExampleEntry[];
+}
+
+export const EXAMPLE_LIBRARY: Record<string, ExampleCategory[]> = {
+  okr: [
+    {
+      label: "Produto e Engenharia",
+      examples: [
+        {
+          objective: "Melhorar a confiabilidade da plataforma",
+          keyResults: [
+            "Atingir 99,9% de uptime",
+            "Reduzir tempo médio de resposta da API para < 200ms",
+            "Zero incidentes críticos (P0) no trimestre",
+          ],
+        },
+        {
+          objective: "Acelerar a velocidade de entrega",
+          keyResults: [
+            "Reduzir cycle time de 12 para 5 dias",
+            "Aumentar frequência de deploys para 3x/semana",
+            "100% dos PRs revisados em < 24h",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Marketing",
+      examples: [
+        {
+          objective: "Fortalecer a marca no mercado mid-market",
+          keyResults: [
+            "Aumentar tráfego orgânico em 40%",
+            "Gerar 500 MQLs no trimestre",
+            "Publicar 12 artigos de thought leadership",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Vendas",
+      examples: [
+        {
+          objective: "Expandir receita no segmento Enterprise",
+          keyResults: [
+            "Fechar 5 contas Enterprise com ACV > R$ 200k",
+            "Aumentar pipeline qualificado em 60%",
+            "Reduzir ciclo médio de venda de 90 para 60 dias",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Customer Success",
+      examples: [
+        {
+          objective: "Aumentar a retenção de clientes",
+          keyResults: [
+            "Reduzir churn mensal de 5% para 2,5%",
+            "Aumentar NPS de clientes ativos para 75+",
+            "90% dos clientes com health score verde",
+          ],
+        },
+      ],
+    },
+    {
+      label: "People / RH",
+      examples: [
+        {
+          objective: "Construir uma cultura de alta performance",
+          keyResults: [
+            "100% dos colaboradores com OKRs definidos até semana 2",
+            "eNPS > 60",
+            "Reduzir turnover voluntário para < 10% anual",
+          ],
+        },
+      ],
+    },
+  ],
+  pdi: [
+    {
+      label: "Liderança",
+      examples: [
+        {
+          objective: "Desenvolver habilidades de liderança",
+          keyResults: [
+            "Completar curso de Liderança Situacional",
+            "Liderar 3 reuniões como facilitador",
+            "Receber feedback 360° ≥ 4 em liderança",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Comunicação",
+      examples: [
+        {
+          objective: "Melhorar comunicação assertiva",
+          keyResults: [
+            "Apresentar em 2 all-hands da empresa",
+            "Participar de mentoria mensal com gestor",
+            "Nota ≥ 4 em comunicação na avaliação de pares",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Técnico",
+      examples: [
+        {
+          objective: "Dominar nova stack tecnológica",
+          keyResults: [
+            "Completar certificação AWS Solutions Architect",
+            "Implementar 2 projetos usando a nova stack",
+            "Conduzir 1 tech talk para o time",
+          ],
+        },
+      ],
+    },
+  ],
+  bsc: [
+    {
+      label: "Balanced Scorecard",
+      examples: [
+        {
+          objective: "Perspectiva Financeira — Crescimento sustentável",
+          keyResults: ["Aumentar MRR em 30%", "Reduzir CAC para R$ 800", "Atingir margem EBITDA de 15%"],
+        },
+        {
+          objective: "Perspectiva do Cliente — Excelência no atendimento",
+          keyResults: ["NPS ≥ 70 em todas as linhas", "Tempo de resposta ao cliente < 4h", "95% de satisfação no onboarding"],
+        },
+        {
+          objective: "Perspectiva de Processos — Eficiência operacional",
+          keyResults: [
+            "Reduzir tempo de deploy para < 30min",
+            "Automatizar 80% dos processos repetitivos",
+            "Zero retrabalho em entregas críticas",
+          ],
+        },
+        {
+          objective: "Perspectiva de Aprendizado — Desenvolvimento do time",
+          keyResults: [
+            "100% dos líderes com PDI ativo",
+            "40h de capacitação por colaborador/ano",
+            "Implementar programa de mentoria cruzada",
+          ],
+        },
+      ],
+    },
+  ],
+  kpi: [
+    {
+      label: "Vendas",
+      examples: [
+        {
+          objective: "Taxa de conversão do funil",
+          keyResults: ["25% de conversão MQL → SQL", "Tempo de resposta a lead < 2h", "Win rate ≥ 30%"],
+        },
+      ],
+    },
+    {
+      label: "Produto",
+      examples: [
+        {
+          objective: "Engajamento do produto",
+          keyResults: ["DAU/MAU ≥ 40%", "Retenção D30 ≥ 60%", "Tempo médio de sessão > 8min"],
+        },
+      ],
+    },
+    {
+      label: "Operações",
+      examples: [
+        {
+          objective: "Eficiência operacional",
+          keyResults: ["SLA de atendimento cumprido em 95%", "Custo por ticket < R$ 15", "First contact resolution ≥ 70%"],
+        },
+      ],
+    },
+  ],
+  meta: [
+    {
+      label: "Projeto",
+      examples: [
+        {
+          objective: "Lançar módulo de relatórios customizados",
+          keyResults: [
+            "Design e protótipo validado",
+            "Backend da API desenvolvido e testado",
+            "Beta com 10 clientes piloto",
+          ],
+        },
+      ],
+    },
+    {
+      label: "Processo",
+      examples: [
+        {
+          objective: "Implementar processo de code review",
+          keyResults: [
+            "Documentar guidelines de review",
+            "100% dos PRs revisados antes do merge",
+            "Tempo médio de review < 4h",
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 export const CREATE_STEPS: BreadcrumbItem[] = [
   { label: "Escolher template" },
   { label: "Construir missão" },
@@ -193,41 +406,17 @@ export const MORE_MISSION_OPTIONS = [
   { id: "visibility", label: "Quem pode ver", icon: Eye },
 ];
 
-// visibilityOptions is now generated dynamically inside MissionsPage using teamOptions
-
-export const ASSISTANT_MISSIONS: MissionItem[] = [
+export const ASSISTANT_MISSIONS: DsMissionItem[] = [
   { id: "okr-1", label: "Reduzir churn do produto de Crédito Imobiliário" },
   { id: "okr-2", label: "Aumentar NPS do onboarding para 75+" },
   { id: "okr-3", label: "Lançar feature Y até final do Q1" },
 ];
 
-/* ——— Measurement mode options ——— */
-
 export const MEASUREMENT_MODES = [
-  {
-    id: "mission",
-    label: "Nova missão",
-    description: "Missão com indicadores dentro",
-    icon: Target,
-  },
-  {
-    id: "task",
-    label: "Tarefa",
-    description: "Pendente, em andamento e concluída",
-    icon: ListChecks,
-  },
-  {
-    id: "manual",
-    label: "Indicador manual",
-    description: "Defina meta e acompanhe manualmente",
-    icon: Gauge,
-  },
-  {
-    id: "external",
-    label: "Importar de fonte externa",
-    description: "Google Sheets, Power BI, etc.",
-    icon: UploadSimple,
-  },
+  { id: "mission", label: "Nova missão", description: "Missão com indicadores dentro", icon: Target },
+  { id: "task", label: "Tarefa", description: "Pendente, em andamento e concluída", icon: ListChecks },
+  { id: "manual", label: "Indicador manual", description: "Defina meta e acompanhe manualmente", icon: Gauge },
+  { id: "external", label: "Importar de fonte externa", description: "Google Sheets, Power BI, etc.", icon: UploadSimple },
 ];
 
 export const MANUAL_INDICATOR_TYPES = [
@@ -236,6 +425,7 @@ export const MANUAL_INDICATOR_TYPES = [
   { id: "below", label: "Manter abaixo", icon: TrendDown },
   { id: "between", label: "Manter entre", icon: ArrowsInLineHorizontal },
   { id: "reduce", label: "Reduzir", icon: TrendDown },
+  { id: "survey", label: "De uma pesquisa", icon: ChartBar },
 ];
 
 export const UNIT_OPTIONS = [
@@ -254,22 +444,12 @@ export const UNIT_OPTIONS = [
   { value: "bool", label: "Sim/Não" },
 ];
 
-export const KANBAN_COLUMNS: {
-  id: KanbanStatus;
-  label: string;
-  color: string;
-}[] = [
-  {
-    id: "uncategorized",
-    label: "Não categorizado",
-    color: "var(--color-neutral-400)",
-  },
+export const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
+  { id: "uncategorized", label: "Não categorizado", color: "var(--color-neutral-400)" },
   { id: "todo", label: "Para fazer", color: "var(--color-caramel-400)" },
   { id: "doing", label: "Fazendo", color: "var(--color-orange-500)" },
   { id: "done", label: "Feito", color: "var(--color-green-500)" },
 ];
-
-/* (Mock data and types imported from @/types and @/lib/missions) */
 
 export const CONFIDENCE_OPTIONS: {
   id: ConfidenceLevel;
@@ -286,29 +466,25 @@ export const CONFIDENCE_OPTIONS: {
   {
     id: "medium",
     label: "Média confiança",
-    description:
-      "Existe um risco de não alcançarmos o resultado-chave, mas seguimos otimistas",
+    description: "Existe um risco de não alcançarmos o resultado-chave, mas seguimos otimistas",
     color: "var(--color-yellow-500)",
   },
   {
     id: "low",
     label: "Baixa confiança",
-    description:
-      "Não vamos alcançar o resultado a não ser que a gente mude nossa abordagem",
+    description: "Não vamos alcançar o resultado a não ser que a gente mude nossa abordagem",
     color: "var(--color-red-500)",
   },
   {
     id: "barrier",
     label: "Com barreira",
-    description:
-      "Existe um fator externo impedindo o progresso desse resultado-chave",
+    description: "Existe um fator externo impedindo o progresso desse resultado-chave",
     color: "var(--color-wine-500)",
   },
   {
     id: "deprioritized",
     label: "Despriorizado",
-    description:
-      "Este resultado-chave foi despriorizado e deixado de lado por enquanto",
+    description: "Este resultado-chave foi despriorizado e deixado de lado por enquanto",
     color: "var(--color-neutral-400)",
   },
 ];
@@ -318,20 +494,12 @@ export const DRAWER_TASKS_BY_INDICATOR: Record<
   { id: string; title: string; isDone: boolean }[]
 > = {
   i1: [
-    {
-      id: "t1",
-      title: "Revisar contratos pendentes com jurídico",
-      isDone: true,
-    },
+    { id: "t1", title: "Revisar contratos pendentes com jurídico", isDone: true },
     { id: "t2", title: "Agendar reunião com time comercial", isDone: true },
     { id: "t3", title: "Preparar relatório de pipeline Q1", isDone: false },
   ],
   i5: [
-    {
-      id: "t4",
-      title: "Definir escopo do módulo de pesquisas v2",
-      isDone: true,
-    },
+    { id: "t4", title: "Definir escopo do módulo de pesquisas v2", isDone: true },
     { id: "t5", title: "Criar protótipos de alta fidelidade", isDone: false },
     { id: "t6", title: "Validar fluxo com 3 clientes beta", isDone: false },
   ],

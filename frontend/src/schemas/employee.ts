@@ -23,3 +23,18 @@ export const EmployeeListResponseSchema = z.object({
 });
 
 export type EmployeeResponse = z.infer<typeof EmployeeResponseSchema>;
+
+export const EmployeeLookupResponseSchema = z.object({
+  id: z.string(),
+  fullName: z.string(),
+  email: z.string(),
+  role: z.enum(["Contributor", "TeamLeader", "HRManager", "OrgAdmin"]),
+});
+
+export const EmployeeLookupListResponseSchema = z.array(
+  EmployeeLookupResponseSchema,
+);
+
+export type EmployeeLookupResponse = z.infer<
+  typeof EmployeeLookupResponseSchema
+>;

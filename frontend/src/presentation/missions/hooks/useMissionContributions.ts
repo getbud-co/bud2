@@ -1,17 +1,12 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "@getbud-co/buds";
-import type {
-  ExternalContribution,
-  Indicator,
-  Mission,
-  MissionTask,
-} from "@/types";
+import type { ExternalContribution, KeyResult, Mission, MissionTask } from "@/types";
 import {
   addExternalContrib,
-  addIndicatorContribution,
+  addKRContribution,
   addTaskContribution,
   removeExternalContrib,
-  removeIndicatorContribution,
+  removeKRContribution,
   removeTaskContribution,
 } from "../utils/missionTree";
 
@@ -45,37 +40,25 @@ export function useMissionContributions({
     targetMissionId: string,
     targetMissionTitle: string,
   ) {
-    setRemoveContribConfirm({
-      itemId,
-      itemType,
-      targetMissionId,
-      targetMissionTitle,
-    });
+    setRemoveContribConfirm({ itemId, itemType, targetMissionId, targetMissionTitle });
   }
 
-  function handleRemoveContribution(
-    itemId: string,
-    itemType: "indicator" | "task",
-    targetMissionId: string,
-  ) {
+  function handleRemoveContribution(itemId: string, itemType: "indicator" | "task", targetMissionId: string) {
     setMissions((prev) => {
-      const removed =
-        itemType === "indicator"
-          ? removeIndicatorContribution(prev, itemId, targetMissionId)
-          : removeTaskContribution(prev, itemId, targetMissionId);
+      const removed = itemType === "indicator"
+        ? removeKRContribution(prev, itemId, targetMissionId)
+        : removeTaskContribution(prev, itemId, targetMissionId);
       return removeExternalContrib(removed, targetMissionId, itemId);
     });
 
-    setDrawerContributesTo((prev) =>
-      prev.filter((ct) => ct.missionId !== targetMissionId),
-    );
+    setDrawerContributesTo((prev) => prev.filter((ct) => ct.missionId !== targetMissionId));
     setOpenRowMenu(null);
     setOpenContributeFor(null);
     toast.success("Contribuição removida");
   }
 
   function handleAddContribution(
-    item: Indicator | MissionTask,
+    item: KeyResult | MissionTask,
     itemType: "indicator" | "task",
     sourceMissionId: string,
     sourceMissionTitle: string,
@@ -84,31 +67,29 @@ export function useMissionContributions({
   ) {
     const target = { id: targetMissionId, title: targetMissionTitle };
 
-    const contrib: ExternalContribution =
-      itemType === "indicator"
-        ? {
-            type: "indicator",
-            id: item.id,
-            title: item.title,
-            progress: (item as Indicator).progress,
-            status: (item as Indicator).status,
-            owner: item.owner,
-            sourceMission: { id: sourceMissionId, title: sourceMissionTitle },
-          }
-        : {
-            type: "task",
-            id: item.id,
-            title: item.title,
-            isDone: (item as MissionTask).isDone,
-            owner: item.owner,
-            sourceMission: { id: sourceMissionId, title: sourceMissionTitle },
-          };
+    const contrib: ExternalContribution = itemType === "indicator"
+      ? {
+          type: "indicator",
+          id: item.id,
+          title: item.title,
+          progress: (item as KeyResult).progress,
+          status: (item as KeyResult).status,
+          owner: item.owner,
+          sourceMission: { id: sourceMissionId, title: sourceMissionTitle },
+        }
+      : {
+          type: "task",
+          id: item.id,
+          title: item.title,
+          isDone: (item as MissionTask).isDone,
+          owner: item.owner,
+          sourceMission: { id: sourceMissionId, title: sourceMissionTitle },
+        };
 
     setMissions((prev) => {
-      const withConnection =
-        itemType === "indicator"
-          ? addIndicatorContribution(prev, item.id, target)
-          : addTaskContribution(prev, item.id, target);
+      const withConnection = itemType === "indicator"
+        ? addKRContribution(prev, item.id, target)
+        : addTaskContribution(prev, item.id, target);
       return addExternalContrib(withConnection, targetMissionId, contrib);
     });
 

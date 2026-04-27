@@ -29,7 +29,7 @@ export interface Indicator {
   description: string | null;
   ownerId: string;
   measurementMode: MeasurementMode;
-  missionType: MissionType;
+  goalType: MissionType;
   targetValue: string | null;
   currentValue: string;
   startValue: string;

@@ -1,23 +1,13 @@
-import type {
-  ExternalContribution,
-  Indicator,
-  Mission,
-  MissionTask,
-} from "@/types";
+import type { ExternalContribution, KeyResult, Mission, MissionTask } from "@/types";
 
-export function findParentMission(
-  indicatorId: string,
-  missionList: Mission[],
-): string {
+export function findParentMission(krId: string, missionList: Mission[]): string {
   for (const mission of missionList) {
-    for (const indicator of mission.indicators ?? []) {
-      if (indicator.id === indicatorId) return mission.title;
-      if (indicator.children?.some((sub) => sub.id === indicatorId))
-        return `${mission.title} › ${indicator.title}`;
+    for (const kr of mission.keyResults ?? []) {
+      if (kr.id === krId) return mission.title;
     }
 
     if (mission.children) {
-      const found = findParentMission(indicatorId, mission.children);
+      const found = findParentMission(krId, mission.children);
       if (found) return found;
     }
   }
@@ -25,23 +15,16 @@ export function findParentMission(
   return "";
 }
 
-export function findIndicatorById(
-  id: string,
-  missionList: Mission[],
-): Indicator | null {
-  function searchInIndicators(indicators: Indicator[]): Indicator | null {
-    for (const indicator of indicators) {
-      if (indicator.id === id) return indicator;
-      if (indicator.children) {
-        const child = searchInIndicators(indicator.children);
-        if (child) return child;
-      }
+export function findIndicatorById(id: string, missionList: Mission[]): KeyResult | null {
+  function searchInKeyResults(keyResults: KeyResult[]): KeyResult | null {
+    for (const kr of keyResults) {
+      if (kr.id === id) return kr;
     }
     return null;
   }
 
   for (const mission of missionList) {
-    const foundInMission = searchInIndicators(mission.indicators ?? []);
+    const foundInMission = searchInKeyResults(mission.keyResults ?? []);
     if (foundInMission) return foundInMission;
 
     if (mission.children) {
@@ -53,31 +36,14 @@ export function findIndicatorById(
   return null;
 }
 
-export function findTaskById(
-  taskId: string,
-  missionList: Mission[],
-): { task: MissionTask; parentLabel: string } | null {
+export function findTaskById(taskId: string, missionList: Mission[]): { task: MissionTask; parentLabel: string } | null {
   for (const mission of missionList) {
     const missionTask = mission.tasks?.find((task) => task.id === taskId);
     if (missionTask) return { task: missionTask, parentLabel: mission.title };
 
-    for (const indicator of mission.indicators ?? []) {
-      const indicatorTask = indicator.tasks?.find((task) => task.id === taskId);
-      if (indicatorTask)
-        return {
-          task: indicatorTask,
-          parentLabel: `${mission.title} › ${indicator.title}`,
-        };
-
-      for (const sub of indicator.children ?? []) {
-        const subTask = sub.tasks?.find((task) => task.id === taskId);
-        if (subTask) {
-          return {
-            task: subTask,
-            parentLabel: `${mission.title} › ${indicator.title} › ${sub.title}`,
-          };
-        }
-      }
+    for (const kr of mission.keyResults ?? []) {
+      const keyResultTask = kr.tasks?.find((task) => task.id === taskId);
+      if (keyResultTask) return { task: keyResultTask, parentLabel: `${mission.title} › ${kr.title}` };
     }
 
     if (mission.children) {
@@ -89,17 +55,14 @@ export function findTaskById(
   return null;
 }
 
-export function findTaskInMissions(
-  taskId: string,
-  missionList: Mission[],
-): MissionTask | undefined {
+export function findTaskInMissions(taskId: string, missionList: Mission[]): MissionTask | undefined {
   for (const mission of missionList) {
     const missionTask = mission.tasks?.find((task) => task.id === taskId);
     if (missionTask) return missionTask;
 
-    for (const indicator of mission.indicators ?? []) {
-      const indicatorTask = indicator.tasks?.find((task) => task.id === taskId);
-      if (indicatorTask) return indicatorTask;
+    for (const kr of mission.keyResults ?? []) {
+      const keyResultTask = kr.tasks?.find((task) => task.id === taskId);
+      if (keyResultTask) return keyResultTask;
     }
 
     if (mission.children) {
@@ -111,9 +74,7 @@ export function findTaskInMissions(
   return undefined;
 }
 
-export function flattenMissions(
-  missions: Mission[],
-): { id: string; title: string }[] {
+export function flattenMissions(missions: Mission[]): { id: string; title: string }[] {
   const list: { id: string; title: string }[] = [];
   for (const mission of missions) {
     list.push({ id: mission.id, title: mission.title });
@@ -122,145 +83,82 @@ export function flattenMissions(
   return list;
 }
 
-export function addIndicatorContribution(
-  missions: Mission[],
-  indicatorId: string,
-  target: { id: string; title: string },
-): Mission[] {
+export function addKRContribution(missions: Mission[], krId: string, target: { id: string; title: string }): Mission[] {
   return missions.map((mission) => ({
     ...mission,
-    indicators: mission.indicators?.map((indicator) =>
-      indicator.id === indicatorId
+    keyResults: mission.keyResults?.map((kr) =>
+      kr.id === krId
         ? {
-            ...indicator,
-            contributesTo: indicator.contributesTo?.some(
-              (c) => c.missionId === target.id,
-            )
-              ? indicator.contributesTo
-              : [
-                  ...(indicator.contributesTo ?? []),
-                  { missionId: target.id, missionTitle: target.title },
-                ],
+            ...kr,
+            contributesTo: kr.contributesTo?.some((c) => c.missionId === target.id)
+              ? kr.contributesTo
+              : [...(kr.contributesTo ?? []), { missionId: target.id, missionTitle: target.title }],
           }
-        : indicator,
+        : kr
     ),
-    children: mission.children
-      ? addIndicatorContribution(mission.children, indicatorId, target)
-      : undefined,
+    children: mission.children ? addKRContribution(mission.children, krId, target) : undefined,
   }));
 }
 
-export function addTaskContribution(
-  missions: Mission[],
-  taskId: string,
-  target: { id: string; title: string },
-): Mission[] {
+export function addTaskContribution(missions: Mission[], taskId: string, target: { id: string; title: string }): Mission[] {
   return missions.map((mission) => ({
     ...mission,
     tasks: mission.tasks?.map((task) =>
       task.id === taskId
         ? {
             ...task,
-            contributesTo: task.contributesTo?.some(
-              (c) => c.missionId === target.id,
-            )
+            contributesTo: task.contributesTo?.some((c) => c.missionId === target.id)
               ? task.contributesTo
-              : [
-                  ...(task.contributesTo ?? []),
-                  { missionId: target.id, missionTitle: target.title },
-                ],
+              : [...(task.contributesTo ?? []), { missionId: target.id, missionTitle: target.title }],
           }
-        : task,
+        : task
     ),
-    children: mission.children
-      ? addTaskContribution(mission.children, taskId, target)
-      : undefined,
+    children: mission.children ? addTaskContribution(mission.children, taskId, target) : undefined,
   }));
 }
 
-export function addExternalContrib(
-  missions: Mission[],
-  targetId: string,
-  contrib: ExternalContribution,
-): Mission[] {
+export function addExternalContrib(missions: Mission[], targetId: string, contrib: ExternalContribution): Mission[] {
   return missions.map((mission) => ({
     ...mission,
     externalContributions:
-      mission.id === targetId &&
-      !mission.externalContributions?.some((ec) => ec.id === contrib.id)
+      mission.id === targetId && !mission.externalContributions?.some((ec) => ec.id === contrib.id)
         ? [...(mission.externalContributions ?? []), contrib]
         : mission.externalContributions,
-    children: mission.children
-      ? addExternalContrib(mission.children, targetId, contrib)
-      : undefined,
+    children: mission.children ? addExternalContrib(mission.children, targetId, contrib) : undefined,
   }));
 }
 
-export function removeIndicatorContribution(
-  missions: Mission[],
-  indicatorId: string,
-  targetMissionId: string,
-): Mission[] {
+export function removeKRContribution(missions: Mission[], krId: string, targetMissionId: string): Mission[] {
   return missions.map((mission) => ({
     ...mission,
-    indicators: mission.indicators?.map((indicator) =>
-      indicator.id === indicatorId
-        ? {
-            ...indicator,
-            contributesTo: indicator.contributesTo?.filter(
-              (c) => c.missionId !== targetMissionId,
-            ),
-          }
-        : indicator,
+    keyResults: mission.keyResults?.map((kr) =>
+      kr.id === krId
+        ? { ...kr, contributesTo: kr.contributesTo?.filter((c) => c.missionId !== targetMissionId) }
+        : kr
     ),
-    children: mission.children
-      ? removeIndicatorContribution(
-          mission.children,
-          indicatorId,
-          targetMissionId,
-        )
-      : undefined,
+    children: mission.children ? removeKRContribution(mission.children, krId, targetMissionId) : undefined,
   }));
 }
 
-export function removeTaskContribution(
-  missions: Mission[],
-  taskId: string,
-  targetMissionId: string,
-): Mission[] {
+export function removeTaskContribution(missions: Mission[], taskId: string, targetMissionId: string): Mission[] {
   return missions.map((mission) => ({
     ...mission,
     tasks: mission.tasks?.map((task) =>
       task.id === taskId
-        ? {
-            ...task,
-            contributesTo: task.contributesTo?.filter(
-              (c) => c.missionId !== targetMissionId,
-            ),
-          }
-        : task,
+        ? { ...task, contributesTo: task.contributesTo?.filter((c) => c.missionId !== targetMissionId) }
+        : task
     ),
-    children: mission.children
-      ? removeTaskContribution(mission.children, taskId, targetMissionId)
-      : undefined,
+    children: mission.children ? removeTaskContribution(mission.children, taskId, targetMissionId) : undefined,
   }));
 }
 
-export function removeExternalContrib(
-  missions: Mission[],
-  targetMissionId: string,
-  itemId: string,
-): Mission[] {
+export function removeExternalContrib(missions: Mission[], targetMissionId: string, itemId: string): Mission[] {
   return missions.map((mission) => ({
     ...mission,
     externalContributions:
       mission.id === targetMissionId
-        ? mission.externalContributions?.filter(
-            (external) => external.id !== itemId,
-          )
+        ? mission.externalContributions?.filter((external) => external.id !== itemId)
         : mission.externalContributions,
-    children: mission.children
-      ? removeExternalContrib(mission.children, targetMissionId, itemId)
-      : undefined,
+    children: mission.children ? removeExternalContrib(mission.children, targetMissionId, itemId) : undefined,
   }));
 }

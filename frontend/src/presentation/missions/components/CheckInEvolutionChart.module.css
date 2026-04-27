@@ -1,0 +1,150 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+}
+
+/* ─── KPI strip ─── */
+
+.kpiRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+}
+
+.kpiPrimary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-3xs);
+}
+
+.kpiValue {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  line-height: 1;
+}
+
+.kpiUnit {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-neutral-500);
+}
+
+.kpiContext {
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kpiContextGood {
+  color: var(--color-green-700);
+}
+
+.kpiContextBad {
+  color: var(--color-red-700);
+}
+
+.kpiContextNeutral {
+  color: var(--color-neutral-700);
+}
+
+/* ─── Tooltip ─── */
+
+.tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2xs);
+  min-width: 200px;
+  padding: var(--sp-xs) var(--sp-sm);
+  background-color: var(--color-neutral-0);
+  border: 1px solid var(--color-caramel-300);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+}
+
+.tooltipTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-xs);
+}
+
+.tooltipDate {
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-transform: capitalize;
+}
+
+.tooltipAuthorChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--sp-3xs);
+  font-family: var(--font-label);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+  background-color: var(--color-caramel-100);
+  border-radius: var(--radius-full);
+}
+
+.tooltipValue {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  line-height: 1.1;
+}
+
+.tooltipDeltaRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-xs);
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+}
+
+.tooltipDeltaLabel {
+  color: var(--color-neutral-500);
+}
+
+.tooltipDeltaValue {
+  font-weight: 500;
+}
+
+.tooltipDeltaPct {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.tooltipFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3xs);
+  margin-top: var(--sp-2xs);
+  padding-top: var(--sp-2xs);
+  border-top: 1px solid var(--color-caramel-200);
+  font-size: var(--text-xs);
+}
+
+.tooltipConfidenceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.tooltipConfidenceLabel {
+  color: var(--color-neutral-700);
+}
