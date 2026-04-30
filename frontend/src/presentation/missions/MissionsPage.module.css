@@ -142,97 +142,6 @@
 
 /* ——— Save view modal ——— */
 
-.saveModalContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-lg);
-}
-
-.saveFiltersSummary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2xs);
-}
-
-.saveFiltersTitle {
-  font-family: var(--font-label);
-  font-weight: 500;
-  font-size: var(--text-sm);
-  color: var(--color-neutral-950);
-  line-height: 1.05;
-}
-
-.saveFiltersList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--color-caramel-200);
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-}
-
-.saveFilterItem {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2xs);
-  padding: var(--sp-xs);
-  font-family: var(--font-label);
-  font-weight: 500;
-  font-size: var(--text-xs);
-  border-bottom: 1px solid var(--color-caramel-200);
-}
-
-.saveFilterItem:last-child {
-  border-bottom: none;
-}
-
-.saveFilterIcon {
-  flex-shrink: 0;
-  color: var(--color-neutral-400);
-}
-
-.saveFilterName {
-  color: var(--color-neutral-600);
-  white-space: nowrap;
-}
-
-.saveFilterValue {
-  flex: 1;
-  min-width: 0;
-  text-align: right;
-  color: var(--color-neutral-950);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ——— Delete confirmation modal ——— */
-
-.dangerTitle {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2xs);
-}
-
-.dangerIcon {
-  color: var(--color-red-600);
-  flex-shrink: 0;
-}
-
-.deleteText {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-sm);
-  margin: 0;
-  font-family: var(--font-body);
-  font-weight: 400;
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--color-neutral-700);
-}
-
 /* ——— Delete view button (inside FilterBar primaryAction) ——— */
 
 .deleteViewBtn {
@@ -370,15 +279,6 @@
   border-color: var(--color-caramel-300);
 }
 
-.missionCardDraft {
-  border-style: dashed;
-  border-color: var(--color-caramel-300);
-  opacity: 0.85;
-}
-
-.missionCardDraft:hover {
-  border-color: var(--color-caramel-500);
-}
 
 .missionActions {
   display: flex;
@@ -1715,84 +1615,6 @@
 
 .reviewItemMeta svg {
   flex-shrink: 0;
-}
-
-/* ——— Cards grid view ——— */
-
-.cardsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--sp-sm);
-}
-
-.missionCardGrid {
-  display: flex;
-  flex-direction: column;
-  transition: border-color 120ms ease;
-}
-
-.missionCardGrid:hover {
-  border-color: var(--color-caramel-300);
-}
-
-.cardGridHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-sm);
-}
-
-.cardGridMeta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cardGridTitle {
-  font-family: var(--font-heading);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-neutral-950);
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.cardGridSub {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  color: var(--color-neutral-500);
-  line-height: 1.3;
-}
-
-.cardGridProgress {
-  margin-top: var(--sp-xs);
-}
-
-.cardGridFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--sp-xs);
-}
-
-.cardGridAvatars {
-  display: flex;
-  align-items: center;
-  gap: -4px;
-}
-
-.cardGridAvatars > * + * {
-  margin-left: -4px;
-}
-
-.cardGridActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
 }
 
 /* ——— Kanban view ——— */
@@ -3158,9 +2980,6 @@
   background: var(--color-caramel-200);
 }
 
-.teamSectionHeaderCards {
-  grid-column: 1 / -1;
-}
 
 .kanbanTeamTag {
   display: inline-flex;

@@ -14,7 +14,7 @@ type MissionContributionTarget = { missionId: string; missionTitle: string };
 
 interface UseMissionContributionsParams {
   setMissions: Dispatch<SetStateAction<Mission[]>>;
-  setDrawerContributesTo: Dispatch<SetStateAction<MissionContributionTarget[]>>;
+  setDrawerContributesTo?: Dispatch<SetStateAction<MissionContributionTarget[]>>;
   setOpenRowMenu: Dispatch<SetStateAction<string | null>>;
   setOpenContributeFor: Dispatch<SetStateAction<string | null>>;
   setContributePickerSearch: Dispatch<SetStateAction<string>>;
@@ -51,7 +51,7 @@ export function useMissionContributions({
       return removeExternalContrib(removed, targetMissionId, itemId);
     });
 
-    setDrawerContributesTo((prev) => prev.filter((ct) => ct.missionId !== targetMissionId));
+    setDrawerContributesTo?.((prev) => prev.filter((ct) => ct.missionId !== targetMissionId));
     setOpenRowMenu(null);
     setOpenContributeFor(null);
     toast.success("Contribuição removida");

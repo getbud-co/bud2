@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FilterDropdown,
   Button,
@@ -39,177 +39,75 @@ import {
   getOwnerInitials,
   formatCheckinDate,
 } from "@/lib/missions";
-import type { CheckInChartPoint } from "../utils/checkinReadModels";
 import styles from "../MissionsPage.module.css";
+import { useMissionDrawer } from "../contexts/MissionDrawerContext";
 
-interface OwnerOption {
-  id: string;
-  label: string;
-  initials: string;
-}
-
-interface ConfidenceOption {
-  id: ConfidenceLevel;
-  label: string;
-  description: string;
-  color: string;
-}
-
-interface MentionPerson {
-  id: string;
-  label: string;
-  initials: string;
-}
-
-interface DrawerTask {
-  id: string;
-  title: string;
-  isDone: boolean;
-  ownerId: string | null;
-}
-
-interface CheckInSyncState {
-  syncStatus: "pending" | "synced" | "failed";
-  error: string | null;
-  nextRetryAt: string | null;
-}
-
-interface UpdateCheckInPatch {
-  note?: string | null;
-  confidence?: ConfidenceLevel | null;
-}
-
-interface MissionDetailsDrawerProps {
-  drawerOpen: boolean;
-  drawerMode: "indicator" | "task";
-  drawerIndicator: KeyResult | null;
-  drawerTask: MissionTask | null;
-  drawerMissionTitle: string;
-  drawerEditing: boolean;
-  editingItem: unknown;
-  renderInlineForm: () => ReactNode;
-  startDrawerEdit: () => void;
-  handleCloseDrawer: () => void;
-  drawerContributesTo: { missionId: string; missionTitle: string }[];
-  setDrawerContributesTo: (updater: (prev: { missionId: string; missionTitle: string }[]) => { missionId: string; missionTitle: string }[]) => void;
-  drawerItemId: string | null;
-  handleRequestRemoveContribution: (itemId: string, itemType: "indicator" | "task", targetMissionId: string, targetMissionTitle: string) => void;
-  drawerContribPickerOpen: boolean;
-  setDrawerContribPickerOpen: (open: boolean) => void;
-  drawerContribPickerSearch: string;
-  setDrawerContribPickerSearch: (value: string) => void;
-  addContribRef: MutableRefObject<HTMLButtonElement | null>;
-  allMissions: { id: string; title: string }[];
-  drawerSourceMissionId: string | null;
-  drawerSourceMissionTitle: string;
-  handleAddContribution: (item: KeyResult | MissionTask, itemType: "indicator" | "task", sourceMissionId: string, sourceMissionTitle: string, targetMissionId: string, targetMissionTitle: string) => void;
-  supportTeam: string[];
-  setSupportTeam: (updater: (prev: string[]) => string[]) => void;
-  addSupportOpen: boolean;
-  setAddSupportOpen: (updater: (prev: boolean) => boolean) => void;
-  addSupportRef: MutableRefObject<HTMLDivElement | null>;
-  supportSearch: string;
-  setSupportSearch: (value: string) => void;
-  ownerOptions: OwnerOption[];
-  drawerValue: string;
-  setDrawerValue: (value: string) => void;
-  drawerConfidence: ConfidenceLevel | null;
-  setDrawerConfidence: (value: ConfidenceLevel) => void;
-  confidenceOpen: boolean;
-  setConfidenceOpen: (updater: (prev: boolean) => boolean) => void;
-  confidenceBtnRef: MutableRefObject<HTMLButtonElement | null>;
-  confidenceOptions: ConfidenceOption[];
-  drawerNote: string;
-  drawerNoteRef: MutableRefObject<HTMLTextAreaElement | null>;
-  handleNoteChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
-  handleNoteKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
-  mentionQuery: string | null;
-  mentionIndex: number;
-  mentionResults: MentionPerson[];
-  insertMention: (person: MentionPerson) => void;
-  handleConfirmCheckin: () => void;
-  checkInHistoryForIndicator: CheckIn[];
-  checkInChartDataForIndicator: CheckInChartPoint[];
-  checkInSyncStateById: Record<string, CheckInSyncState>;
-  retryCheckInSync: (checkInId: string) => void;
-  onUpdateCheckIn: (checkInId: string, patch: UpdateCheckInPatch) => void;
-  onDeleteCheckIn: (checkInId: string) => void;
-  newlyCreatedCheckInId: string | null;
-  drawerTasks: DrawerTask[];
-  setDrawerTasks: (updater: (prev: DrawerTask[]) => DrawerTask[]) => void;
-  newTaskLabel: string;
-  setNewTaskLabel: (value: string) => void;
-  setDrawerTask: (updater: (prev: MissionTask | null) => MissionTask | null) => void;
-  currentUserId: string | null;
-  onOpenTaskFromIndicator: (taskId: string) => void;
-  onChangeTaskOwner: (ownerId: string) => void;
-}
-
-export function MissionDetailsDrawer({
-  drawerOpen,
-  drawerMode,
-  drawerIndicator,
-  drawerTask,
-  drawerMissionTitle,
-  drawerEditing,
-  editingItem,
-  renderInlineForm,
-  startDrawerEdit,
-  handleCloseDrawer,
-  drawerContributesTo,
-  setDrawerContributesTo,
-  drawerItemId,
-  handleRequestRemoveContribution,
-  drawerContribPickerOpen,
-  setDrawerContribPickerOpen,
-  drawerContribPickerSearch,
-  setDrawerContribPickerSearch,
-  addContribRef,
-  allMissions,
-  drawerSourceMissionId,
-  drawerSourceMissionTitle,
-  handleAddContribution,
-  supportTeam,
-  setSupportTeam,
-  addSupportOpen,
-  setAddSupportOpen,
-  addSupportRef,
-  supportSearch,
-  setSupportSearch,
-  ownerOptions,
-  drawerValue,
-  setDrawerValue,
-  drawerConfidence,
-  setDrawerConfidence,
-  confidenceOpen,
-  setConfidenceOpen,
-  confidenceBtnRef,
-  confidenceOptions,
-  drawerNote,
-  drawerNoteRef,
-  handleNoteChange,
-  handleNoteKeyDown,
-  mentionQuery,
-  mentionIndex,
-  mentionResults,
-  insertMention,
-  handleConfirmCheckin,
-  checkInHistoryForIndicator,
-  checkInChartDataForIndicator,
-  checkInSyncStateById,
-  retryCheckInSync,
-  onUpdateCheckIn,
-  onDeleteCheckIn,
-  newlyCreatedCheckInId,
-  drawerTasks,
-  setDrawerTasks,
-  newTaskLabel,
-  setNewTaskLabel,
-  setDrawerTask,
-  currentUserId,
-  onOpenTaskFromIndicator,
-  onChangeTaskOwner,
-}: MissionDetailsDrawerProps) {
+export function MissionDetailsDrawer() {
+  const {
+    drawerOpen,
+    drawerMode,
+    drawerIndicator,
+    drawerTask,
+    setDrawerTask,
+    drawerMissionTitle,
+    drawerEditing,
+    editingItem,
+    renderInlineForm,
+    startEdit: startDrawerEdit,
+    closeDrawer: handleCloseDrawer,
+    drawerContributesTo,
+    setDrawerContributesTo,
+    drawerItemId,
+    requestRemoveContribution: handleRequestRemoveContribution,
+    drawerContribPickerOpen,
+    setDrawerContribPickerOpen,
+    drawerContribPickerSearch,
+    setDrawerContribPickerSearch,
+    addContribRef,
+    allMissions,
+    drawerSourceMissionId,
+    drawerSourceMissionTitle,
+    addContribution: handleAddContribution,
+    supportTeam,
+    setSupportTeam,
+    addSupportOpen,
+    setAddSupportOpen,
+    addSupportRef,
+    supportSearch,
+    setSupportSearch,
+    ownerOptions,
+    drawerValue,
+    setDrawerValue,
+    drawerConfidence,
+    setDrawerConfidence,
+    confidenceOpen,
+    setConfidenceOpen,
+    confidenceBtnRef,
+    confidenceOptions,
+    drawerNote,
+    drawerNoteRef,
+    handleNoteChange,
+    handleNoteKeyDown,
+    mentionQuery,
+    mentionIndex,
+    mentionResults,
+    insertMention,
+    confirmCheckin: handleConfirmCheckin,
+    checkInHistoryForIndicator,
+    checkInChartDataForIndicator,
+    checkInSyncStateById,
+    retryCheckInSync,
+    updateCheckIn: onUpdateCheckIn,
+    deleteCheckIn: onDeleteCheckIn,
+    newlyCreatedCheckInId,
+    drawerTasks,
+    setDrawerTasks,
+    newTaskLabel,
+    setNewTaskLabel,
+    currentUserId,
+    openTaskFromIndicator: onOpenTaskFromIndicator,
+    changeTaskOwner: onChangeTaskOwner,
+  } = useMissionDrawer();
   const newlyCreatedCheckInRef = useRef<HTMLDivElement | null>(null);
   const [highlightedCheckInId, setHighlightedCheckInId] = useState<string | null>(null);
   const [editingCheckInId, setEditingCheckInId] = useState<string | null>(null);

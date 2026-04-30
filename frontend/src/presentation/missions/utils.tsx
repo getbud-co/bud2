@@ -1,6 +1,20 @@
 import { TemplateConfig } from "@/types";
 import { TEMPLATE_CONFIGS } from "./consts";
 import { CalendarDate } from "@/lib/tempStorage/date-format";
+import {
+  Crosshair,
+  GitBranch,
+  ListChecks,
+  Target,
+  User,
+  Users,
+} from "lucide-react";
+import {
+  CalendarBlank,
+  FunnelSimple,
+  ListBullets,
+  UsersThree,
+} from "@phosphor-icons/react";
 
 export function getTemplateConfig(
   template: string | undefined,
@@ -90,3 +104,16 @@ export function isoToCalendarDate(iso: string): CalendarDate {
   const [year = 0, month = 1, day = 1] = iso.split("-").map(Number);
   return { year, month, day };
 }
+
+export const filterChipIcons: Record<string, typeof Users | undefined> = {
+  team: Users,
+  period: CalendarBlank,
+  status: FunnelSimple,
+  owner: User,
+  itemType: ListBullets,
+  indicatorType: Crosshair,
+  contribution: GitBranch,
+  supporter: UsersThree,
+  taskState: ListChecks,
+  missionStatus: Target,
+};

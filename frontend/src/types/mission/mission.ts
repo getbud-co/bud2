@@ -1,6 +1,7 @@
 import type { Tag } from "@/types/tag/tag";
 import { Indicator, IndicatorStatus } from "./indicator";
 import { MissionTask } from "./mission-task";
+import { EmployeeLookup } from "../employee/employee";
 
 export type MissionStatus =
   | "draft"
@@ -9,7 +10,7 @@ export type MissionStatus =
   | "completed"
   | "cancelled";
 
-export type MissionVisibility = "public" | "team_only" | "private";
+export type MissionVisibility = "public" | "private";
 
 export type KanbanStatus = "uncategorized" | "todo" | "doing" | "done";
 
@@ -28,7 +29,6 @@ export interface MissionMember {
   role: MissionMemberRole;
   addedAt: string;
   addedBy: string | null;
-  /** Preenchido em queries com join */
   user?: {
     id: string;
     fullName: string;
@@ -45,7 +45,6 @@ export interface MissionLink {
   linkType: MissionLinkType;
   createdBy: string | null;
   createdAt: string;
-  /** Preenchido em queries com join */
   target?: {
     id: string;
     title: string;
@@ -76,36 +75,25 @@ export interface Mission {
   orgId: string;
   cycleId: string | null;
   parentId: string | null;
-  /** Profundidade na árvore: 0 = raiz, 1 = filha, etc. */
-  depth: number;
-  /** Materialized path: [raiz_id, ..., self_id] para queries eficientes de subárvore */
   path: string[];
   title: string;
   description: string | null;
   ownerId: string;
-  teamId: string | null;
   status: MissionStatus;
   visibility: MissionVisibility;
   progress: number;
   kanbanStatus: KanbanStatus;
-  sortOrder: number;
+  sortOrder: string;
   dueDate: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  /** Preenchido em queries com join */
-  owner?: {
-    id: string;
-    fullName: string;
-    initials: string | null;
-  };
-  team?: { id: string; name: string; color: string };
+  owner?: EmployeeLookup;
   indicators?: Indicator[];
   tasks?: MissionTask[];
   children?: Mission[];
   tags?: Tag[];
-  /** FUTURE */
   members?: MissionMember[];
   outgoingLinks?: MissionLink[];
   incomingLinks?: MissionLink[];

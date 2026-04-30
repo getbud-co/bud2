@@ -411,7 +411,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["m1"],
     title: "Usar o nosso conhecimento para mudar o patamar do negócio",
     description: null,
@@ -539,7 +538,6 @@ export const MOCK_MISSIONS: Mission[] = [
         orgId: ORG_ID,
         cycleId: CURRENT_CYCLE_ID,
         parentId: "m1",
-        depth: 1,
         path: ["m1", "m1-sub"],
         title: "Expandir a base de clientes enterprise",
         description: null,
@@ -585,7 +583,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["m2"],
     title:
       "Acelerar a governança, a performance e o desenvolvimento interno colaborativo",
@@ -681,7 +678,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: null,
     parentId: null,
-    depth: 0,
     path: ["m3"],
     title: "Implementar programa de mentoria entre líderes",
     description: null,
@@ -711,7 +707,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["mp1"],
     title: "Lançar módulo de Missões v2",
     description:
@@ -795,7 +790,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["mp2"],
     title: "Aumentar adoção do produto em 50%",
     description:
@@ -883,7 +877,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["mp3"],
     title: "Redesenhar fluxo de onboarding",
     description:
@@ -969,7 +962,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["mp4"],
     title: "Implementar sistema de feedback contínuo",
     description:
@@ -1059,7 +1051,6 @@ export const MOCK_MISSIONS: Mission[] = [
     orgId: ORG_ID,
     cycleId: CURRENT_CYCLE_ID,
     parentId: null,
-    depth: 0,
     path: ["mp5"],
     title: "Documentar e publicar APIs públicas v1",
     description:

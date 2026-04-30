@@ -35,6 +35,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { useMissionDrawer } from "@/presentation/missions/contexts/MissionDrawerContext";
 
 interface MissionItemProps {
   mission: Mission;
@@ -43,15 +44,8 @@ interface MissionItemProps {
   onExpand: (mission: Mission) => void;
   onEdit: (mission: Mission) => void;
   onDelete?: (mission: Mission) => void;
-  onCheckin?: (payload: {
-    keyResult: Indicator;
-    currentValue: number;
-    newValue: number;
-  }) => void;
   onToggleTask?: (taskId: string) => void;
-  onOpenTaskDrawer?: (task: MissionTask, parentLabel: string) => void;
   expandedMissions: Set<string>;
-  depth?: number;
   isLast?: boolean;
   isChild?: boolean;
   hideExpand?: boolean;
@@ -65,21 +59,6 @@ interface MissionItemProps {
     Record<string, HTMLButtonElement | null>
   >;
   allMissions?: { id: string; title: string }[];
-  onAddContribution?: (
-    item: Indicator | MissionTask,
-    itemType: "indicator" | "task",
-    sourceMissionId: string,
-    sourceMissionTitle: string,
-    targetMissionId: string,
-    targetMissionTitle: string,
-  ) => void;
-  onRemoveContribution?: (
-    itemId: string,
-    itemType: "indicator" | "task",
-    targetMissionId: string,
-    targetMissionTitle: string,
-  ) => void;
-  onOpenExternalContrib?: (ec: ExternalContribution) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
@@ -151,8 +130,6 @@ function ContributeMenu({
   missionId,
   missionTitle,
   itemType,
-  onAddContribution,
-  onRemoveContribution,
   rowMenuBtnRefs,
   item,
 }: {
@@ -168,25 +145,12 @@ function ContributeMenu({
   missionId: string;
   missionTitle: string;
   itemType: "indicator" | "task";
-  onAddContribution?: (
-    item: Indicator | MissionTask,
-    itemType: "indicator" | "task",
-    sourceMissionId: string,
-    sourceMissionTitle: string,
-    targetMissionId: string,
-    targetMissionTitle: string,
-  ) => void;
-  onRemoveContribution?: (
-    itemId: string,
-    itemType: "indicator" | "task",
-    targetMissionId: string,
-    targetMissionTitle: string,
-  ) => void;
   rowMenuBtnRefs?: React.MutableRefObject<
     Record<string, HTMLButtonElement | null>
   >;
   item: Indicator | MissionTask;
 }) {
+  const { addContribution, requestRemoveContribution } = useMissionDrawer();
   return (
     <>
       <Button
@@ -237,7 +201,7 @@ function ContributeMenu({
                     "flex items-center gap-[var(--sp-2xs)] w-full px-[var(--sp-2xs)] py-[var(--sp-2xs)] border-none bg-transparent rounded-[var(--radius-2xs)] [font-family:var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-red-600)] cursor-pointer whitespace-nowrap transition-colors duration-[120ms] ease-in-out text-left hover:bg-[var(--color-red-50)]"
                   }
                   onClick={() =>
-                    onRemoveContribution?.(
+                    requestRemoveContribution(
                       itemId,
                       itemType,
                       ct.missionId,
@@ -305,7 +269,7 @@ function ContributeMenu({
                   "flex items-center gap-[var(--sp-2xs)] w-full px-[var(--sp-2xs)] py-[var(--sp-2xs)] border-none bg-transparent rounded-[var(--radius-2xs)] [font-family:var(--font-label)] font-medium text-[var(--text-xs)] text-[var(--color-neutral-950)] cursor-pointer whitespace-nowrap transition-colors duration-[120ms] ease-in-out text-left hover:bg-[var(--color-caramel-100)]"
                 }
                 onClick={() =>
-                  onAddContribution?.(
+                  addContribution(
                     item,
                     itemType,
                     missionId,
@@ -337,9 +301,7 @@ function MissionItem({
   onExpand,
   onEdit,
   onDelete,
-  onCheckin,
   onToggleTask,
-  onOpenTaskDrawer,
   expandedMissions,
   isChild = false,
   isLast = false,
@@ -352,12 +314,10 @@ function MissionItem({
   setContributePickerSearch,
   rowMenuBtnRefs,
   allMissions = [],
-  onAddContribution,
-  onRemoveContribution,
-  onOpenExternalContrib,
   onToggleSubtask,
 }: MissionItemProps) {
   const router = useRouter();
+  const { openCheckin, openTaskDrawer, openExternalContrib, addContribution, requestRemoveContribution } = useMissionDrawer();
   const [indicatorValues, setIndicatorValues] = useState<
     Record<string, number>
   >({});
@@ -376,7 +336,6 @@ function MissionItem({
   }
 
   useEffect(() => {
-    if (!onCheckin) return;
     function onPointerUp() {
       if (!dragRef.current) return;
       const { indicator, value } = dragRef.current;
@@ -387,7 +346,7 @@ function MissionItem({
         return next;
       });
       requestAnimationFrame(() => {
-        onCheckin!({
+        openCheckin({
           keyResult: indicator,
           currentValue: indicator.progress,
           newValue: value,
@@ -396,16 +355,14 @@ function MissionItem({
     }
     document.addEventListener("pointerup", onPointerUp);
     return () => document.removeEventListener("pointerup", onPointerUp);
-  }, [onCheckin]);
+  }, [openCheckin]);
 
   function handleIndicatorClick(kr: Indicator) {
-    if (onCheckin) {
-      onCheckin({
-        keyResult: kr,
-        currentValue: getIndicatorValue(kr),
-        newValue: getIndicatorValue(kr),
-      });
-    }
+    openCheckin({
+      keyResult: kr,
+      currentValue: getIndicatorValue(kr),
+      newValue: getIndicatorValue(kr),
+    });
   }
 
   const keyResults = mission.indicators ?? [];
@@ -534,17 +491,14 @@ function MissionItem({
                           className={indicatorRowCls(
                             isFirstItem,
                             itemIsLast,
-                            !!onCheckin,
+                            true,
                             hasIndChildren,
                           )}
                           onClick={() => handleIndicatorClick(kr)}
-                          role={onCheckin ? "button" : undefined}
-                          tabIndex={onCheckin ? 0 : undefined}
+                          role="button"
+                          tabIndex={0}
                           onKeyDown={(e) => {
-                            if (
-                              onCheckin &&
-                              (e.key === "Enter" || e.key === " ")
-                            ) {
+                            if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               handleIndicatorClick(kr);
                             }
@@ -689,8 +643,6 @@ function MissionItem({
                                   missionId={mission.id}
                                   missionTitle={mission.title}
                                   itemType="indicator"
-                                  onAddContribution={onAddContribution}
-                                  onRemoveContribution={onRemoveContribution}
                                   rowMenuBtnRefs={rowMenuBtnRefs}
                                   item={kr}
                                 />
@@ -712,7 +664,7 @@ function MissionItem({
                                     )}
                                     style={{ cursor: "pointer" }}
                                     onClick={() =>
-                                      onOpenTaskDrawer?.(
+                                      openTaskDrawer(
                                         task,
                                         `${mission.title} › ${kr.title}`,
                                       )
@@ -798,12 +750,6 @@ function MissionItem({
                                             missionId={mission.id}
                                             missionTitle={mission.title}
                                             itemType="task"
-                                            onAddContribution={
-                                              onAddContribution
-                                            }
-                                            onRemoveContribution={
-                                              onRemoveContribution
-                                            }
                                             rowMenuBtnRefs={rowMenuBtnRefs}
                                             item={task}
                                           />
@@ -833,7 +779,7 @@ function MissionItem({
                           )}
                           style={{ cursor: "pointer" }}
                           onClick={() =>
-                            onOpenTaskDrawer?.(task, mission.title)
+                            openTaskDrawer(task, mission.title)
                           }
                         >
                           <div
@@ -902,8 +848,6 @@ function MissionItem({
                                   missionId={mission.id}
                                   missionTitle={mission.title}
                                   itemType="task"
-                                  onAddContribution={onAddContribution}
-                                  onRemoveContribution={onRemoveContribution}
                                   rowMenuBtnRefs={rowMenuBtnRefs}
                                   item={task}
                                 />
@@ -925,9 +869,7 @@ function MissionItem({
                       onExpand={onExpand}
                       onEdit={onEdit}
                       onDelete={onDelete}
-                      onCheckin={onCheckin}
                       onToggleTask={onToggleTask}
-                      onOpenTaskDrawer={onOpenTaskDrawer}
                       expandedMissions={expandedMissions}
                       isChild
                       isLast={itemIsLast}
@@ -939,9 +881,6 @@ function MissionItem({
                       setContributePickerSearch={setContributePickerSearch}
                       rowMenuBtnRefs={rowMenuBtnRefs}
                       allMissions={allMissions}
-                      onAddContribution={onAddContribution}
-                      onRemoveContribution={onRemoveContribution}
-                      onOpenExternalContrib={onOpenExternalContrib}
                       onToggleSubtask={onToggleSubtask}
                     />
                   );
@@ -959,11 +898,11 @@ function MissionItem({
                       <div
                         key={ec.id}
                         className="flex flex-row items-center gap-[var(--sp-xs)] py-[var(--sp-xs)] pl-[var(--sp-sm)] pr-[var(--sp-xs)] bg-[var(--color-neutral-0)] border-[1.5px] border-dashed border-[var(--color-caramel-200)] rounded-[var(--radius-2xs)] cursor-pointer transition-colors duration-[120ms] ease-in-out hover:bg-[var(--color-caramel-100)]"
-                        onClick={() => onOpenExternalContrib?.(ec)}
+                        onClick={() => openExternalContrib(ec)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") onOpenExternalContrib?.(ec);
+                          if (e.key === "Enter") openExternalContrib(ec);
                         }}
                       >
                         <div className="flex-1 min-w-0 flex flex-col gap-[var(--sp-3xs)]">
@@ -1043,7 +982,7 @@ function MissionItem({
                             leftIcon={X}
                             aria-label="Remover contribuição"
                             onClick={() =>
-                              onRemoveContribution?.(
+                              requestRemoveContribution(
                                 ec.id,
                                 ec.type,
                                 mission.id,
