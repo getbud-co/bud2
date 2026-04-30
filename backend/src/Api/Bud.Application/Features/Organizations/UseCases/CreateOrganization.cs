@@ -3,7 +3,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Organizations.UseCases;
 
-public sealed record CreateOrganizationCommand(string Name);
+public sealed record CreateOrganizationCommand(
+    string Name,
+    string Cnpj,
+    OrganizationPlan Plan,
+    OrganizationContractStatus ContractStatus,
+    string? IconUrl);
 
 public sealed partial class CreateOrganization(
     IOrganizationRepository organizationRepository,
@@ -18,14 +23,13 @@ public sealed partial class CreateOrganization(
 
         try
         {
-            var organizationDomainName = OrganizationDomainName.Create(command.Name);
-            var organization = Organization.Create(Guid.NewGuid(), organizationDomainName);
-
-            if (await organizationRepository.ExistsByNameAsync(organization.Name, ct: cancellationToken))
-            {
-                LogOrganizationCreationFailed(logger, command.Name, "Organization domain already exists");
-                return Result<Organization>.Failure(UserErrorMessages.OrganizationNameConflict, ErrorType.Conflict);
-            }
+            var organization = Organization.Create(
+                Guid.NewGuid(),
+                command.Name,
+                command.Cnpj,
+                command.Plan,
+                command.ContractStatus,
+                command.IconUrl);
 
             await organizationRepository.AddAsync(organization, cancellationToken);
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);

@@ -32,19 +32,11 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
         };
     }
 
-    public async Task<bool> ExistsByNameAsync(OrganizationDomainName name, Guid? excludeId = null, CancellationToken ct = default)
-    {
-        return await dbContext.Organizations
-            .IgnoreQueryFilters()
-            .Where(o => !excludeId.HasValue || o.Id != excludeId.Value)
-            .AnyAsync(o => EF.Property<string>(o, nameof(Organization.Name)) == name.Value, ct);
-    }
-
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
         => await dbContext.Organizations.AnyAsync(o => o.Id == id, ct);
 
     public async Task<bool> HasEmployeesAsync(Guid organizationId, CancellationToken ct = default)
-        => await dbContext.Employees.AnyAsync(c => c.OrganizationId == organizationId, ct);
+        => await dbContext.Memberships.AnyAsync(m => m.OrganizationId == organizationId, ct);
 
     public async Task AddAsync(Organization entity, CancellationToken ct = default)
         => await dbContext.Organizations.AddAsync(entity, ct);

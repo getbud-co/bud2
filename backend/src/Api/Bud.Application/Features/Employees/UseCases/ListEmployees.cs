@@ -1,3 +1,6 @@
+using Bud.Application.Common;
+using Bud.Shared.Contracts;
+
 namespace Bud.Application.Features.Employees.UseCases;
 
 public sealed class ListEmployees(IEmployeeRepository employeeRepository)
@@ -9,7 +12,7 @@ public sealed class ListEmployees(IEmployeeRepository employeeRepository)
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
-        var result = await employeeRepository.GetAllAsync(search, page, pageSize, cancellationToken);
+        var result = await employeeRepository.GetAllAsync(teamId, search, page, pageSize, cancellationToken);
         return Result<PagedResult<Employee>>.Success(result);
     }
 }

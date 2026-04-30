@@ -1,3 +1,6 @@
+global using Bud.Domain.Cycles;
+global using Bud.Domain.Cycles.Events;
+global using Bud.Domain.Notifications;
 global using Bud.Domain.Organizations;
 global using Bud.Domain.Employees;
 global using Bud.Domain.Notifications;

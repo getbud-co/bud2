@@ -126,8 +126,7 @@ Authorization is **declarative** — expressed as `[Authorize(Policy = ...)]` at
 |---|---|---|
 | `TenantSelected` | Controller class level | Authenticated user with a tenant selected (JWT `X-Tenant-Id`) |
 | `GlobalAdmin` | Specific endpoints (Organizations) | Global administrator only |
-| `LeaderRequired` | Employee write methods | Líder do tenant atual ou administrador global |
-
+| `LeaderRequired` | Teams/Employees write methods | Authenticated user with `EmployeeRole.TeamLeader` in the current tenant (`Membership.Role`) |
 
 **Tenant data isolation** is enforced by EF Core query filters (`OrganizationId == TenantId`) — no per-use-case ownership checks are needed for standard CRUD.
 

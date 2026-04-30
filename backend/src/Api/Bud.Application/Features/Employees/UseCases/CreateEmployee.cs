@@ -46,17 +46,40 @@ public sealed partial class CreateEmployee(
 
         try
         {
-            var employee = Employee.Create(
-                Guid.NewGuid(),
-                organizationId.Value,
-                employeeName,
-                emailAddress,
-                command.Role);
+            if (command.TeamId.HasValue)
+            {
+                var validTeams = await employeeRepository.CountTeamsByIdsAndOrganizationAsync(
+                    [command.TeamId.Value],
+                    organizationId.Value,
+                    cancellationToken);
+
+                if (validTeams != 1)
+                {
+                    LogEmployeeCreationFailed(logger, command.FullName, "Team not found");
+                    return Result<Employee>.NotFound(UserErrorMessages.TeamNotFound);
+                }
+            }
+
+            var newId = Guid.NewGuid();
+            var employee = Employee.Create(newId, personName.Value, emailAddress.Value);
+            var member = Membership.Create(newId, organizationId.Value, command.Role, command.LeaderId);
+            member.Employee = employee;
+            employee.Memberships.Add(member);
+
+            if (command.TeamId.HasValue)
+            {
+                employee.EmployeeTeams.Add(new EmployeeTeam
+                {
+                    EmployeeId = newId,
+                    TeamId = command.TeamId.Value,
+                    AssignedAt = DateTime.UtcNow,
+                });
+            }
 
             await employeeRepository.AddAsync(employee, cancellationToken);
             await unitOfWork.CommitAsync(employeeRepository.SaveChangesAsync, cancellationToken);
 
-            LogEmployeeCreated(logger, employee.Id, employee.FullName.Value);
+            LogEmployeeCreated(logger, newId, employee.FullName);
             return Result<Employee>.Success(employee);
         }
         catch (DomainInvariantException ex)

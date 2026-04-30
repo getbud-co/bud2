@@ -11,7 +11,22 @@ public sealed class LeaderRequiredHandler(ITenantProvider tenantProvider)
         AuthorizationHandlerContext context,
         LeaderRequiredRequirement requirement)
     {
-        if (tenantProvider.IsGlobalAdmin || context.User.IsInRole(nameof(EmployeeRole.Leader)))
+        if (tenantProvider.IsGlobalAdmin)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
+        if (tenantProvider.EmployeeId is null || !tenantProvider.TenantId.HasValue)
+        {
+            return;
+        }
+
+        var employee = await dbContext.Employees
+            .Include(e => e.Memberships)
+            .FirstOrDefaultAsync(e => e.Id == tenantProvider.EmployeeId.Value);
+
+        if (employee?.HasMinimumRoleIn(tenantProvider.TenantId.Value, EmployeeRole.TeamLeader) == true)
         {
             context.Succeed(requirement);
         }

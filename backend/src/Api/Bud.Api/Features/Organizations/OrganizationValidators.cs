@@ -9,10 +9,8 @@ public sealed class CreateOrganizationValidator : AbstractValidator<CreateOrgani
     public CreateOrganizationValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("O domínio é obrigatório.")
-            .MaximumLength(200).WithMessage("O domínio não pode exceder 200 caracteres.")
-            .Must(static name => string.IsNullOrWhiteSpace(name) || OrganizationDomainName.TryCreate(name, out _))
-            .WithMessage("O nome deve ser um domínio válido (ex: empresa.com.br).");
+            .NotEmpty().WithMessage("O nome da organização é obrigatório.")
+            .MaximumLength(200).WithMessage("O nome não pode exceder 200 caracteres.");
     }
 }
 
@@ -21,10 +19,8 @@ public sealed class PatchOrganizationValidator : AbstractValidator<PatchOrganiza
     public PatchOrganizationValidator()
     {
         RuleFor(x => x.Name.Value)
-            .NotEmpty().WithMessage("O domínio é obrigatório.")
-            .MaximumLength(200).WithMessage("O domínio não pode exceder 200 caracteres.")
-            .Must(static name => string.IsNullOrWhiteSpace(name) || OrganizationDomainName.TryCreate(name, out _))
-            .WithMessage("O nome deve ser um domínio válido (ex: empresa.com.br).")
+            .NotEmpty().WithMessage("O nome da organização é obrigatório.")
+            .MaximumLength(200).WithMessage("O nome não pode exceder 200 caracteres.")
             .When(x => x.Name.HasValue);
     }
 }

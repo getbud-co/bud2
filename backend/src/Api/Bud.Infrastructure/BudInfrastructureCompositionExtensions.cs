@@ -1,8 +1,11 @@
 using Bud.Application.Abstractions;
-using Bud.Application.Features.Employees;
 using Bud.Application.Features.Me;
 using Bud.Application.Features.Organizations;
 using Bud.Infrastructure.Persistence;
+using Bud.Infrastructure.DomainEvents;
+using Bud.Infrastructure.Features.Notifications;
+using Bud.Infrastructure.Features.Employees;
+using Bud.Infrastructure.Features.Teams;
 using Bud.Application.Ports;
 using Bud.Infrastructure.Features.Employees;
 using Bud.Infrastructure.Features.Me;
@@ -23,9 +26,12 @@ public static class BudInfrastructureCompositionExtensions
         }
 
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<ITeamRepository, TeamRepository>();
+        services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<ISessionAuthenticator, SessionAuthenticator>();
+        services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
         services.AddScoped<IMyOrganizationsReadStore, MyOrganizationsReadStore>();
         services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
         services.AddScoped<TenantSaveChangesInterceptor>();

@@ -7,7 +7,13 @@ public static class OrganizationContractMapper
         return new OrganizationResponse
         {
             Id = source.Id,
-            Name = source.Name.Value
+            Name = source.Name,
+            Cnpj = source.Cnpj,
+            Plan = source.Plan,
+            ContractStatus = source.ContractStatus,
+            IconUrl = source.IconUrl,
+            CreatedAt = source.CreatedAt,
+            DeletedAt = source.DeletedAt
         };
     }
 }

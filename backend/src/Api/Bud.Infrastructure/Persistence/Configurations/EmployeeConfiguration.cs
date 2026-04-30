@@ -19,15 +19,18 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
                 value => EmailAddress.Create(value))
             .HasMaxLength(320);
 
-        builder.Property(c => c.IsGlobalAdmin)
-            .HasDefaultValue(false);
+        builder.Property(c => c.Nickname)
+            .HasMaxLength(100);
 
-        builder.HasOne(c => c.Organization)
-            .WithMany()
-            .HasForeignKey(c => c.OrganizationId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(c => c.Language)
+            .HasConversion<string>()
+            .HasMaxLength(10)
+            .IsRequired();
 
-        builder.HasIndex(c => c.OrganizationId);
+        builder.Property(c => c.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
 
         builder.HasIndex(c => c.Email)
             .IsUnique();

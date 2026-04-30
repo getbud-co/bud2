@@ -5,7 +5,12 @@ using Microsoft.Extensions.Options;
 
 namespace Bud.Application.Features.Organizations.UseCases;
 
-public sealed record UpdateOrganizationCommand(Optional<string> Name);
+public sealed record PatchOrganizationCommand(
+    Optional<string> Name,
+    Optional<string> Cnpj,
+    Optional<OrganizationPlan> Plan,
+    Optional<OrganizationContractStatus> ContractStatus,
+    Optional<string?> IconUrl);
 
 public sealed partial class UpdateOrganization(
     IOrganizationRepository organizationRepository,
@@ -44,14 +49,26 @@ public sealed partial class UpdateOrganization(
         {
             if (command.Name.HasValue)
             {
-                var organizationDomainName = OrganizationDomainName.Create(command.Name.Value ?? string.Empty);
-                organization.Rename(organizationDomainName);
+                organization.Rename(command.Name.Value ?? string.Empty);
+            }
+            if (command.Cnpj.HasValue)
+            {
+                organization.Cnpj = command.Cnpj.Value ?? string.Empty;
+            }
 
-                if (await organizationRepository.ExistsByNameAsync(organization.Name, organization.Id, cancellationToken))
-                {
-                    LogOrganizationUpdateFailed(logger, id, "Organization domain already exists");
-                    return Result<Organization>.Failure(UserErrorMessages.OrganizationNameConflict, ErrorType.Conflict);
-                }
+            if (command.Plan.HasValue)
+            {
+                organization.Plan = command.Plan.Value;
+            }
+
+            if (command.ContractStatus.HasValue)
+            {
+                organization.ContractStatus = command.ContractStatus.Value;
+            }
+
+            if (command.IconUrl.HasValue)
+            {
+                organization.IconUrl = command.IconUrl.Value;
             }
 
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);
