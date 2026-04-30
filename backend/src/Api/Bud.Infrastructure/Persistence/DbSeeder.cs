@@ -15,7 +15,6 @@ public static class DbSeeder
         }
 
         var organizationName = organizationDomainName.Value;
-        var adminEmail = adminEmailAddress.Value;
 
         var organization = await context.Organizations
             .IgnoreQueryFilters()
