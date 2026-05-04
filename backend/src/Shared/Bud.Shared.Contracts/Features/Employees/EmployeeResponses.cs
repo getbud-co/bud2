@@ -23,7 +23,6 @@ public sealed class EmployeeMembershipResponse
     public EmployeeStatus Status { get; set; } = EmployeeStatus.Invited;
     public EmployeeRole Role { get; set; } = EmployeeRole.Contributor;
     public Guid OrganizationId { get; set; }
-    public Guid? LeaderId { get; set; }
     public bool IsGlobalAdmin { get; set; }
     public List<TeamResponse> Teams { get; set; } = [];
     public EmployeeMembershipResponse? Leader { get; set; }

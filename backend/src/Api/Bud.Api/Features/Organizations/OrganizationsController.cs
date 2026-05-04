@@ -11,7 +11,7 @@ namespace Bud.Api.Features.Organizations;
 [Produces("application/json")]
 public sealed class OrganizationsController(
     CreateOrganization createOrganization,
-    PatchOrganization patchOrganization,
+    UpdateOrganization updateOrganization,
     DeleteOrganization deleteOrganization,
     GetOrganizationById getOrganizationById,
     ListOrganizations listOrganizations,
@@ -70,7 +70,7 @@ public sealed class OrganizationsController(
 
         var command = new PatchOrganizationCommand(request.Name, request.Cnpj, request.Plan, request.ContractStatus, request.IconUrl);
 
-        var result = await patchOrganization.ExecuteAsync(id, command, cancellationToken);
+        var result = await updateOrganization.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, organization => organization.ToResponse());
     }
 

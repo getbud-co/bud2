@@ -10,8 +10,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
         string email,
         CancellationToken cancellationToken = default)
     {
-        var normalizedEmail = email?.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        if (!EmailAddress.TryCreate(email, out var emailAddress))
         {
             return Result<List<OrganizationSnapshot>>.Failure("E-mail é obrigatório.");
         }
@@ -33,7 +32,7 @@ public sealed class MyOrganizationsReadStore(ApplicationDbContext dbContext) : I
             var allOrgs = await dbContext.Organizations
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .OrderBy(o => o.Name)
+                .OrderBy(o => EF.Property<string>(o, nameof(Organization.Name)))
                 .Select(o => new OrganizationSnapshot
                 {
                     Id = o.Id,

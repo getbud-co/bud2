@@ -1,18 +1,13 @@
 using Bud.Api.Authorization.Requirements;
 using Bud.Application.Ports;
-using Bud.Infrastructure.Persistence;
-using Bud.Shared.Kernel.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bud.Api.Authorization.Handlers;
 
-public sealed class LeaderRequiredHandler(
-    ApplicationDbContext dbContext,
-    ITenantProvider tenantProvider)
+public sealed class LeaderRequiredHandler(ITenantProvider tenantProvider)
     : AuthorizationHandler<LeaderRequiredRequirement>
 {
-    protected override async Task HandleRequirementAsync(
+    protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         LeaderRequiredRequirement requirement)
     {
@@ -35,5 +30,7 @@ public sealed class LeaderRequiredHandler(
         {
             context.Succeed(requirement);
         }
+
+        return Task.CompletedTask;
     }
 }

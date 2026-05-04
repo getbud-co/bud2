@@ -11,26 +11,13 @@ namespace Bud.Api.Features.Employees;
 [Produces("application/json")]
 public sealed class EmployeesController(
     CreateEmployee createEmployee,
-    PatchEmployee patchEmployee,
+    UpdateEmployee updateEmployee,
     DeleteEmployee deleteEmployee,
     GetEmployeeById getEmployeeById,
-    GetEmployeeLookup listEmployeeOptions,
-    ListLeaderEmployees listLeaderEmployees,
     ListEmployees listEmployees,
-    GetEmployeeHierarchy getEmployeeHierarchy,
-    ListEmployeeTeams listEmployeeTeams,
-    PatchEmployeeTeams patchEmployeeTeams,
-    ListAvailableTeamsForEmployee listAvailableTeamsForEmployee,
     IValidator<CreateEmployeeRequest> createValidator,
     IValidator<PatchEmployeeRequest> updateValidator) : ApiControllerBase
 {
-    /// <summary>
-    /// Cria um funcionário.
-    /// </summary>
-    /// <response code="201">Funcionário criado com sucesso.</response>
-    /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Time não encontrado.</response>
-    /// <response code="403">Sem permissão para criar funcionário.</response>
     [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPost]
     [Consumes("application/json")]
@@ -46,25 +33,12 @@ public sealed class EmployeesController(
             return ValidationProblemFrom(validationResult);
         }
 
-        var command = new CreateEmployeeCommand(
-            request.FullName,
-            request.Email,
-            request.Role,
-            request.TeamId,
-            request.LeaderId);
-
+        var command = new CreateEmployeeCommand(request.FullName, request.Email, request.Role);
         var result = await createEmployee.ExecuteAsync(command, cancellationToken);
         return FromResult<Employee, EmployeeMembershipResponse>(result, employee =>
             CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee.ToEmployeeMembershipResponse()));
     }
 
-    /// <summary>
-    /// Atualiza um funcionário.
-    /// </summary>
-    /// <response code="200">Funcionário atualizado com sucesso.</response>
-    /// <response code="400">Payload inválido.</response>
-    /// <response code="404">Funcionário não encontrado.</response>
-    /// <response code="403">Sem permissão para atualizar funcionário.</response>
     [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpPatch("{id:guid}")]
     [Consumes("application/json")]
@@ -93,30 +67,16 @@ public sealed class EmployeesController(
         return FromResultOk(result, member => member.ToEmployeeMembershipResponse());
     }
 
-    /// <summary>
-    /// Exclui um funcionário.
-    /// </summary>
-    /// <response code="204">Funcionário removido com sucesso.</response>
-    /// <response code="404">Funcionário não encontrado.</response>
-    /// <response code="409">Conflito de integridade ao remover funcionário.</response>
-    /// <response code="403">Sem permissão para excluir funcionário.</response>
     [Authorize(Policy = AuthorizationPolicies.LeaderRequired)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await deleteEmployee.ExecuteAsync(id, cancellationToken);
         return FromResult(result, NoContent);
     }
 
-    /// <summary>
-    /// Busca funcionário por identificador.
-    /// </summary>
-    /// <response code="200">Funcionário encontrado.</response>
-    /// <response code="404">Funcionário não encontrado.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -126,11 +86,6 @@ public sealed class EmployeesController(
         return FromResultOk(result, member => member.ToEmployeeResponse());
     }
 
-    /// <summary>
-    /// Lista funcionários com paginação e filtros.
-    /// </summary>
-    /// <response code="200">Lista paginada retornada com sucesso.</response>
-    /// <response code="400">Parâmetros inválidos.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<EmployeeMembershipResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

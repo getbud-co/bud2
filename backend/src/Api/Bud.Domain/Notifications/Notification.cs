@@ -9,12 +9,12 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
     public Organization Organization { get; set; } = null!;
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
-    public NotificationType Type { get; set; }
+    public string Category { get; set; } = string.Empty;
     public bool IsRead { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? ReadAtUtc { get; set; }
-    public Guid? RelatedEntityId { get; set; }
-    public string? RelatedEntityType { get; set; }
+    public Guid? ReferenceId { get; set; }
+    public string? ReferenceType { get; set; }
 
     public static Notification Create(
         Guid id,
@@ -22,10 +22,10 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
         Guid organizationId,
         string title,
         string message,
-        NotificationType type,
+        string category,
         DateTime createdAtUtc,
-        Guid? relatedEntityId = null,
-        string? relatedEntityType = null)
+        Guid? referenceId = null,
+        string? referenceType = null)
     {
         if (recipientEmployeeId == Guid.Empty)
         {
@@ -37,14 +37,19 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("A notificação deve pertencer a uma organização válida.");
         }
 
-        if (!NotificationTitle.TryCreate(title, out var normalizedTitle))
+        if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 200)
         {
             throw new DomainInvariantException("O título da notificação é obrigatório e deve ter até 200 caracteres.");
         }
 
-        if (!NotificationMessage.TryCreate(message, out var normalizedMessage))
+        if (string.IsNullOrWhiteSpace(message) || message.Trim().Length > 1000)
         {
             throw new DomainInvariantException("A mensagem da notificação é obrigatória e deve ter até 1000 caracteres.");
+        }
+
+        if (string.IsNullOrWhiteSpace(category) || category.Trim().Length > 100)
+        {
+            throw new DomainInvariantException("A categoria da notificação é obrigatória e deve ter até 100 caracteres.");
         }
 
         return new Notification
@@ -52,13 +57,13 @@ public sealed class Notification : ITenantEntity, IAggregateRoot
             Id = id,
             RecipientEmployeeId = recipientEmployeeId,
             OrganizationId = organizationId,
-            Title = normalizedTitle.Value,
-            Message = normalizedMessage.Value,
-            Type = type,
+            Title = title.Trim(),
+            Message = message.Trim(),
+            Category = category.Trim(),
             IsRead = false,
             CreatedAtUtc = createdAtUtc,
-            RelatedEntityId = relatedEntityId,
-            RelatedEntityType = string.IsNullOrWhiteSpace(relatedEntityType) ? null : relatedEntityType.Trim()
+            ReferenceId = referenceId,
+            ReferenceType = string.IsNullOrWhiteSpace(referenceType) ? null : referenceType.Trim()
         };
     }
 

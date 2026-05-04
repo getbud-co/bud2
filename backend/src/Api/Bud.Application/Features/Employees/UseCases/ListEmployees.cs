@@ -6,7 +6,6 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed class ListEmployees(IEmployeeRepository employeeRepository)
 {
     public async Task<Result<PagedResult<Employee>>> ExecuteAsync(
-        Guid? teamId,
         string? search,
         int page,
         int pageSize,

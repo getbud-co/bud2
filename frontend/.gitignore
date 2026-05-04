@@ -3,6 +3,14 @@
 # local npm config (contains auth tokens)
 .npmrc
 
+# Next.js auto-generated
+next-env.d.ts
+
+# Production
+.next/
+out/
+build/
+dist/
 # dependencies
 /node_modules
 /.pnp

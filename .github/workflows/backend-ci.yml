@@ -37,12 +37,6 @@ jobs:
 
       - run: dotnet build Bud.sln --no-restore -c Release
 
-      # Invariant check BEFORE tests (fail fast on catalog drift)
-      - name: Verify MCP tool catalog
-        run: dotnet run --project src/Mcp/Bud.Mcp -- check-tool-catalog --fail-on-diff
-        env:
-          BUD_API_BASE_URL: http://localhost:5000
-
       - name: Run tests
         run: |
           dotnet test Bud.sln --no-build -c Release \

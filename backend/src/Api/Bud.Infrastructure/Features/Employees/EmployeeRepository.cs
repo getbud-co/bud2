@@ -1,8 +1,6 @@
 using Bud.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-using Bud.Shared.Contracts;
-
 namespace Bud.Infrastructure.Features.Employees;
 
 public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmployeeRepository
@@ -174,6 +172,7 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
     public async Task<bool> IsEmailUniqueAsync(string email, Guid? excludeId, CancellationToken ct = default)
     {
         var query = dbContext.Employees.AsQueryable();
+
         if (excludeId.HasValue)
         {
             query = query.Where(e => e.Id != excludeId.Value);
@@ -225,15 +224,14 @@ public sealed class EmployeeRepository(ApplicationDbContext dbContext) : IEmploy
         IReadOnlyDictionary<Guid, List<Employee>> childrenByLeader,
         List<Employee> acc)
     {
-        if (depth >= maxDepth || !childrenByLeader.TryGetValue(leaderId, out var children))
+        if (string.IsNullOrWhiteSpace(search))
         {
-            return;
+            return query;
         }
 
-        foreach (var child in children)
-        {
-            acc.Add(child);
-            CollectSubordinates(child.Id, depth + 1, maxDepth, childrenByLeader, acc);
-        }
+        var normalized = $"%{search.Trim()}%";
+        return query.Where(c =>
+            EF.Functions.ILike(EF.Property<string>(c, nameof(Employee.FullName)), normalized) ||
+            EF.Functions.ILike(EF.Property<string>(c, nameof(Employee.Email)), normalized));
     }
 }

@@ -1,8 +1,5 @@
-using Bud.Application.Common;
 using Bud.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-
-using Bud.Shared.Contracts;
 
 namespace Bud.Infrastructure.Features.Organizations;
 
@@ -21,7 +18,7 @@ public sealed class OrganizationRepository(ApplicationDbContext dbContext) : IOr
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(o => o.Name)
+            .OrderBy(o => EF.Property<string>(o, nameof(Organization.Name)))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

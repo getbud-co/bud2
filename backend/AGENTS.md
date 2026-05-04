@@ -54,9 +54,8 @@ This file supplements `/AGENTS.md` with backend-specific rules.
 - Keep the solution warning-free (`TreatWarningsAsErrors=true`).
 - For `Bud.Api` logging, use source-generated logging (`[LoggerMessage]`) local to each component (`partial` class); do not introduce centralized ad-hoc log catalogs.
 - For observability, register via `AddBudObservability()` in `BudObservabilityCompositionExtensions` (structured logging + OpenTelemetry). OTel config is **config-as-environment**: all export/resource/service-name settings come from standard OTel env vars, never hardcoded in code or appsettings.
-- Reserve EventId ranges per domain: 3100–3199 RequestTelemetryMiddleware; 4000–4009 Mission; 4010–4019 Organization; 4020–4029 reserved; 4030–4039 Team; 4040–4049 Employee; 4050–4059 Indicator; 4060–4069 Checkin; 4070–4079 Template; 4080–4089 MissionTask; 4090–4099 Session/Notification; 5000–5009 McpRequestLoggingMiddleware.
-- For `Bud.Mcp`, keep tool schemas explicit (`required`, field types/formats/enums) and propagate API validation details (`errors` by field).
-- For `Bud.Mcp`, keep domain tools (`mission_*`, `mission_indicator_*`, `indicator_checkin_*`) sourced from `Tools/Generated/mcp-tool-catalog.json` (strict mode, no runtime ad-hoc fallback).
+- Reserve EventId ranges per domain: 3100–3199 RequestTelemetryMiddleware; 4010–4019 Organization; 4040–4049 Employee/Auth; 4050–4059 Notification; 4090–4099 Session; 5000–5009 McpRequestLoggingMiddleware.
+- For `Bud.Mcp`, keep tool schemas explicit (`required`, field types/formats) e limitadas às capacidades atuais do host.
 - For `Bud.Mcp` HTTP transport, use `MCP-Session-Id` as the session header.
 - For `Bud.Mcp` protocol compatibility, keep `prompts/list` implemented (empty list when no prompts are published).
 
@@ -93,8 +92,10 @@ Bud backend is an ASP.NET Core 10 solution with PostgreSQL persistence and an MC
 - `src/Mcp/Bud.Mcp`: MCP server over HTTP treated as a conversational client of `Bud.Api`.
 - `src/Shared/Bud.Shared.Kernel`: stable shared types.
 - `src/Shared/Bud.Shared.Contracts`: shared edge contracts.
-- `tests/Api/*`: backend unit, integration, and architecture tests.
+- `tests/Api/*`: backend API unit tests.
 - `tests/Mcp/*`: MCP tests.
+
+The current base keeps a neutral notification inbox capability. It is infrastructure-oriented and must remain decoupled from product-specific event names or workflows.
 
 ### Layering and Dependencies (MUST)
 
@@ -129,14 +130,8 @@ Authorization is **declarative** — expressed as `[Authorize(Policy = ...)]` at
 
 **Tenant data isolation** is enforced by EF Core query filters (`OrganizationId == TenantId`) — no per-use-case ownership checks are needed for standard CRUD.
 
-**Exceptions (business rules in use cases, not auth):**
-- `PatchCheckin` / `DeleteCheckin`: author-only check (`checkin.EmployeeId == tenantProvider.EmployeeId`)
-- `PatchNotification`: recipient-only check (`notification.RecipientEmployeeId == tenantProvider.EmployeeId`), returns 404 to avoid leaking existence
-- `CreateMission` / `PatchMission` / `CreateTeam` / `CreateTemplate`: tenant presence check before creating entities
-
 **Adding a new authorization rule:**
-- If it is role-based (Leader, GlobalAdmin) → create a new `IAuthorizationRequirement` + `AuthorizationHandler<T>` in `Bud.Api/Authorization/`, register in `BudSecurityCompositionExtensions`, annotate the controller method.
-- If it is record-ownership (only the author can edit) → check in the use case after loading the record, return `NotFound` to avoid leaking existence.
+- If it is role-based (GlobalAdmin, future tenant role) → create a new `IAuthorizationRequirement` + `AuthorizationHandler<T>` in `Bud.Api/Authorization/`, register in `BudSecurityCompositionExtensions`, annotate the controller method.
 - Never add `IApplicationAuthorizationGateway` or resource/context records — that pattern has been removed.
 
 ### Controller Pattern (MUST)
@@ -189,27 +184,14 @@ dotnet ef migrations add <Name> --project src/Api/Bud.Infrastructure --startup-p
 
 ### Coverage Expectations (MUST)
 
-- Repositories: unit tests.
-- Use cases: unit tests (including authorization branches when applicable).
 - Validators: unit tests.
-- API endpoints: integration tests.
-- Business rules/invariants: automated tests.
+- Middleware/auth/tenant rules: unit tests.
+- MCP protocol/session behavior: unit tests.
 
 ### Test Strategy Essentials
 
 - Unit tests: xUnit + Moq + FluentAssertions.
-- Repository unit tests: EF InMemory + unique DB per test + tenant-aware setup.
-- Integration tests: `WebApplicationFactory<Program>` + Testcontainers PostgreSQL.
-- Include tenant scenarios: global admin, tenant-scoped requests, and no-tenant authenticated requests when relevant.
-
-## MCP Tool Catalog Sync (MUST)
-
-When contracts used by MCP tools change (`/api/missions`, `/api/indicators`, `/api/indicators/{id}/checkins`), run from `backend/`:
-
-```bash
-dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- generate-tool-catalog
-dotnet run --project src/Mcp/Bud.Mcp/Bud.Mcp.csproj -- check-tool-catalog --fail-on-diff
-```
+- Include tenant scenarios: global admin, tenant selecionado e autenticação ausente quando relevante.
 
 ## Operational References
 

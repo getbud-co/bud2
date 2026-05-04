@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using Bud.Mcp.Configuration;
-using Bud.Mcp.Clients;
 using Bud.Mcp.Tools;
 
 namespace Bud.Mcp.Auth;
@@ -77,9 +76,8 @@ public sealed class InMemoryMcpSessionStore(BudMcpOptions options) : IMcpSession
         var session = new BudApiSession(httpClient, _options);
         await session.InitializeAsync(cancellationToken);
 
-        var apiClient = new BudApiClient(httpClient, session);
-        var toolService = new McpToolService(apiClient, session);
-        return new McpSessionContext(sessionId, httpClient, session, apiClient, toolService);
+        var toolService = new McpToolService(session);
+        return new McpSessionContext(sessionId, httpClient, session, toolService);
     }
 
     private void CleanupExpiredSessions()

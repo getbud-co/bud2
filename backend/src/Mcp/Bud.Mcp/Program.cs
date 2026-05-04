@@ -2,7 +2,6 @@ using Bud.Mcp.Auth;
 using Bud.Mcp.Configuration;
 using Bud.Mcp.Observability;
 using Bud.Mcp.Protocol;
-using Bud.Mcp.Tools.Generation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -11,14 +10,6 @@ using OpenTelemetry.Trace;
 var builder = WebApplication.CreateBuilder(args);
 
 var options = BudMcpOptions.FromConfiguration(builder.Configuration);
-
-var commandRunner = new ToolCatalogCommandRunner();
-var commandResult = await commandRunner.TryExecuteAsync(args, options);
-if (commandResult.Handled)
-{
-    Environment.ExitCode = commandResult.ExitCode;
-    return;
-}
 
 // Structured JSON logging for Cloud Logging (non-development environments)
 if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Testing"))

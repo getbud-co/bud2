@@ -1,105 +1,95 @@
-# Bud API - Backend
+# Bud Backend
 
-Backend ASP.NET Core da aplicação Bud.
+Backend ASP.NET Core 10 reiniciado sobre uma base enxuta, preservando infraestrutura compartilhada e removendo as features legadas do Bud.
 
-## Tech Stack
+## Estado atual
 
-- **Framework**: ASP.NET Core 10
-- **Database**: PostgreSQL 16 + EF Core 10
-- **Architecture**: DDD + Clean Architecture
-- **Testing**: xUnit + Moq + Testcontainers
-- **Observability**: Structured Logging + OpenTelemetry
+- `Bud.Api`: API HTTP com autenticação JWT, multitenancy por `OrganizationId`, middleware, OpenAPI e health checks.
+- `Bud.Application`: casos de uso mínimos para sessão, organizações, colaboradores, notificações e contexto do usuário.
+- `Bud.Domain`: domínio reduzido a `Organization`, `Employee`, `Notification` e value objects como `EmployeeName`, `EmailAddress` e `OrganizationDomainName`.
+- `Bud.Infrastructure`: EF Core, repositórios mínimos, `ApplicationDbContext`, seed, inbox de notificações e migrations.
+- `Bud.Mcp`: host MCP limpo, com sessão, autenticação, seleção de tenant, observabilidade e protocolo JSON-RPC.
+
+## O que ficou no backend base
+
+- autenticação JWT por e-mail
+- isolamento por tenant com `X-Tenant-Id`
+- organizações e listagem de organizações disponíveis para o usuário
+- CRUD de colaboradores (`Employee`) com listagem paginada padrão
+- inbox neutro de notificações por colaborador
+- observabilidade com structured logging + OpenTelemetry
+- health checks (`/health/live` e `/health/ready`)
+- Docker dev/prod, CI e migrations
+- servidor MCP HTTP sem tools de domínio
+
+## O que saiu
+
+- metas
+- indicadores e check-ins
+- tarefas
+- templates
+- times
+- dashboard legado
+- catálogo MCP gerado a partir do domínio anterior
+
+## Notificações neutras
+
+- inbox por colaborador com listagem paginada
+- marcação individual e em lote como lida
+- publicação genérica via `PublishNotification`
+- categorias livres (`system.info`, `workflow.review`, etc.)
+- sem acoplamento a metas, check-ins ou qualquer feature legada
 
 ## Estrutura
 
-```
+```text
 backend/
 ├── src/
-│   ├── Api/           # API HTTP (Controllers, Features)
-│   ├── Mcp/           # MCP Server (HTTP)
-│   └── Shared/        # Contratos e tipos compartilhados
+│   ├── Api/
+│   │   ├── Bud.Api
+│   │   ├── Bud.Application
+│   │   ├── Bud.Domain
+│   │   └── Bud.Infrastructure
+│   ├── Mcp/
+│   │   └── Bud.Mcp
+│   └── Shared/
+│       ├── Bud.Shared.Contracts
+│       └── Bud.Shared.Kernel
 ├── tests/
-│   ├── Api/           # Testes Backend (Unit, Integration, Architecture)
-│   └── Mcp/           # Testes MCP
+│   ├── Api/Bud.Api.Tests
+│   ├── Application/Bud.Application.Tests
+│   ├── Domain/Bud.Domain.Tests
+│   ├── Infrastructure/Bud.Infrastructure.Tests
+│   ├── Mcp/Bud.Mcp.Tests
+│   └── Shared/Bud.TestHelpers
 ├── Bud.sln
-├── Dockerfile         # Dev targets (dev-api, dev-mcp)
-└── Dockerfile.Production  # Prod targets (prod-api, prod-mcp, prod-migrate)
+├── Dockerfile
+└── Dockerfile.Production
 ```
 
-## Setup Local
-
-### Pré-requisitos
-
-- .NET 10 SDK
-- Docker (para PostgreSQL local)
-- Docker Compose
-
-### Iniciar
+## Comandos principais
 
 ```bash
-cd backend
-dotnet restore
-dotnet build
-dotnet test
+dotnet restore Bud.sln
+dotnet build Bud.sln
+dotnet test Bud.sln
 ```
 
-Ou com Docker Compose (na raiz do repo):
+## Migrations
 
 ```bash
-docker compose up api db
-```
-
-### Variáveis de Ambiente
-
-Criar `.env` ou copiar de `.env.example`:
-
-```env
-ASPNETCORE_ENVIRONMENT=Development
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=bud;Username=postgres;Password=postgres
-```
-
-## Desenvolvimento
-
-### Estrutura DDD
-
-- **Domain**: Entidades, Value Objects, Eventos, Interfaces de Repositório
-- **Application**: Use Cases, Mappers, Ports, Read Models
-- **Infrastructure**: EF Core, Repositórios Concretos, Serviços, Domain Event Dispatcher
-- **Api**: Controllers + Validators co-localizados em `Features/<Feature>/`, Middleware, Authorization
-
-### Testes
-
-```bash
-# Unit tests
-dotnet test tests/Api/Bud.Api.UnitTests/
-
-# Integration tests (requer Testcontainers PostgreSQL)
-dotnet test tests/Api/Bud.Api.IntegrationTests/
-
-# Architecture tests
-dotnet test tests/Api/Bud.ArchitectureTests/
-
-# Tudo
-dotnet test
-```
-
-### Migrations
-
-```bash
-# Add migration
-dotnet ef migrations add <Name> --project src/Api/Bud.Infrastructure --startup-project src/Api/Bud.Api
-
-# Remove last migration
-dotnet ef migrations remove --project src/Api/Bud.Infrastructure --startup-project src/Api/Bud.Api
-
-# Update database
+dotnet ef migrations add <Nome> --project src/Api/Bud.Infrastructure --startup-project src/Api/Bud.Api
 dotnet ef database update --project src/Api/Bud.Infrastructure --startup-project src/Api/Bud.Api
 ```
 
-### API Documentation
+## Execução local
 
-OpenAPI disponível em `/swagger` e `/openapi/v1.json` em Development.
+Na raiz do monorepo:
 
-## Deploy
+```bash
+docker compose up api mcp db
+```
 
-Ver `../DEPLOY.md` para instruções de deploy no GCP Cloud Run.
+## Observação
+
+Este backend está intencionalmente reduzido a uma base operacional para reconstrução do produto a partir do frontend novo.

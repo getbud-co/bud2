@@ -18,22 +18,19 @@ public sealed class SessionAuthenticator(
 
     public async Task<Result<LoginResult>> LoginAsync(CreateSessionRequest request, CancellationToken cancellationToken = default)
     {
-        var email = request.Email?.Trim();
-        if (string.IsNullOrWhiteSpace(email))
+        if (!EmailAddress.TryCreate(request.Email, out var emailAddress))
         {
             return Result<LoginResult>.Failure("Informe o e-mail.");
         }
 
-        var normalizedEmail = email.ToLowerInvariant();
-
         var employee = await dbContext.Employees
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Email == normalizedEmail, cancellationToken);
+            .FirstOrDefaultAsync(c => EF.Property<string>(c, nameof(Employee.Email)) == emailAddress.Value, cancellationToken);
 
         if (employee is null)
         {
-            return Result<LoginResult>.NotFound("Usuário não encontrado.");
+            return Result<LoginResult>.Unauthorized("Falha ao autenticar.");
         }
 
         // Load the membership for the organization context
@@ -49,8 +46,8 @@ public sealed class SessionAuthenticator(
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, employee.Email),
-            new("email", employee.Email),
+            new(ClaimTypes.Email, employee.Email.Value),
+            new("email", employee.Email.Value),
             new("employee_id", employee.Id.ToString()),
             new("organization_id", member.OrganizationId.ToString()),
             new(ClaimTypes.Name, employee.FullName),
@@ -75,13 +72,6 @@ public sealed class SessionAuthenticator(
             Role = member.Role,
             OrganizationId = member.OrganizationId,
         });
-    }
-
-    private async Task RegisterAccessLogAsync(Guid employeeId, Guid organizationId, CancellationToken cancellationToken)
-    {
-        dbContext.EmployeeAccessLogs.Add(
-            EmployeeAccessLog.Create(Guid.NewGuid(), employeeId, organizationId, DateTime.UtcNow));
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private string GenerateJwtToken(List<Claim> claims)

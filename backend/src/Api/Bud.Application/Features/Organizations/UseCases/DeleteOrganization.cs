@@ -11,7 +11,10 @@ public sealed partial class DeleteOrganization(
     ILogger<DeleteOrganization> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    private readonly string _globalAdminOrgName = globalAdminSettings.Value.OrganizationName;
+    private readonly OrganizationDomainName? _globalAdminOrgName =
+        OrganizationDomainName.TryCreate(globalAdminSettings.Value.OrganizationName, out var organizationDomainName)
+            ? organizationDomainName
+            : null;
 
     public async Task<Result> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -29,7 +32,7 @@ public sealed partial class DeleteOrganization(
             LogOrganizationDeletionFailed(logger, id, "Protected organization");
             return Result.Failure(
                 "Esta organização está protegida e não pode ser excluída.",
-                ErrorType.Validation);
+                ErrorType.Conflict);
         }
 
         if (await organizationRepository.HasEmployeesAsync(id, cancellationToken))

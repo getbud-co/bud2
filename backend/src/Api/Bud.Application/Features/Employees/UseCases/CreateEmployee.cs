@@ -1,5 +1,3 @@
-using Bud.Application.Common;
-using Bud.Application.Ports;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Employees.UseCases;
@@ -7,9 +5,7 @@ namespace Bud.Application.Features.Employees.UseCases;
 public sealed record CreateEmployeeCommand(
     string FullName,
     string Email,
-    EmployeeRole Role,
-    Guid? TeamId,
-    Guid? LeaderId);
+    EmployeeRole Role);
 
 public sealed partial class CreateEmployee(
     IEmployeeRepository employeeRepository,
@@ -27,19 +23,25 @@ public sealed partial class CreateEmployee(
         if (!organizationId.HasValue)
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Organization context not found");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeContextNotFound, ErrorType.Validation);
+            return Result<Employee>.Failure("Contexto de organização não encontrado.", ErrorType.Validation);
         }
 
         if (!EmailAddress.TryCreate(command.Email, out var emailAddress))
         {
             LogEmployeeCreationFailed(logger, command.FullName, "Invalid email");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeInvalidEmail, ErrorType.Validation);
+            return Result<Employee>.Failure("E-mail inválido.", ErrorType.Validation);
         }
 
-        if (!PersonName.TryCreate(command.FullName, out var personName))
+        if (!EmployeeName.TryCreate(command.FullName, out var employeeName))
         {
-            LogEmployeeCreationFailed(logger, command.FullName, "Invalid name");
-            return Result<Employee>.Failure(UserErrorMessages.EmployeeNameRequired, ErrorType.Validation);
+            LogEmployeeCreationFailed(logger, command.FullName, "Invalid full name");
+            return Result<Employee>.Failure("O nome do colaborador é obrigatório.", ErrorType.Validation);
+        }
+
+        if (!await employeeRepository.IsEmailUniqueAsync(emailAddress, null, cancellationToken))
+        {
+            LogEmployeeCreationFailed(logger, command.FullName, "Email already in use");
+            return Result<Employee>.Failure("E-mail já está em uso.", ErrorType.Validation);
         }
 
         try

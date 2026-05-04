@@ -1,4 +1,3 @@
-
 namespace Bud.Application.Features.Employees;
 
 public interface IEmployeeRepository

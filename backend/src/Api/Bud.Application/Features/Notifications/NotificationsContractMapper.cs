@@ -1,7 +1,6 @@
-
 namespace Bud.Application.Features.Notifications;
 
-internal static class NotificationsContractMapper
+public static class NotificationsContractMapper
 {
     public static NotificationResponse ToResponse(this Notification source)
     {
@@ -10,12 +9,12 @@ internal static class NotificationsContractMapper
             Id = source.Id,
             Title = source.Title,
             Message = source.Message,
-            Type = source.Type.ToString(),
+            Category = source.Category,
             IsRead = source.IsRead,
             CreatedAtUtc = source.CreatedAtUtc,
             ReadAtUtc = source.ReadAtUtc,
-            RelatedEntityId = source.RelatedEntityId,
-            RelatedEntityType = source.RelatedEntityType
+            ReferenceId = source.ReferenceId,
+            ReferenceType = source.ReferenceType
         };
     }
 }

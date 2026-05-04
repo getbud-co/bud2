@@ -1,4 +1,3 @@
-using Bud.Application.Common;
 using Microsoft.Extensions.Logging;
 
 namespace Bud.Application.Features.Employees.UseCases;
@@ -8,9 +7,7 @@ public sealed partial class DeleteEmployee(
     ILogger<DeleteEmployee> logger,
     IUnitOfWork? unitOfWork = null)
 {
-    public async Task<Result> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<Result> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         LogDeletingEmployee(logger, id);
 
@@ -18,23 +15,7 @@ public sealed partial class DeleteEmployee(
         if (employee is null)
         {
             LogEmployeeDeletionFailed(logger, id, "Not found");
-            return Result.NotFound(UserErrorMessages.EmployeeNotFound);
-        }
-
-        if (await employeeRepository.HasSubordinatesAsync(id, cancellationToken))
-        {
-            LogEmployeeDeletionFailed(logger, id, "Has subordinates");
-            return Result.Failure(
-                "Não é possível excluir o colaborador. Ele é líder de outros colaboradores.",
-                ErrorType.Conflict);
-        }
-
-        if (await employeeRepository.HasMissionsAsync(id, cancellationToken))
-        {
-            LogEmployeeDeletionFailed(logger, id, "Has missions");
-            return Result.Failure(
-                "Não é possível excluir o colaborador porque existem metas associadas a ele.",
-                ErrorType.Conflict);
+            return Result.NotFound("Funcionário não encontrado.");
         }
 
         await employeeRepository.RemoveAsync(employee, cancellationToken);

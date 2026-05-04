@@ -34,7 +34,7 @@ public sealed partial class CreateOrganization(
             await organizationRepository.AddAsync(organization, cancellationToken);
             await unitOfWork.CommitAsync(organizationRepository.SaveChangesAsync, cancellationToken);
 
-            LogOrganizationCreated(logger, organization.Id, organization.Name);
+            LogOrganizationCreated(logger, organization.Id, organization.Name.Value);
             return Result<Organization>.Success(organization);
         }
         catch (DomainInvariantException ex)

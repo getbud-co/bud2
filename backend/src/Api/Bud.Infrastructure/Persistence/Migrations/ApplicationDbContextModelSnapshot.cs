@@ -84,9 +84,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -174,147 +171,16 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.ToTable("Memberships");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Indicators.Checkin", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CheckinDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ConfidenceLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IndicatorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Text")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<decimal?>("Value")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("IndicatorId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("Checkins");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Indicators.Indicator", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal?>("MaxValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal?>("MinValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("MissionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("QuantitativeType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TargetText")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Unit")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MissionId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("Indicators");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Missions.Mission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("Dimension")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("ParentId");
-
-                    b.ToTable("Missions");
-                });
-
             modelBuilder.Entity("Bud.Domain.Notifications.Notification", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -336,10 +202,10 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("RecipientEmployeeId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("RelatedEntityId")
+                    b.Property<Guid?>("ReferenceId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("RelatedEntityType")
+                    b.Property<string>("ReferenceType")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -348,14 +214,11 @@ namespace Bud.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("OrganizationId", "IsRead");
 
-                    b.HasIndex("RecipientEmployeeId", "IsRead", "CreatedAtUtc");
+                    b.HasIndex("RecipientEmployeeId", "CreatedAtUtc");
 
                     b.ToTable("Notifications");
                 });
@@ -399,101 +262,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Organizations");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tags.MissionTag", b =>
-                {
-                    b.Property<Guid>("MissionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TagId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("MissionId", "TagId");
-
-                    b.HasIndex("MissionId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("MissionTags");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("OrganizationId", "Name")
-                        .IsUnique()
-                        .HasFilter("\"DeletedAt\" IS NULL");
-
-                    b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tasks.MissionTask", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("date")
-                        .HasColumnName("due_date");
-
-                    b.Property<Guid>("MissionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MissionId");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("MissionId", "State");
-
-                    b.ToTable("MissionTasks");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
@@ -543,134 +311,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.HasIndex("ParentTeamId");
 
                     b.ToTable("Teams");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.Template", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("MissionDescriptionPattern")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("MissionNamePattern")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("Templates");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.TemplateIndicator", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal?>("MaxValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal?>("MinValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("QuantitativeType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TargetText")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("TemplateMissionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Unit")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("TemplateId");
-
-                    b.HasIndex("TemplateMissionId");
-
-                    b.ToTable("TemplateIndicators");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.TemplateMission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("Dimension")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("ParentId");
-
-                    b.HasIndex("TemplateId");
-
-                    b.ToTable("TemplateMissions");
                 });
 
             modelBuilder.Entity("Bud.Domain.Cycles.Cycle", b =>
@@ -753,77 +393,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("Organization");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Indicators.Checkin", b =>
-                {
-                    b.HasOne("Bud.Domain.Employees.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Indicators.Indicator", "Indicator")
-                        .WithMany("Checkins")
-                        .HasForeignKey("IndicatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Indicator");
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Indicators.Indicator", b =>
-                {
-                    b.HasOne("Bud.Domain.Missions.Mission", "Mission")
-                        .WithMany("Indicators")
-                        .HasForeignKey("MissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Mission");
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Missions.Mission", b =>
-                {
-                    b.HasOne("Bud.Domain.Employees.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Missions.Mission", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Parent");
-                });
-
             modelBuilder.Entity("Bud.Domain.Notifications.Notification", b =>
                 {
                     b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
@@ -841,55 +410,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("Organization");
 
                     b.Navigation("RecipientEmployee");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tags.MissionTag", b =>
-                {
-                    b.HasOne("Bud.Domain.Missions.Mission", "Mission")
-                        .WithMany("Tags")
-                        .HasForeignKey("MissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Tags.Tag", "Tag")
-                        .WithMany("MissionTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Mission");
-
-                    b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
-                {
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tasks.MissionTask", b =>
-                {
-                    b.HasOne("Bud.Domain.Missions.Mission", "Mission")
-                        .WithMany("Tasks")
-                        .HasForeignKey("MissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Mission");
-
-                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
@@ -910,95 +430,11 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("ParentTeam");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Templates.Template", b =>
-                {
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.TemplateIndicator", b =>
-                {
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Templates.Template", "Template")
-                        .WithMany("Indicators")
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Templates.TemplateMission", "TemplateMission")
-                        .WithMany("Indicators")
-                        .HasForeignKey("TemplateMissionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Template");
-
-                    b.Navigation("TemplateMission");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.TemplateMission", b =>
-                {
-                    b.HasOne("Bud.Domain.Organizations.Organization", "Organization")
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bud.Domain.Templates.TemplateMission", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Bud.Domain.Templates.Template", "Template")
-                        .WithMany("Missions")
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("Template");
-                });
-
             modelBuilder.Entity("Bud.Domain.Employees.Employee", b =>
                 {
                     b.Navigation("EmployeeTeams");
 
                     b.Navigation("Memberships");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Indicators.Indicator", b =>
-                {
-                    b.Navigation("Checkins");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Missions.Mission", b =>
-                {
-                    b.Navigation("Children");
-
-                    b.Navigation("Indicators");
-
-                    b.Navigation("Tags");
-
-                    b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Tags.Tag", b =>
-                {
-                    b.Navigation("MissionTags");
                 });
 
             modelBuilder.Entity("Bud.Domain.Teams.Team", b =>
@@ -1008,19 +444,6 @@ namespace Bud.Infrastructure.Persistence.Migrations
                     b.Navigation("Employees");
                 });
 
-            modelBuilder.Entity("Bud.Domain.Templates.Template", b =>
-                {
-                    b.Navigation("Indicators");
-
-                    b.Navigation("Missions");
-                });
-
-            modelBuilder.Entity("Bud.Domain.Templates.TemplateMission", b =>
-                {
-                    b.Navigation("Children");
-
-                    b.Navigation("Indicators");
-                });
 #pragma warning restore 612, 618
         }
     }

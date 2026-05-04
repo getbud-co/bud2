@@ -2,34 +2,26 @@ using Bud.Application.Common;
 using Bud.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-using Bud.Shared.Contracts;
-
 namespace Bud.Infrastructure.Features.Notifications;
 
 public sealed class NotificationRepository(ApplicationDbContext dbContext) : INotificationRepository
 {
-    public async Task<Notification?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => await dbContext.Notifications
-            .FirstOrDefaultAsync(n => n.Id == id, ct);
+    public Task<Notification?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => dbContext.Notifications.FirstOrDefaultAsync(n => n.Id == id, ct);
 
-    public async Task<PagedResult<Notification>> GetByRecipientAsync(
-        Guid recipientId,
-        bool? isRead,
-        int page,
-        int pageSize,
-        CancellationToken ct = default)
+    public async Task<PagedResult<Notification>> GetByRecipientAsync(Guid recipientId, bool? isRead, int page, int pageSize, CancellationToken ct = default)
     {
         (page, pageSize) = PaginationNormalizer.Normalize(page, pageSize);
 
         var query = dbContext.Notifications
             .AsNoTracking()
             .Where(n => n.RecipientEmployeeId == recipientId)
-            .OrderByDescending(n => n.CreatedAtUtc);
+            .OrderByDescending(n => n.CreatedAtUtc)
+            .AsQueryable();
 
         if (isRead.HasValue)
         {
-            query = query.Where(n => n.IsRead == isRead.Value)
-                .OrderByDescending(n => n.CreatedAtUtc);
+            query = query.Where(n => n.IsRead == isRead.Value).OrderByDescending(n => n.CreatedAtUtc);
         }
 
         var total = await query.CountAsync(ct);
@@ -47,17 +39,17 @@ public sealed class NotificationRepository(ApplicationDbContext dbContext) : INo
         };
     }
 
-    public async Task MarkAllAsReadAsync(Guid recipientId, CancellationToken ct = default)
-        => await dbContext.Notifications
+    public Task<List<Notification>> GetUnreadByRecipientAsync(Guid recipientId, CancellationToken ct = default)
+    {
+        return dbContext.Notifications
             .Where(n => n.RecipientEmployeeId == recipientId && !n.IsRead)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(n => n.IsRead, true)
-                .SetProperty(n => n.ReadAtUtc, DateTime.UtcNow),
-                ct);
+            .OrderByDescending(n => n.CreatedAtUtc)
+            .ToListAsync(ct);
+    }
 
-    public async Task AddRangeAsync(IEnumerable<Notification> notifications, CancellationToken ct = default)
-        => await dbContext.Notifications.AddRangeAsync(notifications, ct);
+    public Task AddRangeAsync(IEnumerable<Notification> notifications, CancellationToken ct = default)
+        => dbContext.Notifications.AddRangeAsync(notifications, ct);
 
-    public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await dbContext.SaveChangesAsync(ct);
+    public Task SaveChangesAsync(CancellationToken ct = default)
+        => dbContext.SaveChangesAsync(ct);
 }

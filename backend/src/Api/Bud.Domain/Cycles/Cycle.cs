@@ -2,9 +2,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Bud.Domain.Cycles;
 
-public sealed class Cycle : ITenantEntity, IAggregateRoot, IHasDomainEvents
+public sealed class Cycle : ITenantEntity, IAggregateRoot
 {
-    private readonly List<IDomainEvent> _domainEvents = [];
 
     public Guid Id { get; set; }
 
@@ -17,9 +16,6 @@ public sealed class Cycle : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public CycleStatus Status { get; set; }
-
-    [NotMapped]
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public static Cycle Create(
         Guid id,
@@ -43,7 +39,6 @@ public sealed class Cycle : ITenantEntity, IAggregateRoot, IHasDomainEvents
         };
 
         cycle.ApplyDetails(name, cadence, startDate, endDate, status);
-        cycle.AddDomainEvent(new CycleCreatedDomainEvent(cycle.Id, cycle.OrganizationId, cycle.Name, actorCollaboratorId));
         return cycle;
     }
 
@@ -55,21 +50,6 @@ public sealed class Cycle : ITenantEntity, IAggregateRoot, IHasDomainEvents
         CycleStatus status)
     {
         ApplyDetails(name, cadence, startDate, endDate, status);
-    }
-
-    public void MarkAsUpdated(Guid? actorCollaboratorId = null)
-    {
-        AddDomainEvent(new CycleUpdatedDomainEvent(Id, OrganizationId, Name, actorCollaboratorId));
-    }
-
-    public void MarkAsDeleted(Guid? actorCollaboratorId = null)
-    {
-        AddDomainEvent(new CycleDeletedDomainEvent(Id, OrganizationId, Name, actorCollaboratorId));
-    }
-
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
     }
 
     private void ApplyDetails(
@@ -101,8 +81,4 @@ public sealed class Cycle : ITenantEntity, IAggregateRoot, IHasDomainEvents
         Status = status;
     }
 
-    private void AddDomainEvent(IDomainEvent domainEvent)
-    {
-        _domainEvents.Add(domainEvent);
-    }
 }
