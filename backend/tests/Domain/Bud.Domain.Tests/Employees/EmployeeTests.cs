@@ -36,10 +36,10 @@ public sealed class EmployeeTests
         var newName = EmployeeName.Create("Maria Santos");
         var newEmail = EmailAddress.Create("maria@bud.co");
 
-        employee.UpdateProfile(newName, newEmail, EmployeeRole.Leader);
+        employee.UpdateProfile(newName, newEmail, EmployeeRole.TeamLeader);
 
         employee.FullName.Should().Be(newName);
         employee.Email.Should().Be(newEmail);
-        employee.Role.Should().Be(EmployeeRole.Leader);
+        employee.Role.Should().Be(EmployeeRole.TeamLeader);
     }
 }

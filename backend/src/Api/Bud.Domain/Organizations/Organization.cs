@@ -33,7 +33,7 @@ public sealed class Organization : IAggregateRoot
         return organization;
     }
 
-    public void Rename(OrganizationDomainName name)
+    public void Rename(string name)
     {
         Name = name;
     }
