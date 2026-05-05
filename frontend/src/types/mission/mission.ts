@@ -4,17 +4,17 @@ import { MissionTask } from "./mission-task";
 import { EmployeeLookup } from "../employee/employee";
 
 export type MissionStatus =
-  | "draft"
-  | "active"
-  | "paused"
-  | "completed"
-  | "cancelled";
+  | "Draft"
+  | "Active"
+  | "Paused"
+  | "Completed"
+  | "Cancelled";
 
-export type MissionVisibility = "public" | "private";
+export type MissionVisibility = "Public" | "Private";
 
-export type KanbanStatus = "uncategorized" | "todo" | "doing" | "done";
+export type KanbanStatus = "Uncategorized" | "Todo" | "Doing" | "Done";
 
-export type MissionMemberRole = "owner" | "supporter" | "observer";
+export type MissionMemberRole = "Owner" | "Supporter" | "Observer";
 
 export type MissionLinkType =
   | "related"

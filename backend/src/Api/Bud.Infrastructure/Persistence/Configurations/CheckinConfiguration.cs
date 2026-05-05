@@ -10,8 +10,11 @@ public sealed class CheckinConfiguration : IEntityTypeConfiguration<Checkin>
         builder.Property(c => c.Note)
             .HasMaxLength(1000);
 
-        builder.Property(c => c.Text)
-            .HasMaxLength(1000);
+        builder.Property(c => c.Confidence)
+            .HasConversion<string>();
+
+        builder.Property(c => c.Mentions)
+            .HasColumnType("jsonb");
 
         builder.HasOne(c => c.Organization)
             .WithMany()

@@ -1,4 +1,3 @@
-
 namespace Bud.Domain.Tasks;
 
 public sealed class MissionTask : ITenantEntity, IAggregateRoot
@@ -6,21 +5,32 @@ public sealed class MissionTask : ITenantEntity, IAggregateRoot
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
+
     public Guid MissionId { get; set; }
     public Mission Mission { get; set; } = null!;
-    public string Name { get; set; } = string.Empty;
+
+    public Guid EmployeeId { get; set; }
+    public Employee? Employee { get; set; }
+
+    public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public TaskState State { get; set; }
-    public DateTime? DueDate { get; private set; }
+    public bool IsDone { get; set; }
+    public DateOnly? DueDate { get; set; }
+    public string SortOrder { get; set; } = string.Empty;
+
+    public DateTime? CompletedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public static MissionTask Create(
         Guid id,
         Guid organizationId,
         Guid missionId,
-        string name,
-        string? description,
-        TaskState state,
-        DateTime? dueDate = null)
+        Guid employeeId,
+        string title,
+        string sortOrder,
+        string? description = null,
+        DateOnly? dueDate = null)
     {
         if (organizationId == Guid.Empty)
         {
@@ -32,31 +42,49 @@ public sealed class MissionTask : ITenantEntity, IAggregateRoot
             throw new DomainInvariantException("Tarefa deve pertencer a uma meta válida.");
         }
 
-        var task = new MissionTask
+        if (!EntityName.TryCreate(title, out var entityName))
+        {
+            throw new DomainInvariantException("O título da tarefa é obrigatório e deve ter até 200 caracteres.");
+        }
+
+        return new MissionTask
         {
             Id = id,
             OrganizationId = organizationId,
-            MissionId = missionId
+            MissionId = missionId,
+            EmployeeId = employeeId,
+            Title = entityName.Value,
+            SortOrder = sortOrder,
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+            DueDate = dueDate,
+            IsDone = false,
         };
-        task.UpdateDetails(name, description, state, dueDate);
-        return task;
     }
 
-    public void UpdateDetails(string name, string? description, TaskState state, DateTime? dueDate)
+    public void UpdateDetails(string title, string? description, DateOnly? dueDate)
     {
-        if (!EntityName.TryCreate(name, out var entityName))
+        if (!EntityName.TryCreate(title, out var entityName))
         {
-            throw new DomainInvariantException("O nome da tarefa é obrigatório e deve ter até 200 caracteres.");
+            throw new DomainInvariantException("O título da tarefa é obrigatório e deve ter até 200 caracteres.");
         }
 
-        if (!Enum.IsDefined(state))
-        {
-            throw new DomainInvariantException("Estado da tarefa inválido.");
-        }
-
-        Name = entityName.Value;
+        Title = entityName.Value;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-        State = state;
         DueDate = dueDate;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Complete()
+    {
+        IsDone = true;
+        CompletedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Reopen()
+    {
+        IsDone = false;
+        CompletedAt = null;
+        UpdatedAt = DateTime.UtcNow;
     }
 }

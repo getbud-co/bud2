@@ -234,7 +234,6 @@ export function CreateMissionModal({
       setNewMissionDesc(editingMission.description ?? "");
       setNewMissionItems(missionToItems(editingMission));
       setSelectedMissionOwners([]);
-      setSelectedMissionTeam(editingMission.teamId ?? null);
       setMissionPeriod([null, null]);
       setSelectedSupportTeam(
         (editingMission.members ?? [])
@@ -274,11 +273,6 @@ export function CreateMissionModal({
     setCreateAssistantMissions([]);
   }
 
-  function toIsoDate(date: CalendarDate | null): string | null {
-    if (!date) return null;
-    return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
-  }
-
   function ownerFromSelection() {
     const selected = missionOwnerOptions.find(
       (option) => option.id === selectedMissionOwners[0],
@@ -297,13 +291,6 @@ export function CreateMissionModal({
       lastName: name.lastName,
       initials: owner.initials,
     };
-  }
-
-  function unitFromValue(unit: string): Indicator["unit"] {
-    if (unit === "%") return "percent";
-    if (unit === "R$" || unit === "US$") return "currency";
-    if (!unit || unit === "un") return "count";
-    return "custom";
   }
 
   function materializeMissionItems(

@@ -9,27 +9,72 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
+
     public Guid MissionId { get; set; }
     public Mission Mission { get; set; } = null!;
 
-    public string Name { get; set; } = string.Empty;
-    public IndicatorType Type { get; set; }
+    public Guid? ParentKrId { get; set; }
+    public Indicator? ParentKr { get; set; }
+    public ICollection<Indicator> SubIndicators { get; set; } = [];
 
-    // Quantitative indicator fields
-    public QuantitativeIndicatorType? QuantitativeType { get; set; }
-    public decimal? MinValue { get; set; }
-    public decimal? MaxValue { get; set; }
-    public IndicatorUnit? Unit { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
-    // Qualitative indicator fields
-    public string? TargetText { get; set; }
+    public Guid EmployeeId { get; set; }
+    public Employee? Employee { get; set; }
+
+    public IndicatorMeasurementMode MeasurementMode { get; set; }
+
+    public Guid? LinkedMissionId { get; set; }
+    public Mission? LinkedMission { get; set; }
+
+    public Guid? LinkedSurveyId { get; set; }
+
+    public IndicatorExternalSource? ExternalSource { get; set; }
+    public string? ExternalConfig { get; set; }
+
+    public IndicatorGoalType GoalType { get; set; }
+    public decimal? TargetValue { get; set; }
+    public decimal CurrentValue { get; set; }
+    public decimal StartValue { get; set; }
+    public decimal? LowThreshold { get; set; }
+    public decimal? HighThreshold { get; set; }
+    public IndicatorUnit Unit { get; set; }
+    public string UnitLabel { get; set; } = string.Empty;
+    public decimal? ExpectedValue { get; set; }
+
+    public IndicatorStatus Status { get; set; }
+    public int Progress { get; set; }
+
+    public string? PeriodLabel { get; set; }
+    public DateOnly? PeriodStart { get; set; }
+    public DateOnly? PeriodEnd { get; set; }
+
+    public string SortOrder { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAt { get; set; }
 
     public ICollection<Checkin> Checkins { get; set; } = [];
 
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    public static Indicator Create(Guid id, Guid organizationId, Guid missionId, string name, IndicatorType type)
+    public static Indicator Create(
+        Guid id,
+        Guid organizationId,
+        Guid missionId,
+        Guid employeeId,
+        string title,
+        IndicatorMeasurementMode measurementMode,
+        IndicatorGoalType goalType,
+        decimal startValue,
+        decimal? targetValue,
+        IndicatorUnit unit,
+        string unitLabel,
+        string sortOrder,
+        Guid? parentKrId = null)
     {
         if (organizationId == Guid.Empty)
         {
@@ -41,105 +86,110 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             throw new DomainInvariantException("Indicador deve pertencer a uma meta válida.");
         }
 
-        var indicator = new Indicator
+        if (!EntityName.TryCreate(title, out var entityName))
+        {
+            throw new DomainInvariantException("O título do indicador é obrigatório e deve ter até 200 caracteres.");
+        }
+
+        return new Indicator
         {
             Id = id,
             OrganizationId = organizationId,
-            MissionId = missionId
+            MissionId = missionId,
+            EmployeeId = employeeId,
+            Title = entityName.Value,
+            MeasurementMode = measurementMode,
+            GoalType = goalType,
+            StartValue = startValue,
+            CurrentValue = startValue,
+            TargetValue = targetValue,
+            Unit = unit,
+            UnitLabel = unitLabel,
+            SortOrder = sortOrder,
+            ParentKrId = parentKrId,
+            Status = IndicatorStatus.OnTrack,
+            Progress = 0,
         };
-
-        indicator.UpdateDefinition(name, type);
-        return indicator;
     }
 
-    public void UpdateDefinition(string name, IndicatorType type)
+    public void UpdateDetails(
+        string title,
+        string? description,
+        Guid employeeId,
+        IndicatorMeasurementMode measurementMode,
+        IndicatorGoalType goalType,
+        decimal startValue,
+        decimal? targetValue,
+        decimal? lowThreshold,
+        decimal? highThreshold,
+        IndicatorUnit unit,
+        string unitLabel,
+        decimal? expectedValue,
+        string? periodLabel,
+        DateOnly? periodStart,
+        DateOnly? periodEnd,
+        Guid? linkedMissionId,
+        Guid? linkedSurveyId,
+        IndicatorExternalSource? externalSource,
+        string? externalConfig)
     {
-        if (!EntityName.TryCreate(name, out var entityName))
+        if (!EntityName.TryCreate(title, out var entityName))
         {
-            throw new DomainInvariantException("O nome do indicador é obrigatório e deve ter até 200 caracteres.");
+            throw new DomainInvariantException("O título do indicador é obrigatório e deve ter até 200 caracteres.");
         }
 
-        Name = entityName.Value;
-        Type = type;
-    }
-
-    public void ApplyTarget(
-        IndicatorType type,
-        QuantitativeIndicatorType? quantitativeType,
-        decimal? minValue,
-        decimal? maxValue,
-        IndicatorUnit? unit,
-        string? targetText)
-    {
-        var target = IndicatorTargetDefinition.Create(type, quantitativeType, minValue, maxValue, unit, targetText);
-
-        QuantitativeType = target.QuantitativeType;
-        MinValue = target.MinValue;
-        MaxValue = target.MaxValue;
-        Unit = target.Unit;
-        TargetText = target.TargetText;
+        Title = entityName.Value;
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        EmployeeId = employeeId;
+        MeasurementMode = measurementMode;
+        GoalType = goalType;
+        StartValue = startValue;
+        TargetValue = targetValue;
+        LowThreshold = lowThreshold;
+        HighThreshold = highThreshold;
+        Unit = unit;
+        UnitLabel = unitLabel;
+        ExpectedValue = expectedValue;
+        PeriodLabel = string.IsNullOrWhiteSpace(periodLabel) ? null : periodLabel.Trim();
+        PeriodStart = periodStart;
+        PeriodEnd = periodEnd;
+        LinkedMissionId = linkedMissionId;
+        LinkedSurveyId = linkedSurveyId;
+        ExternalSource = externalSource;
+        ExternalConfig = string.IsNullOrWhiteSpace(externalConfig) ? null : externalConfig.Trim();
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public Checkin CreateCheckin(
         Guid checkinId,
         Guid employeeId,
-        decimal? value,
-        string? text,
+        decimal value,
         DateTime checkinDate,
         string? note,
         int confidenceLevel)
     {
-        ValidateCheckinPayload(value, text);
-
         var checkin = Checkin.Create(
             checkinId,
             OrganizationId,
             Id,
             employeeId,
             value,
-            text,
             checkinDate,
             note,
             confidenceLevel);
 
-        AddDomainEvent(new CheckinCreatedDomainEvent(
-            checkin.Id,
-            Id,
-            OrganizationId,
-            employeeId,
-            Name));
-
+        AddDomainEvent(new CheckinCreatedDomainEvent(checkin.Id, Id, OrganizationId, employeeId, Title));
         return checkin;
     }
 
-    public void UpdateCheckin(
-        Checkin checkin,
-        decimal? value,
-        string? text,
-        DateTime checkinDate,
-        string? note,
-        int confidenceLevel)
+    public void UpdateCheckin(Checkin checkin, decimal value, DateTime checkinDate, string? note, int confidenceLevel)
     {
         if (checkin.IndicatorId != Id)
         {
             throw new DomainInvariantException("Check-in não pertence ao indicador informado.");
         }
 
-        ValidateCheckinPayload(value, text);
-        checkin.Update(value, text, checkinDate, note, confidenceLevel);
-    }
-
-    private void ValidateCheckinPayload(decimal? value, string? text)
-    {
-        if (Type == IndicatorType.Quantitative && value is null)
-        {
-            throw new DomainInvariantException("Valor é obrigatório para indicadores quantitativos.");
-        }
-
-        if (Type == IndicatorType.Qualitative && string.IsNullOrWhiteSpace(text))
-        {
-            throw new DomainInvariantException("Texto é obrigatório para indicadores qualitativos.");
-        }
+        checkin.Update(value, checkinDate, note, confidenceLevel);
     }
 
     public void ClearDomainEvents()

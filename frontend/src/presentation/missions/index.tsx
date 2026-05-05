@@ -22,6 +22,8 @@ import { useSavedViews } from "@/contexts/SavedViewsContext";
 import { useMissionsData } from "@/contexts/MissionsDataContext";
 import { usePeopleData } from "@/contexts/PeopleDataContext";
 import { useConfigData } from "@/contexts/ConfigDataContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useLoggedUser } from "@/contexts/LoggedUserContext";
 import type { SavedView } from "@/contexts/SavedViewsContext";
 import type { Mission, Indicator, MissionTask } from "@/types";
 import styles from "./MissionsPage.module.css";
@@ -102,6 +104,40 @@ function MissionsPageContent({
   initialPeriod?: [CalendarDate, CalendarDate];
   focusMissionId?: string;
 }) {
+  const router = useRouter();
+  const { activeOrgId } = useOrganization();
+  const { loggedUser } = useLoggedUser();
+  const { openCheckin, drawerOverlayKey } = useMissionDrawer();
+
+  const [filters, setFilters] = useState<FilterValues>({
+    selectedTeams: ["all"],
+    selectedPeriod: initialPeriod ?? [null, null],
+    selectedStatus: "all",
+    selectedOwners: mine && loggedUser ? [loggedUser.fullName] : ["all"],
+    selectedItemTypes: ["all"],
+    selectedIndicatorTypes: ["all"],
+    selectedContributions: ["all"],
+    selectedTaskState: "all",
+    selectedMissionStatuses: ["all"],
+    selectedSupporters: ["all"],
+  });
+  const {
+    selectedTeams,
+    selectedPeriod,
+    selectedStatus,
+    selectedOwners,
+    selectedItemTypes,
+    selectedIndicatorTypes,
+    selectedContributions,
+    selectedTaskState,
+    selectedMissionStatuses,
+    selectedSupporters,
+  } = filters;
+
+  const [activeFilters, setActiveFilters] = useState<string[]>(
+    mine ? ["owner", "period"] : ["team", "period"],
+  );
+
   const { missions, setMissions } = useMissionsData();
   const {
     teamOptions,
@@ -111,57 +147,21 @@ function MissionsPageContent({
     resolveUserId,
     resolveTeamId,
   } = usePeopleData();
+
   const {
-    activeOrgId,
     tagOptions,
     cyclePresetOptions,
     createTag,
     getTagById,
     resolveTagId,
   } = useConfigData();
-  const { openCheckin, drawerOverlayKey } = useMissionDrawer();
-
-  const ownerFilterOptions = useMemo(
-    () => [{ id: "all", label: "Todos", initials: "" }, ...ownerOptions],
-    [ownerOptions],
-  );
-  const missionOwnerOptions = useMemo(
-    () => ownerFilterOptions.filter((option) => option.id !== "all"),
-    [ownerFilterOptions],
-  );
-  const currentUserOption = useMemo(
-    () => currentUser ?? ownerOptions[0] ?? null,
-    [currentUser, ownerOptions],
-  );
-  const currentUserDefaultName = currentUserOption?.label ?? "all";
-  const missionTagOptions = useMemo(
-    () => tagOptions.map((tag) => ({ id: tag.id, label: tag.label })),
-    [tagOptions],
-  );
-  const presetPeriods = useMemo(
-    () =>
-      cyclePresetOptions.map((cycle) => ({
-        id: cycle.id,
-        label: cycle.label,
-        start: isoToCalendarDate(cycle.startDate),
-        end: isoToCalendarDate(cycle.endDate),
-      })),
-    [cyclePresetOptions],
-  );
 
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { t } = useTranslation("missions");
   const viewId = searchParams.get("view");
-
-  /* ——— "New view" mode from sidebar ——— */
   const isNewViewMode = searchParams.get("newView") === "true";
   const [filterBarDefaultOpen, setFilterBarDefaultOpen] =
     useState(isNewViewMode);
 
-  const [activeFilters, setActiveFilters] = useState<string[]>(
-    mine ? ["owner", "period"] : ["team", "period"],
-  );
   const [expandedMissions, setExpandedMissions] = useState<Set<string>>(
     new Set(),
   );
@@ -323,34 +323,7 @@ function MissionsPageContent({
   }
 
   /* ——— Filter values ——— */
-  const [filters, setFilters] = useState<FilterValues>({
-    selectedTeams: ["all"],
-    selectedPeriod: initialPeriod ?? [null, null],
-    selectedStatus: "all",
-    selectedOwners:
-      mine && currentUserDefaultName !== "all"
-        ? [currentUserDefaultName]
-        : ["all"],
-    selectedItemTypes: ["all"],
-    selectedIndicatorTypes: ["all"],
-    selectedContributions: ["all"],
-    selectedTaskState: "all",
-    selectedMissionStatuses: ["all"],
-    selectedSupporters: ["all"],
-  });
-  const {
-    selectedTeams,
-    selectedPeriod,
-    selectedStatus,
-    selectedOwners,
-    selectedItemTypes,
-    selectedIndicatorTypes,
-    selectedContributions,
-    selectedTaskState,
-    selectedMissionStatuses,
-    selectedSupporters,
-  } = filters;
-
+  
   useEffect(() => {
     if (!mine || currentUserDefaultName === "all") return;
     setFilters((prev) => ({

@@ -10,21 +10,21 @@ public sealed class Checkin : ITenantEntity
     public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
 
-    public decimal? Value { get; set; }
-    public string? Text { get; set; }
-
-    public DateTime CheckinDate { get; set; }
+    public decimal Value { get; set; }
+    public decimal PreviousValue { get; set; }
+    public CheckinConfidence? Confidence { get; set; }
     public string? Note { get; set; }
-    public int ConfidenceLevel { get; set; }
+    public Guid[] Mentions { get; set; } = [];
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public static Checkin Create(
         Guid id,
         Guid organizationId,
         Guid indicatorId,
         Guid employeeId,
-        decimal? value,
-        string? text,
-        DateTime checkinDate,
+        decimal value,
+        DateTime createdAt,
         string? note,
         int confidenceLevel)
     {
@@ -48,24 +48,25 @@ public sealed class Checkin : ITenantEntity
             Id = id,
             OrganizationId = organizationId,
             IndicatorId = indicatorId,
-            EmployeeId = employeeId
+            EmployeeId = employeeId,
+            PreviousValue = 0,
+            CreatedAt = createdAt
         };
 
-        checkin.Update(value, text, checkinDate, note, confidenceLevel);
+        checkin.Update(value, createdAt, note, confidenceLevel);
         return checkin;
     }
 
-    public void Update(decimal? value, string? text, DateTime checkinDate, string? note, int confidenceLevel)
+    public void Update(decimal value, DateTime createdAt, string? note, int confidenceLevel)
     {
         if (confidenceLevel < 1 || confidenceLevel > 5)
         {
             throw new DomainInvariantException("Nível de confiança deve ser entre 1 e 5.");
         }
 
+        PreviousValue = Value;
         Value = value;
-        Text = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-        CheckinDate = checkinDate;
         Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
-        ConfidenceLevel = confidenceLevel;
+        CreatedAt = createdAt;
     }
 }

@@ -76,11 +76,11 @@ export const TASK_STATE_OPTIONS = [
 
 export const MISSION_STATUS_OPTIONS = [
   { id: "all", label: "Todos" },
-  { id: "draft", label: "Rascunho" },
-  { id: "active", label: "Ativa" },
-  { id: "paused", label: "Pausada" },
-  { id: "completed", label: "Concluída" },
-  { id: "cancelled", label: "Cancelada" },
+  { id: "Draft", label: "Rascunho" },
+  { id: "Active", label: "Ativa" },
+  { id: "Paused", label: "Pausada" },
+  { id: "Completed", label: "Concluída" },
+  { id: "Cancelled", label: "Cancelada" },
 ];
 
 export const MISSION_TEMPLATES = [
@@ -445,10 +445,10 @@ export const UNIT_OPTIONS = [
 ];
 
 export const KANBAN_COLUMNS: { id: KanbanStatus; label: string; color: string }[] = [
-  { id: "uncategorized", label: "Não categorizado", color: "var(--color-neutral-400)" },
-  { id: "todo", label: "Para fazer", color: "var(--color-caramel-400)" },
-  { id: "doing", label: "Fazendo", color: "var(--color-orange-500)" },
-  { id: "done", label: "Feito", color: "var(--color-green-500)" },
+  { id: "Uncategorized", label: "Não categorizado", color: "var(--color-neutral-400)" },
+  { id: "Todo", label: "Para fazer", color: "var(--color-caramel-400)" },
+  { id: "Doing", label: "Fazendo", color: "var(--color-orange-500)" },
+  { id: "Done", label: "Feito", color: "var(--color-green-500)" },
 ];
 
 export const CONFIDENCE_OPTIONS: {

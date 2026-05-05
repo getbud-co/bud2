@@ -1,12 +1,9 @@
 namespace Bud.Shared.Kernel.Enums;
 
-#pragma warning disable CA1720
 public enum IndicatorUnit
 {
-    Integer = 0,
-    Decimal = 1,
-    Percentage = 2,
-    Hours = 3,
-    Points = 4
+    Percent = 0,
+    Currency = 1,
+    Count = 2,
+    Custom = 3
 }
-#pragma warning restore CA1720

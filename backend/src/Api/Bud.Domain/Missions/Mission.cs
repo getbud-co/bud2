@@ -15,12 +15,25 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
     // Cycle
 
-    public string Name { get; set; } = string.Empty;
+    public Guid? CycleId { get; set; }
+    public Cycle? Cycle { get; set; }
+
+    // Ordenation field for kanban
+    public string SortOrder { get; set; } = string.Empty;
+
+    // Mission hierarchy
+    public Array<string> Path { get; set; } = Array.Empty<string>();
+
+    public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Dimension { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? DueDate { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public MissionStatus Status { get; set; }
+
+    public MissionVisibility Visibility { get; set; }
+
+    public MissionKanbanStatus? KanbanStatus { get; set; } = MissionKanbanStatus.Uncategorized;
 
 
     // Recursive parent-child relationship
@@ -32,12 +45,18 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public Guid? EmployeeId { get; set; }
     public Employee? Employee { get; set; }
 
+    public ICollection<MissionMember> Members { get; set; } = [];
     public ICollection<Indicator> Indicators { get; set; } = [];
     public ICollection<MissionTask> Tasks { get; set; } = [];
     public ICollection<MissionTag> Tags { get; set; } = [];
 
+    // Auditing fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAt { get; set; }
+
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
 
     public static Mission Create(
         Guid id,
@@ -48,6 +67,7 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         DateTime startDate,
         DateTime endDate,
         MissionStatus status,
+        MissionVisibility visibility,
         Guid? parentId = null,
         Guid? actorEmployeeId = null)
     {
@@ -63,8 +83,8 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
             ParentId = parentId
         };
 
-        mission.ApplyDetails(name, description, dimension, startDate, endDate, status);
-        mission.AddDomainEvent(new MissionCreatedDomainEvent(mission.Id, mission.OrganizationId, mission.Name, actorEmployeeId));
+        mission.ApplyDetails(name, description, dimension, startDate, endDate, status, visibility);
+        mission.AddDomainEvent(new MissionCreatedDomainEvent(mission.Id, mission.OrganizationId, mission.Title, actorEmployeeId));
         return mission;
     }
 
@@ -74,19 +94,22 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         string? dimension,
         DateTime startDate,
         DateTime endDate,
-        MissionStatus status)
+        MissionStatus status,
+        MissionVisibility visibility)
     {
-        ApplyDetails(name, description, dimension, startDate, endDate, status);
+        ApplyDetails(name, description, dimension, startDate, endDate, status, visibility);
     }
 
     public void MarkAsUpdated(Guid? actorEmployeeId = null)
     {
-        AddDomainEvent(new MissionUpdatedDomainEvent(Id, OrganizationId, Name, actorEmployeeId));
+        UpdatedAt = DateTime.UtcNow;
+        AddDomainEvent(new MissionUpdatedDomainEvent(Id, OrganizationId, Title, actorEmployeeId));
     }
 
     public void MarkAsDeleted(Guid? actorEmployeeId = null)
     {
-        AddDomainEvent(new MissionDeletedDomainEvent(Id, OrganizationId, Name, actorEmployeeId));
+        DeletedAt = DateTime.UtcNow;
+        AddDomainEvent(new MissionDeletedDomainEvent(Id, OrganizationId, Title, actorEmployeeId));
     }
 
     public void ClearDomainEvents()
@@ -100,7 +123,8 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         string? dimension,
         DateTime startDate,
         DateTime endDate,
-        MissionStatus status)
+        MissionStatus status,
+        MissionVisibility visibility)
     {
         if (!EntityName.TryCreate(name, out var entityName))
         {
@@ -112,12 +136,26 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
             throw new DomainInvariantException("Data de término deve ser igual ou posterior à data de início.");
         }
 
-        Name = entityName.Value;
+        Title = entityName.Value;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
         Dimension = string.IsNullOrWhiteSpace(dimension) ? null : dimension.Trim();
         StartDate = startDate;
         EndDate = endDate;
         Status = status;
+        Visibility = visibility;
+    }
+
+    public string BuildLtreePath()
+    {
+        var segments = new List<string>();
+        var current = this;
+        while (current is not null)
+        {
+            segments.Add(current.Id.ToString("N"));
+            current = current.Parent;
+        }
+        segments.Reverse();
+        return string.Join('.', segments);
     }
 
     private void AddDomainEvent(IDomainEvent domainEvent)

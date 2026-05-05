@@ -36,6 +36,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Cycle> Cycles => Set<Cycle>();
     public DbSet<MissionTask> MissionTasks => Set<MissionTask>();
+    public DbSet<MissionMember> MissionMembers => Set<MissionMember>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<MissionTag> MissionTags => Set<MissionTag>();
 
