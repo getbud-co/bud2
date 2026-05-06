@@ -10,7 +10,7 @@ public sealed class MissionSearchSpecification(string? search, bool isNpgsql) : 
             query,
             search,
             isNpgsql,
-            (q, pattern) => q.Where(g => EF.Functions.ILike(g.Name, pattern)),
-            (q, term) => q.Where(g => g.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            (q, pattern) => q.Where(g => EF.Functions.ILike(g.Title, pattern)),
+            (q, term) => q.Where(g => g.Title.Contains(term, StringComparison.OrdinalIgnoreCase)));
     }
 }

@@ -6,16 +6,22 @@ namespace Bud.Shared.Contracts.Features.Missions;
 public sealed class MissionResponse
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Dimension { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? DueDate { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public MissionStatus Status { get; set; }
+    public MissionVisibility Visibility { get; set; }
+    public MissionKanbanStatus? KanbanStatus { get; set; }
     public Guid OrganizationId { get; set; }
+    public Guid? CycleId { get; set; }
     public Guid? ParentId { get; set; }
+    public string Path { get; set; } = string.Empty;
+    public string SortOrder { get; set; } = string.Empty;
     public Guid? EmployeeId { get; set; }
     public EmployeeMembershipResponse? Employee { get; set; }
+    public DateTime CreatedAt { get; set; }
     public List<MissionResponse> Children { get; set; } = [];
     public List<IndicatorResponse> Indicators { get; set; } = [];
     public List<TaskResponse> Tasks { get; set; } = [];

@@ -22,7 +22,7 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
     public string SortOrder { get; set; } = string.Empty;
 
     // Mission hierarchy
-    public Array<string> Path { get; set; } = Array.Empty<string>();
+    public string Path { get; set; } = string.Empty;
 
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -64,8 +64,8 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         string name,
         string? description,
         string? dimension,
-        DateTime startDate,
-        DateTime endDate,
+        DateTime dueDate,
+        DateTime completedAt,
         MissionStatus status,
         MissionVisibility visibility,
         Guid? parentId = null,
@@ -83,7 +83,7 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
             ParentId = parentId
         };
 
-        mission.ApplyDetails(name, description, dimension, startDate, endDate, status, visibility);
+        mission.ApplyDetails(name, description, dimension, dueDate, completedAt, status, visibility);
         mission.AddDomainEvent(new MissionCreatedDomainEvent(mission.Id, mission.OrganizationId, mission.Title, actorEmployeeId));
         return mission;
     }
@@ -92,17 +92,16 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         string name,
         string? description,
         string? dimension,
-        DateTime startDate,
-        DateTime endDate,
+        DateTime dueDate,
+        DateTime completedAt,
         MissionStatus status,
         MissionVisibility visibility)
     {
-        ApplyDetails(name, description, dimension, startDate, endDate, status, visibility);
+        ApplyDetails(name, description, dimension, dueDate, completedAt, status, visibility);
     }
 
     public void MarkAsUpdated(Guid? actorEmployeeId = null)
     {
-        UpdatedAt = DateTime.UtcNow;
         AddDomainEvent(new MissionUpdatedDomainEvent(Id, OrganizationId, Title, actorEmployeeId));
     }
 
@@ -121,8 +120,8 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
         string name,
         string? description,
         string? dimension,
-        DateTime startDate,
-        DateTime endDate,
+        DateTime dueDate,
+        DateTime completedAt,
         MissionStatus status,
         MissionVisibility visibility)
     {
@@ -131,16 +130,11 @@ public sealed class Mission : ITenantEntity, IAggregateRoot, IHasDomainEvents
             throw new DomainInvariantException("O nome da meta é obrigatório e deve ter até 200 caracteres.");
         }
 
-        if (endDate < startDate)
-        {
-            throw new DomainInvariantException("Data de término deve ser igual ou posterior à data de início.");
-        }
-
         Title = entityName.Value;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
         Dimension = string.IsNullOrWhiteSpace(dimension) ? null : dimension.Trim();
-        StartDate = startDate;
-        EndDate = endDate;
+        DueDate = dueDate;
+        CompletedAt = completedAt;
         Status = status;
         Visibility = visibility;
     }

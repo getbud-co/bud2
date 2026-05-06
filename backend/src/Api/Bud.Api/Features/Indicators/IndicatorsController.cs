@@ -56,13 +56,18 @@ public sealed class IndicatorsController(
 
         var command = new CreateIndicatorCommand(
             request.MissionId,
-            request.Name,
-            request.Type,
-            request.QuantitativeType,
-            request.MinValue,
-            request.MaxValue,
+            request.EmployeeId,
+            request.Title,
+            request.MeasurementMode,
+            request.GoalType,
+            request.StartValue,
+            request.TargetValue,
+            request.LowThreshold,
+            request.HighThreshold,
             request.Unit,
-            request.TargetText);
+            request.UnitLabel,
+            request.SortOrder,
+            request.ParentKrId);
 
         var result = await createIndicator.ExecuteAsync(command, cancellationToken);
         return FromResult<Indicator, IndicatorResponse>(result, indicator =>
@@ -91,13 +96,25 @@ public sealed class IndicatorsController(
         }
 
         var command = new PatchIndicatorCommand(
-            request.Name,
-            request.Type,
-            request.QuantitativeType,
-            request.MinValue,
-            request.MaxValue,
+            request.Title,
+            request.Description,
+            request.EmployeeId,
+            request.MeasurementMode,
+            request.GoalType,
+            request.StartValue,
+            request.TargetValue,
+            request.LowThreshold,
+            request.HighThreshold,
             request.Unit,
-            request.TargetText);
+            request.UnitLabel,
+            request.ExpectedValue,
+            request.PeriodLabel,
+            request.PeriodStart,
+            request.PeriodEnd,
+            request.LinkedMissionId,
+            request.LinkedSurveyId,
+            request.ExternalSource,
+            request.ExternalConfig);
 
         var result = await patchIndicator.ExecuteAsync(id, command, cancellationToken);
         return FromResultOk(result, indicator => indicator.ToResponse());
@@ -200,7 +217,6 @@ public sealed class IndicatorsController(
 
         var command = new CreateCheckinCommand(
             request.Value,
-            request.Text,
             request.CheckinDate,
             request.Note,
             request.ConfidenceLevel);
@@ -270,7 +286,6 @@ public sealed class IndicatorsController(
 
         var command = new PatchCheckinCommand(
             request.Value,
-            request.Text,
             request.CheckinDate,
             request.Note,
             request.ConfidenceLevel);

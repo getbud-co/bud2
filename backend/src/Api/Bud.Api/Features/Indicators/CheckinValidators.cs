@@ -15,10 +15,6 @@ public sealed class CreateCheckinValidator : AbstractValidator<CreateCheckinRequ
         RuleFor(x => x.Note)
             .MaximumLength(1000).WithMessage("Nota deve ter no máximo 1000 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.Note));
-
-        RuleFor(x => x.Text)
-            .MaximumLength(1000).WithMessage("Texto deve ter no máximo 1000 caracteres.")
-            .When(x => !string.IsNullOrEmpty(x.Text));
     }
 }
 
@@ -35,9 +31,5 @@ public sealed class PatchCheckinValidator : AbstractValidator<PatchCheckinReques
         RuleFor(x => x.Note)
             .MaximumLength(1000).WithMessage("Nota deve ter no máximo 1000 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.Note));
-
-        RuleFor(x => x.Text)
-            .MaximumLength(1000).WithMessage("Texto deve ter no máximo 1000 caracteres.")
-            .When(x => !string.IsNullOrEmpty(x.Text));
     }
 }

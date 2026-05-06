@@ -25,8 +25,8 @@ public sealed class TaskRepository(ApplicationDbContext dbContext) : ITaskReposi
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(t => t.State)
-            .ThenBy(t => t.Name)
+            .OrderBy(t => t.IsDone)
+            .ThenBy(t => t.Title)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -43,10 +43,9 @@ public sealed class TaskRepository(ApplicationDbContext dbContext) : ITaskReposi
     public async Task<List<MissionTask>> GetActiveTasksForMissionsAsync(List<Guid> missionIds, CancellationToken ct = default)
         => await dbContext.MissionTasks
             .AsNoTracking()
-            .Where(t => missionIds.Contains(t.MissionId)
-                && (t.State == TaskState.ToDo || t.State == TaskState.Doing))
-            .OrderBy(t => t.State)
-            .ThenBy(t => t.Name)
+            .Where(t => missionIds.Contains(t.MissionId) && !t.IsDone)
+            .OrderBy(t => t.CreatedAt)
+            .ThenBy(t => t.Title)
             .ToListAsync(ct);
 
     public async Task AddAsync(MissionTask entity, CancellationToken ct = default)

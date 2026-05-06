@@ -1,4 +1,3 @@
-using Bud.Shared.Contracts;
 using FluentValidation;
 
 namespace Bud.Api.Features.Tasks;
@@ -10,12 +9,12 @@ public sealed class CreateTaskValidator : AbstractValidator<CreateTaskRequest>
         RuleFor(x => x.MissionId)
             .NotEmpty().WithMessage("Meta é obrigatória.");
 
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Nome é obrigatório.")
-            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres.");
+        RuleFor(x => x.EmployeeId)
+            .NotEmpty().WithMessage("Colaborador é obrigatório.");
 
-        RuleFor(x => x.State)
-            .IsInEnum().WithMessage("Estado inválido.");
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("Título é obrigatório.")
+            .MaximumLength(200).WithMessage("Título deve ter no máximo 200 caracteres.");
 
         RuleFor(x => x.Description)
             .MaximumLength(2000).WithMessage("Descrição deve ter no máximo 2000 caracteres.")
@@ -27,14 +26,10 @@ public sealed class PatchTaskValidator : AbstractValidator<PatchTaskRequest>
 {
     public PatchTaskValidator()
     {
-        RuleFor(x => x.Name.Value)
-            .NotEmpty().WithMessage("Nome é obrigatório.")
-            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres.")
-            .When(x => x.Name.HasValue);
-
-        RuleFor(x => x.State.Value)
-            .IsInEnum().WithMessage("Estado inválido.")
-            .When(x => x.State.HasValue);
+        RuleFor(x => x.Title.Value)
+            .NotEmpty().WithMessage("Título é obrigatório.")
+            .MaximumLength(200).WithMessage("Título deve ter no máximo 200 caracteres.")
+            .When(x => x.Title.HasValue);
 
         RuleFor(x => x.Description.Value)
             .MaximumLength(2000).WithMessage("Descrição deve ter no máximo 2000 caracteres.")

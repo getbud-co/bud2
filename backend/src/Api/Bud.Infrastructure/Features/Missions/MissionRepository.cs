@@ -49,7 +49,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(g => g.Name)
+            .OrderBy(g => g.Title)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -73,7 +73,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(g => g.Name)
+            .OrderBy(g => g.Title)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -97,7 +97,7 @@ public sealed class MissionRepository(ApplicationDbContext dbContext) : IMission
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(i => i.Name)
+            .OrderBy(i => i.Title)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

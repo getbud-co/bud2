@@ -159,7 +159,7 @@ public static class DbSeeder
                     TemplateMissionId = financeiraMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 },
                 new TemplateIndicator
                 {
@@ -172,7 +172,7 @@ public static class DbSeeder
                     QuantitativeType = QuantitativeIndicatorType.KeepAbove,
                     MinValue = 70,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Points
+                    Unit = IndicatorUnit.Count
                 },
                 new TemplateIndicator
                 {
@@ -184,7 +184,7 @@ public static class DbSeeder
                     TemplateMissionId = processosMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 },
                 new TemplateIndicator
                 {
@@ -196,7 +196,7 @@ public static class DbSeeder
                     TemplateMissionId = aprendizadoMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 }
             ]
         };
@@ -378,7 +378,7 @@ public static class DbSeeder
                     TemplateMissionId = executionMissionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 }
             ]
         };
@@ -420,7 +420,7 @@ public static class DbSeeder
                     TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 },
                 new TemplateIndicator
                 {
@@ -432,7 +432,7 @@ public static class DbSeeder
                     TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 },
                 new TemplateIndicator
                 {
@@ -444,7 +444,7 @@ public static class DbSeeder
                     TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 }
             ]
         };
@@ -506,7 +506,7 @@ public static class DbSeeder
                     TemplateMissionId = missionId,
                     QuantitativeType = QuantitativeIndicatorType.Achieve,
                     MaxValue = 100,
-                    Unit = IndicatorUnit.Percentage
+                    Unit = IndicatorUnit.Percent
                 }
             ]
         };

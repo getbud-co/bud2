@@ -6,20 +6,21 @@ namespace Bud.Shared.Contracts.Features.Tasks;
 public sealed class CreateTaskRequest
 {
     public Guid MissionId { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public Guid EmployeeId { get; set; }
+    public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public TaskState State { get; set; } = TaskState.ToDo;
-    public DateTime? DueDate { get; set; }
+    public string SortOrder { get; set; } = string.Empty;
+    public DateOnly? DueDate { get; set; }
 }
 
 public sealed class PatchTaskRequest
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Optional<string> Name { get; set; }
+    public Optional<string> Title { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Optional<string?> Description { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Optional<TaskState> State { get; set; }
+    public Optional<bool> IsDone { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Optional<DateTime?> DueDate { get; set; }
+    public Optional<DateOnly?> DueDate { get; set; }
 }

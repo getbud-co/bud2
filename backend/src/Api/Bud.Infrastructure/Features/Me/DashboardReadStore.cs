@@ -299,16 +299,16 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             ? await dbContext.Checkins
                 .AsNoTracking()
                 .Where(c => indicatorIdsForActiveMissions.Contains(c.IndicatorId)
-                    && c.CheckinDate >= thisWeekStart)
+                    && c.CreatedAt >= thisWeekStart)
                 .Select(c => c.Indicator.MissionId)
                 .Distinct()
                 .ToListAsync(ct)
             : new List<Guid>();
 
-        // Missions updated via Doing tasks (considered "atualizada")
+        // Missions updated via active tasks (considered "atualizada")
         var missionsWithDoingTasks = await dbContext.MissionTasks
             .AsNoTracking()
-            .Where(t => activeMissionIds.Contains(t.MissionId) && t.State == TaskState.Doing)
+            .Where(t => activeMissionIds.Contains(t.MissionId) && !t.IsDone)
             .Select(t => t.MissionId)
             .Distinct()
             .ToListAsync(ct);
@@ -323,8 +323,8 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             ? await dbContext.Checkins
                 .AsNoTracking()
                 .Where(c => indicatorIdsForActiveMissions.Contains(c.IndicatorId)
-                    && c.CheckinDate >= lastWeekStart
-                    && c.CheckinDate < thisWeekStart)
+                    && c.CreatedAt >= lastWeekStart
+                    && c.CreatedAt < thisWeekStart)
                 .Select(c => c.Indicator.MissionId)
                 .Distinct()
                 .CountAsync(ct)
@@ -351,20 +351,21 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
             return 0;
         }
 
-        var recentCheckins = await dbContext.Checkins
+        var recentCheckinConfidences = await dbContext.Checkins
             .AsNoTracking()
             .Where(c => teamMemberIds.Contains(c.EmployeeId)
-                && c.CheckinDate >= DateTime.UtcNow.AddDays(-30)
-                && c.ConfidenceLevel > 0)
-            .Select(c => c.ConfidenceLevel)
+                && c.CreatedAt >= DateTime.UtcNow.AddDays(-30)
+                && c.Confidence != null
+                && c.Confidence != CheckinConfidence.Deprioritized)
+            .Select(c => c.Confidence)
             .ToListAsync(ct);
 
-        if (recentCheckins.Count == 0)
+        if (recentCheckinConfidences.Count == 0)
         {
             return 0;
         }
 
-        var avg = recentCheckins.Average();
+        var avg = recentCheckinConfidences.Average(c => (double)ToConfidenceScore(c));
         return (int)Math.Round((avg / 5.0) * 100);
     }
 
@@ -405,7 +406,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         foreach (var mission in myMissions)
         {
             var needsCheckin = mission.Indicators.Any(i =>
-                !i.Checkins.Any(c => c.CheckinDate >= sevenDaysAgo));
+                !i.Checkins.Any(c => c.CreatedAt >= sevenDaysAgo));
 
             if (needsCheckin)
             {
@@ -413,7 +414,7 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                 {
                     ReferenceId = mission.Id,
                     TaskType = "mission_checkin",
-                    Title = mission.Name,
+                    Title = mission.Title,
                     Description = "Check-in pendente há mais de 7 dias",
                     NavigateUrl = $"/missions/{mission.Id}",
                 });
@@ -426,11 +427,10 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         {
             var activeTasks = await dbContext.MissionTasks
                 .AsNoTracking()
-                .Where(t => myMissionIds.Contains(t.MissionId)
-                    && (t.State == TaskState.ToDo || t.State == TaskState.Doing))
+                .Where(t => myMissionIds.Contains(t.MissionId) && !t.IsDone)
                 .ToListAsync(ct);
 
-            var missionNameById = myMissions.ToDictionary(g => g.Id, g => g.Name);
+            var missionNameById = myMissions.ToDictionary(g => g.Id, g => g.Title);
             foreach (var missionTask in activeTasks)
             {
                 var missionName = missionNameById.GetValueOrDefault(missionTask.MissionId, string.Empty);
@@ -438,8 +438,8 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
                 {
                     ReferenceId = missionTask.Id,
                     TaskType = "mission_task",
-                    Title = missionTask.Name,
-                    Description = $"Meta: {missionName} — {GetTaskStateLabel(missionTask.State)}",
+                    Title = missionTask.Title,
+                    Description = $"Meta: {missionName} — Em andamento",
                     NavigateUrl = $"/missions/{missionTask.MissionId}",
                 });
             }
@@ -448,11 +448,13 @@ public sealed class DashboardReadStore(ApplicationDbContext dbContext) : IMyDash
         return tasks;
     }
 
-    private static string GetTaskStateLabel(TaskState state) => state switch
+    private static decimal ToConfidenceScore(CheckinConfidence? confidence) => confidence switch
     {
-        TaskState.ToDo => "A fazer",
-        TaskState.Doing => "Em andamento",
-        _ => string.Empty,
+        CheckinConfidence.High => 5m,
+        CheckinConfidence.Medium => 3m,
+        CheckinConfidence.Low => 2m,
+        CheckinConfidence.Barrier => 1m,
+        _ => 0m,
     };
 
     private static string GetInitials(string fullName)

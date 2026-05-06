@@ -4,23 +4,17 @@ namespace Bud.Application.Features.Missions;
 
 internal static class MissionDateRangePolicy
 {
-    public static Result<T>? ValidateChildWindow<T>(
-        DateTime childStartDate,
-        DateTime childEndDate,
-        DateTime parentStartDate,
-        DateTime parentEndDate)
+    public static Result<T>? ValidateChildDueDate<T>(DateTime? childDueDate, DateTime? parentDueDate)
     {
-        if (childStartDate < parentStartDate)
+        if (childDueDate is null || parentDueDate is null)
         {
-            return Result<T>.Failure(
-                $"A data de início da meta não pode ser anterior à do pai ({parentStartDate:dd/MM/yyyy}).",
-                ErrorType.Validation);
+            return null;
         }
 
-        if (childEndDate > parentEndDate)
+        if (childDueDate.Value > parentDueDate.Value)
         {
             return Result<T>.Failure(
-                $"A data de término da meta não pode ser posterior à do pai ({parentEndDate:dd/MM/yyyy}).",
+                $"A data de entrega da meta não pode ser posterior à do pai ({parentDueDate.Value:dd/MM/yyyy}).",
                 ErrorType.Validation);
         }
 

@@ -33,15 +33,15 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
         var taskCounts = await dbContext.MissionTasks
             .AsNoTracking()
             .Where(t => missionIds.Contains(t.MissionId))
-            .GroupBy(t => new { t.MissionId, t.State })
-            .Select(g => new { g.Key.MissionId, g.Key.State, Count = g.Count() })
+            .GroupBy(t => new { t.MissionId, t.IsDone })
+            .Select(g => new { g.Key.MissionId, g.Key.IsDone, Count = g.Count() })
             .ToListAsync(ct);
 
-        var todoTasksByMission = taskCounts
-            .Where(t => t.State == TaskState.ToDo)
+        var pendingTasksByMission = taskCounts
+            .Where(t => !t.IsDone)
             .ToDictionary(t => t.MissionId, t => t.Count);
-        var doingTasksByMission = taskCounts
-            .Where(t => t.State == TaskState.Doing)
+        var doneTasksByMission = taskCounts
+            .Where(t => t.IsDone)
             .ToDictionary(t => t.MissionId, t => t.Count);
 
         var missionsById = missions.ToDictionary(g => g.Id);
@@ -60,19 +60,19 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
 
         var latestCheckinByIndicator = allCheckins
             .GroupBy(c => c.IndicatorId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.CheckinDate).Last());
+            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.CreatedAt).Last());
 
         // Build first checkin map for Reduce-type indicators (needed for baseline)
         var reduceIndicatorIds = missions
             .SelectMany(g => g.Indicators)
-            .Where(i => i.Type == IndicatorType.Quantitative && i.QuantitativeType == QuantitativeIndicatorType.Reduce)
+            .Where(i => i.GoalType == IndicatorGoalType.Reduce)
             .Select(i => i.Id)
             .ToHashSet();
 
         var firstCheckins = allCheckins
             .Where(c => reduceIndicatorIds.Contains(c.IndicatorId))
             .GroupBy(c => c.IndicatorId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.CheckinDate).First());
+            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.CreatedAt).First());
 
         var now = DateTime.UtcNow;
         var oneWeekAgo = now.AddDays(-7);
@@ -112,9 +112,9 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
                 }
 
                 indicatorsWithCheckins++;
-                confidenceSum += latestCheckin.ConfidenceLevel;
+                confidenceSum += ToConfidenceScore(latestCheckin.Confidence);
 
-                if (latestCheckin.CheckinDate < oneWeekAgo)
+                if (latestCheckin.CreatedAt < oneWeekAgo)
                 {
                     outdatedIndicators++;
                 }
@@ -130,7 +130,7 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
                 ? confidenceSum / indicatorsWithCheckins
                 : 0m;
 
-            var expectedProgress = CalculateExpectedProgress(mission.StartDate, mission.EndDate, now);
+            var expectedProgress = CalculateExpectedProgress(mission.CreatedAt, mission.DueDate, now);
 
             var directChildren = missions.Count(g => g.ParentId == missionId);
             var directIndicators = mission.Indicators.Count;
@@ -138,7 +138,7 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
             var lastCheckinDate = subtreeIndicators
                 .Select(i => latestCheckinByIndicator.GetValueOrDefault(i.Id))
                 .Where(c => c is not null)
-                .Select(c => c!.CheckinDate)
+                .Select(c => c!.CreatedAt)
                 .DefaultIfEmpty()
                 .Max();
 
@@ -161,8 +161,8 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
                 OutdatedIndicators = outdatedIndicators,
                 DirectChildren = directChildren,
                 DirectIndicators = directIndicators,
-                TodoTasks = todoTasksByMission.GetValueOrDefault(missionId, 0),
-                DoingTasks = doingTasksByMission.GetValueOrDefault(missionId, 0),
+                TodoTasks = pendingTasksByMission.GetValueOrDefault(missionId, 0),
+                DoingTasks = doneTasksByMission.GetValueOrDefault(missionId, 0),
                 LastCheckinDate = lastCheckinDate == default ? null : lastCheckinDate,
                 DistinctEmployeeIds = employeeIds
             });
@@ -201,17 +201,16 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
             });
         }
 
-        var latestCheckin = checkins.OrderBy(c => c.CheckinDate).Last();
+        var latestCheckin = checkins.OrderBy(c => c.CreatedAt).Last();
         var firstCheckins = new Dictionary<Guid, Checkin>();
 
-        if (indicator.Type == IndicatorType.Quantitative &&
-            indicator.QuantitativeType == QuantitativeIndicatorType.Reduce)
+        if (indicator.GoalType == IndicatorGoalType.Reduce)
         {
-            firstCheckins[indicatorId] = checkins.OrderBy(c => c.CheckinDate).First();
+            firstCheckins[indicatorId] = checkins.OrderBy(c => c.CreatedAt).First();
         }
 
         var progress = CalculateIndicatorProgress(indicator, latestCheckin, firstCheckins);
-        var isOutdated = latestCheckin.CheckinDate < DateTime.UtcNow.AddDays(-7);
+        var isOutdated = latestCheckin.CreatedAt < DateTime.UtcNow.AddDays(-7);
 
         var employeeName = await dbContext.Employees
             .AsNoTracking()
@@ -224,7 +223,7 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
         {
             IndicatorId = indicatorId,
             Progress = Math.Round(progress, 1),
-            Confidence = latestCheckin.ConfidenceLevel,
+            Confidence = (int)ToConfidenceScore(latestCheckin.Confidence),
             HasCheckins = true,
             IsOutdated = isOutdated,
             LastCheckinEmployeeName = employeeName
@@ -236,25 +235,20 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
         Checkin latestCheckin,
         Dictionary<Guid, Checkin> firstCheckins)
     {
-        if (indicator.Type == IndicatorType.Qualitative)
+        if (indicator.GoalType == IndicatorGoalType.Survey)
         {
-            return Clamp(latestCheckin.ConfidenceLevel / 5m * 100m);
+            return Clamp(ToConfidenceScore(latestCheckin.Confidence) / 5m * 100m);
         }
 
-        if (latestCheckin.Value is null)
-        {
-            return 0m;
-        }
+        var value = latestCheckin.Value;
 
-        var value = latestCheckin.Value.Value;
-
-        return indicator.QuantitativeType switch
+        return indicator.GoalType switch
         {
-            QuantitativeIndicatorType.Achieve => CalculateAchieveProgress(value, indicator.MaxValue),
-            QuantitativeIndicatorType.Reduce => CalculateReduceProgress(value, indicator.MaxValue, indicator.Id, firstCheckins),
-            QuantitativeIndicatorType.KeepAbove => CalculateKeepAboveProgress(value, indicator.MinValue ?? 0m),
-            QuantitativeIndicatorType.KeepBelow => CalculateKeepBelowProgress(value, indicator.MaxValue ?? decimal.MaxValue),
-            QuantitativeIndicatorType.KeepBetween => CalculateKeepBetweenProgress(value, indicator.MinValue ?? 0m, indicator.MaxValue ?? decimal.MaxValue),
+            IndicatorGoalType.Reach => CalculateAchieveProgress(value, indicator.TargetValue),
+            IndicatorGoalType.Reduce => CalculateReduceProgress(value, indicator.TargetValue, indicator.Id, firstCheckins),
+            IndicatorGoalType.Above => CalculateKeepAboveProgress(value, indicator.LowThreshold ?? 0m),
+            IndicatorGoalType.Below => CalculateKeepBelowProgress(value, indicator.HighThreshold ?? decimal.MaxValue),
+            IndicatorGoalType.Between => CalculateKeepBetweenProgress(value, indicator.LowThreshold ?? 0m, indicator.HighThreshold ?? decimal.MaxValue),
             _ => 0m
         };
     }
@@ -271,23 +265,23 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
 
     private static decimal CalculateReduceProgress(
         decimal currentValue,
-        decimal? maxValue,
+        decimal? targetValue,
         Guid indicatorId,
         Dictionary<Guid, Checkin> firstCheckins)
     {
-        var target = maxValue ?? 0m;
+        var target = targetValue ?? 0m;
 
         if (currentValue <= target)
         {
             return 100m;
         }
 
-        if (!firstCheckins.TryGetValue(indicatorId, out var firstCheckin) || firstCheckin.Value is null)
+        if (!firstCheckins.TryGetValue(indicatorId, out var firstCheckin))
         {
             return 0m;
         }
 
-        var baseline = firstCheckin.Value.Value;
+        var baseline = firstCheckin.Value;
         var range = baseline - target;
 
         if (range <= 0m)
@@ -354,9 +348,14 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
         return Clamp(maxValue / currentValue * 100m);
     }
 
-    public static decimal CalculateExpectedProgress(DateTime startDate, DateTime endDate, DateTime now)
+    public static decimal CalculateExpectedProgress(DateTime startDate, DateTime? dueDate, DateTime now)
     {
-        var totalDays = (endDate - startDate).TotalDays;
+        if (dueDate is null)
+        {
+            return 0m;
+        }
+
+        var totalDays = (dueDate.Value - startDate).TotalDays;
         if (totalDays <= 0)
         {
             return 100m;
@@ -365,6 +364,16 @@ public sealed class MissionProgressService(ApplicationDbContext dbContext) : IMi
         var elapsedDays = (now - startDate).TotalDays;
         return Clamp((decimal)(elapsedDays / totalDays) * 100m);
     }
+
+    private static decimal ToConfidenceScore(CheckinConfidence? confidence) => confidence switch
+    {
+        CheckinConfidence.High => 5m,
+        CheckinConfidence.Medium => 3m,
+        CheckinConfidence.Low => 2m,
+        CheckinConfidence.Barrier => 1m,
+        CheckinConfidence.Deprioritized => 0m,
+        _ => 0m
+    };
 
     private static decimal Clamp(decimal value)
     {

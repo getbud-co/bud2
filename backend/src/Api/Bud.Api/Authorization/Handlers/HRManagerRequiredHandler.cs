@@ -23,7 +23,9 @@ public sealed class HRManagerRequiredHandler(
         }
 
         if (!tenantProvider.EmployeeId.HasValue || !tenantProvider.TenantId.HasValue)
+        {
             return;
+        }
 
         var employee = await dbContext.Employees
             .Include(e => e.Memberships)

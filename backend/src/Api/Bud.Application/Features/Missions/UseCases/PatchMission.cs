@@ -5,12 +5,14 @@ using Microsoft.Extensions.Logging;
 namespace Bud.Application.Features.Missions.UseCases;
 
 public sealed record PatchMissionCommand(
-    Optional<string> Name,
+    Optional<string> Title,
     Optional<string?> Description,
     Optional<string?> Dimension,
-    Optional<DateTime> StartDate,
-    Optional<DateTime> EndDate,
+    Optional<DateTime?> DueDate,
+    Optional<DateTime?> CompletedAt,
     Optional<MissionStatus> Status,
+    Optional<MissionVisibility> Visibility,
+    Optional<Guid?> CycleId,
     Optional<Guid?> EmployeeId);
 
 public sealed partial class PatchMission(
@@ -34,23 +36,16 @@ public sealed partial class PatchMission(
             return Result<Mission>.NotFound(UserErrorMessages.MissionNotFound);
         }
 
-        if (mission.ParentId.HasValue && (command.StartDate.HasValue || command.EndDate.HasValue))
+        if (mission.ParentId.HasValue && command.DueDate.HasValue)
         {
             var parentMission = await missionRepository.GetByIdReadOnlyAsync(mission.ParentId.Value, cancellationToken);
             if (parentMission is not null)
             {
-                var childStartDate = command.StartDate.HasValue
-                    ? UtcDateTimeNormalizer.Normalize(command.StartDate.Value)
-                    : mission.StartDate;
-                var childEndDate = command.EndDate.HasValue
-                    ? UtcDateTimeNormalizer.Normalize(command.EndDate.Value)
-                    : mission.EndDate;
+                var childDueDate = command.DueDate.Value.HasValue
+                    ? UtcDateTimeNormalizer.Normalize(command.DueDate.Value.Value)
+                    : mission.DueDate;
 
-                var violation = MissionDateRangePolicy.ValidateChildWindow<Mission>(
-                    childStartDate,
-                    childEndDate,
-                    parentMission.StartDate,
-                    parentMission.EndDate);
+                var violation = MissionDateRangePolicy.ValidateChildDueDate<Mission>(childDueDate, parentMission.DueDate);
                 if (violation is not null)
                 {
                     LogMissionPatchFailed(logger, id, violation.Error!);
@@ -61,20 +56,27 @@ public sealed partial class PatchMission(
 
         try
         {
-            var status = command.Status.HasValue ? command.Status.Value : mission.Status;
-            var name = command.Name.HasValue ? (command.Name.Value ?? mission.Name) : mission.Name;
+            var title = command.Title.HasValue ? (command.Title.Value ?? mission.Title) : mission.Title;
             var description = command.Description.HasValue ? command.Description.Value : mission.Description;
             var dimension = command.Dimension.HasValue ? command.Dimension.Value : mission.Dimension;
-            var startDate = command.StartDate.HasValue ? command.StartDate.Value : mission.StartDate;
-            var endDate = command.EndDate.HasValue ? command.EndDate.Value : mission.EndDate;
+            var dueDate = command.DueDate.HasValue ? command.DueDate.Value : mission.DueDate;
+            var completedAt = command.CompletedAt.HasValue ? command.CompletedAt.Value : mission.CompletedAt;
+            var status = command.Status.HasValue ? command.Status.Value : mission.Status;
+            var visibility = command.Visibility.HasValue ? command.Visibility.Value : mission.Visibility;
+
+            if (command.CycleId.HasValue)
+            {
+                mission.CycleId = command.CycleId.Value;
+            }
 
             mission.UpdateDetails(
-                name,
+                title,
                 description,
                 dimension,
-                UtcDateTimeNormalizer.Normalize(startDate),
-                UtcDateTimeNormalizer.Normalize(endDate),
-                status);
+                dueDate.HasValue ? UtcDateTimeNormalizer.Normalize(dueDate.Value) : default,
+                completedAt.HasValue ? UtcDateTimeNormalizer.Normalize(completedAt.Value) : default,
+                status,
+                visibility);
 
             if (command.EmployeeId.HasValue)
             {
@@ -101,7 +103,7 @@ public sealed partial class PatchMission(
             mission.MarkAsUpdated(tenantProvider.EmployeeId);
             await unitOfWork.CommitAsync(missionRepository.SaveChangesAsync, cancellationToken);
 
-            LogMissionPatched(logger, id, mission.Name);
+            LogMissionPatched(logger, id, mission.Title);
             return Result<Mission>.Success(mission);
         }
         catch (DomainInvariantException ex)
@@ -114,8 +116,8 @@ public sealed partial class PatchMission(
     [LoggerMessage(EventId = 4003, Level = LogLevel.Information, Message = "Patching mission {MissionId}")]
     private static partial void LogPatchingMission(ILogger logger, Guid missionId);
 
-    [LoggerMessage(EventId = 4004, Level = LogLevel.Information, Message = "Mission patched successfully: {MissionId} - '{Name}'")]
-    private static partial void LogMissionPatched(ILogger logger, Guid missionId, string name);
+    [LoggerMessage(EventId = 4004, Level = LogLevel.Information, Message = "Mission patched successfully: {MissionId} - '{Title}'")]
+    private static partial void LogMissionPatched(ILogger logger, Guid missionId, string title);
 
     [LoggerMessage(EventId = 4005, Level = LogLevel.Warning, Message = "Mission patch failed for {MissionId}: {Reason}")]
     private static partial void LogMissionPatchFailed(ILogger logger, Guid missionId, string reason);

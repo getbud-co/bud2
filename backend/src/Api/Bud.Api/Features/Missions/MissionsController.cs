@@ -58,12 +58,14 @@ public sealed class MissionsController(
         }
 
         var command = new CreateMissionCommand(
-            request.Name,
+            request.Title,
             request.Description,
             request.Dimension,
-            request.StartDate,
-            request.EndDate,
+            request.DueDate,
+            request.CompletedAt,
             request.Status,
+            request.Visibility,
+            request.CycleId,
             request.ParentId,
             request.EmployeeId);
 
@@ -96,12 +98,14 @@ public sealed class MissionsController(
         }
 
         var command = new PatchMissionCommand(
-            request.Name,
+            request.Title,
             request.Description,
             request.Dimension,
-            request.StartDate,
-            request.EndDate,
+            request.DueDate,
+            request.CompletedAt,
             request.Status,
+            request.Visibility,
+            request.CycleId,
             request.EmployeeId);
 
         var result = await patchMission.ExecuteAsync(id, command, cancellationToken);

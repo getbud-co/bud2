@@ -25,14 +25,18 @@ public sealed class MissionOwnerOrTeamLeaderHandler(
         }
 
         if (!tenantProvider.EmployeeId.HasValue || !tenantProvider.TenantId.HasValue)
+        {
             return;
+        }
 
         var employee = await dbContext.Employees
             .Include(e => e.Memberships)
             .FirstOrDefaultAsync(e => e.Id == tenantProvider.EmployeeId.Value);
 
         if (employee is null)
+        {
             return;
+        }
 
         if (employee.HasMinimumRoleIn(tenantProvider.TenantId.Value, EmployeeRole.TeamLeader))
         {
@@ -44,7 +48,9 @@ public sealed class MissionOwnerOrTeamLeaderHandler(
         if (routeValues is null ||
             !routeValues.TryGetValue("id", out var idValue) ||
             !Guid.TryParse(idValue?.ToString(), out var missionId))
+        {
             return;
+        }
 
         var missionOwnerId = await dbContext.Missions
             .Where(m => m.Id == missionId)

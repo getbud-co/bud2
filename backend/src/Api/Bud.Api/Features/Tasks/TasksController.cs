@@ -42,9 +42,10 @@ public sealed class TasksController(
 
         var command = new CreateTaskCommand(
             missionId,
-            request.Name,
+            request.EmployeeId,
+            request.Title,
             request.Description,
-            request.State,
+            request.SortOrder,
             request.DueDate);
 
         var result = await createTask.ExecuteAsync(command, cancellationToken);
@@ -88,9 +89,9 @@ public sealed class TasksController(
         }
 
         var command = new PatchTaskCommand(
-            request.Name,
+            request.Title,
             request.Description,
-            request.State,
+            request.IsDone,
             request.DueDate);
 
         var result = await patchTask.ExecuteAsync(id, command, cancellationToken);

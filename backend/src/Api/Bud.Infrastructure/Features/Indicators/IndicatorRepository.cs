@@ -30,7 +30,7 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(i => i.Name)
+            .OrderBy(i => i.Title)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -76,7 +76,7 @@ public sealed class IndicatorRepository(ApplicationDbContext dbContext) : IIndic
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderByDescending(c => c.CheckinDate)
+            .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

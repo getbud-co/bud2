@@ -20,7 +20,10 @@ public sealed class MissionConfiguration : IEntityTypeConfiguration<Mission>
             .HasMaxLength(255);
 
         builder.Property(m => m.Path)
-            .HasColumnType("jsonb");
+            .HasColumnType("ltree");
+
+        builder.HasIndex(m => m.Path)
+            .HasMethod("gist");
 
         builder.Property(m => m.Status)
             .HasConversion<string>();

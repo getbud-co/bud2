@@ -10,10 +10,14 @@ public static class TaskContractMapper
             Id = source.Id,
             OrganizationId = source.OrganizationId,
             MissionId = source.MissionId,
-            Name = source.Name,
+            EmployeeId = source.EmployeeId,
+            Title = source.Title,
             Description = source.Description,
-            State = source.State,
-            DueDate = source.DueDate
+            IsDone = source.IsDone,
+            DueDate = source.DueDate,
+            SortOrder = source.SortOrder,
+            CompletedAt = source.CompletedAt,
+            CreatedAt = source.CreatedAt
         };
     }
 }

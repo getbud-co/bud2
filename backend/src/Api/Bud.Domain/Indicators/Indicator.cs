@@ -35,8 +35,10 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
     public IndicatorGoalType GoalType { get; set; }
     public decimal? TargetValue { get; set; }
-    public decimal CurrentValue { get; set; }
     public decimal StartValue { get; set; }
+
+    [NotMapped]
+    public decimal CurrentValue => Checkins.OrderByDescending(c => c.CreatedAt).FirstOrDefault()?.Value ?? StartValue;
     public decimal? LowThreshold { get; set; }
     public decimal? HighThreshold { get; set; }
     public IndicatorUnit Unit { get; set; }
@@ -71,6 +73,8 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
         IndicatorGoalType goalType,
         decimal startValue,
         decimal? targetValue,
+        decimal? lowThreshold,
+        decimal? highThreshold,
         IndicatorUnit unit,
         string unitLabel,
         string sortOrder,
@@ -101,7 +105,6 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             MeasurementMode = measurementMode,
             GoalType = goalType,
             StartValue = startValue,
-            CurrentValue = startValue,
             TargetValue = targetValue,
             Unit = unit,
             UnitLabel = unitLabel,
@@ -109,6 +112,8 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
             ParentKrId = parentKrId,
             Status = IndicatorStatus.OnTrack,
             Progress = 0,
+            LowThreshold = lowThreshold,
+            HighThreshold = highThreshold,
         };
     }
 
@@ -191,6 +196,8 @@ public sealed class Indicator : ITenantEntity, IAggregateRoot, IHasDomainEvents
 
         checkin.Update(value, checkinDate, note, confidenceLevel);
     }
+
+
 
     public void ClearDomainEvents()
     {

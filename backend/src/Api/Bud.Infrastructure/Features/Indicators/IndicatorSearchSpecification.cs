@@ -10,7 +10,7 @@ public sealed class IndicatorSearchSpecification(string? search, bool isNpgsql) 
             query,
             search,
             isNpgsql,
-            (q, pattern) => q.Where(i => EF.Functions.ILike(i.Name, pattern)),
-            (q, term) => q.Where(i => i.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            (q, pattern) => q.Where(i => EF.Functions.ILike(i.Title, pattern)),
+            (q, term) => q.Where(i => i.Title.Contains(term, StringComparison.OrdinalIgnoreCase)));
     }
 }

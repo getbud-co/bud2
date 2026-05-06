@@ -5,8 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Bud.Application.Features.Indicators.UseCases;
 
 public sealed record CreateCheckinCommand(
-    decimal? Value,
-    string? Text,
+    decimal Value,
     DateTime CheckinDate,
     string? Note,
     int ConfidenceLevel);
@@ -61,7 +60,6 @@ public sealed partial class CreateCheckin(
                 Guid.NewGuid(),
                 employeeId.Value,
                 command.Value,
-                command.Text,
                 UtcDateTimeNormalizer.Normalize(command.CheckinDate),
                 command.Note,
                 command.ConfidenceLevel);
